@@ -29,9 +29,9 @@ export const PROVIDERS = {
     models: [
       ["claude-opus-5", "Claude Opus 5"],
       ["claude-sonnet-5", "Claude Sonnet 5"],
+      ["claude-sonnet-5:batch", "Claude Sonnet 5 (batch)"],
       ["claude-fable-5", "Claude Fable 5"],
-      ["claude-opus-4-8", "Claude Opus 4.8"],
-      ["claude-opus-4-7", "Claude Opus 4.7"],
+      ["claude-fable-5:batch", "Claude Fable 5 (batch)"],
       ["claude-haiku-4-5", "Claude Haiku 4.5"],
     ],
     // <models:anthropic:end>
@@ -113,17 +113,16 @@ export const PROVIDERS = {
       ["poolside/laguna-s-2.1:free", "Laguna S 2.1 — free"],
       ["poolside/laguna-xs-2.1:free", "Laguna XS 2.1 — free"],
       ["cohere/north-mini-code:free", "North Mini Code — free"],
-      ["poolside/laguna-m.1:free", "Laguna M.1 — free"],
       ["openrouter/free", "Free Models Router — free"],
       ["anthropic/claude-opus-5", "Claude Opus 5 (paid)"],
       ["anthropic/claude-sonnet-5", "Claude Sonnet 5 (paid)"],
-      ["anthropic/claude-fable-5", "Claude Fable 5 (paid)"],
+      ["anthropic/claude-sonnet-5:batch", "Claude Sonnet 5 (batch) (paid)"],
       ["openai/gpt-5.6-luna-pro", "GPT-5.6 Luna Pro (paid)"],
       ["openai/gpt-5.6-luna", "GPT-5.6 Luna (paid)"],
       ["openai/gpt-5.6-terra-pro", "GPT-5.6 Terra Pro (paid)"],
       ["google/gemini-3.6-flash", "Gemini 3.6 Flash (paid)"],
+      ["google/gemini-3.6-flash:batch", "Gemini 3.6 Flash (batch) (paid)"],
       ["google/gemini-3.5-flash", "Gemini 3.5 Flash (paid)"],
-      ["google/gemini-2.5-flash", "Gemini 2.5 Flash (paid)"],
       ["x-ai/grok-4.5", "Grok 4.5 (paid)"],
       ["x-ai/grok-build-0.1", "Grok Build 0.1 (paid)"],
       ["x-ai/grok-4.3", "Grok 4.3 (paid)"],
@@ -152,9 +151,10 @@ export const PROVIDERS = {
     // <models:google:start>
     models: [
       ["gemini-3.6-flash", "Gemini 3.6 Flash"],
+      ["gemini-3.6-flash:batch", "Gemini 3.6 Flash (batch)"],
       ["gemini-3.5-flash", "Gemini 3.5 Flash"],
+      ["gemini-3.5-flash:batch", "Gemini 3.5 Flash (batch)"],
       ["gemini-2.5-flash", "Gemini 2.5 Flash"],
-      ["gemini-2.5-pro", "Gemini 2.5 Pro"],
       ["gemini-3.5-flash-lite", "Gemini 3.5 Flash Lite"],
     ],
     // <models:google:end>
