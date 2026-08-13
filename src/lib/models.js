@@ -125,15 +125,15 @@ export const PROVIDERS = {
       ["google/gemini-3.6-flash", "Gemini 3.6 Flash (paid)"],
       ["google/gemini-3.6-flash:batch", "Gemini 3.6 Flash (batch) (paid)"],
       ["google/gemini-3.5-flash", "Gemini 3.5 Flash (paid)"],
+      ["x-ai/grok-4.6", "Grok 4.6 (paid)"],
       ["x-ai/grok-4.5", "Grok 4.5 (paid)"],
       ["x-ai/grok-build-0.1", "Grok Build 0.1 (paid)"],
-      ["x-ai/grok-4.3", "Grok 4.3 (paid)"],
+      ["deepseek/deepseek-v4-pro-0813", "DeepSeek V4 Pro 0813 (paid)"],
       ["deepseek/deepseek-v4-flash-0731", "DeepSeek V4 Flash 0731 (paid)"],
       ["deepseek/deepseek-v4-pro", "DeepSeek V4 Pro (paid)"],
-      ["deepseek/deepseek-v4-flash", "DeepSeek V4 Flash 0423 (paid)"],
+      ["qwen/qwen3.8-2.4t-a95b", "Qwen3.8 2.4T A95B (paid)"],
       ["qwen/qwen3.8-max", "Qwen3.8 Max (paid)"],
       ["qwen/qwen3.7-flash", "Qwen3.7 Flash (paid)"],
-      ["qwen/qwen3.7-plus", "Qwen3.7 Plus (paid)"],
       ["mistralai/mistral-medium-3-5", "Mistral Medium 3.5 (paid)"],
       ["mistralai/ministral-14b-2512", "Ministral 3 14B 2512 (paid)"],
       ["mistralai/mistral-large-2512", "Mistral Large 3 2512 (paid)"],
@@ -220,6 +220,7 @@ export const PROVIDERS = {
     // auto-maintained by scripts/update-models.mjs (daily)
     // <models:xai:start>
     models: [
+      ["grok-4.6", "Grok 4.6"],
       ["grok-4.5", "Grok 4.5"],
       ["grok-4.3", "Grok 4.3"],
       ["grok-4.20", "Grok 4.20"],
