@@ -323,22 +323,15 @@ bouton **Ouvrir** (plein écran) :
 - [x] 6 thèmes + couleurs personnalisées, interface en 6 langues
 - [x] **Conformité magasins** : `addons-linter` **0 erreur / 0 note**, manifests Firefox
       et Chromium dédiés, périmètre `declarativeNetRequest` restreint, déclaration de
-      collecte de données — voir [PUBLISHING.md](PUBLISHING.md)
+      collecte de données
 - [ ] Soumission **AMO** (canal *listed*)
 - [ ] Soumission **Chrome Web Store**
 - [ ] Capture d'écran du README à régénérer (UI à 10 espaces)
-
-## Documentation
-
-| Document | Contenu |
-|---|---|
-| [PUBLISHING.md](PUBLISHING.md) | Publication pas-à-pas sur **AMO**, **Chrome Web Store** et **Edge** : signature *unlisted*, auto-update auto-hébergé, justification de **chaque permission**, réponses de l'onglet « Confidentialité », checklist avant soumission |
-| [REVIEWERS.md](REVIEWERS.md) | Note aux relecteurs : build reproductible, libs vendorées, avertissements attendus et pourquoi, déclaration de collecte de données, périmètre `declarativeNetRequest` |
 
 ## Licence
 
 MIT — voir [LICENSE](./LICENSE).
 
-## Building / reviewers
+## Building
 
-The extension ships hand-written, non-minified source (only `vendor/` holds unmodified third-party libraries). To reproduce the exact packages: `bash scripts/build.sh`. Verify the third-party libs with `bash scripts/fetch-vendor.sh --check`. Full reviewer/build documentation: see [REVIEWERS.md](REVIEWERS.md).
+The extension ships hand-written, non-minified source (only `vendor/` holds unmodified third-party libraries). To reproduce the exact packages: `bash scripts/build.sh`. Verify the third-party libs with `bash scripts/fetch-vendor.sh --check`.
