@@ -183,7 +183,10 @@ async function benchCode(model) {
   let pass = 0, cost = 0, ms = 0;
   const detail = [];
   for (const task of CODE_TASKS) {
-    const r = await chat(model, [{ role: "user", content: task.prompt }], { maxTokens: 2000 });
+    // 2000 was too tight: a free model that emits reasoning before its answer got TRUNCATED,
+    // and a truncated function fails every assertion — the bench blamed the model for its own
+    // budget. Measuring badly is worse than not measuring.
+    const r = await chat(model, [{ role: "user", content: task.prompt }], { maxTokens: 6000 });
     cost += r.cost; ms += r.ms;
     if (!r.ok) { detail.push(`${task.name}: API ${r.error}`); continue; }
     const res = runCode(extractCode(r.text), task.checks);
