@@ -1,6 +1,6 @@
 # Hivey AI — IA multi-fournisseurs pour Firefox & Chromium
 
-![version](https://img.shields.io/badge/version-2.195.0-8b5cf6) ![MV3](https://img.shields.io/badge/manifest-v3-blue) ![licence](https://img.shields.io/badge/licence-MIT-green)
+![version](https://img.shields.io/badge/version-2.196.0-8b5cf6) ![MV3](https://img.shields.io/badge/manifest-v3-blue) ![licence](https://img.shields.io/badge/licence-MIT-green)
 
 Une extension **open-source** qui ajoute une **sidebar IA** à la manière de
 [sider.ai](https://sider.ai), mais où **vous branchez votre propre IA** (BYOK) et
@@ -61,14 +61,9 @@ VS Code / Slack — scale mieux qu'une rangée d'onglets) donne accès à :
 - 📤 **Export de conversation** (impression / PDF via le rendu natif du navigateur).
 - 🎨 **Interface moderne & personnalisable** : **6 thèmes** (Dark, Hive, Modern, Neon,
   Sunset, Light) avec **personnalisation des couleurs par-dessus** (accent, fond,
-  surface, texte) et une **pipette** pour capturer une couleur à l'écran.
-- 🎨 **Interface moderne & personnalisable** : plusieurs **thèmes** (Default, Pro,
-  Gamer, Modern, Sunset, Light) avec **personnalisation des couleurs par-dessus**
-  (accent, fond, surface, texte) et une **pipette** pour capturer une couleur à
-  l'écran. Zone de saisie unifiée façon Claude/Gemini, et un **sélecteur de modèle
-  unifié** au-dessus du chat (une seule liste groupée par fournisseur connecté).
-- 🌍 **Interface multilingue** : anglais, français, espagnol, allemand, italien,
-  portugais (réglable dans les paramètres).
+  surface, texte) et une **pipette** pour capturer une couleur à l'écran. Zone de
+  saisie unifiée façon Claude/Gemini, et **sélecteur de modèle unifié** au-dessus
+  du chat (une seule liste groupée par fournisseur connecté).
 - 🔌 **Tous les fournisseurs** : **Claude**, **OpenAI**, **Gemini**, **Mistral**,
   **Groq**, **DeepSeek**, **xAI (Grok)**, **Perplexity**, **Together**, **Fireworks**,
   **DeepInfra**, **Cerebras**, **Cohere**, **OpenRouter**, et les **modèles locaux**
@@ -97,7 +92,8 @@ VS Code / Slack — scale mieux qu'une rangée d'onglets) donne accès à :
   talkers/ports, mix protocolaire, heuristiques de scan TCP) — **jamais** les
   charges utiles. Seul ce résumé peut partir vers le modèle.
 - 🌍 **Interface multilingue** : anglais, français, espagnol, allemand, italien,
-  portugais (réglable dans les paramètres).
+  portugais (réglable dans les paramètres) — les six sont **complètes**, et un test
+  échoue si une clé manque dans l'une d'elles.
 - 👁 **L'IA voit la page** : le contenu est lu automatiquement à l'ouverture d'un
   site **et à chaque navigation** (y compris changement de sous-domaine et
   navigations SPA), puis utilisé comme support pour répondre.
@@ -202,7 +198,8 @@ src/
   lib/
     models.js            Catalogue des fournisseurs + modèles + presets d'écriture
     providers.js         Client Anthropic natif + client générique OpenAI ; images
-    agent.js             Boucle d'agent (tours modèle ↔ outils)
+    harness.js           Noyau de raisonnement : coutures, journal de session, événements
+    agent.js             Tour d'agent monté sur le noyau (prompt système + greffons)
     tools.js             Outils navigateur (onglets, DOM) + exécuteur
     auth.js              Connexion OAuth (PKCE) OpenRouter via browser.identity
     history.js           Historique local des conversations (storage.local)
@@ -221,9 +218,21 @@ src/
     theme.js             6 thèmes + surcouche de couleurs personnalisées
     i18n.js / i18n-langs.js  Traductions UI (en, fr, es, de, it, pt)
     dom.js               Point d'insertion HTML unique (audit sécurité)
+tests/                   Suite node:test — `npm test`, aucune dépendance
+scripts/bench-hivey.mjs  Banc de qualité Hivey (routage + code exécuté)
 ```
 
 ### Détails techniques
+
+- **Noyau de raisonnement** (`lib/harness.js`) : la boucle d'agent ne garde que la
+  mécanique — tours, étapes, appels d'outils. Tout ce qui décide *de ce qui a le
+  droit d'arriver* s'enregistre depuis l'extérieur. Le journal de session fait
+  foi : la requête envoyée au modèle est **dérivée** de ce journal à chaque étape,
+  jamais tenue à côté, si bien que la transcription ne peut pas diverger de ce qui
+  a réellement été envoyé. Avant chaque appel, `agent/pre-step` laisse un
+  auditeur réécrire la requête ou la **refuser**, ce qui clôt le tour sans avoir
+  rien dépensé. Inspiré de DeepSeek Harness (et du paradigme Cordis), implémenté
+  ici de zéro : aucune dépendance, aucun appel à DeepSeek.
 
 - **MV3 / Firefox** : `sidebar_action` (équivalent Chrome : `side_panel`).
   Le background est un *event page* (`background.scripts`).
@@ -306,6 +315,24 @@ bouton **Ouvrir** (plein écran) :
 - ` ```jsx ` (ou `react`) → **composant React** (définir `App`), transpilé en direct
 - ` ```svg ` → graphique vectoriel rendu
 - ` ```mermaid ` → diagramme rendu automatiquement
+
+## Tests
+
+```sh
+npm test              # suite complète (node:test, zéro dépendance)
+npm run models:check  # le catalogue de modèles est-il à jour ?
+npm run vendor:check  # les bibliothèques tierces sont-elles les originaux amont ?
+```
+
+66 tests couvrent le noyau de raisonnement (tours, étapes, admission avant appel,
+greffons réversibles), le tour d'agent de bout en bout (ce que le fournisseur
+reçoit, ce que l'historique contient ensuite, le vérificateur indépendant), le
+routage Hivey, et **la complétude des six langues** — une clé manquante ne plante
+pas, elle s'affiche telle quelle à l'écran, ce qu'aucun build ne signalait.
+
+Le banc `scripts/bench-hivey.mjs` mesure la qualité réelle des variantes Hivey :
+précision du routeur sur un jeu de prompts étiquetés (FR + EN), et exactitude du
+rôle code, en **exécutant** le code produit contre des assertions.
 
 ## Feuille de route
 
