@@ -1813,8 +1813,11 @@ function readFileAs(file, how) {
 }
 async function extractPdfText(buf) {
   if (!window.pdfjsLib) throw new Error("pdf.js not loaded");
+  // `isEvalSupported: false` disables pdf.js's eval-based font path — the one CVE-2024-4367 abuses
+  // to run JavaScript out of a malicious PDF. The extension CSP (script-src 'self') already blocks
+  // eval outright, so this is belt AND braces: it keeps holding if that CSP is ever loosened.
   if (!pdfWorkerSet) { window.pdfjsLib.GlobalWorkerOptions.workerSrc = browser.runtime.getURL("vendor/pdf.worker.min.js"); pdfWorkerSet = true; }
-  const doc = await window.pdfjsLib.getDocument({ data: buf }).promise;
+  const doc = await window.pdfjsLib.getDocument({ data: buf, isEvalSupported: false }).promise;
   let text = "";
   for (let i = 1; i <= doc.numPages; i++) {
     const page = await doc.getPage(i);
@@ -8398,7 +8401,7 @@ async function loadPdfFiles(fileList) {
   for (const file of files) {
     try {
       const buf = await file.arrayBuffer();
-      const doc = await window.pdfjsLib.getDocument({ data: buf }).promise;
+      const doc = await window.pdfjsLib.getDocument({ data: buf, isEvalSupported: false }).promise;
       let text = "";
       for (let i = 1; i <= doc.numPages; i++) {
         const page = await doc.getPage(i);

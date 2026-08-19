@@ -948,6 +948,7 @@ const EN = {
 };
 
 const FR = {
+  "opts.title": "Options",  // manquait: le titre du panneau s affichait en anglais
   "history.title": "Historique (local)",
   "newChat.title": "Nouvelle conversation",
   "settings.title": "Réglages",
@@ -1863,7 +1864,9 @@ const FR = {
   "opt.uiFr": "Français",
 };
 
-const DICT = { en: EN, fr: FR, es: ES, de: DE, it: IT, pt: PT };
+// Exported so a test can check EVERY key the UI asks for actually exists: a missing key falls back
+// to English and then to the RAW KEY, which is what a user sees printed on screen.
+export const DICT = { en: EN, fr: FR, es: ES, de: DE, it: IT, pt: PT };
 
 export function setLang(l) {
   lang = l === "fr" ? "fr" : "en";

@@ -18,7 +18,7 @@ CHECK_ONLY="${1:-}"
 # file  →  official source URL (jsDelivr mirrors npm 1:1)
 declare -A SRC=(
   [marked.min.js]="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"
-  [purify.min.js]="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"
+  [purify.min.js]="https://cdn.jsdelivr.net/npm/dompurify@3.4.14/dist/purify.min.js"
   [browser-polyfill.min.js]="https://cdn.jsdelivr.net/npm/webextension-polyfill@0.12.0/dist/browser-polyfill.min.js"
   [mermaid.min.js]="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"
   [pdf.min.js]="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/pdf.min.js"
@@ -29,7 +29,7 @@ declare -A SRC=(
 # expected SHA-256 of each file
 declare -A SHA=(
   [marked.min.js]="15fabce5b65898b32b03f5ed25e9f891a729ad4c0d6d877110a7744aa847a894"
-  [purify.min.js]="c0845096a7c4a6741f362ac506c94c1c7d27dc603bcc1bf64a587f76f2dbe3a1"
+  [purify.min.js]="c2f26ea4fc0d88141c9aa430eb515ac86fce59418ceebd85fa475b87a8d6c3e6"
   [browser-polyfill.min.js]="918ed891c0e7f9b58b39ac32c9c3133eb2a1fbaaa27f4aa7579ae55e7572cc21"
   [mermaid.min.js]="61b335a46df05a7ce1c98378f60e5f3e77a7fb608a1056997e8a649304a936d6"
   [pdf.min.js]="978fd1b2d134a98e98966186a97777bebf87d8e770dadab1ece3687e21a5aa6c"
