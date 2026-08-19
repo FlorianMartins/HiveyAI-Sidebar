@@ -47,10 +47,10 @@ const FREE_PREF = [
 // release could never enter the list on its own: GPT-5.6, Claude Sonnet 5 and Grok 4.5 all
 // shipped while the fallback still advertised GPT-4o. We now take each vendor's NEWEST
 // flagships straight from the catalogue, so new releases are picked up with zero edits.
-const PAID_VENDORS = ["anthropic", "openai", "google", "x-ai", "deepseek", "qwen", "mistralai"];
+const PAID_VENDORS = ["anthropic", "openai", "google", "x-ai", "deepseek", "qwen", "mistralai", "z-ai", "moonshotai"];
 const PER_VENDOR = 3; // newest flagships kept per vendor
 const FREE_CAP = 18;
-const PAID_CAP = 21;
+const PAID_CAP = 27;
 const IMAGE_CAP = 8;
 
 // Small/cheap variants — kept, but never allowed to displace a vendor's flagship.
@@ -60,7 +60,9 @@ const SMALL = /(?:^|[-_/])(mini|nano|lite|small|tiny|haiku|8b|4b|3b|1b)\b/i;
 // Builds we never advertise as a default: experimental, pinned date snapshots ("…-20260420",
 // superseded by the moving id), agent-only / research-only SKUs.
 // "-fast" is a routing SKU of a model already listed — keep the canonical one in the fallback.
-const NOT_DEFAULT = /preview|-exp\b|experimental|multi-agent|deep-research|search-preview|:online|-20\d{6}\b|-fast$/i;
+// ":batch" is the asynchronous batch-API SKU of a model already listed: it is cheaper because
+// the answer arrives later, which is the one thing an interactive sidebar cannot use.
+const NOT_DEFAULT = /preview|-exp\b|experimental|multi-agent|deep-research|search-preview|:online|:batch\b|-20\d{6}\b|-fast$/i;
 // Open-weights families: they belong in the FREE section (that's how people use them), not
 // among a vendor's paid flagships — otherwise Gemma outranks Gemini in Google's own slot.
 const OPEN_WEIGHTS = /gemma|gpt-oss|llama|qwen[23]-|mistral-7b/i;
@@ -257,8 +259,76 @@ function curateHivey(all) {
   }
   const outPrice = (m) => (m && m.pricing && +m.pricing.completion ? +m.pricing.completion * 1e6 : 0);
 
+  // ── Rescuing a model id that VANISHED from the catalogue ─────────────────────
+  // The same-family bump above can only promote a NEWER SIBLING. When a provider
+  // retires a model outright and ships no successor under the same stem, there is
+  // no sibling to promote — and the old code then kept the dead id ("gone but no
+  // same-family replacement"). Every request to that role answered HTTP 404, which
+  // is exactly how the whole Free variant died: 3 of its 4 model ids no longer
+  // existed. A dead id is not something to preserve, so we re-pick across families.
+  //
+  // The replacement is chosen per ROLE, because the roles are not interchangeable:
+  // the image role needs a model that can OUTPUT an image, the agent role needs
+  // tool-calling, and the cheap roles exist precisely to not burn a flagship.
+  const ROLE_NEEDS = {
+    image: { outputs: "image" },
+    vision: { accepts: "image" },
+    code: { prefer: /cod(e|er|ing)|devstral|laguna|seed-.*code/i },
+    test: { prefer: /cod(e|er|ing)|devstral|laguna|seed-.*code/i },
+    agent: { tools: true, prefer: /cod(e|er|ing)|devstral|laguna/i },
+    router: { cheap: true }, utility: { cheap: true }, light: { cheap: true },
+    extract: { cheap: true }, verify: { cheap: true },
+    reasoning: { strong: true }, math: { strong: true },
+  };
+
+  const modalities = (m, dir) => (m.architecture && m.architecture[dir]) || [];
+  const supports = (m, p) => (m.supported_parameters || []).includes(p);
+
+  function pickReplacement(role, wantFree) {
+    const need = ROLE_NEEDS[role] || {};
+    const pool = all.filter((m) => {
+      if (/^~/.test(m.id)) return false;                    // moving aliases: not a stable id to commit
+      if (/preview|-exp\b|experimental/i.test(m.id)) return false;
+      if (wantFree !== /:free$/.test(m.id)) return false;
+      if (need.outputs && !modalities(m, "output_modalities").includes(need.outputs)) return false;
+      if (need.accepts && !modalities(m, "input_modalities").includes(need.accepts)) return false;
+      if (need.tools && !supports(m, "tools")) return false;
+      // Every text role must actually be able to answer in text.
+      if (!need.outputs && !modalities(m, "output_modalities").includes("text")) return false;
+      return true;
+    });
+    if (!pool.length) return null;
+
+    const price = (m) => outPrice(m);
+    const maxCtx = Math.max(...pool.map((m) => m.context_length || 0), 1);
+    const newest = Math.max(...pool.map((m) => m.created || 0), 1);
+    // A code-specialised model is a poor general assistant, and vice versa. Without this
+    // penalty "north-mini-code" won the router/utility/light roles purely because "mini"
+    // read as small-and-cheap — a code model answering small talk in six languages.
+    const CODEY = /cod(e|er|ing)|devstral|laguna|seed-.*code|starcoder/i;
+    const score = (m) => {
+      let s = 0;
+      if (need.prefer && need.prefer.test(m.id)) s += 5;
+      else if (CODEY.test(m.id)) s -= 4;
+      // Context is capability you can measure — but only where the role uses it. The router
+      // classifies one sentence into one word; a million-token window buys it nothing, while
+      // the latency of a reasoning model buys it a visible pause before every single answer.
+      s += (need.cheap ? 0.5 : 2) * ((m.context_length || 0) / maxCtx);
+      s += 1.5 * ((m.created || 0) / newest);               // recency, but never the only criterion
+      if (need.cheap) {
+        s += SMALL.test(m.id) ? 1.5 : 0;                    // cheap roles WANT the small model
+        if (/reasoning|thinking/i.test(m.id)) s -= 3;       // …and want it to answer, not deliberate
+      }
+      if (need.strong) s += SMALL.test(m.id) ? -1.5 : 1;
+      if (!wantFree) s += need.cheap ? -0.5 * Math.min(price(m) / 5, 2) : 0.3 * Math.min(price(m) / 5, 2);
+      return s;
+    };
+    return pool.sort((a, b) => score(b) - score(a))[0];
+  }
+
   const merged = {};
   let changes = 0;
+  const dead = [];
   for (const variant of Object.keys(current)) {
     merged[variant] = {};
     for (const role of Object.keys(current[variant])) {
@@ -273,22 +343,36 @@ function curateHivey(all) {
         merged[variant][role] = cand.id;
         changes++;
         console.log(`🐝 ${variant}.${role}: ${cur} → ${cand.id}`);
+      } else if (!curM) {
+        // The id is GONE from the catalogue and no sibling replaced it.
+        const rescue = pickReplacement(role, isFree);
+        dead.push(`${variant}.${role} = ${cur}`);
+        if (rescue) {
+          merged[variant][role] = rescue.id;
+          changes++;
+          console.log(`💀 ${variant}.${role}: ${cur} NO LONGER EXISTS → ${rescue.id}`);
+        } else {
+          merged[variant][role] = cur;
+          console.log(`💀 ${variant}.${role}: ${cur} NO LONGER EXISTS and nothing fits this role.`);
+        }
       } else {
-        merged[variant][role] = cur; // keep (already newest, or gone but no same-family replacement)
+        merged[variant][role] = cur; // already the newest of its family
       }
     }
   }
+  if (dead.length) console.log(`💀 ${dead.length} dead model id(s) found: ${dead.join(", ")}`);
   if (!changes) {
     console.log("🐝 Hivey auto-curation: every role already on the newest model of its family.");
-    return;
+    return dead.length;
   }
   if (CHECK_ONLY) {
     console.log(`🐝 Hivey auto-curation WOULD bump ${changes} assignment(s).`);
-    return;
+    return dead.length;
   }
   const header = srcText.split("// <hivey:start>")[0];
   writeFileSync(HIVEY_FILE, `${header}// <hivey:start>\nexport const HIVEY_MODELS = ${JSON.stringify(merged, null, 2)};\n// <hivey:end>\n`);
   console.log(`✓ hivey-models.js auto-curated (${changes} bump(s)).`);
+  return dead.length;
 }
 
 async function main() {

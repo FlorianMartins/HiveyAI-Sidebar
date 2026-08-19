@@ -8,3 +8,6 @@ web-ext-artifacts/
 *.xpi
 .DS_Store
 .claude/
+
+# bench artefacts (contiennent des mesures, pas du code)
+bench-hivey.json

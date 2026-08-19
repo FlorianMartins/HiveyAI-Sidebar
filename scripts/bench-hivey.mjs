@@ -1,0 +1,220 @@
+#!/usr/bin/env node
+// 🐝 Hivey quality bench — does the routing actually work, and is each role's model any good?
+//
+// The Hivey engine's whole claim is that picking the right model per task beats sending
+// everything to the most expensive one. That claim is measurable, and until it is measured it
+// is only a hope: a router that misclassifies sends "write me a quicksort" to the small-talk
+// model, and the user experiences Hivey as "worse than just picking a model myself".
+//
+// Three things are measured, all of them decidable without a human judging taste:
+//   1. ROUTER ACCURACY — labelled prompts (FR + EN) against the real dispatcher prompt. The
+//      router must answer with exactly one category word, so scoring is exact-match, not vibes.
+//   2. CODE CORRECTNESS — the code role is asked for a pure function with known edge cases; the
+//      answer is extracted and RUN against assertions. Passing is a fact, not an impression.
+//   3. COST AND LATENCY — from OpenRouter's own usage accounting, per role, per variant.
+//
+// Generated code runs inside `vm.runInNewContext` with an empty context and a timeout: with no
+// `require`, `process` or `fetch` in scope it cannot touch the disk or the network. That is a
+// deliberate limit of this bench — it measures pure functions, and nothing else should be run.
+//
+// Usage:  OPENROUTER_API_KEY=sk-or-... node scripts/bench-hivey.mjs [--variants free,hybrid,smart]
+
+import { runInNewContext } from "node:vm";
+import { readFileSync, writeFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const KEY = process.env.OPENROUTER_API_KEY || "";
+if (!KEY) { console.error("OPENROUTER_API_KEY is required."); process.exit(2); }
+
+const argVariants = (process.argv.find((a) => a.startsWith("--variants=")) || "").split("=")[1];
+const WANTED = (argVariants || "free,hybrid,smart").split(",").map((s) => `hivey/${s.trim()}`);
+
+// Read the committed assignments straight from the source of truth, so the bench always tests
+// what actually ships rather than a copy that drifts.
+function loadModels() {
+  const src = readFileSync(join(__dirname, "..", "src", "lib", "hivey-models.js"), "utf8");
+  const start = src.indexOf("{", src.indexOf("HIVEY_MODELS"));
+  return new Function(`return (${src.slice(start, src.lastIndexOf("}") + 1)});`)();
+}
+
+// The dispatcher prompt, verbatim from models.js — testing a paraphrase would measure nothing.
+function loadRouterSystem() {
+  const src = readFileSync(join(__dirname, "..", "src", "lib", "models.js"), "utf8");
+  const m = /export const HIVEY_ROUTER_SYSTEM =([\s\S]*?);\n/.exec(src);
+  if (!m) throw new Error("HIVEY_ROUTER_SYSTEM not found in models.js");
+  return new Function(`return (${m[1]});`)();
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function chat(model, messages, { maxTokens = 900, temperature = 0, attempt = 0 } = {}) {
+  const t0 = Date.now();
+  const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ model, messages, max_tokens: maxTokens, temperature, usage: { include: true } }),
+  });
+  const j = await r.json().catch(() => ({}));
+  const ms = Date.now() - t0;
+  // Free models are rate-limited per MINUTE. Counting a 429 as a wrong answer would slander the
+  // model for the bench's own impatience, so we wait it out instead of scoring it.
+  const errMsg = (j.error && j.error.message) || "";
+  if ((r.status === 429 || /rate limit/i.test(errMsg)) && attempt < 4) {
+    await sleep(12000 * (attempt + 1));
+    return chat(model, messages, { maxTokens, temperature, attempt: attempt + 1 });
+  }
+  if (!r.ok) return { ok: false, ms, error: errMsg || `HTTP ${r.status}`, cost: 0 };
+  const msg = (j.choices && j.choices[0] && j.choices[0].message) || {};
+  return {
+    ok: true,
+    ms,
+    text: (msg.content || "").trim(),
+    cost: (j.usage && j.usage.cost) || 0,
+    tokens: (j.usage && j.usage.completion_tokens) || 0,
+  };
+}
+
+// ── 1. Router accuracy ───────────────────────────────────────────────────────────────────────
+// French and English mixed on purpose: the sidebar ships in six languages and a router that only
+// classifies English would silently degrade for most of its users.
+const ROUTER_CASES = [
+  ["Bonjour, ça va ?", "light"],
+  ["hi", "light"],
+  ["Quelle est la capitale du Portugal ?", "light"],
+  ["Merci beaucoup !", "light"],
+  ["Explique-moi la différence entre HTTP et HTTPS", "normal"],
+  ["Summarise the pros and cons of remote work", "normal"],
+  ["Quels sont les symptômes d'une carence en fer ?", "normal"],
+  ["Écris une fonction Python qui inverse une liste chaînée", "code"],
+  ["Fix this: TypeError: cannot read property 'map' of undefined in my React component", "code"],
+  ["Refactor ce composant Vue pour utiliser la Composition API", "code"],
+  ["Write a SQL query joining orders and customers by id", "code"],
+  ["Write unit tests with pytest for a function that parses ISO dates", "test"],
+  ["Ajoute des tests Jest pour ce reducer Redux", "test"],
+  ["Résous l'équation 3x² - 12x + 9 = 0", "math"],
+  ["What is the probability of getting three heads in five fair coin flips?", "math"],
+  ["Démontre par récurrence que la somme des n premiers entiers vaut n(n+1)/2", "math"],
+  ["Quel temps fait-il à Lyon aujourd'hui ?", "search"],
+  ["What's the latest news about the EU AI Act?", "search"],
+  ["Quel est le prix actuel du Bitcoin ?", "search"],
+  ["Écris un poème sur l'automne en Bretagne", "creative"],
+  ["Draft a punchy launch email for a new productivity app", "creative"],
+  ["Trouve-moi 10 noms de marque pour une boutique de café", "creative"],
+  ["Design a fault-tolerant architecture for a multi-region payment system and justify each trade-off", "hard"],
+  ["Analyse en profondeur les risques de sécurité d'un modèle d'authentification par magic link", "hard"],
+];
+
+async function benchRouter(model, routerSystem) {
+  let hit = 0, cost = 0, ms = 0, failures = [];
+  for (const [prompt, expected] of ROUTER_CASES) {
+    const r = await chat(model, [
+      { role: "system", content: routerSystem },
+      { role: "user", content: prompt },
+    ], { maxTokens: 800 });
+    cost += r.cost; ms += r.ms;
+    const word = (r.text || "").toLowerCase().replace(/[^a-z]/g, "");
+    if (word === expected) hit++;
+    else failures.push(`${expected}→${word || (r.error ? "ERR:" + r.error : "∅")}  «${prompt.slice(0, 44)}»`);
+  }
+  return { total: ROUTER_CASES.length, hit, cost, ms, failures };
+}
+
+// ── 2. Code correctness ──────────────────────────────────────────────────────────────────────
+// Small, unambiguous, edge-case-heavy tasks. A model that only handles the happy path fails.
+const CODE_TASKS = [
+  {
+    name: "chunk",
+    prompt:
+      "Write a JavaScript function `chunk(arr, size)` that splits an array into consecutive chunks of `size`. " +
+      "If size is not a positive integer, return []. The last chunk may be shorter. " +
+      "Reply with ONLY the function inside a ```js code block, no explanation, no exports.",
+    checks: `
+      assert(JSON.stringify(chunk([1,2,3,4,5],2)) === "[[1,2],[3,4],[5]]", "basic split");
+      assert(JSON.stringify(chunk([],3)) === "[]", "empty input");
+      assert(JSON.stringify(chunk([1,2],0)) === "[]", "size 0");
+      assert(JSON.stringify(chunk([1,2],-1)) === "[]", "negative size");
+      assert(JSON.stringify(chunk([1,2],1.5)) === "[]", "non-integer size");
+      assert(JSON.stringify(chunk([1,2,3],10)) === "[[1,2,3]]", "size larger than array");
+    `,
+  },
+  {
+    name: "parseDuration",
+    prompt:
+      "Write a JavaScript function `parseDuration(s)` that turns a duration string like \"1h30m\", \"45s\", " +
+      "\"2h\", \"90m\" into a number of SECONDS. Supported units: h, m, s, in any combination and order of " +
+      "appearance left to right. Return null for anything unparseable (empty string, \"abc\", \"5x\", null). " +
+      "Reply with ONLY the function inside a ```js code block, no explanation, no exports.",
+    checks: `
+      assert(parseDuration("1h30m") === 5400, "1h30m");
+      assert(parseDuration("45s") === 45, "45s");
+      assert(parseDuration("2h") === 7200, "2h");
+      assert(parseDuration("90m") === 5400, "90m");
+      assert(parseDuration("1h2m3s") === 3723, "combined");
+      assert(parseDuration("abc") === null, "garbage");
+      assert(parseDuration("") === null, "empty");
+      assert(parseDuration("5x") === null, "bad unit");
+      assert(parseDuration(null) === null, "null input");
+    `,
+  },
+];
+
+function extractCode(text) {
+  const fenced = /```(?:js|javascript)?\s*\n([\s\S]*?)```/i.exec(text || "");
+  return (fenced ? fenced[1] : text || "").trim();
+}
+
+function runCode(code, checks) {
+  const failures = [];
+  const sandbox = {
+    assert(cond, label) { if (!cond) failures.push(label); },
+    // Deliberately nothing else: no require, no process, no fetch, no timers.
+  };
+  try {
+    runInNewContext(`${code}\n;(function(){${checks}})();`, sandbox, { timeout: 2000 });
+  } catch (e) {
+    return { pass: false, failures: [`threw: ${String(e.message).slice(0, 90)}`] };
+  }
+  return { pass: failures.length === 0, failures };
+}
+
+async function benchCode(model) {
+  let pass = 0, cost = 0, ms = 0;
+  const detail = [];
+  for (const task of CODE_TASKS) {
+    const r = await chat(model, [{ role: "user", content: task.prompt }], { maxTokens: 2000 });
+    cost += r.cost; ms += r.ms;
+    if (!r.ok) { detail.push(`${task.name}: API ${r.error}`); continue; }
+    const res = runCode(extractCode(r.text), task.checks);
+    if (res.pass) { pass++; detail.push(`${task.name}: pass`); }
+    else detail.push(`${task.name}: FAIL (${res.failures.join(", ")})`);
+  }
+  return { total: CODE_TASKS.length, pass, cost, ms, detail };
+}
+
+// ── Run ──────────────────────────────────────────────────────────────────────────────────────
+const MODELS = loadModels();
+const routerSystem = loadRouterSystem();
+const report = { at: new Date().toISOString(), variants: {} };
+
+for (const variant of WANTED) {
+  const roles = MODELS[variant];
+  if (!roles) { console.log(`skip ${variant}: not in hivey-models.js`); continue; }
+  console.log(`\n=== ${variant} ===`);
+  console.log(`router: ${roles.router}`);
+  const router = await benchRouter(roles.router, routerSystem);
+  console.log(`  routing  ${router.hit}/${router.total} (${Math.round((100 * router.hit) / router.total)}%)  ${Math.round(router.ms / router.total)}ms/call  $${router.cost.toFixed(4)}`);
+  router.failures.forEach((f) => console.log(`    ✗ ${f}`));
+
+  console.log(`code:   ${roles.code}`);
+  const code = await benchCode(roles.code);
+  console.log(`  code     ${code.pass}/${code.total}  ${Math.round(code.ms / code.total)}ms/call  $${code.cost.toFixed(4)}`);
+  code.detail.forEach((d) => console.log(`    · ${d}`));
+
+  report.variants[variant] = { router: { model: roles.router, ...router }, code: { model: roles.code, ...code } };
+}
+
+const out = join(__dirname, "..", "bench-hivey.json");
+writeFileSync(out, JSON.stringify(report, null, 2));
+console.log(`\nreport → ${out}`);

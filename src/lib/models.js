@@ -28,10 +28,10 @@ export const PROVIDERS = {
     // <models:anthropic:start>
     models: [
       ["claude-opus-5", "Claude Opus 5"],
-      ["claude-opus-5:batch", "Claude Opus 5 (batch)"],
       ["claude-sonnet-5", "Claude Sonnet 5"],
-      ["claude-sonnet-5:batch", "Claude Sonnet 5 (batch)"],
       ["claude-fable-5", "Claude Fable 5"],
+      ["claude-opus-4-8", "Claude Opus 4.8"],
+      ["claude-opus-4-7", "Claude Opus 4.7"],
       ["claude-haiku-4-5", "Claude Haiku 4.5"],
     ],
     // <models:anthropic:end>
@@ -55,11 +55,11 @@ export const PROVIDERS = {
     // <models:openai:start>
     models: [
       ["gpt-5.6-luna-pro", "GPT-5.6 Luna Pro"],
-      ["gpt-5.6-luna-pro:batch", "GPT-5.6 Luna Pro (batch)"],
       ["gpt-5.6-luna", "GPT-5.6 Luna"],
-      ["gpt-5.6-luna:batch", "GPT-5.6 Luna (batch)"],
       ["gpt-5.6-terra-pro", "GPT-5.6 Terra Pro"],
-      ["gpt-5.6-terra-pro:batch", "GPT-5.6 Terra Pro (batch)"],
+      ["gpt-5.6-terra", "GPT-5.6 Terra"],
+      ["gpt-5.6-sol-pro", "GPT-5.6 Sol Pro"],
+      ["gpt-5.6-sol", "GPT-5.6 Sol"],
       ["gpt-5.4-nano", "GPT-5.4 Nano"],
     ],
     // <models:openai:end>
@@ -118,14 +118,14 @@ export const PROVIDERS = {
       ["z-ai/glm-5.2:free", "GLM 5.2 — free"],
       ["openrouter/free", "Free Models Router — free"],
       ["anthropic/claude-opus-5", "Claude Opus 5 (paid)"],
-      ["anthropic/claude-opus-5:batch", "Claude Opus 5 (batch) (paid)"],
       ["anthropic/claude-sonnet-5", "Claude Sonnet 5 (paid)"],
+      ["anthropic/claude-fable-5", "Claude Fable 5 (paid)"],
       ["openai/gpt-5.6-luna-pro", "GPT-5.6 Luna Pro (paid)"],
-      ["openai/gpt-5.6-luna-pro:batch", "GPT-5.6 Luna Pro (batch) (paid)"],
       ["openai/gpt-5.6-luna", "GPT-5.6 Luna (paid)"],
+      ["openai/gpt-5.6-terra-pro", "GPT-5.6 Terra Pro (paid)"],
       ["google/gemini-3.7-flash", "Gemini 3.7 Flash (paid)"],
-      ["google/gemini-3.7-flash:batch", "Gemini 3.7 Flash (batch) (paid)"],
       ["google/gemini-3.6-flash", "Gemini 3.6 Flash (paid)"],
+      ["google/gemini-3.5-flash", "Gemini 3.5 Flash (paid)"],
       ["x-ai/grok-4.6", "Grok 4.6 (paid)"],
       ["x-ai/grok-4.5", "Grok 4.5 (paid)"],
       ["x-ai/grok-build-0.1", "Grok Build 0.1 (paid)"],
@@ -138,6 +138,12 @@ export const PROVIDERS = {
       ["mistralai/mistral-medium-3-5", "Mistral Medium 3.5 (paid)"],
       ["mistralai/ministral-14b-2512", "Ministral 3 14B 2512 (paid)"],
       ["mistralai/mistral-large-2512", "Mistral Large 3 2512 (paid)"],
+      ["z-ai/glm-5.3", "GLM 5.3 (paid)"],
+      ["z-ai/glm-5.2", "GLM 5.2 (paid)"],
+      ["z-ai/glm-5.1", "GLM 5.1 (paid)"],
+      ["moonshotai/kimi-k3", "Kimi K3 (paid)"],
+      ["moonshotai/kimi-k2.7-code", "Kimi K2.7 Code (paid)"],
+      ["moonshotai/kimi-k2.6", "Kimi K2.6 (paid)"],
     ],
     // <models:openrouter:end>
   },
@@ -154,10 +160,10 @@ export const PROVIDERS = {
     // <models:google:start>
     models: [
       ["gemini-3.7-flash", "Gemini 3.7 Flash"],
-      ["gemini-3.7-flash:batch", "Gemini 3.7 Flash (batch)"],
       ["gemini-3.6-flash", "Gemini 3.6 Flash"],
-      ["gemini-3.6-flash:batch", "Gemini 3.6 Flash (batch)"],
       ["gemini-3.5-flash", "Gemini 3.5 Flash"],
+      ["gemini-2.5-flash", "Gemini 2.5 Flash"],
+      ["gemini-2.5-pro", "Gemini 2.5 Pro"],
       ["gemini-3.5-flash-lite", "Gemini 3.5 Flash Lite"],
     ],
     // <models:google:end>
@@ -525,8 +531,17 @@ export const HIVEY_ROUTER_SYSTEM =
 export function hiveyTierForLabel(modelId, label) {
   const T = hiveyTiers(modelId);
   const k = String(label || "").toLowerCase().replace(/[^a-z]/g, "");
-  if (k.startsWith("hard")) return T.reasoning;
-  if (k.startsWith("code")) return T.code;
+  // Every category the dispatcher is ASKED to produce must map to a tier. It used to answer with
+  // eight words while only three were read — "test", "math", "search" and "creative" all fell
+  // through to the chat model, so the per-role models configured for them were never once used
+  // and the router paid for a distinction that was then thrown away. Measured on a labelled set,
+  // the dispatcher gets these right 96% of the time; discarding that was pure waste.
+  if (k.startsWith("hard")) return T.reasoning || T.chat;
+  if (k.startsWith("test")) return T.test || T.code || T.chat;
+  if (k.startsWith("code")) return T.code || T.chat;
+  if (k.startsWith("math")) return T.math || T.reasoning || T.chat;
+  if (k.startsWith("search")) return T.search || T.chat;
+  if (k.startsWith("creative")) return T.creative || T.chat;
   if (k.startsWith("light") || k.startsWith("simple") || k.startsWith("trivial")) return T.light || T.chat;
   return T.chat; // normal + anything unrecognised
 }

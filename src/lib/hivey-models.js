@@ -46,20 +46,20 @@ export const HIVEY_MODELS = {
     "image": "google/gemini-3.1-flash-image"
   },
   "hivey/free": {
-    "router": "meta-llama/llama-3.3-70b-instruct:free",
-    "utility": "meta-llama/llama-3.3-70b-instruct:free",
-    "light": "meta-llama/llama-3.3-70b-instruct:free",
-    "chat": "qwen/qwen3-next-80b-a3b-instruct:free",
-    "code": "qwen/qwen3-coder:free",
-    "test": "qwen/qwen3-coder:free",
+    "router": "nvidia/nemotron-3-nano-30b-a3b:free",
+    "utility": "nvidia/nemotron-3-nano-30b-a3b:free",
+    "light": "nvidia/nemotron-3-nano-30b-a3b:free",
+    "chat": "nvidia/nemotron-3.5-lightning:free",
+    "code": "poolside/laguna-s-2.1:free",
+    "test": "poolside/laguna-s-2.1:free",
     "reasoning": "nvidia/nemotron-3-super-120b-a12b:free",
     "math": "nvidia/nemotron-3-super-120b-a12b:free",
-    "creative": "qwen/qwen3-next-80b-a3b-instruct:free",
-    "extract": "meta-llama/llama-3.3-70b-instruct:free",
+    "creative": "nvidia/nemotron-3.5-lightning:free",
+    "extract": "nvidia/nemotron-3-nano-30b-a3b:free",
     "vision": "nvidia/nemotron-nano-12b-v2-vl:free",
-    "verify": "meta-llama/llama-3.3-70b-instruct:free",
-    "agent": "qwen/qwen3-coder:free",
-    "search": "meta-llama/llama-3.3-70b-instruct:free",
+    "verify": "nvidia/nemotron-3-nano-30b-a3b:free",
+    "agent": "poolside/laguna-s-2.1:free",
+    "search": "nvidia/nemotron-3.5-lightning:free",
     "image": "google/gemini-3.1-flash-image"
   }
 };

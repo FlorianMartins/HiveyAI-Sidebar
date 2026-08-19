@@ -2,6 +2,7 @@
 // calling tools (or the step budget is exhausted).
 
 import { executeTool, TOOLS } from "./tools.js";
+import { createHarness, runTurn } from "./harness.js";
 
 // Build the system prompt. `mode` tailors the assistant for the active workspace
 // tab (chat / translate / improve / image), `agentMode` unlocks the browser
@@ -265,6 +266,13 @@ export function activeTools({ agentMode }) {
   return TOOLS;
 }
 
+// ── The agent turn, on the reasoning kernel ──────────────────────────────────────────────────
+//
+// The signature is unchanged on purpose — every call site in sidebar.js keeps working — but the
+// body no longer IS the loop. It assembles a harness: the provider becomes the `llm` seam, the
+// browser tools become the `tools` seam, and the behaviours that used to be hard-coded branches
+// (confirmations, the payment guard, the independent verifier) are mounted as plugins that can
+// be removed one by one. See src/lib/harness.js for why.
 export async function runConversation({
   provider,
   system,
@@ -280,47 +288,108 @@ export async function runConversation({
   signal,
   verify,
   maxSteps = 24,
+  // The tool executor is a seam, not a hard-wired import: the browser supplies the real one,
+  // and a test supplies a scripted one. Without this the reasoning loop could only be exercised
+  // inside a browser, which is precisely why it went untested for so long.
+  execute = executeTool,
 }) {
-  let verifyCount = 0;
-  for (let step = 0; step < maxSteps; step++) {
-    const turn = await provider.runTurn({ system, history, tools, onText, onThink, signal });
-    history.push(turn.message);
+  const ctx = createHarness();
 
-    if (!turn.toolCalls.length || turn.stopReason !== "tool_use") {
-      // INDEPENDENT VERIFIER: before accepting "done", a separate check confirms the task is
-      // really accomplished (kills false successes). On FAIL, hand the reason back and continue.
-      if (verify && verifyCount < 2) {
-        verifyCount++;
-        let v = null;
-        try { v = await verify(history, turn.text); } catch (_) { v = null; }
-        if (v && v.pass === false) {
-          history.push({ role: "user", content: "[Independent verifier] NOT done yet — " + (v.reason || "result not confirmed") + ". Take the missing action(s), VERIFY by observing the page, then finish." });
-          continue;
-        }
+  // The system prompt is model-visible, so it belongs in the log like everything else.
+  ctx.append("system/prompt", { text: system });
+  // Seed the log with the conversation so far. These messages are already in the provider's
+  // native wire format, so they are carried verbatim rather than re-encoded — a round trip
+  // through a normalised shape would lose Anthropic's thinking blocks and citation metadata.
+  for (const m of history || []) ctx.append("user/message", { native: m });
+
+  ctx.provide("llm", {
+    // Project the log back into the provider's native history. Tool results are emitted as ONE
+    // batch per step because that is what both wire formats expect for parallel calls.
+    project(e, i, all) {
+      if (e.type === "user/message") return e.native || { role: "user", content: e.text };
+      if (e.type === "assistant/message") return e.raw;
+      if (e.type === "tool/result") {
+        const first = all.find((x) => x.type === "tool/result" && x.step === e.step);
+        if (first !== e) return null; // already emitted with its batch
+        const batch = all.filter((x) => x.type === "tool/result" && x.step === e.step);
+        return [].concat(provider.formatToolResults(batch.map((r) => ({
+          id: r.id,
+          name: r.name,
+          // A screenshot travels as `_image` (a data: URL). It must stay OUT of the text dump —
+          // inlining it once cost a 400 for exceeding the context — and go to the vision path.
+          content: JSON.stringify(r.result && r.result._image ? { ...r.result, _image: "[screenshot attached]" } : r.result).slice(0, 8000),
+          image: (r.result && r.result._image) || null,
+          isError: !!r.isError,
+        }))));
       }
-      return { history, text: turn.text, done: true };
-    }
+      return null;
+    },
+    async runTurn(req) {
+      const sys = (ctx.events().filter((e) => e.type === "system/prompt").pop() || {}).text || "";
+      return provider.runTurn({ system: sys, history: req.messages, tools: req.tools, onText, onThink, signal: req.signal });
+    },
+  });
 
-    const results = [];
-    for (const call of turn.toolCalls) {
-      onToolStart && onToolStart(call);
-      const out = await executeTool(call.name, call.input, { confirmActions, confirmFn, guard });
-      onToolEnd && onToolEnd(call, out);
-      // A tool may return a screenshot via `_image` (a data: URL). Keep it OUT of the text dump
-      // and hand it to formatToolResults so vision-capable models actually SEE it.
-      const image = out && out._image ? out._image : null;
-      const text = out && out._image ? { ...out, _image: "[screenshot attached]" } : out;
-      results.push({
-        id: call.id,
-        name: call.name,
-        content: JSON.stringify(text).slice(0, 8000),
-        image,
-        isError: !!(out && out.error),
-      });
-    }
-
-    const formatted = provider.formatToolResults(results);
-    history.push(...[].concat(formatted));
+  if (tools && tools.length) {
+    ctx.provide("tools", {
+      list: () => tools,
+      execute: (name, input) => execute(name, input, { confirmActions, confirmFn, guard }),
+    });
   }
-  return { history, done: false, text: "(Agent step limit reached.)" };
+
+  // ── Plugins ────────────────────────────────────────────────────────────────────────────────
+  // Progress reporting. Registered as listeners rather than threaded through the loop, so the UI
+  // can be swapped or silenced without touching the reasoning.
+  if (onToolStart || onToolEnd) {
+    ctx.on("tools/pre-execute", async (d, next) => {
+      onToolStart && onToolStart(d.call);
+      return next(d);
+    }, 10);
+    ctx.on("tools/post-execute", async (v, next) => {
+      onToolEnd && onToolEnd(v.call, v.result);
+      return next(v);
+    }, 10);
+  }
+
+  // The independent verifier: a separate model pass that re-reads the world and judges whether
+  // the task is genuinely done, because a model claiming success is not evidence of success. It
+  // used to sit in the middle of the loop; it is now simply the last listener before the turn
+  // closes, and its objection reaches the model through the log like any other message.
+  if (verify) {
+    let used = 0;
+    ctx.on("agent/turn-stopping", async (closing) => {
+      if (used >= 2) return; // two objections is help; more is a loop
+      used++;
+      let v = null;
+      try {
+        v = await verify(ctx.deriveMessages(ctx.get("llm").project), closing.text);
+      } catch (_) { v = null; }
+      if (v && v.pass === false) {
+        closing.continue = true;
+        closing.reason =
+          "[Independent verifier] NOT done yet — " + (v.reason || "result not confirmed") +
+          ". Take the missing action(s), VERIFY by observing the page, then finish.";
+      }
+    }, 200);
+  }
+
+  const result = await runTurn(ctx, { maxSteps, signal });
+
+  // Callers keep a reference to the array they passed in and persist it afterwards, so the
+  // conversation is written back into that same array rather than returned as a new one.
+  if (Array.isArray(history)) {
+    const derived = ctx.deriveMessages(ctx.get("llm").project);
+    history.length = 0;
+    history.push(...derived);
+  }
+
+  return {
+    history,
+    text: result.text,
+    done: result.done,
+    steps: result.steps,
+    reason: result.reason,
+    // The full session log: an exact record of what happened, for transcripts and debugging.
+    events: ctx.events(),
+  };
 }
