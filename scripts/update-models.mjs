@@ -51,7 +51,10 @@ const PAID_VENDORS = ["anthropic", "openai", "google", "x-ai", "deepseek", "qwen
 const PER_VENDOR = 3; // newest flagships kept per vendor
 const FREE_CAP = 18;
 const PAID_CAP = 27;
-const IMAGE_CAP = 8;
+// No cap on image models: there are ~9 real ones in the whole catalogue, the picker is
+// searchable, and truncating a list that short only ever hides a model somebody wanted. The chat
+// lists stay capped because those run to hundreds of entries.
+const IMAGE_CAP = Infinity;
 
 // Small/cheap variants — kept, but never allowed to displace a vendor's flagship.
 // The token must start at a separator: without that, "mini" matches inside "ge-MINI-2.5-pro"
@@ -415,10 +418,28 @@ async function main() {
   });
 
   // ----- Curate the image list -----
-  const imgModels = all.filter(canImage);
-  // Prefer Google "nano banana" / gemini image models first, then the rest.
-  imgModels.sort((a, b) => rankBy(["gemini-2.5-flash-image", "gemini", "flux", "dall"], a.id)
-    - rankBy(["gemini-2.5-flash-image", "gemini", "flux", "dall"], b.id) || a.id.localeCompare(b.id));
+  // Same discipline as the paid chat list, which the image list had never been given:
+  //  * NOT_DEFAULT excluded — "gemini-3-pro-image" and "gemini-3-pro-image-preview" are the same
+  //    model, and with a cap of 8 each duplicate cost a real alternative its slot (three did).
+  //  * the family preference names FAMILIES, never versions. The old ranking pinned
+  //    "gemini-2.5-flash-image" to the top, so a 2.5-era model still headed the picker long after
+  //    3.1 shipped — the exact rot the paid list's comment warns about, in the one list that had
+  //    not been converted.
+  const IMAGE_FAMILIES = ["gemini", "gpt-image", "flux", "dall", "grok", "imagen"];
+  // "openrouter/auto*" reports an image output because it can ROUTE to an image model; it is a
+  // meta-model, not something to offer in a picker of image generators.
+  // Everything that can actually GENERATE an image, preview builds included — a preview is a real
+  // model somebody may want, and for image models it is often where the newest capability lands
+  // first. Two things are still excluded, because neither is an image generator you can pick:
+  // "openrouter/auto*" (a meta-router that merely CAN route to one) and dated snapshots, which are
+  // duplicates of the moving id under another name.
+  const imgModels = all.filter((m) =>
+    canImage(m) && !/^openrouter\//.test(m.id) && !/-20\d{6}\b|:batch\b|:online/.test(m.id));
+  imgModels.sort((a, b) =>
+    rankBy(IMAGE_FAMILIES, a.id) - rankBy(IMAGE_FAMILIES, b.id)
+    || (SMALL.test(a.id) ? 1 : 0) - (SMALL.test(b.id) ? 1 : 0)  // a "lite" must not head its own family
+    || (b.created || 0) - (a.created || 0)                       // then newest first
+    || a.id.localeCompare(b.id));
   const imagePairs = imgModels.slice(0, IMAGE_CAP).map((m) => [m.id, niceName(m)]);
 
   // ----- Splice into models.js -----
