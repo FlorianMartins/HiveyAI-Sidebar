@@ -336,6 +336,37 @@ bouton **Ouvrir** (plein écran) :
 - ` ```svg ` → graphique vectoriel rendu
 - ` ```mermaid ` → diagramme rendu automatiquement
 
+## Mémoire (opt-in, désactivée par défaut)
+
+Une mémoire **à étages**, consultée à la demande, conçue pour ne pas augmenter votre facture.
+Ce n'est pas de la compression de jetons : c'est un **déplacement de la dépense**.
+
+| | |
+|---|---|
+| tour ordinaire | **0 jeton** — aucune recherche, aucun modèle appelé, rien d'injecté |
+| consultation | ~30 jetons pour demander + ~200 jetons de synthèse sur votre modèle |
+| les ~3 000 jetons de candidats | lus par un modèle **local ou gratuit**, jamais par le vôtre |
+
+- **Trois étages** : un profil borné (~800 jetons, gelé pendant la session pour préserver le cache
+  du fournisseur), des schémas consolidés, et les épisodes bruts (gzip + vecteurs int8 — **99,4 %
+  de rappel mesuré**, 12,7 Mo pour 20 000 épisodes).
+- **Provenance obligatoire** : seuls `user` et `agent` sont stockables. Rien qui vienne d'une page,
+  d'un onglet ou d'un PDF n'est jamais écrit. Chaque espace de travail a une capacité déclarée
+  (`memory-policy.js`) ; le mode agent ne lit que ce que **vous** avez dit.
+- **Une mémoire n'est jamais une instruction** : elle est injectée après le préfixe stable, dans une
+  clôture dédiée, avec la mention explicite que ce que vous dites maintenant l'emporte.
+- **Vous voyez ce qui part** : ligne de statut nommant la **destination** et le nombre, panneau
+  dépliable montrant le texte transmis *tel quel*, sa provenance, sa date et son coût en jetons —
+  avec « pas cette fois » distinct de « supprimer définitivement ».
+- **Choix du modèle mémoire** dans les Réglages : serveur local, tier gratuit, ou n'importe quel
+  modèle de votre clé avec son **prix affiché**. Sans configuration : gratuit. Jamais un modèle
+  cher choisi à votre place.
+- **Banc d'admission** (`npm run memory:admission`) : 30 cas mesurant le rappel, la **fabrication**
+  (des distracteurs absents des sources) et la latence. Un modèle n'entre dans le pool que s'il
+  passe le seuil.
+
+Menaces, mitigations codées et **résiduels assumés** : [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md).
+
 ## Tests
 
 ```sh

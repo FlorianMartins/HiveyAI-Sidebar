@@ -2239,3 +2239,33 @@ body.theme-light .icon:hover { color: #475569; }
 .bv-dash, .bv-empty { color: var(--muted); }
 .bv-empty { text-align: center; padding: 18px 8px; }
 .bv-note { margin: 0; font-size: 10.5px; line-height: 1.45; }
+
+/* ── Memory status & panel ───────────────────────────────────────────────────
+   The status line is sequential rather than a spinner: two seconds that are
+   ANNOUNCED read very differently from two seconds merely endured. The panel is
+   collapsed by default — a long conversation accumulates dozens of them. */
+.mem-status { font-size: 11.5px; color: var(--muted); padding: 2px 0; }
+.mem-status[data-phase="sending"] { color: var(--accent); }
+
+.mem-panel { margin: 4px 0 6px; border: 1px solid var(--border-soft); border-radius: var(--radius-sm); background: color-mix(in srgb, var(--panel-2) 55%, transparent); }
+.mem-panel-head { display: flex; align-items: center; gap: 8px; padding: 5px 9px; font-size: 11px; cursor: pointer; list-style: none; }
+.mem-panel-head::-webkit-details-marker { display: none; }
+.mem-panel-title { font-weight: 600; }
+/* Destination and cost sit in the SUMMARY, visible without opening: the two facts a user needs
+   before deciding whether to look further are where it went and what it cost. */
+.mem-panel-dest { color: var(--muted); }
+.mem-panel-cost { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; }
+.mem-panel-body { padding: 2px 9px 9px; display: flex; flex-direction: column; gap: 7px; }
+
+.mem-row { border-top: 1px solid var(--border-soft); padding-top: 6px; }
+.mem-row-text { font-size: 11.5px; line-height: 1.45; }
+.mem-row-meta { display: flex; gap: 8px; margin-top: 3px; font-size: 10px; color: var(--muted); }
+.mem-row-acts { display: flex; gap: 6px; margin-top: 5px; }
+.mem-act { font: inherit; font-size: 10.5px; padding: 2px 7px; cursor: pointer; color: var(--text); background: var(--tool); border: 1px solid var(--border); border-radius: 999px; }
+.mem-act:hover { border-color: var(--accent); }
+.mem-act-del:hover { border-color: var(--error); color: var(--error); }
+/* Excluded, not deleted: struck through and dimmed, because the difference between "not this
+   time" and "never" has to be visible at a glance. */
+.mem-row-off .mem-row-text { opacity: .45; text-decoration: line-through; }
+.mem-row-gone { opacity: .35; }
+.mem-panel-note { margin: 6px 0 0; font-size: 10.5px; color: var(--muted); line-height: 1.4; }

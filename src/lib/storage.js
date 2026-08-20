@@ -42,6 +42,18 @@ const DEFAULTS = {
   // so this works out of the box. The user can still PIN a specific agent model in Settings
   // (e.g. a free tool-capable model) if their chosen chat model can't call tools.
   agentModel: "",
+  // ── Memory ──────────────────────────────────────────────────────────────────────────────
+  // OFF by default, and off means no search at all — not a search whose result is discarded.
+  // Opt-in is the only defensible default for a feature that writes down what someone says about
+  // themselves and then sends parts of it to a model.
+  memoryEnabled: false,
+  memoryModels: {},          // role → model id. Empty = the free route (see memory-models.js).
+  memoryReviewEvery: 4,      // user turns between background reviews
+  memoryRecallBudget: 300,   // max tokens of briefing injected per recall
+  memoryQuotaMb: 50,         // episodic store ceiling before salience-based eviction
+  memoryEncrypt: false,      // encrypt episode text at rest (asks for a passphrase)
+  memoryAgentName: "",       // what the status lines call the assistant; empty = neutral wording
+  memoryOffered: false,      // the one-time suggestion has been shown
   agentVerify: false, // independent verifier pass at the end of an agent task — OFF by default (opt-in in Settings).
   agentInteractive: false, // interaction mode: the agent proposes several options in chat (after page+web research) instead of acting on its own.
   agentPermission: "auto", // "auto" (default) = run actions automatically, BUT very sensitive ones

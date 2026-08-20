@@ -8,6 +8,7 @@ import { t, setLang, applyDom } from "../lib/i18n.js";
 import { SHORTCUT_ACTIONS, defaultShortcuts, comboFromEvent, isBindable } from "../lib/shortcuts.js";
 import { encryptSettings, decryptSettings } from "../lib/syncCrypto.js";
 import { setHTML } from "../lib/dom.js";
+import { memoryModelChoices, MEMORY_ROLES } from "../lib/memory-models.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -741,6 +742,7 @@ function updateQuickConnect(connectedNow) {
 const SECTION_ICONS = {
   "sec-quick": '<svg viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg>',
   "sec-providers": '<svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><path d="M6 6h.01"/><path d="M6 18h.01"/></svg>',
+  "sec-memory": '<svg viewBox="0 0 24 24"><path d="M12 3a4 4 0 0 0-4 4v1a3 3 0 0 0 0 6v1a4 4 0 0 0 8 0v-1a3 3 0 0 0 0-6V7a4 4 0 0 0-4-4z"/><path d="M9 9h6"/><path d="M9 15h6"/></svg>',
   "sec-agent": '<svg viewBox="0 0 24 24"><path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M9 13v2"/><path d="M15 13v2"/></svg>',
   "sec-web": '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/></svg>',
   "sec-image": '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>',
@@ -763,6 +765,7 @@ const SECTION_ORDER = [
   "sec-lang",        // language & writing
   "sec-behavior",    // everyday behaviour
   "sec-agent",       // per-feature configs…
+  "sec-memory",
   "sec-web",
   "sec-image",
   "sec-efficiency",
@@ -933,6 +936,7 @@ async function load() {
   buildQuickActions();                     // top-right one-tap toggles (neon / contour / sound / menu side)
   buildQuickNav();                         // jump pins to each section (follows the new order)
   addSectionIcons();                       // same line icons on each section title
+  wireMemory();
   modelLists = { ...(settings.modelLists || {}) };
   buildProviderFields();
   buildImageProvider();
@@ -989,6 +993,14 @@ async function load() {
   $("webDefault").checked = !!settings.webDefault;
   $("orFreeOnly").checked = settings.orFreeOnly !== false;
   $("agentPermission").value = settings.agentPermission || "manual";
+  if ($("memoryEnabled")) $("memoryEnabled").checked = settings.memoryEnabled === true;
+  if ($("memoryRecallBudget")) $("memoryRecallBudget").value = settings.memoryRecallBudget ?? 300;
+  if ($("memoryReviewEvery")) $("memoryReviewEvery").value = settings.memoryReviewEvery ?? 4;
+  if ($("memoryQuotaMb")) $("memoryQuotaMb").value = settings.memoryQuotaMb ?? 50;
+  if ($("memoryAgentName")) $("memoryAgentName").value = settings.memoryAgentName || "";
+  if ($("memoryEncrypt")) $("memoryEncrypt").checked = settings.memoryEncrypt === true;
+  fillMemoryModels();
+  renderMemoryAudit();
   if ($("agentVerify")) $("agentVerify").checked = settings.agentVerify === true;
   if ($("agentInteractive")) $("agentInteractive").checked = !!settings.agentInteractive;
   $("codeAppUrl").value = settings.codeAppUrl != null ? settings.codeAppUrl : "";
@@ -1086,6 +1098,13 @@ function collectSettings() {
     agentModel: $("agentModel").value,
     agentPermission: $("agentPermission").value,
     confirmActions: $("agentPermission").value !== "auto",
+    memoryEnabled: $("memoryEnabled") ? $("memoryEnabled").checked : false,
+    memoryModels: readMemoryModels(),
+    memoryRecallBudget: Number($("memoryRecallBudget") ? $("memoryRecallBudget").value : 300) || 300,
+    memoryReviewEvery: Number($("memoryReviewEvery") ? $("memoryReviewEvery").value : 4) || 4,
+    memoryQuotaMb: Number($("memoryQuotaMb") ? $("memoryQuotaMb").value : 50) || 50,
+    memoryAgentName: $("memoryAgentName") ? $("memoryAgentName").value.trim().slice(0, 24) : "",
+    memoryEncrypt: $("memoryEncrypt") ? $("memoryEncrypt").checked : false,
     agentVerify: $("agentVerify") ? $("agentVerify").checked : false,
     agentInteractive: $("agentInteractive") ? $("agentInteractive").checked : false,
     codeAppUrl: $("codeAppUrl").value.trim(),
@@ -1209,3 +1228,107 @@ browser.storage.onChanged.addListener((changes, area) => {
 });
 
 load();
+
+
+function wireMemory() {
+  if ($("memoryAuditFilter")) $("memoryAuditFilter").addEventListener("change", renderMemoryAudit);
+  if ($("memoryPurge")) {
+    $("memoryPurge").addEventListener("click", async () => {
+      // Irreversible and it says so. A confirm that understates what it destroys is worse than none.
+      if (!confirm(t("opt.mem.purgeConfirm"))) return;
+      try {
+        await browser.storage.local.remove(["memoryProfile", "memoryAudit"]);
+        indexedDB.deleteDatabase("hivey-memory");
+      } catch (_) {}
+      renderMemoryAudit();
+      alert(t("opt.mem.purged"));
+    });
+  }
+}
+
+// ── Memory ─────────────────────────────────────────────────────────────────────────────────────
+// The picker offers everything the user's key can reach, with prices visible. Suggestions, never
+// a cage: hiding the expensive options would be making the decision instead of informing it — and
+// the free routes are listed first because that is what keeps a lookup from costing anything.
+
+const MEM_SELECTS = {
+  "memory-recall": "memoryModelRecall",
+  "memory-extract": "memoryModelExtract",
+  "memory-consolidate": "memoryModelConsolidate",
+};
+
+let memCatalogue = [];
+
+async function fillMemoryModels() {
+  if (!$("memoryModelRecall")) return;
+  if (!memCatalogue.length) {
+    // Public endpoint: the list works before any key is entered, and simply stays short if it fails.
+    try {
+      const r = await fetch("https://openrouter.ai/api/v1/models");
+      if (r.ok) memCatalogue = ((await r.json()).data || []).filter((m) => m && m.id);
+    } catch (_) { memCatalogue = []; }
+  }
+  for (const [role, id] of Object.entries(MEM_SELECTS)) {
+    const sel = $(id);
+    if (!sel) continue;
+    const chosen = (settings.memoryModels || {})[role] || "";
+    sel.replaceChildren();
+    const auto = document.createElement("option");
+    auto.value = "";
+    auto.textContent = t("opt.mem.auto");
+    sel.append(auto);
+    for (const c of memoryModelChoices(role, { catalogue: memCatalogue })) {
+      const o = document.createElement("option");
+      o.value = c.id;
+      // Price in the label, always. They are BYOK: a picker that hides the cost is asking them to
+      // choose blind about their own money.
+      const price = c.price ? ` — $${c.price.toFixed(2)}/M` : ` — ${t("opt.mem.free")}`;
+      o.textContent = `${c.label}${price}`;
+      if (c.id === chosen) o.selected = true;
+      sel.append(o);
+    }
+  }
+}
+
+function readMemoryModels() {
+  const out = {};
+  for (const [role, id] of Object.entries(MEM_SELECTS)) {
+    const v = $(id) ? $(id).value : "";
+    if (v) out[role] = v;
+  }
+  return out;
+}
+
+async function renderMemoryAudit() {
+  const host = $("memoryAuditList");
+  if (!host) return;
+  let log = [];
+  try { log = (await browser.storage.local.get("memoryAudit")).memoryAudit || []; } catch (_) {}
+  const filter = $("memoryAuditFilter") ? $("memoryAuditFilter").value : "";
+  const rows = log.filter((e) => !filter || e.op === filter).slice(-200).reverse();
+  host.replaceChildren();
+  if (!rows.length) {
+    const p = document.createElement("p");
+    p.className = "muted";
+    p.textContent = t("opt.mem.auditEmpty");
+    host.append(p);
+    return;
+  }
+  for (const e of rows) {
+    const row = document.createElement("div");
+    row.className = "mem-audit-row";
+    const when = document.createElement("span");
+    when.className = "mem-when";
+    when.textContent = e.t ? new Date(e.t).toISOString().slice(0, 16).replace("T", " ") : "";
+    const op = document.createElement("span");
+    op.className = `mem-op mem-op-${e.op}`;
+    op.textContent = e.op || "";
+    const what = document.createElement("span");
+    what.className = "mem-what";
+    // An entry is either what was stored, or WHY something was refused. A refusal with no reason
+    // is indistinguishable from a bug, which is the whole point of keeping this log.
+    what.textContent = e.reason ? e.reason : [e.space, e.kind, e.id].filter(Boolean).join(" · ");
+    row.append(when, op, what);
+    host.append(row);
+  }
+}
