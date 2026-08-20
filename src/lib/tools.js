@@ -212,6 +212,25 @@ export const TOOLS = [
       required: ["x", "y"],
     },
   },
+  {
+    name: "recall",
+    description:
+      "Search the user's long-term memory for anything relevant to a question, and get back a short "
+      + "briefing plus the ids of the memories it came from. Use it when the user refers to something "
+      + "from an earlier conversation, or asks about their own preferences, decisions or history. "
+      + "The briefing is a summary: if it seems thin or you need exact wording, call get_memory with "
+      + "one of the returned ids.",
+    write: false,
+    parameters: { type: "object", properties: { query: { type: "string", description: "What to look for." } }, required: ["query"] },
+  },
+  {
+    name: "get_memory",
+    description:
+      "Fetch one memory verbatim by its id, as returned by recall. Use it when the briefing lost a "
+      + "detail you need exactly.",
+    write: false,
+    parameters: { type: "object", properties: { id: { type: "string" } }, required: ["id"] },
+  },
 ];
 
 // 🔒 Agent focus: while the agent works, it stays PINNED to the tab it started on, so the
@@ -402,6 +421,18 @@ export async function executeTool(name, input, opts = {}) {
 
   try {
     switch (name) {
+      // ── Memory ──────────────────────────────────────────────────────────────────────────────
+      // Both are read-only and both refuse clearly when memory is off, rather than returning an
+      // empty result that the model would read as "the user has no such memory".
+      case "recall": {
+        if (!opts.recall) return { error: "Memory is turned off in Settings." };
+        return await opts.recall(String((input && input.query) || ""));
+      }
+      case "get_memory": {
+        if (!opts.getMemory) return { error: "Memory is turned off in Settings." };
+        const e = await opts.getMemory(String((input && input.id) || ""));
+        return e || { error: "No memory with that id (it may have been deleted)." };
+      }
       case "read_page":
         return await sendToActiveTab({ type: "read_page" });
       case "read_selection":

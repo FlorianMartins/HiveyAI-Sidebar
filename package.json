@@ -1,6 +1,6 @@
 {
   "name": "hivey-ai-sidebar",
-  "version": "2.198.0",
+  "version": "2.199.0",
   "private": true,
   "type": "module",
   "description": "Hivey AI — multi-provider AI sidebar for Firefox & Chromium. This package.json exists for the DEV toolchain only (tests, model curation); the add-on itself ships no npm dependency and is not built from it.",

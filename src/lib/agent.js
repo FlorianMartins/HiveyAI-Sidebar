@@ -261,9 +261,18 @@ export function buildSystemPrompt({ agentMode, targetLang, responseLang, mode, b
 }
 
 // Tools to expose for the current mode.
-export function activeTools({ agentMode }) {
+const MEMORY_TOOLS = new Set(["recall", "get_memory"]);
+
+/**
+ * Which tools this turn may use.
+ *
+ * Memory tools are withheld when memory is off. Offering a tool that will refuse wastes a model
+ * call to learn something the settings already knew — and teaches the model that its tools are
+ * unreliable.
+ */
+export function activeTools({ agentMode, memoryEnabled = false }) {
   if (!agentMode) return [];
-  return TOOLS;
+  return memoryEnabled ? TOOLS : TOOLS.filter((t) => !MEMORY_TOOLS.has(t.name));
 }
 
 // ── The agent turn, on the reasoning kernel ──────────────────────────────────────────────────
