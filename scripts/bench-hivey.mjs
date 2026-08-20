@@ -20,6 +20,11 @@
 // Usage:
 //   OPENROUTER_API_KEY=sk-or-… node scripts/bench-hivey.mjs [--variants=free,hybrid,smart]
 //   OPENROUTER_API_KEY=sk-or-… node scripts/bench-hivey.mjs --candidates=modelA,modelB,…
+//   OPENROUTER_API_KEY=sk-or-… node scripts/bench-hivey.mjs --memory=modelA,modelB,…
+//
+// The third form is the MEMORY ADMISSION bench: 30 cases, each a set of memories, a question, the
+// information that must come back, and distractors that appear in no source. A model only joins
+// the memory pool if it passes — auto-curation with a canary, not a pinned model.
 //
 // The second form is the BAKE-OFF: it runs only the code tasks, against an arbitrary list of
 // models, and prints a pass rate per model. That is how the free code role was chosen — and the
@@ -27,6 +32,8 @@
 // it has to live here rather than in someone's shell history.
 
 import { runInNewContext } from "node:vm";
+import { MEMORY_CASES, poolFor, scoreAnswer } from "./memory-cases.mjs";
+import { RECALL_SYSTEM } from "../src/lib/recall.js";
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -214,7 +221,53 @@ async function benchCode(model, repeats = 1) {
   return { total: CODE_TASKS.length * repeats, pass, cost, ms, detail, kinds };
 }
 
+// ── Memory admission ─────────────────────────────────────────────────────────────────────────
+// Thresholds. Fabrication is the strict one on purpose: a model that recalls little is
+// disappointing, a model that invents is unusable — it sounds MORE helpful than the honest one and
+// is wrong in a way the main model cannot detect.
+const ADMIT_RECALL = 0.8;
+const ADMIT_FABRICATION = 0.1;
+
+async function benchMemory(model) {
+  let recalled = 0, fabricated = 0, errors = 0, ms = 0, cost = 0;
+  const failures = [];
+  for (const c of MEMORY_CASES) {
+    const memories = poolFor(c.pool).map((m, i) => `[${i + 1}] (fact) ${m}`).join("\n");
+    const r = await chat(model, [
+      { role: "system", content: RECALL_SYSTEM },
+      { role: "user", content: `QUESTION:\n${c.q}\n\nMEMORIES:\n${memories}` },
+    ], { maxTokens: 1200 });
+    ms += r.ms; cost += r.cost || 0;
+    if (!r.ok) { errors++; continue; }
+    const s = scoreAnswer(r.text, c);
+    if (s.recalled) recalled++; else failures.push(`miss: ${c.q}`);
+    if (s.fabricated) { fabricated++; failures.push(`INVENTED: ${c.q}`); }
+  }
+  const answered = MEMORY_CASES.length - errors;
+  return {
+    model, answered, errors,
+    recall: answered ? recalled / answered : 0,
+    fabrication: answered ? fabricated / answered : 1,
+    ms: answered ? Math.round(ms / answered) : 0,
+    cost, failures,
+  };
+}
+
 // ── Run ──────────────────────────────────────────────────────────────────────────────────────
+const memoryArg = (process.argv.find((a) => a.startsWith("--memory=")) || "").split("=")[1];
+if (memoryArg) {
+  const models = memoryArg.split(",").map((m) => m.trim()).filter(Boolean);
+  console.log(`Memory admission: ${MEMORY_CASES.length} cases, ${models.length} model(s).`);
+  console.log(`Admitted at recall >= ${ADMIT_RECALL} and fabrication <= ${ADMIT_FABRICATION}.\n`);
+  for (const model of models) {
+    const r = await benchMemory(model);
+    const admitted = r.recall >= ADMIT_RECALL && r.fabrication <= ADMIT_FABRICATION;
+    console.log(`${admitted ? "ADMIT " : "REJECT"}  recall ${(r.recall * 100).toFixed(0).padStart(3)}%  invented ${(r.fabrication * 100).toFixed(0).padStart(3)}%  ${String(r.ms).padStart(5)}ms  $${r.cost.toFixed(4)}  ${model}${r.errors ? `  (${r.errors} errors)` : ""}`);
+    r.failures.slice(0, 6).forEach((f) => console.log(`         ${f}`));
+  }
+  process.exit(0);
+}
+
 const candidateArg = (process.argv.find((a) => a.startsWith("--candidates=")) || "").split("=")[1];
 if (candidateArg) {
   const models = candidateArg.split(",").map((m) => m.trim()).filter(Boolean);
