@@ -10,7 +10,7 @@ de Firefox ne permet pas. Un équivalent libre n'existait pas.
 **Aucun backend, aucune télémétrie, aucune clé fournie.** Tout (clés, conversations,
 base de connaissance, embeddings) reste dans votre navigateur.
 
-## 10 espaces de travail
+## 11 espaces de travail
 
 Une **barre latérale d'activité** à gauche (convention « activity bar » façon
 VS Code / Slack — scale mieux qu'une rangée d'onglets) donne accès à :
@@ -26,6 +26,7 @@ VS Code / Slack — scale mieux qu'une rangée d'onglets) donne accès à :
 | 📄 **PDF** | Lecture d'un document et questions dessus |
 | 🛡 **Sécurité** | Assistant **cybersécurité défensive** — analyse de capture `.pcap` résumée localement |
 | 🧠 **Wisebase** | **Base de connaissance locale + RAG**, embeddings calculés dans le navigateur |
+| 📊 **Benchmark** | Classements **publiés** (avec leur fraîcheur réelle) + **test en direct** sur votre clé, pour les modèles qu'aucun classement n'a encore atteints |
 | `</>` **Code** | Atelier d'app IA complet (aperçu live, terminal, QR Expo Go) |
 
 ## Fonctionnalités
@@ -207,6 +208,9 @@ src/
     markdown.js          Rendu Markdown + artifacts interactifs (HTML/JS, React, SVG, Mermaid)
     hivey-models.js      Moteur Hivey : paliers par capacité, auto-curation du catalogue
     benchmarks.js        Index de qualité curé par famille de modèle et par catégorie
+    benchmark-web.js     GÉNÉRÉ : résultats publiés (Aider, Vectara) + fraîcheur de chaque source
+    benchmarkView.js     Espace Benchmark : tableau publié vs mesuré, test en direct
+    livebench.js         Épreuves notées par programme (raisonnement, consigne, JSON, outils)
     wisebase.js          Base de connaissance locale + RAG (collections, chunks, IndexedDB)
     embeddings.js        Embeddings calculés dans le navigateur (transformers.js / WASM)
     skills.js            Skills experts + objectifs, exposés en slash-commands
@@ -219,7 +223,9 @@ src/
     i18n.js / i18n-langs.js  Traductions UI (en, fr, es, de, it, pt)
     dom.js               Point d'insertion HTML unique (audit sécurité)
 tests/                   Suite node:test — `npm test`, aucune dépendance
-scripts/bench-hivey.mjs  Banc de qualité Hivey (routage + code exécuté)
+scripts/bench-hivey.mjs  Banc de qualité Hivey (routage + code exécuté) ; `--candidates=` = comparatif
+scripts/auto-tier.mjs    Réaffectation des rôles au meilleur modèle MESURÉ (timer hebdomadaire)
+scripts/update-benchmarks.mjs  Collecte des classements publiés (timer quotidien)
 ```
 
 ### Détails techniques

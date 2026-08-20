@@ -46,6 +46,7 @@
         <button class="railtab" data-mode="pdf" data-i18n-title="rail.pdfTitle" title="Read a PDF and ask questions"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg></button>
         <button class="railtab" data-mode="security" data-i18n-title="rail.securityTitle" title="Defensive security assistant"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></button>
         <button class="railtab" data-mode="wisebase" data-i18n-title="rail.wisebaseTitle" title="Wisebase — your local knowledge base (RAG)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h7"/><path d="M9 11h5"/></svg></button>
+        <button class="railtab" data-mode="benchmark" data-i18n-title="rail.benchmarkTitle" title="Benchmark — published leaderboards + a live test on your own key"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6" rx="1"/><rect x="12" y="8" width="3" height="10" rx="1"/><rect x="17" y="4" width="3" height="14" rx="1"/></svg></button>
         <button class="railtab" data-mode="code" data-i18n-title="rail.codeTitle" title="AI code workshop (preview, terminal, Expo Go…)"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><rect x="4.25" y="2.25" width="15.5" height="3.5" rx="1.75"/><rect x="2" y="7.5" width="20" height="3.5" rx="1.75"/><rect x="3" y="12.75" width="18" height="3.5" rx="1.75"/><rect x="5.75" y="18" width="12.5" height="3.5" rx="1.75"/></svg></button>
         <button class="railtab rail-add" id="railAddBtn" type="button" data-i18n-title="rail.add" title="Show hidden tabs"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
       </nav>
@@ -141,6 +142,36 @@
          opens in a dedicated browser tab where live preview, the integrated
          terminal and Expo Go all keep working. The sidebar hands it its OpenRouter
          key so both share one and the same service. -->
+    <section id="benchmarkView" class="benchview hidden">
+      <header class="bv-head">
+        <h2 class="bv-title" data-i18n="bench.title">Benchmark</h2>
+        <p class="bv-sub muted" data-i18n="bench.sub">What the web publishes about a model, and what this browser measured. Kept apart on purpose — they answer different questions.</p>
+        <div class="bv-sources" id="bvSources"></div>
+      </header>
+      <div class="bv-bar">
+        <input id="bvSearch" class="bv-search" type="search" data-i18n-ph="bench.searchPh" placeholder="Search a model…" />
+        <label class="bv-check"><input type="checkbox" id="bvOnlyGap" /><span data-i18n="bench.onlyUncovered">Only models no leaderboard covers</span></label>
+        <button id="bvRun" class="btn-grad bv-run"><span data-i18n="bench.run">Run the live test</span></button>
+        <button id="bvStop" class="bv-stop hidden" data-i18n="bench.stop">Stop</button>
+      </div>
+      <div id="bvProgress" class="bv-progress hidden"></div>
+      <div class="bv-tablewrap">
+        <table class="bv-table">
+          <thead>
+            <tr>
+              <th data-sort="name" data-i18n="bench.colModel">Model</th>
+              <th data-sort="measured" class="num" data-i18n="bench.colMeasured">Measured here</th>
+              <th data-sort="aider" class="num" data-i18n="bench.colAider">Aider code %</th>
+              <th data-sort="halluc" class="num" data-i18n="bench.colHalluc">Hallucination %</th>
+              <th data-sort="price" class="num" data-i18n="bench.colPrice">$/M out</th>
+              <th data-sort="ctx" class="num" data-i18n="bench.colCtx">Context</th>
+            </tr>
+          </thead>
+          <tbody id="bvBody"></tbody>
+        </table>
+      </div>
+      <p class="bv-note muted" data-i18n="bench.note">The live test grades reasoning, instruction-following, strict JSON and tool use. It does not run generated code: the add-on forbids eval on purpose, and sending your model output to a third-party sandbox to earn a number is not a trade worth making. Executed code benchmarks live in scripts/bench-hivey.mjs.</p>
+    </section>
     <section id="codeView" class="codeview hidden">
       <div class="code-launch">
         <div class="cl-logo"><svg class="tab-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg></div>

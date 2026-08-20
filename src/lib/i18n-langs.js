@@ -3,6 +3,33 @@
 // back to English. Placeholders {name}, HTML tags and emojis are kept verbatim.
 
 export const ES = {
+  // ── Benchmark workspace ──
+  "rail.benchmarkTitle": "Benchmark — clasificaciones publicadas + prueba en vivo con tu clave",
+  "bench.title": "Benchmark",
+  "bench.sub": "Lo que la web publica sobre un modelo, y lo que este navegador midió. Separados a propósito: responden a preguntas distintas, en fechas distintas.",
+  "bench.searchPh": "Buscar un modelo…",
+  "bench.onlyUncovered": "Solo los modelos que ninguna clasificación cubre",
+  "bench.run": "Lanzar la prueba en vivo",
+  "bench.stop": "Detener",
+  "bench.colModel": "Modelo",
+  "bench.colMeasured": "Medido aquí",
+  "bench.colAider": "Aider código %",
+  "bench.colHalluc": "Alucinación %",
+  "bench.colPrice": "$/M salida",
+  "bench.colCtx": "Contexto",
+  "bench.note": "La prueba en vivo evalúa el razonamiento, el seguimiento de instrucciones, el JSON estricto y el uso de herramientas. No ejecuta el código generado: la extensión prohíbe eval a propósito, y enviar la salida de tu modelo a un entorno aislado de terceros para ganar una cifra no es un intercambio que valga la pena. Los benchmarks de código ejecutado están en scripts/bench-hivey.mjs.",
+  "bench.covers": "cubre hasta el {date} · {months} meses de retraso",
+  "bench.matched": "{n} de {total} filas asociadas a un modelo seleccionable",
+  "bench.fetched": "recopilado el {date}",
+  "bench.none": "Ningún modelo coincide con este filtro.",
+  "bench.gapTag": "sin puntuación publicada",
+  "bench.thin": "medición parcial",
+  "bench.publishedAs": "publicado como «{as}»",
+  "bench.progress": "Midiendo {model} — {done}/{of} pruebas ({i} de {n} modelos)",
+  "bench.done": "{n} modelo(s) medido(s) · coste {cost} $",
+  "bench.stopping": "Deteniendo tras la prueba en curso…",
+  "bench.allMeasured": "Todo lo que está en pantalla ya se ha medido. Quita un filtro para alcanzar más modelos.",
+  "bench.noKey": "Añade una clave de OpenRouter en los Ajustes para lanzar la prueba en vivo.",
   // ── Added 2026-08-19 ── These keys existed in EN/FR but not here, so half the interface
   // silently fell back to English for anyone running the extension in this language.
   "agent.act.autoplay": "Activando la reproducción automática",
@@ -741,6 +768,33 @@ export const ES = {
 };
 
 export const DE = {
+  // ── Benchmark workspace ──
+  "rail.benchmarkTitle": "Benchmark — veröffentlichte Ranglisten + Live-Test mit deinem Schlüssel",
+  "bench.title": "Benchmark",
+  "bench.sub": "Was das Web über ein Modell veröffentlicht, und was dieser Browser gemessen hat. Bewusst getrennt: sie beantworten verschiedene Fragen, zu verschiedenen Zeitpunkten.",
+  "bench.searchPh": "Modell suchen…",
+  "bench.onlyUncovered": "Nur Modelle, die keine Rangliste abdeckt",
+  "bench.run": "Live-Test starten",
+  "bench.stop": "Stoppen",
+  "bench.colModel": "Modell",
+  "bench.colMeasured": "Hier gemessen",
+  "bench.colAider": "Aider Code %",
+  "bench.colHalluc": "Halluzination %",
+  "bench.colPrice": "$/M Ausgabe",
+  "bench.colCtx": "Kontext",
+  "bench.note": "Der Live-Test bewertet Schlussfolgern, das Befolgen von Anweisungen, striktes JSON und den Umgang mit Werkzeugen. Er führt erzeugten Code NICHT aus: die Erweiterung verbietet eval mit Absicht, und die Ausgabe deines Modells an eine fremde Sandbox zu schicken, um eine Zahl zu bekommen, ist kein guter Tausch. Benchmarks mit ausgeführtem Code stehen in scripts/bench-hivey.mjs.",
+  "bench.covers": "deckt bis {date} ab · {months} Monate alt",
+  "bench.matched": "{n} von {total} Zeilen einem wählbaren Modell zugeordnet",
+  "bench.fetched": "erhoben am {date}",
+  "bench.none": "Kein Modell passt zu diesem Filter.",
+  "bench.gapTag": "kein veröffentlichter Wert",
+  "bench.thin": "unvollständige Messung",
+  "bench.publishedAs": "veröffentlicht als „{as}“",
+  "bench.progress": "Messe {model} — {done}/{of} Proben ({i} von {n} Modellen)",
+  "bench.done": "{n} Modell(e) gemessen · Kosten {cost} $",
+  "bench.stopping": "Stoppt nach der laufenden Probe…",
+  "bench.allMeasured": "Alles auf dem Bildschirm wurde bereits gemessen. Entferne einen Filter, um mehr Modelle zu erreichen.",
+  "bench.noKey": "Trage in den Einstellungen einen OpenRouter-Schlüssel ein, um den Live-Test zu starten.",
   // ── Added 2026-08-19 ── These keys existed in EN/FR but not here, so half the interface
   // silently fell back to English for anyone running the extension in this language.
   "agent.act.autoplay": "Autoplay wird aktiviert",
@@ -1479,6 +1533,33 @@ export const DE = {
 };
 
 export const IT = {
+  // ── Benchmark workspace ──
+  "rail.benchmarkTitle": "Benchmark — classifiche pubblicate + test dal vivo con la tua chiave",
+  "bench.title": "Benchmark",
+  "bench.sub": "Ciò che il web pubblica su un modello, e ciò che questo browser ha misurato. Tenuti separati di proposito: rispondono a domande diverse, in date diverse.",
+  "bench.searchPh": "Cerca un modello…",
+  "bench.onlyUncovered": "Solo i modelli che nessuna classifica copre",
+  "bench.run": "Avvia il test dal vivo",
+  "bench.stop": "Ferma",
+  "bench.colModel": "Modello",
+  "bench.colMeasured": "Misurato qui",
+  "bench.colAider": "Aider codice %",
+  "bench.colHalluc": "Allucinazione %",
+  "bench.colPrice": "$/M uscita",
+  "bench.colCtx": "Contesto",
+  "bench.note": "Il test dal vivo valuta il ragionamento, il rispetto delle istruzioni, il JSON rigoroso e l'uso degli strumenti. Non esegue il codice generato: l'estensione vieta eval di proposito, e mandare l'output del tuo modello a una sandbox di terzi per ottenere un numero non è uno scambio che valga la pena. I benchmark con codice eseguito sono in scripts/bench-hivey.mjs.",
+  "bench.covers": "copre fino al {date} · {months} mesi di ritardo",
+  "bench.matched": "{n} righe su {total} associate a un modello selezionabile",
+  "bench.fetched": "raccolto il {date}",
+  "bench.none": "Nessun modello corrisponde a questo filtro.",
+  "bench.gapTag": "nessun punteggio pubblicato",
+  "bench.thin": "misurazione parziale",
+  "bench.publishedAs": "pubblicato come «{as}»",
+  "bench.progress": "Misurazione di {model} — {done}/{of} prove ({i} su {n} modelli)",
+  "bench.done": "{n} modello/i misurato/i · costo {cost} $",
+  "bench.stopping": "Arresto dopo la prova in corso…",
+  "bench.allMeasured": "Tutto ciò che è a schermo è già stato misurato. Togli un filtro per raggiungere altri modelli.",
+  "bench.noKey": "Aggiungi una chiave OpenRouter nelle Impostazioni per avviare il test dal vivo.",
   // ── Added 2026-08-19 ── These keys existed in EN/FR but not here, so half the interface
   // silently fell back to English for anyone running the extension in this language.
   "agent.act.autoplay": "Attivazione della riproduzione automatica",
@@ -2217,6 +2298,33 @@ export const IT = {
 };
 
 export const PT = {
+  // ── Benchmark workspace ──
+  "rail.benchmarkTitle": "Benchmark — classificações publicadas + teste ao vivo com a sua chave",
+  "bench.title": "Benchmark",
+  "bench.sub": "O que a web publica sobre um modelo, e o que este navegador mediu. Mantidos separados de propósito: respondem a perguntas diferentes, em datas diferentes.",
+  "bench.searchPh": "Procurar um modelo…",
+  "bench.onlyUncovered": "Apenas os modelos que nenhuma classificação cobre",
+  "bench.run": "Iniciar o teste ao vivo",
+  "bench.stop": "Parar",
+  "bench.colModel": "Modelo",
+  "bench.colMeasured": "Medido aqui",
+  "bench.colAider": "Aider código %",
+  "bench.colHalluc": "Alucinação %",
+  "bench.colPrice": "$/M saída",
+  "bench.colCtx": "Contexto",
+  "bench.note": "O teste ao vivo avalia o raciocínio, o cumprimento de instruções, o JSON estrito e o uso de ferramentas. Não executa o código gerado: a extensão proíbe eval de propósito, e enviar a saída do seu modelo para uma sandbox de terceiros só para obter um número não é uma troca que valha a pena. Os benchmarks com código executado estão em scripts/bench-hivey.mjs.",
+  "bench.covers": "cobre até {date} · {months} meses de atraso",
+  "bench.matched": "{n} de {total} linhas associadas a um modelo selecionável",
+  "bench.fetched": "recolhido em {date}",
+  "bench.none": "Nenhum modelo corresponde a este filtro.",
+  "bench.gapTag": "sem pontuação publicada",
+  "bench.thin": "medição parcial",
+  "bench.publishedAs": "publicado como «{as}»",
+  "bench.progress": "A medir {model} — {done}/{of} provas ({i} de {n} modelos)",
+  "bench.done": "{n} modelo(s) medido(s) · custo {cost} $",
+  "bench.stopping": "A parar após a prova em curso…",
+  "bench.allMeasured": "Tudo o que está no ecrã já foi medido. Retire um filtro para alcançar mais modelos.",
+  "bench.noKey": "Adicione uma chave OpenRouter nas Definições para iniciar o teste ao vivo.",
   // ── Added 2026-08-19 ── These keys existed in EN/FR but not here, so half the interface
   // silently fell back to English for anyone running the extension in this language.
   "agent.act.autoplay": "A ativar a reprodução automática",

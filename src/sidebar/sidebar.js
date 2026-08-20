@@ -13,6 +13,7 @@ import { makeProvider, listModels, listOpenRouterRich, generateImage, transcribe
 import { buildSystemPrompt, activeTools, runConversation } from "../lib/agent.js";
 import { SKILLS, GOAL_SYSTEM, ENHANCE_SYSTEM, skillById } from "../lib/skills.js";
 import { executeTool, setAgentTab, clearAgentTab, getAgentTab } from "../lib/tools.js";
+import { initBenchmarkView } from "../lib/benchmarkView.js";
 import { configureMarkdown, renderMarkdown, enhanceArtifacts, setArtifactsLive, setJudge0Config } from "../lib/markdown.js";
 import { PROVIDERS, PROVIDER_ORDER, modelFor, keyFor, connectedProviders, defaultSearchModel, IMAGE_SIZES, WRITING_PRESETS, WRITING_TONES, WRITING_LENGTHS, NO_LENGTH_PRESETS, HIVEY_AUTO, HIVEY_VARIANTS, hiveyTiers, hiveyTierFor, hiveyHeuristicKey, hiveyLabelKey, hiveyRouterModel, HIVEY_ROUTER_SYSTEM, isHivey } from "../lib/models.js";
 import { categoryForMode, categoryLabel, modelScore } from "../lib/benchmarks.js";
@@ -33,6 +34,14 @@ const $ = (id) => document.getElementById(id);
 // "open in a tab" button appends ?tab=1; we hide that button when already in a tab.
 const IS_TAB = new URLSearchParams(location.search).get("tab") === "1";
 const els = {
+  benchmarkView: $("benchmarkView"),
+  bvSources: $("bvSources"),
+  bvSearch: $("bvSearch"),
+  bvOnlyGap: $("bvOnlyGap"),
+  bvRun: $("bvRun"),
+  bvStop: $("bvStop"),
+  bvProgress: $("bvProgress"),
+  bvBody: $("bvBody"),
   modelInput: $("modelInput"),
   modelMenu: $("modelMenu"),
   modelWrap: $("modelWrap"),
@@ -2459,11 +2468,51 @@ async function captureRegion() {
   els.input.focus();
 }
 
+// ----- Benchmark workspace --------------------------------------------------
+// Built lazily on first open: nobody should pay a table render, a catalogue fetch and a storage
+// read for a workspace they never visit.
+let _benchView = null;
+function benchmarkView() {
+  if (_benchView) return _benchView;
+  _benchView = initBenchmarkView({
+    els,
+    t,
+    load: async (k) => { try { return (await browser.storage.local.get(k))[k]; } catch (_) { return null; } },
+    save: async (k, v) => { try { await browser.storage.local.set({ [k]: v }); } catch (_) {} },
+    // Public endpoint: the table shows prices and context sizes before any key is entered.
+    fetchCatalogue: async () => {
+      const r = await fetch("https://openrouter.ai/api/v1/models");
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return ((await r.json()).data || []).filter((m) => m && m.id && !/^~/.test(m.id));
+    },
+    // The live test is BYOK like everything else here, and it spends the user's money, so it
+    // refuses rather than falling back to some other provider they did not choose.
+    callModel: async ({ model, messages, tools }) => {
+      const key = keyFor("openrouter", settings);
+      if (!key) return { error: t("bench.noKey") };
+      try {
+        const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ model, messages, tools, max_tokens: 4000, temperature: 0, usage: { include: true } }),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) return { error: (j.error && j.error.message) || `HTTP ${r.status}` };
+        const m = (j.choices && j.choices[0] && j.choices[0].message) || {};
+        return { text: (m.content || "").trim(), toolCalls: m.tool_calls || [], cost: (j.usage && j.usage.cost) || 0 };
+      } catch (e) {
+        return { error: e && e.message ? e.message : String(e) };
+      }
+    },
+  });
+  return _benchView;
+}
+
 // ----- Workspace modes ------------------------------------------------------
 // ── Rail layout: user-defined ORDER (drag to reorder) + per-tab VISIBILITY (Settings). The
 // rail markup is static, so we reorder/hide the buttons from settings at runtime. `web` and
 // `code` can be hidden like any other; if the active tab gets hidden we fall back to Chat.
-const RAIL_MODES = ["chat", "web", "agent", "translate", "improve", "image", "pdf", "security", "wisebase", "code"];
+const RAIL_MODES = ["chat", "web", "agent", "translate", "improve", "image", "pdf", "security", "wisebase", "benchmark", "code"];
 function railTabEls() { return Array.from(els.rail.querySelectorAll(".railtab:not(.rail-add)")); }
 function applyRailLayout() {
   if (!els.rail) return;
@@ -2668,6 +2717,9 @@ function setMode(next) {
   renderSecRecipes(next);
   if (els.secHeadersBtn) els.secHeadersBtn.classList.toggle("hidden", next !== "security");
   els.codeView.classList.toggle("hidden", next !== "code");
+  els.benchmarkView.classList.toggle("hidden", next !== "benchmark");
+  document.body.classList.toggle("mode-benchmark", next === "benchmark");
+  if (next === "benchmark") benchmarkView().open();
   els.input.placeholder = placeholderFor(next);
   applyModeModel(next); // each tab keeps its own model — restore it before the picker refreshes
   refreshModelUI(); // Image tab lists image models; others list chat models.

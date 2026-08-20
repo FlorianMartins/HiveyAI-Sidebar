@@ -2173,3 +2173,69 @@ body.theme-light .cmp-combo-input:focus {
 /* 3 — header utility icons in neutral grey; brand + gradient buttons keep the accent. */
 body.theme-light .icon { color: #64748b; }
 body.theme-light .icon:hover { color: #475569; }
+
+/* ── Benchmark workspace ─────────────────────────────────────────────────────
+   Two kinds of number sit in this table and they must never be mistaken for one
+   another: what a public leaderboard measured (possibly months ago) and what this
+   browser measured (today, on fewer tasks). The measured column is the only one
+   that gets the accent colour, and a stale source is dimmed rather than hidden —
+   a number whose age you cannot see invites a decision it cannot support. */
+.benchview { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; padding: 14px 12px 10px; gap: 10px; }
+.bv-head { display: flex; flex-direction: column; gap: 6px; }
+.bv-title { margin: 0; font-size: 17px; font-weight: 650; }
+.bv-sub { margin: 0; font-size: 12px; line-height: 1.45; }
+
+.bv-sources { display: flex; flex-direction: column; gap: 6px; margin-top: 2px; }
+.bv-source {
+  display: grid; grid-template-columns: auto 1fr; gap: 2px 8px;
+  padding: 8px 10px; border: 1px solid var(--border-soft); border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--panel-2) 60%, transparent);
+}
+.bv-src-name { grid-column: 1; font-size: 12px; font-weight: 600; color: var(--text); text-decoration: none; }
+.bv-src-name:hover { color: var(--accent); }
+.bv-src-fresh { grid-column: 2; justify-self: end; font-size: 11px; color: var(--muted); }
+.bv-src-about { grid-column: 1 / -1; font-size: 11px; color: var(--muted); line-height: 1.4; }
+.bv-src-match { grid-column: 1 / -1; font-size: 10.5px; color: var(--muted); opacity: .8; }
+/* A source that covers nothing recent is still useful — it is just not evidence about the
+   models you can pick today, and the eye should register that before the numbers do. */
+.bv-source-stale { border-style: dashed; }
+.bv-source-stale .bv-src-fresh { color: var(--error); opacity: .85; }
+.bv-fetched { font-size: 10.5px; color: var(--muted); opacity: .75; }
+
+.bv-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bv-search {
+  flex: 1; min-width: 120px; padding: 7px 10px; font: inherit; font-size: 12px;
+  color: var(--text); background: var(--panel-2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+}
+.bv-search:focus { outline: none; border-color: var(--accent); }
+.bv-check { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--muted); cursor: pointer; }
+.bv-run { padding: 7px 12px; font-size: 12px; }
+.bv-stop {
+  padding: 7px 12px; font-size: 12px; color: var(--text); cursor: pointer;
+  background: var(--tool); border: 1px solid var(--border); border-radius: var(--radius-sm);
+}
+.bv-progress { font-size: 11.5px; color: var(--muted); padding: 2px 1px; }
+
+.bv-tablewrap { flex: 1; min-height: 0; overflow: auto; border: 1px solid var(--border-soft); border-radius: var(--radius-sm); }
+.bv-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.bv-table th {
+  position: sticky; top: 0; z-index: 1; text-align: left; font-weight: 600; white-space: nowrap;
+  padding: 7px 8px; color: var(--muted); background: var(--panel); cursor: pointer;
+  border-bottom: 1px solid var(--border);
+}
+.bv-table th:hover { color: var(--text); }
+.bv-table th.num, .bv-table td.num { text-align: right; }
+.bv-table td { padding: 6px 8px; border-bottom: 1px solid var(--border-soft); vertical-align: top; }
+.bv-table tr:last-child td { border-bottom: 0; }
+.bv-table tbody tr:hover { background: color-mix(in srgb, var(--accent) 7%, transparent); }
+.bv-model { display: flex; flex-direction: column; gap: 2px; }
+.bv-id { word-break: break-word; }
+.bv-gap {
+  align-self: flex-start; font-size: 9.5px; letter-spacing: .02em; padding: 1px 5px; border-radius: 999px;
+  color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.bv-score { font-weight: 650; color: var(--accent); }
+.bv-thin { display: block; font-size: 9.5px; color: var(--muted); }
+.bv-dash, .bv-empty { color: var(--muted); }
+.bv-empty { text-align: center; padding: 18px 8px; }
+.bv-note { margin: 0; font-size: 10.5px; line-height: 1.45; }
