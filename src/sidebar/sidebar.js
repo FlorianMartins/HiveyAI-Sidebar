@@ -14,6 +14,8 @@ import { buildSystemPrompt, activeTools, runConversation } from "../lib/agent.js
 import { SKILLS, GOAL_SYSTEM, ENHANCE_SYSTEM, skillById } from "../lib/skills.js";
 import { executeTool, setAgentTab, clearAgentTab, getAgentTab } from "../lib/tools.js";
 import { initBenchmarkView } from "../lib/benchmarkView.js";
+import { buildTurn } from "../lib/untrusted.js";
+import { isWebChatUrl } from "../lib/memory-policy.js";
 import { configureMarkdown, renderMarkdown, enhanceArtifacts, setArtifactsLive, setJudge0Config } from "../lib/markdown.js";
 import { PROVIDERS, PROVIDER_ORDER, modelFor, keyFor, connectedProviders, defaultSearchModel, IMAGE_SIZES, WRITING_PRESETS, WRITING_TONES, WRITING_LENGTHS, NO_LENGTH_PRESETS, HIVEY_AUTO, HIVEY_VARIANTS, hiveyTiers, hiveyTierFor, hiveyHeuristicKey, hiveyLabelKey, hiveyRouterModel, HIVEY_ROUTER_SYSTEM, isHivey } from "../lib/models.js";
 import { categoryForMode, categoryLabel, modelScore } from "../lib/benchmarks.js";
@@ -7574,7 +7576,7 @@ async function compareRun(list, btn) {
 }
 
 // ----- Core send ------------------------------------------------------------
-async function sendToModel(displayText, modelContent, { forceWeb = false, runMode = "chat", attImgs = [], attMeta = [], reuseUserEl = null, versioned = false } = {}) {
+async function sendToModel(displayText, modelContent, { forceWeb = false, runMode = "chat", attImgs = [], attMeta = [], reuseUserEl = null, versioned = false, untrusted = [] } = {}) {
   if (busy) return;
   const sel = currentSelection();
   if (currentKeyMissing(sel.providerId)) {
@@ -7737,13 +7739,19 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   // With image attachments, switch the user turn to the provider's multimodal
   // content array (vision). Text-file attachments are already folded into modelContent.
   const userContent = buildUserContent(modelContent, attImgs, turnSel.providerId);
+  // Untrusted material goes in AHEAD of the user's turn, each block in its own message behind a
+  // per-turn nonce it cannot guess. Nothing is appended to the user's message, so there is no
+  // arrangement of page text that lands where an instruction would.
+  const untrustedMsgs = untrusted && untrusted.length
+    ? buildTurn({ userText: "", untrusted }).messages.slice(0, -1)
+    : [];
   let turnHistory;
   if (isolated) {
-    turnHistory = [{ role: "user", content: userContent }];
+    turnHistory = [...untrustedMsgs, { role: "user", content: userContent }];
   } else {
     // Token saving: summarise older turns before this one when the thread is long.
     await maybeCompressSession(sess, sessMode, abortController && abortController.signal);
-    boundHistory.push({ role: "user", content: userContent });
+    boundHistory.push(...untrustedMsgs, { role: "user", content: userContent });
     turnHistory = boundHistory;
   }
   // 🐝 Hivey auto-thinking: spend a reasoning budget ONLY on the reasoning tier (where it pays
@@ -7788,6 +7796,17 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
       confirmActions: settings.agentPermission !== "auto",
       confirmFn: agentMode ? confirmAction : null,
       guard: { blockPayments: settings.blockPayments },
+      // Refuse the whole turn — before the model is called — when the agent is pinned to one of
+      // the signed-in AI chat tabs. Letting the model run and refusing each tool afterwards would
+      // pay for an answer we already know we will not act on.
+      preStep: agentMode ? async () => {
+        try {
+          const id = getAgentTab();
+          const tab = id != null ? await browser.tabs.get(id) : (await browser.tabs.query({ active: true, currentWindow: true }))[0];
+          if (tab && isWebChatUrl(tab.url)) return t("agent.refuseWebChat");
+        } catch (_) {}
+        return null;
+      } : null,
       signal: abortController.signal,
       // Independent verifier (agent only): a separate, stateless model pass that re-reads the
       // page and judges whether the task is GENUINELY done — kills "thought it worked but didn't".
@@ -7960,7 +7979,12 @@ async function onChatSend() {
     if (note) note.remove();
   }
   enhanceNext = false; renderCmdChips();
-  let prefix = "";
+  // Page text, tab text and attached documents are UNTRUSTED: none of it was written by the user,
+  // and some of it was written by whoever controls the page. It used to be concatenated into the
+  // same message as the user's own words, separated by the literal marker "[Message]" — which a
+  // page can simply contain. Each piece is now its own fenced message (see lib/untrusted.js), so
+  // the instruction channel holds exactly two things: the system prompt, and what the user typed.
+  const untrusted = [];
   if (!agentActive()) {
     // Send a page's content only ONCE per conversation (it stays in history after
     // that), so follow-up questions don't re-pay for the same page text every turn.
@@ -7968,11 +7992,12 @@ async function onChatSend() {
       const sess = getSession(mode);
       const key = currentPage.url || "";
       if (!settings.cleanContext || !sess.pageCtxKeys.has(key)) {
-        prefix += pageContextBlock();
+        untrusted.push({ kind: "web page", source: currentPage.url || currentPage.title || "", text: pageContextBlock() });
         sess.pageCtxKeys.add(key);
       }
     }
-    prefix += await selectedTabsContext();
+    const tabs = await selectedTabsContext();
+    if (tabs) untrusted.push({ kind: "browser tabs", source: "tabs you selected", text: tabs });
   } else if (currentPage) {
     // Agent mode: silently hand it the page the user is on (no Page chip / popup — it's always
     // on) so it has that context for precision, on top of its read_page/extraction tools. Sent
@@ -7980,14 +8005,13 @@ async function onChatSend() {
     const sess = getSession(mode);
     const key = currentPage.url || "";
     if (!settings.cleanContext || !sess.pageCtxKeys.has(key)) {
-      prefix += pageContextBlock();
+      untrusted.push({ kind: "web page", source: currentPage.url || currentPage.title || "", text: pageContextBlock() });
       sess.pageCtxKeys.add(key);
     }
   }
-  if (textBlock) prefix += textBlock; // attached files/PDFs folded in as context
+  if (textBlock) untrusted.push({ kind: "attached document", source: "a file you attached", text: textBlock });
   const body = text || (imgs.length ? "Please look at the attached image(s)." : "Please use the attached file(s).");
-  const content = prefix ? prefix + `[Message]\n${body}` : body;
-  await sendToModel(text, content, { attImgs: imgs, attMeta: meta, runMode: mode === "security" ? "security" : "chat" });
+  await sendToModel(text, body, { attImgs: imgs, attMeta: meta, untrusted, runMode: mode === "security" ? "security" : "chat" });
 }
 async function runTranslateFromInput() {
   const lang = els.translateLang.value || settings.targetLang || "French";

@@ -10,6 +10,8 @@
 // (see content.js) refuses checkout/payment actions when enabled, so the agent
 // can fill a cart but can never complete a purchase.
 
+import { isWebChatUrl } from "./memory-policy.js";
+
 export const TOOLS = [
   {
     name: "read_page",
@@ -322,6 +324,39 @@ async function playMedia(query) {
   return res;
 }
 
+// ── Authenticated chat tabs are off limits to the agent ──────────────────────────────────────
+// The Web chats workspace works by embedding sites the user is LOGGED INTO. An agent able to
+// drive those tabs would hold all three ingredients of the classic problem at once: private data,
+// untrusted content, and an outbound capability — it could read a private conversation and act on
+// what it read there. The refusal is CODE, not a line in a prompt, for the same reason the
+// anti-purchase guard is code: a prompt is not a control.
+const TAB_ACTING = new Set([
+  "read_page", "read_selection", "read_tab", "find_elements", "click_element",
+  "fill_input", "scroll_page", "control_media", "screenshot", "extract_data",
+]);
+function webChatRefused(url) {
+  return {
+    error: "Refused: that tab is one of the signed-in AI chat sites the Web chats workspace uses. "
+      + "The agent may not read or act on an authenticated chat session.",
+    blocked: true,
+    url: String(url).slice(0, 200),
+  };
+}
+async function webChatRefusal(name, input) {
+  const urlish = input && (input.url || input.href);
+  if (urlish && isWebChatUrl(urlish)) return webChatRefused(urlish);
+  // Tools that act on "the current tab" resolve it themselves, so the URL has to be looked up.
+  if (TAB_ACTING.has(name)) {
+    try {
+      const tab = input && typeof input.tabId === "number"
+        ? await browser.tabs.get(input.tabId)
+        : await getActiveTab();
+      if (tab && isWebChatUrl(tab.url)) return webChatRefused(tab.url);
+    } catch (_) { /* tab gone: the tool's own error path reports it */ }
+  }
+  return null;
+}
+
 // A navigation/open that triggers a file download (or a blob/data download) is a
 // "very sensitive" action and is confirmed even in "Allow" mode.
 function isSensitiveUrl(url) {
@@ -343,6 +378,11 @@ export async function executeTool(name, input, opts = {}) {
   const { confirmActions, confirmFn, guard = {} } = opts;
   const def = TOOLS.find((t) => t.name === name);
   if (!def) return { error: `Unknown tool: ${name}` };
+
+  // Checked BEFORE any confirmation prompt: this is not a decision to delegate to the user
+  // mid-run, and asking would only train them to approve it.
+  const blocked = await webChatRefusal(name, input);
+  if (blocked) return blocked;
 
   // Manual mode: confirm every write action. If approved, mark it confirmed so the
   // sensitive-action gate below (and in the page) doesn't prompt a second time.

@@ -14,6 +14,7 @@ import { setHTML } from "./dom.js";
 let lang = "en";
 
 const EN = {
+  "agent.refuseWebChat": "The agent will not act on a signed-in AI chat tab. Switch to another tab, or use the Web chats workspace directly.",
   // ── Benchmark workspace ──
   "rail.benchmarkTitle": "Benchmark — published leaderboards + a live test on your own key",
   "bench.title": "Benchmark",
@@ -975,6 +976,7 @@ const EN = {
 };
 
 const FR = {
+  "agent.refuseWebChat": "L’agent n’agira pas sur un onglet de chat IA où vous êtes connecté. Changez d’onglet, ou utilisez directement l’espace Web chats.",
   // ── Benchmark workspace ──
   "rail.benchmarkTitle": "Benchmark — classements publiés + test en direct avec votre clé",
   "bench.title": "Benchmark",

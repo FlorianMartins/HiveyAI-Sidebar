@@ -3,6 +3,7 @@
 // back to English. Placeholders {name}, HTML tags and emojis are kept verbatim.
 
 export const ES = {
+  "agent.refuseWebChat": "El agente no actuará sobre una pestaña de chat de IA en la que has iniciado sesión. Cambia de pestaña o usa directamente el espacio Chats web.",
   // ── Benchmark workspace ──
   "rail.benchmarkTitle": "Benchmark — clasificaciones publicadas + prueba en vivo con tu clave",
   "bench.title": "Benchmark",
@@ -768,6 +769,7 @@ export const ES = {
 };
 
 export const DE = {
+  "agent.refuseWebChat": "Der Agent handelt nicht in einem KI-Chat-Tab, in dem du angemeldet bist. Wechsle den Tab oder nutze den Web-Chats-Arbeitsbereich direkt.",
   // ── Benchmark workspace ──
   "rail.benchmarkTitle": "Benchmark — veröffentlichte Ranglisten + Live-Test mit deinem Schlüssel",
   "bench.title": "Benchmark",
@@ -1533,6 +1535,7 @@ export const DE = {
 };
 
 export const IT = {
+  "agent.refuseWebChat": "L’agente non agirà su una scheda di chat IA in cui hai effettuato l’accesso. Cambia scheda, o usa direttamente lo spazio Chat web.",
   // ── Benchmark workspace ──
   "rail.benchmarkTitle": "Benchmark — classifiche pubblicate + test dal vivo con la tua chiave",
   "bench.title": "Benchmark",
@@ -2298,6 +2301,7 @@ export const IT = {
 };
 
 export const PT = {
+  "agent.refuseWebChat": "O agente não vai agir sobre um separador de chat de IA onde tem sessão iniciada. Mude de separador, ou use diretamente o espaço Chats web.",
   // ── Benchmark workspace ──
   "rail.benchmarkTitle": "Benchmark — classificações publicadas + teste ao vivo com a sua chave",
   "bench.title": "Benchmark",

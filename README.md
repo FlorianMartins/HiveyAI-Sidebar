@@ -267,9 +267,23 @@ scripts/update-benchmarks.mjs  Collecte des classements publiés (timer quotidie
   paiement/commande/saisie de carte sont **refusées dans le code** (content script),
   pas seulement dans le prompt — un prompt détourné ne peut pas les contourner.
   L'agent s'arrête au panier.
-- **Anti prompt-injection** : le contenu des pages, onglets et sélections est traité
-  comme une **donnée non fiable**. Le prompt système interdit d'obéir à des
-  instructions trouvées dans une page et de divulguer les clés/réglages.
+- **Anti prompt-injection — séparation structurelle, pas une consigne** : le contenu
+  des pages, onglets, PDF et sélections n'est **plus concaténé** au message de
+  l'utilisateur. Chaque source devient un **message distinct**, encadré par une
+  clôture portant un **nonce aléatoire de 128 bits régénéré à chaque tour**
+  (`src/lib/untrusted.js`). Le canal d'instruction ne contient donc que deux choses :
+  le prompt système et le texte tapé par l'utilisateur. Une page ne peut pas fermer
+  un bloc dont elle ne peut pas deviner le délimiteur.
+  > Cette section affirmait auparavant que le prompt système constituait la défense.
+  > Ce n'en était pas une : aucune formulation ne résiste à une injection indirecte
+  > bien construite, puisque la formulation et l'attaque arrivent par le même canal.
+  > Le dépôt appliquait déjà le bon principe pour l'anti-achat — du code, pas un
+  > prompt — et cette séparation l'étend au reste.
+- **Onglets authentifiés** : l'agent **refuse dans le code** toute action visant les
+  dix sites de chat IA que l'espace Web chats intègre (sessions connectées). Le refus
+  a lieu **avant l'appel au modèle**, donc sans dépense.
+- **Modèle de menaces** : vecteurs, impacts, mitigations codées et **résiduels
+  assumés** sont détaillés dans [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md).
 - **Autorisations de l'agent réglables** : en *Autoriser* (par défaut) l'agent
   s'exécute seul mais **confirme les actions très sensibles** (téléchargement,
   réservation, suppression, virement, inscription, installation…) ; en *validation

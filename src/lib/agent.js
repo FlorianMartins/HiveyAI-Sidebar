@@ -292,6 +292,9 @@ export async function runConversation({
   // and a test supplies a scripted one. Without this the reasoning loop could only be exercised
   // inside a browser, which is precisely why it went untested for so long.
   execute = executeTool,
+  // An admission check run BEFORE each model request. Returning a string refuses the turn, which
+  // closes it having spent nothing — refusing after the call has already paid for the answer.
+  preStep = null,
 }) {
   const ctx = createHarness();
 
@@ -338,6 +341,15 @@ export async function runConversation({
   }
 
   // ── Plugins ────────────────────────────────────────────────────────────────────────────────
+  // Admission first, before anything that costs money. A refusal here is the cheapest possible
+  // "no": the turn closes with the reason recorded and no request sent.
+  if (preStep) {
+    ctx.on("agent/pre-step", async (v, next) => {
+      const reject = await preStep(v);
+      return reject ? { reject } : next(v);
+    }, 5);
+  }
+
   // Progress reporting. Registered as listeners rather than threaded through the loop, so the UI
   // can be swapped or silenced without touching the reasoning.
   if (onToolStart || onToolEnd) {
