@@ -361,3 +361,13 @@ test("no distractor is accidentally present in its own pool", () => {
     }
   }
 });
+
+test("the admission bench gates on latency, not only on quality", async () => {
+  // Measured but not gated was the original mistake: the first real run admitted a model that
+  // scored 100% recall at 22.7 SECONDS per lookup. For the role that sits between a question and
+  // its answer, perfect recall arriving after the user gave up is not a better answer.
+  const src = await import("node:fs").then((fs) => fs.readFileSync("scripts/bench-hivey.mjs", "utf8"));
+  assert.match(src, /ADMIT_MS\s*=\s*\{/, "there is a latency ceiling");
+  assert.match(src, /recall:\s*6000/, "and it is tight for the recall role");
+  assert.match(src, /rejected: /, "a rejection names its reason — 'REJECT' alone is not actionable");
+});

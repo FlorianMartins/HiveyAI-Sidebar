@@ -227,6 +227,11 @@ async function benchCode(model, repeats = 1) {
 // is wrong in a way the main model cannot detect.
 const ADMIT_RECALL = 0.8;
 const ADMIT_FABRICATION = 0.1;
+// Latency was measured from the start but not GATED on, and the first real run showed why it must
+// be: a model scored 100% recall at 22.7 SECONDS per lookup. The recall role sits between a
+// question and its answer — perfect recall that arrives after the user has given up is not a
+// better answer, it is a worse product. Six seconds leaves margin under the 8s hard timeout.
+const ADMIT_MS = { recall: 6000, extract: 30000, consolidate: 60000 };
 
 async function benchMemory(model) {
   let recalled = 0, fabricated = 0, errors = 0, ms = 0, cost = 0;
@@ -259,11 +264,19 @@ if (memoryArg) {
   const models = memoryArg.split(",").map((m) => m.trim()).filter(Boolean);
   console.log(`Memory admission: ${MEMORY_CASES.length} cases, ${models.length} model(s).`);
   console.log(`Admitted at recall >= ${ADMIT_RECALL} and fabrication <= ${ADMIT_FABRICATION}.\n`);
+  const role = (process.argv.find((a) => a.startsWith("--role=")) || "").split("=")[1] || "recall";
+  const msCap = ADMIT_MS[role] ?? ADMIT_MS.recall;
+  console.log(`Role "${role}": latency ceiling ${msCap} ms.\n`);
   for (const model of models) {
     const r = await benchMemory(model);
-    const admitted = r.recall >= ADMIT_RECALL && r.fabrication <= ADMIT_FABRICATION;
-    console.log(`${admitted ? "ADMIT " : "REJECT"}  recall ${(r.recall * 100).toFixed(0).padStart(3)}%  invented ${(r.fabrication * 100).toFixed(0).padStart(3)}%  ${String(r.ms).padStart(5)}ms  $${r.cost.toFixed(4)}  ${model}${r.errors ? `  (${r.errors} errors)` : ""}`);
-    r.failures.slice(0, 6).forEach((f) => console.log(`         ${f}`));
+    // Each reason is named. "REJECT" alone tells you nothing you can act on.
+    const why = [];
+    if (r.recall < ADMIT_RECALL) why.push(`recall ${(r.recall * 100).toFixed(0)}% < ${ADMIT_RECALL * 100}%`);
+    if (r.fabrication > ADMIT_FABRICATION) why.push(`invents ${(r.fabrication * 100).toFixed(0)}% > ${ADMIT_FABRICATION * 100}%`);
+    if (r.ms > msCap) why.push(`${r.ms}ms > ${msCap}ms`);
+    console.log(`${why.length ? "REJECT" : "ADMIT "}  recall ${(r.recall * 100).toFixed(0).padStart(3)}%  invented ${(r.fabrication * 100).toFixed(0).padStart(3)}%  ${String(r.ms).padStart(6)}ms  $${r.cost.toFixed(4)}  ${model}${r.errors ? `  (${r.errors} errors)` : ""}`);
+    if (why.length) console.log(`         rejected: ${why.join(", ")}`);
+    r.failures.slice(0, 4).forEach((f) => console.log(`         ${f}`));
   }
   process.exit(0);
 }
