@@ -17,7 +17,14 @@
 // `require`, `process` or `fetch` in scope it cannot touch the disk or the network. That is a
 // deliberate limit of this bench — it measures pure functions, and nothing else should be run.
 //
-// Usage:  OPENROUTER_API_KEY=sk-or-... node scripts/bench-hivey.mjs [--variants free,hybrid,smart]
+// Usage:
+//   OPENROUTER_API_KEY=sk-or-… node scripts/bench-hivey.mjs [--variants=free,hybrid,smart]
+//   OPENROUTER_API_KEY=sk-or-… node scripts/bench-hivey.mjs --candidates=modelA,modelB,…
+//
+// The second form is the BAKE-OFF: it runs only the code tasks, against an arbitrary list of
+// models, and prints a pass rate per model. That is how the free code role was chosen — and the
+// comment in hivey-models.js tells the next person to re-run it before changing that choice, so
+// it has to live here rather than in someone's shell history.
 
 import { runInNewContext } from "node:vm";
 import { readFileSync, writeFileSync } from "node:fs";
@@ -174,14 +181,24 @@ function runCode(code, checks) {
   try {
     runInNewContext(`${code}\n;(function(){${checks}})();`, sandbox, { timeout: 2000 });
   } catch (e) {
-    return { pass: false, failures: [`threw: ${String(e.message).slice(0, 90)}`] };
+    // Two different failures wear the same "0 points" here, and conflating them makes the
+    // numbers unreadable: code that does not PARSE (typically TypeScript annotations when the
+    // task asked for JavaScript — an instruction-following miss) versus code that parses and
+    // computes the wrong answer. Only the second says anything about coding ability.
+    const msg = String(e.message);
+    const kind = /Unexpected token|Invalid or unexpected|missing \)|Unexpected identifier/.test(msg)
+      ? (/:\s*(string|number|boolean|any|unknown|void|[A-Z]\w*)\b/.test(code) ? "syntax(TS not JS)" : "syntax")
+      : "runtime";
+    return { pass: false, kind, failures: [`${kind}: ${msg.slice(0, 70)}`] };
   }
-  return { pass: failures.length === 0, failures };
+  return { pass: failures.length === 0, kind: failures.length ? "logic" : "ok", failures };
 }
 
-async function benchCode(model) {
+async function benchCode(model, repeats = 1) {
   let pass = 0, cost = 0, ms = 0;
   const detail = [];
+  const kinds = {};
+  for (let run = 0; run < repeats; run++)
   for (const task of CODE_TASKS) {
     // 2000 was too tight: a free model that emits reasoning before its answer got TRUNCATED,
     // and a truncated function fails every assertion — the bench blamed the model for its own
@@ -190,13 +207,35 @@ async function benchCode(model) {
     cost += r.cost; ms += r.ms;
     if (!r.ok) { detail.push(`${task.name}: API ${r.error}`); continue; }
     const res = runCode(extractCode(r.text), task.checks);
+    kinds[res.kind] = (kinds[res.kind] || 0) + 1;
     if (res.pass) { pass++; detail.push(`${task.name}: pass`); }
     else detail.push(`${task.name}: FAIL (${res.failures.join(", ")})`);
   }
-  return { total: CODE_TASKS.length, pass, cost, ms, detail };
+  return { total: CODE_TASKS.length * repeats, pass, cost, ms, detail, kinds };
 }
 
 // ── Run ──────────────────────────────────────────────────────────────────────────────────────
+const candidateArg = (process.argv.find((a) => a.startsWith("--candidates=")) || "").split("=")[1];
+if (candidateArg) {
+  const models = candidateArg.split(",").map((m) => m.trim()).filter(Boolean);
+  // These models are not deterministic even at temperature 0, and a single run of three tasks
+  // ranks noise as often as it ranks models: the same model scored 3/3 and then 1/2 on
+  // consecutive runs. Repeats are the difference between a measurement and an anecdote.
+  const repeats = Number((process.argv.find((a) => a.startsWith("--repeat=")) || "").split("=")[1]) || 3;
+  console.log(`Bake-off: ${CODE_TASKS.length} code tasks x ${repeats} run(s), ${models.length} model(s).\n`);
+  const rows = [];
+  for (const model of models) {
+    const r = await benchCode(model, repeats);
+    rows.push({ model, ...r });
+    const kinds = Object.entries(r.kinds).map(([k, n]) => `${k}:${n}`).join(" ");
+    console.log(`${String(r.pass).padStart(2)}/${r.total}  ${model.padEnd(46)} ${kinds}`);
+  }
+  rows.sort((a, b) => b.pass - a.pass || a.ms - b.ms);
+  console.log(`\nBest: ${rows[0].model} (${rows[0].pass}/${rows[0].total})`);
+  console.log("A model that scores 0 may simply have run out of free-tier retries — check it answers at all before concluding.");
+  process.exit(0);
+}
+
 const MODELS = loadModels();
 const routerSystem = loadRouterSystem();
 const report = { at: new Date().toISOString(), variants: {} };

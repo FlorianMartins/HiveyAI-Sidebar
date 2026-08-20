@@ -9,6 +9,20 @@
 // AUTO-CURATED by scripts/update-models.mjs (daily): each role is bumped to a newer free
 // model of the same family when one ships. Every id is validated against the live catalogue.
 //
+// MEASURED, 2026-08-19/20 (`node scripts/bench-hivey.mjs --candidates=… --repeat=4`, the answers
+// EXTRACTED and EXECUTED against assertions rather than eyeballed). A single run ranked noise:
+// the same model scored 3/3 then 1/2 on consecutive passes. Over four repeats the picture held:
+//
+//     8/8  nvidia/nemotron-3-super-120b-a12b:free    ok:8
+//     8/8  nvidia/nemotron-3.5-lightning:free        ok:8
+//     6/8  poolside/laguna-s-2.1:free                ok:6  logic:2
+//
+// The code-SPECIALISED free models all lost, and laguna's two failures were LOGIC, not syntax —
+// wrong answers, not a misread instruction. So hivey/free code+test run on nemotron-3-super, and
+// agent on nemotron-3.5-lightning (same score, plus a 1M window the agent role genuinely uses).
+// A "-code" suffix is a claim; the bench is a result. Re-run it before changing these back.
+// (z-ai/glm-5.2:free scored 0 in the first sweep purely by exhausting its rate-limit retries —
+// it answers 200 fine. That was the bench's impatience, not the model.)
 // <hivey:start>
 export const HIVEY_MODELS = {
   "hivey/smart": {
@@ -50,15 +64,15 @@ export const HIVEY_MODELS = {
     "utility": "nvidia/nemotron-3-nano-30b-a3b:free",
     "light": "nvidia/nemotron-3-nano-30b-a3b:free",
     "chat": "nvidia/nemotron-3.5-lightning:free",
-    "code": "poolside/laguna-s-2.1:free",
-    "test": "poolside/laguna-s-2.1:free",
+    "code": "nvidia/nemotron-3-super-120b-a12b:free",
+    "test": "nvidia/nemotron-3-super-120b-a12b:free",
     "reasoning": "nvidia/nemotron-3-super-120b-a12b:free",
     "math": "nvidia/nemotron-3-super-120b-a12b:free",
     "creative": "nvidia/nemotron-3.5-lightning:free",
     "extract": "nvidia/nemotron-3-nano-30b-a3b:free",
     "vision": "nvidia/nemotron-nano-12b-v2-vl:free",
     "verify": "nvidia/nemotron-3-nano-30b-a3b:free",
-    "agent": "poolside/laguna-s-2.1:free",
+    "agent": "nvidia/nemotron-3.5-lightning:free",
     "search": "nvidia/nemotron-3.5-lightning:free",
     "image": "google/gemini-3.1-flash-image"
   }
