@@ -27,11 +27,11 @@ export const PROVIDERS = {
     // auto-maintained by scripts/update-models.mjs (daily)
     // <models:anthropic:start>
     models: [
+      ["claude-fable-5-1", "Claude Fable 5.1"],
       ["claude-opus-5", "Claude Opus 5"],
       ["claude-sonnet-5", "Claude Sonnet 5"],
       ["claude-fable-5", "Claude Fable 5"],
       ["claude-opus-4-8", "Claude Opus 4.8"],
-      ["claude-opus-4-7", "Claude Opus 4.7"],
       ["claude-haiku-4-5", "Claude Haiku 4.5"],
     ],
     // <models:anthropic:end>
@@ -119,9 +119,9 @@ export const PROVIDERS = {
       ["minimax/minimax-m3:free", "MiniMax M3 — free"],
       ["minimax/minimax-m2.7:free", "MiniMax M2.7 — free"],
       ["openrouter/free", "Free Models Router — free"],
+      ["anthropic/claude-fable-5.1", "Claude Fable 5.1 (paid)"],
       ["anthropic/claude-opus-5", "Claude Opus 5 (paid)"],
       ["anthropic/claude-sonnet-5", "Claude Sonnet 5 (paid)"],
-      ["anthropic/claude-fable-5", "Claude Fable 5 (paid)"],
       ["openai/gpt-5.6-luna-pro", "GPT-5.6 Luna Pro (paid)"],
       ["openai/gpt-5.6-luna", "GPT-5.6 Luna (paid)"],
       ["openai/gpt-5.6-terra-pro", "GPT-5.6 Terra Pro (paid)"],
