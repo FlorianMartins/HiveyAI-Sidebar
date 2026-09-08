@@ -116,8 +116,6 @@ export const PROVIDERS = {
       ["thinkingmachines/inkling:free", "Inkling — free (reasoning)"],
       ["poolside/laguna-xs-2.1:free", "Laguna XS 2.1 — free"],
       ["cohere/north-mini-code:free", "North Mini Code — free"],
-      ["minimax/minimax-m3:free", "MiniMax M3 — free"],
-      ["minimax/minimax-m2.7:free", "MiniMax M2.7 — free"],
       ["openrouter/free", "Free Models Router — free"],
       ["anthropic/claude-fable-5.1", "Claude Fable 5.1 (paid)"],
       ["anthropic/claude-opus-5", "Claude Opus 5 (paid)"],

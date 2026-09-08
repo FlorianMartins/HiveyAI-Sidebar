@@ -60,18 +60,18 @@ export const HIVEY_MODELS = {
     "image": "google/gemini-3.1-flash-image"
   },
   "hivey/free": {
-    "router": "minimax/minimax-m3:free",
-    "utility": "minimax/minimax-m3:free",
-    "light": "minimax/minimax-m3:free",
+    "router": "nvidia/nemotron-3.5-lightning:free",
+    "utility": "nvidia/nemotron-3.5-lightning:free",
+    "light": "nvidia/nemotron-3.5-lightning:free",
     "chat": "nvidia/nemotron-3.5-lightning:free",
     "code": "nvidia/nemotron-3-super-120b-a12b:free",
     "test": "nvidia/nemotron-3-super-120b-a12b:free",
     "reasoning": "nvidia/nemotron-3-super-120b-a12b:free",
     "math": "nvidia/nemotron-3-super-120b-a12b:free",
     "creative": "nvidia/nemotron-3.5-lightning:free",
-    "extract": "minimax/minimax-m3:free",
+    "extract": "nvidia/nemotron-3.5-lightning:free",
     "vision": "thinkingmachines/inkling-small:free",
-    "verify": "minimax/minimax-m3:free",
+    "verify": "nvidia/nemotron-3.5-lightning:free",
     "agent": "nvidia/nemotron-3.5-lightning:free",
     "search": "nvidia/nemotron-3.5-lightning:free",
     "image": "google/gemini-3.1-flash-image"
