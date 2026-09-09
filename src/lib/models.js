@@ -107,6 +107,8 @@ export const PROVIDERS = {
       ["nvidia/nemotron-3-ultra-550b-a55b:free", "Nemotron 3 Ultra — free"],
       ["nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free", "Nemotron 3 Nano Omni — free (reasoning)"],
       ["nvidia/nemotron-3-super-120b-a12b:free", "Nemotron 3 Super — free"],
+      ["nex-agi/nex-n2.5-mini:free", "Nex-N2.5-Mini — free"],
+      ["nex-agi/nex-n2.5-pro:free", "Nex-N2.5-Pro — free"],
       ["inclusionai/ling-3.0-flash-sante:free", "Ling 3.0 Flash Sante — free"],
       ["inclusionai/ling-3.0-flash-fin:free", "Ling 3.0 Flash Fin — free"],
       ["dots-studio/dots-3-note-preview:free", "Dots3-Note Preview — free"],
