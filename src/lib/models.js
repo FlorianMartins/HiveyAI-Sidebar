@@ -128,9 +128,9 @@ export const PROVIDERS = {
       ["google/gemini-3.8-flash", "Gemini 3.8 Flash (paid)"],
       ["google/gemini-3.7-flash", "Gemini 3.7 Flash (paid)"],
       ["google/gemini-3.6-flash", "Gemini 3.6 Flash (paid)"],
+      ["x-ai/grok-4.7", "Grok 4.7 (paid)"],
       ["x-ai/grok-4.6", "Grok 4.6 (paid)"],
       ["x-ai/grok-4.5", "Grok 4.5 (paid)"],
-      ["x-ai/grok-build-0.1", "Grok Build 0.1 (paid)"],
       ["deepseek/deepseek-v4.1-flash", "DeepSeek V4.1 Flash (paid)"],
       ["deepseek/deepseek-v4-pro-0813", "DeepSeek V4 Pro 0813 (paid)"],
       ["deepseek/deepseek-v4-flash-0731", "DeepSeek V4 Flash 0731 (paid)"],
@@ -229,10 +229,10 @@ export const PROVIDERS = {
     // auto-maintained by scripts/update-models.mjs (daily)
     // <models:xai:start>
     models: [
+      ["grok-4.7", "Grok 4.7"],
       ["grok-4.6", "Grok 4.6"],
       ["grok-4.5", "Grok 4.5"],
       ["grok-4.3", "Grok 4.3"],
-      ["grok-4.20", "Grok 4.20"],
     ],
     // <models:xai:end>
   },
