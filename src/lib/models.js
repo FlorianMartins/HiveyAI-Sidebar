@@ -27,11 +27,11 @@ export const PROVIDERS = {
     // auto-maintained by scripts/update-models.mjs (daily)
     // <models:anthropic:start>
     models: [
+      ["claude-opus-5-5", "Claude Opus 5.5"],
       ["claude-fable-5-1", "Claude Fable 5.1"],
       ["claude-opus-5", "Claude Opus 5"],
       ["claude-sonnet-5", "Claude Sonnet 5"],
       ["claude-fable-5", "Claude Fable 5"],
-      ["claude-opus-4-8", "Claude Opus 4.8"],
       ["claude-haiku-4-5", "Claude Haiku 4.5"],
     ],
     // <models:anthropic:end>
@@ -54,12 +54,12 @@ export const PROVIDERS = {
     // auto-maintained by scripts/update-models.mjs (daily)
     // <models:openai:start>
     models: [
+      ["gpt-6-luna-pro", "GPT-6 Luna Pro"],
+      ["gpt-6-luna", "GPT-6 Luna"],
+      ["gpt-6-sol-pro", "GPT-6 Sol Pro"],
+      ["gpt-6-sol", "GPT-6 Sol"],
       ["gpt-6-astra", "GPT-6 Astra"],
       ["gpt-6-astra-pro", "GPT-6 Astra Pro"],
-      ["gpt-5.6-luna-pro", "GPT-5.6 Luna Pro"],
-      ["gpt-5.6-luna", "GPT-5.6 Luna"],
-      ["gpt-5.6-terra-pro", "GPT-5.6 Terra Pro"],
-      ["gpt-5.6-terra", "GPT-5.6 Terra"],
       ["gpt-5.4-nano", "GPT-5.4 Nano"],
     ],
     // <models:openai:end>
@@ -119,12 +119,12 @@ export const PROVIDERS = {
       ["poolside/laguna-s-2.1:free", "Laguna S 2.1 — free"],
       ["thinkingmachines/inkling:free", "Inkling — free (reasoning)"],
       ["poolside/laguna-xs-2.1:free", "Laguna XS 2.1 — free"],
+      ["anthropic/claude-opus-5.5", "Claude Opus 5.5 (paid)"],
       ["anthropic/claude-fable-5.1", "Claude Fable 5.1 (paid)"],
       ["anthropic/claude-opus-5", "Claude Opus 5 (paid)"],
-      ["anthropic/claude-sonnet-5", "Claude Sonnet 5 (paid)"],
-      ["openai/gpt-6-astra", "GPT-6 Astra (paid)"],
-      ["openai/gpt-6-astra-pro", "GPT-6 Astra Pro (paid)"],
-      ["openai/gpt-5.6-luna-pro", "GPT-5.6 Luna Pro (paid)"],
+      ["openai/gpt-6-luna-pro", "GPT-6 Luna Pro (paid)"],
+      ["openai/gpt-6-luna", "GPT-6 Luna (paid)"],
+      ["openai/gpt-6-sol-pro", "GPT-6 Sol Pro (paid)"],
       ["google/gemini-3.8-flash", "Gemini 3.8 Flash (paid)"],
       ["google/gemini-3.7-flash", "Gemini 3.7 Flash (paid)"],
       ["google/gemini-3.6-flash", "Gemini 3.6 Flash (paid)"],
@@ -134,9 +134,9 @@ export const PROVIDERS = {
       ["deepseek/deepseek-v4.1-flash", "DeepSeek V4.1 Flash (paid)"],
       ["deepseek/deepseek-v4-pro-0813", "DeepSeek V4 Pro 0813 (paid)"],
       ["deepseek/deepseek-v4-flash-0731", "DeepSeek V4 Flash 0731 (paid)"],
+      ["qwen/qwen3.8-omni-flash", "Qwen3.8 Omni Flash (paid)"],
       ["qwen/qwen3.8-max-0902", "Qwen3.8 Max (0902) (paid)"],
       ["qwen/qwen3.8-flash", "Qwen3.8 Flash (paid)"],
-      ["qwen/qwen3.8-27b", "Qwen3.8 27B (paid)"],
       ["mistralai/mistral-medium-3-5", "Mistral Medium 3.5 (paid)"],
       ["mistralai/devstral-2512", "Devstral 2 2512 (paid)"],
       ["mistralai/ministral-14b-2512", "Ministral 3 14B 2512 (paid)"],
