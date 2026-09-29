@@ -27,11 +27,11 @@ export const PROVIDERS = {
     // auto-maintained by scripts/update-models.mjs (daily)
     // <models:anthropic:start>
     models: [
+      ["claude-sonnet-5-5", "Claude Sonnet 5.5"],
       ["claude-opus-5-5", "Claude Opus 5.5"],
       ["claude-fable-5-1", "Claude Fable 5.1"],
       ["claude-opus-5", "Claude Opus 5"],
       ["claude-sonnet-5", "Claude Sonnet 5"],
-      ["claude-fable-5", "Claude Fable 5"],
       ["claude-haiku-4-5", "Claude Haiku 4.5"],
     ],
     // <models:anthropic:end>
@@ -110,7 +110,6 @@ export const PROVIDERS = {
       ["nvidia/nemotron-3-super-120b-a12b:free", "Nemotron 3 Super — free"],
       ["stealth/space-bunny-alpha", "Space Bunny Alpha — free"],
       ["inclusionai/ling-3.0-flash-sante:free", "Ling 3.0 Flash Sante — free"],
-      ["inclusionai/ling-3.0-flash-fin:free", "Ling 3.0 Flash Fin — free"],
       ["dots-studio/dots-3-note-preview:free", "Dots3-Note Preview — free"],
       ["liquid/lfm-2.5-2.6b:free", "LFM2.5-2.6B — free"],
       ["thinkingmachines/inkling-small:free", "Inkling Small — free (reasoning)"],
@@ -119,9 +118,9 @@ export const PROVIDERS = {
       ["poolside/laguna-xs-2.1:free", "Laguna XS 2.1 — free"],
       ["cohere/north-mini-code:free", "North Mini Code — free"],
       ["openrouter/free", "Free Models Router — free"],
+      ["anthropic/claude-sonnet-5.5", "Claude Sonnet 5.5 (paid)"],
       ["anthropic/claude-opus-5.5", "Claude Opus 5.5 (paid)"],
       ["anthropic/claude-fable-5.1", "Claude Fable 5.1 (paid)"],
-      ["anthropic/claude-opus-5", "Claude Opus 5 (paid)"],
       ["openai/gpt-6-luna-pro", "GPT-6 Luna Pro (paid)"],
       ["openai/gpt-6-luna", "GPT-6 Luna (paid)"],
       ["openai/gpt-6-sol-pro", "GPT-6 Sol Pro (paid)"],
