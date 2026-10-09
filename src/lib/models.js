@@ -110,7 +110,6 @@ export const PROVIDERS = {
       ["nvidia/nemotron-3-super-120b-a12b:free", "Nemotron 3 Super — free"],
       ["inclusionai/ling-3.1-flash", "Ling 3.1 Flash — free"],
       ["apodex/apodex-1.1-mini:free", "Apodex 1.1 Mini — free"],
-      ["inclusionai/ling-3.0-flash-sante:free", "Ling 3.0 Flash Sante — free"],
       ["dots-studio/dots-3-note-preview:free", "Dots3-Note Preview — free"],
       ["liquid/lfm-2.5-2.6b:free", "LFM2.5-2.6B — free"],
       ["thinkingmachines/inkling-small:free", "Inkling Small — free (reasoning)"],
