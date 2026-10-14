@@ -108,8 +108,6 @@ export const PROVIDERS = {
       ["nvidia/nemotron-3-ultra-550b-a55b:free", "Nemotron 3 Ultra — free"],
       ["nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free", "Nemotron 3 Nano Omni — free (reasoning)"],
       ["nvidia/nemotron-3-super-120b-a12b:free", "Nemotron 3 Super — free"],
-      ["inclusionai/ling-3.1-flash", "Ling 3.1 Flash — free"],
-      ["apodex/apodex-1.1-mini:free", "Apodex 1.1 Mini — free"],
       ["dots-studio/dots-3-note-preview:free", "Dots3-Note Preview — free"],
       ["liquid/lfm-2.5-2.6b:free", "LFM2.5-2.6B — free"],
       ["thinkingmachines/inkling-small:free", "Inkling Small — free (reasoning)"],
@@ -124,9 +122,9 @@ export const PROVIDERS = {
       ["openai/gpt-6.1-sol-pro", "GPT-6.1 Sol Pro (paid)"],
       ["openai/gpt-6.1-sol", "GPT-6.1 Sol (paid)"],
       ["openai/gpt-6-luna-pro", "GPT-6 Luna Pro (paid)"],
+      ["google/gemini-4-argon", "Gemini 4 Argon (paid)"],
       ["google/gemini-3.8-flash", "Gemini 3.8 Flash (paid)"],
       ["google/gemini-3.7-flash", "Gemini 3.7 Flash (paid)"],
-      ["google/gemini-3.6-flash", "Gemini 3.6 Flash (paid)"],
       ["x-ai/grok-4.7", "Grok 4.7 (paid)"],
       ["x-ai/grok-4.6", "Grok 4.6 (paid)"],
       ["x-ai/grok-4.5", "Grok 4.5 (paid)"],
@@ -160,11 +158,11 @@ export const PROVIDERS = {
     // auto-maintained by scripts/update-models.mjs (daily)
     // <models:google:start>
     models: [
+      ["gemini-4-argon", "Gemini 4 Argon"],
       ["gemini-3.8-flash", "Gemini 3.8 Flash"],
       ["gemini-3.7-flash", "Gemini 3.7 Flash"],
       ["gemini-3.6-flash", "Gemini 3.6 Flash"],
       ["gemini-3.5-flash", "Gemini 3.5 Flash"],
-      ["gemini-2.5-flash", "Gemini 2.5 Flash"],
       ["gemini-nano-banana-2.1", "Nano Banana 2.1"],
     ],
     // <models:google:end>
