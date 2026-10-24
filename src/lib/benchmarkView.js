@@ -14,11 +14,29 @@
 // third-party strings, and this file is the one place where they meet the DOM.
 
 import { BENCHMARK_WEB, BENCHMARK_SOURCES, BENCHMARK_UNCOVERED, BENCHMARK_FETCHED_AT } from "./benchmark-web.js";
-import { runLiveBench, totalProbes, FAMILIES, compareRows } from "./livebench.js";
+import { runLiveBench, totalProbes, estimateSeconds, mergeMeasurement, FAMILIES, compareRows } from "./livebench.js";
 import { pickModel, verdictReason, rankEntries, costValue } from "./bench-report.js";
 
 const STORE_KEY = "benchmarkResults";
 const PICK_KEY = "benchmarkPicked";
+const FAM_KEY = "benchmarkFamilies";
+
+/** The families to run: what the user kept, in the canonical order; all of them by default, and
+ *  never none — an empty choice from storage reads as « all ». */
+export function chosenFamilies(saved) {
+  const keep = Array.isArray(saved) ? FAMILIES.filter((f) => saved.includes(f)) : [];
+  return keep.length ? keep : FAMILIES.slice();
+}
+
+/** « About N min » before a run: the probes' rough durations, per model, rounded up. */
+export function estimateMinutes(families, models) {
+  return Math.max(1, Math.ceil((estimateSeconds(families) * Math.max(1, models)) / 60));
+}
+
+/** The families a measurement covers, in order. */
+export function familiesOf(m) {
+  return FAMILIES.filter((f) => m && m.byFamily && m.byFamily[f] && m.byFamily[f].total);
+}
 
 /** Build the table's rows: everything with a published score, everything measured locally, and
  *  the newest models no leaderboard has reached — which is the whole reason the tab exists. */
@@ -102,6 +120,7 @@ export function initBenchmarkView({ els, t, lang = () => "fr", callModel, load, 
   let catalogue = [];
   let measured = {};
   let picked = [];
+  let families = FAMILIES.slice();
   let sortKey = "aider";
   let abort = null;
 
@@ -149,10 +168,36 @@ export function initBenchmarkView({ els, t, lang = () => "fr", callModel, load, 
     }
     if (els.bvWhat && !abort) {
       els.bvWhat.textContent = picked.length
-        ? t("bench.what", { n: String(totalProbes()), m: String(picked.length), min: String(picked.length) })
+        ? t("bench.what", { n: String(totalProbes(families)), m: String(picked.length), min: String(estimateMinutes(families, picked.length)) })
         : t("bench.pickFirst");
     }
     if (els.bvRun) els.bvRun.disabled = !picked.length;
+    renderFamPick();
+  }
+
+  // Which kinds of questions to run. All on by default; the last one cannot be switched off, so
+  // the button never runs an empty test.
+  function renderFamPick() {
+    const host = els.bvFamPick;
+    if (!host) return;
+    host.setAttribute("aria-label", t("bench.famPick"));
+    host.replaceChildren();
+    for (const f of FAMILIES) {
+      const on = families.includes(f);
+      const b = el("button", "bv-fam-tg");
+      b.type = "button";
+      b.dataset.fam = f;
+      b.setAttribute("aria-pressed", String(on));
+      b.title = t(`bench.famAbout.${f}`);
+      b.append(el("span", null, t(`bench.fam.${f}`)), el("span", "bv-fam-n", String(totalProbes([f]))));
+      b.disabled = !!abort || (on && families.length === 1);
+      b.addEventListener("click", () => {
+        families = on ? families.filter((x) => x !== f) : FAMILIES.filter((x) => x === f || families.includes(x));
+        save(FAM_KEY, families);
+        renderPicked();
+      });
+      host.append(b);
+    }
   }
 
   function renderFamilies() {
@@ -194,6 +239,8 @@ export function initBenchmarkView({ els, t, lang = () => "fr", callModel, load, 
     name.append(el("span", null, v.pick.label));
     host.append(name);
     host.append(el("p", "bv-v-why", verdictReason(v, { t, lang: lang(), running: !!abort })));
+    // Scores over different questions do not compare: say so rather than let the verdict pretend.
+    if (v.vs && new Set(v.rows.map((r) => familiesOf(r).join(","))).size > 1) host.append(el("p", "bv-v-mixed", t("bench.v.mixed")));
     const btn = el("button", "bv-report", t("bench.report"));
     btn.type = "button";
     btn.title = t("bench.reportTitle");
@@ -271,6 +318,8 @@ export function initBenchmarkView({ els, t, lang = () => "fr", callModel, load, 
       fams.append(el("span", "bv-res-prov", [e.provider, e.at].filter(Boolean).join(" · ")));
       det.append(fams);
       main.append(det);
+      const covered = familiesOf(e).length;
+      if (covered && covered < FAMILIES.length) main.append(el("div", "bv-res-part", t("bench.partial", { n: String(covered), of: String(FAMILIES.length) })));
       if (e.errors) main.append(el("div", "bv-res-warn", t("bench.errorsNote", { n: String(e.errors) })));
       row.append(main);
       host.append(row);
@@ -294,7 +343,8 @@ export function initBenchmarkView({ els, t, lang = () => "fr", callModel, load, 
     if (els.bvWhat) els.bvWhat.textContent = t("bench.runningHint");
     renderPicked();
     const targets = picked.slice();
-    const per = totalProbes();
+    const run = families.slice();
+    const per = totalProbes(run);
     const started = Date.now();
     let spent = 0, done = 0;
     for (let i = 0; i < targets.length; i++) {
@@ -312,17 +362,20 @@ export function initBenchmarkView({ els, t, lang = () => "fr", callModel, load, 
           if (r && r.costExact === false) costExact = false;
           return r;
         },
+        families: run,
         signal: abort,
         onProgress: ({ done: d }) => say(d),
       });
       done += per;
       spent += res.cost || 0;
       if (!res.total) continue;
-      measured[key] = {
+      // A family left out of this run keeps its last measurement (see mergeMeasurement): running
+      // « Code » alone does not erase what the model scored on everything else.
+      measured[key] = mergeMeasurement(measured[key], {
         score: res.score, pass: res.pass, total: res.total, answered: res.answered, errors: res.errors,
         byFamily: res.byFamily, failures: res.failures, ms: res.ms, cost: res.cost, costExact, free,
         at: new Date().toISOString().slice(0, 10),
-      };
+      });
       await save(STORE_KEY, measured);
       renderResults();
     }
@@ -413,6 +466,7 @@ export function initBenchmarkView({ els, t, lang = () => "fr", callModel, load, 
         wire();
         measured = normalizeMeasured(await load(STORE_KEY));
         picked = (await load(PICK_KEY)) || [];
+        families = chosenFamilies(await load(FAM_KEY));
         if (!picked.length && currentModel()) picked = [currentModel()];
         renderFamilies();
         renderSources();

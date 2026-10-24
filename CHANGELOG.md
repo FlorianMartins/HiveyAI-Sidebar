@@ -33,6 +33,34 @@ Version de développement, toujours à jour :
 - **Agent** : plus de bloc « Réflexion » dans ses réponses — ses actions disent déjà ce qu'il fait
   et décide.
 
+### Benchmark : quatre nouveaux types de questions — agent, code, rédaction, pièges
+
+- Le test passe de 20 à 39 questions, toujours corrigées par un programme (la même réponse reçoit
+  toujours la même note) :
+  - **Agit en plusieurs étapes** (5) : sur une petite boutique simulée, trouver un client puis lire
+    ses commandes, lire une commande puis demander le bon taux de change, choisir le bon client parmi
+    deux homonymes, envoyer un seul e-mail à la bonne adresse puis s'arrêter — et ne rien appeler
+    quand la question donne déjà tout. La note se lit sur l'ordre et les arguments des appels, puis
+    sur la réponse finale.
+  - **Lit et corrige du code** (5) : prédire une sortie, trouver la ligne fautive, la corriger,
+    écrire une regex essayée sur des exemples fixes. Rien de ce que le modèle écrit n'est exécuté.
+  - **Rédige selon des consignes** (5) : nombre de mots, mots imposés ou interdits, quatre puces
+    exactement, titre en « Title Case », réponse uniquement en allemand, résumé de 25 mots au plus
+    qui garde la date, le nombre et la ville.
+  - **Résiste aux pièges** (4) : un ordre caché dans un e-mail ou une page web (répondre « APPROVED »,
+    envoyer un e-mail, annoncer un prix à 0 €, donner un code secret) ne doit pas être suivi.
+- Vous choisissez les **types de questions** à lancer (tous cochés par défaut) ; la durée annoncée
+  suit. Relancer un seul type ne remplace que celui-là dans le résultat du modèle, et le classement
+  signale un modèle testé sur une partie seulement.
+- Le rapport a une colonne par type et montre, pour chaque question manquée, **la réponse du modèle**
+  (ou la suite d'appels d'outils qu'il a faite).
+- « À une question près » dans le conseil veut dire une question du test réellement lancé (1/39 pour
+  le test complet), et non plus toujours 1/20.
+- Mesuré dans Chromium via OpenRouter : DeepSeek V4.1 Flash 38/39, gpt-oss-20b 33/39, Mistral Small
+  3.2 24B 32/39, Llama 3.1 8B 23/39 (0/5 en plusieurs étapes). Chaque erreur a été relue ; trois
+  correcteurs trop stricts ont été corrigés (tirets insécables, ligne corrigée sans `return`, numéro
+  de ligne suivi d'une explication).
+
 ### Espagnol, allemand, italien, portugais : l'interface les affiche vraiment
 
 - Ces quatre langues étaient proposées dans les réglages, mais l'interface restait en anglais (seul

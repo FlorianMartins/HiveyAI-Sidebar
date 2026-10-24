@@ -60,6 +60,7 @@ const els = {
   bvVerdict: $("bvVerdict"),
   bvRankCard: $("bvRankCard"),
   bvFamList: $("bvFamList"),
+  bvFamPick: $("bvFamPick"),
   bvSort: $("bvSort"),
   bvPbar: $("bvPbar"),
   bvModelInput: $("bvModelInput"),
@@ -2734,6 +2735,10 @@ function benchmarkView() {
         return {
           text: splitThink(r.text || "").answer.trim(),
           toolCalls: r.toolCalls || [],
+          // An agent probe answers the tool calls and asks again: the turn goes back in the
+          // provider's own format, exactly as the Agent mode's loop sends it.
+          message: r.message,
+          formatToolResults: (results) => provider.formatToolResults(results),
           cost: c ? c.usd : 0,
           costExact: c ? !!(c.exact || c.free) : false,
           free: !!(c && c.free),
