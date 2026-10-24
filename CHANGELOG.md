@@ -16,6 +16,7 @@ Version de développement, toujours à jour :
   un élément, onglets ouverts…, surveiller cette page (et, dans Sécurité, les en-têtes de sécurité de
   la page). Les quatre icônes au-dessus de la conversation disparaissent ; il ne reste là que « N
   onglets en contexte » quand il y en a.
+- **Thème clair** : le nom « Hivey » en haut prend la couleur du texte (il était blanc sur fond clair).
 - **Des icônes cohérentes** : `+`, micro, icône du fournisseur, réflexion (une ampoule), options —
   toutes à la même taille et à la couleur de votre thème. **Envoyer** retrouve son rond en dégradé
   (il était invisible en thème clair).
@@ -89,8 +90,17 @@ Version de développement, toujours à jour :
   un clic l'ouvre.
 - L'action « Transformer en carte mentale / diagramme » est retirée.
 - **Onglet Web : vos anciennes conversations Claude** — dans un panneau aussi étroit, claude.ai passe
-  en affichage mobile et son menu des conversations passées devenait inaccessible. L'icône
-  historique de l'en-tête (🕘) ouvre maintenant directement la liste de vos conversations Claude.
+  en affichage mobile et son menu des conversations passées devenait inaccessible. Une icône
+  historique (🕘), **juste à côté du choix du fournisseur**, ouvre directement la liste de vos
+  conversations Claude. Sous Firefox, la barre latérale s'ouvre à ~250 px : l'icône, placée à droite
+  de l'en-tête, tombait hors de l'écran — elle restait introuvable. L'en-tête de l'onglet Web tient
+  désormais dans cette largeur (le nom du fournisseur et le bouton plein écran s'effacent quand la
+  place manque), et la page du site occupe toute la largeur au lieu d'être coupée à droite.
+- **Onglet Web : Copilot s'affiche de nouveau** — copilot.microsoft.com redirige maintenant vers
+  copilot.com, qui refusait d'être intégré (« Firefox ne peut pas ouvrir cette page »). copilot.com
+  est autorisé comme les autres sites. Et si un site refuse malgré tout de s'afficher dans le
+  panneau, un bandeau le dit et propose de **l'ouvrir dans un onglet** d'un clic, au lieu de laisser
+  la page d'erreur du navigateur.
 
 ### L'onglet Benchmark, enfin lisible — avec un rapport à la fin
 
@@ -189,6 +199,11 @@ Version de développement, toujours à jour :
 - **La musique démarre avec le son** : une vidéo ou un morceau lancé par l'agent était toujours
   coupé ; il démarre maintenant avec le son dès que le navigateur l'autorise, et ne passe en muet
   qu'en dernier recours (l'agent vous le dit alors).
+- **Le son en un clic, même sous Firefox** : Firefox refuse le son tant que la page elle-même n'a
+  pas été cliquée — et rien de ce que fait une extension ne compte comme ce clic (pas même un clic
+  dans la barre latérale : vérifié). Quand la musique ne peut démarrer qu'en muet (ou pas du tout),
+  un bouton **« 🔊 Lire avec le son »** s'affiche au centre de la vidéo : un clic, le son vient et
+  reste, sans chercher l'icône 🔊 du lecteur ni la touche M. La barre latérale indique où cliquer.
 
 ### Chat, Sécurité et Wisebase : des réponses plus justes, sans brider les modèles
 

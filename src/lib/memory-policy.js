@@ -85,7 +85,7 @@ export function isWritableProvenance(provenance) {
 // not written in a prompt, because a prompt is not a control.
 
 export const WEB_CHAT_HOSTS = [
-  "chatgpt.com", "claude.ai", "gemini.google.com", "copilot.microsoft.com",
+  "chatgpt.com", "claude.ai", "gemini.google.com", "copilot.microsoft.com", "copilot.com",
   "chat.mistral.ai", "chat.deepseek.com", "chat.qwen.ai", "chat.z.ai",
   "www.kimi.com", "kimi.com", "huggingface.co",
 ];

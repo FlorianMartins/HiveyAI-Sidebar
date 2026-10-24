@@ -455,18 +455,75 @@ function setHTML(el, html) { if (el) el.innerHTML = html == null ? "" : html; }
   // the agent "launched the video then paused it"). We only ever ACT when the player is paused.
   // When we do act and the browser blocks autoplay-with-sound, we fall back to MUTED so the video
   // at least launches, then try to bring the sound back without re-pausing it.
-  async function playVideo(v) {
+  // Sound needs a click ON THE PAGE. Firefox (and Chromium on a site the user rarely plays media
+  // on) refuses audible playback until the page itself has been clicked, and nothing an extension
+  // does counts as that click — not a click in the sidebar, not a script run from one (tested:
+  // play() from the sidebar's own click handler, in the page's world or ours, is still refused, and
+  // a tab-level unmute changes nothing). So when playback could only start muted (or not at all),
+  // ONE clear button sits on the video: the user's click there is a real gesture on the page, the
+  // sound comes on and stays on — no hunting for the player's 🔊 or the M key.
+  const SOUND_BTN_ID = "__hivey_sound_btn";
+  function removeSoundButton() { const el = document.getElementById(SOUND_BTN_ID); if (el) el.remove(); }
+  function soundOn(v) {
+    // YouTube keeps its own mute state (its 🔊 icon, the volume it remembers): go through its own
+    // button so the player agrees, then make sure the element itself is audible and playing.
+    const yt = document.querySelector(".ytp-mute-button");
+    if (yt && v.muted) { try { yt.click(); } catch (_) {} }
+    try { if (v.muted) v.muted = false; if (!v.volume) v.volume = 1; } catch (_) {}
+    if (v.paused) { try { const p = v.play(); if (p && p.catch) p.catch(() => {}); } catch (_) {} }
+  }
+  function offerSoundButton(v, label) {
+    removeSoundButton();
+    const host = document.createElement("div");
+    host.id = SOUND_BTN_ID;
+    host.style.cssText = "position:fixed;z-index:2147483646;left:0;top:0;width:0;height:0;";
+    const root = host.attachShadow({ mode: "closed" });
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = label || "🔊 Play with sound";
+    btn.style.cssText = "position:fixed;transform:translate(-50%,-50%);padding:14px 22px;border:0;border-radius:999px;white-space:nowrap;" +
+      "font:600 17px/1.2 system-ui,-apple-system,'Segoe UI',sans-serif;color:#fff;cursor:pointer;" +
+      "background:linear-gradient(135deg,#7c5cff,#c056f5);box-shadow:0 8px 30px rgba(0,0,0,.45),0 0 0 3px rgba(255,255,255,.85);";
+    root.appendChild(btn);
+    const place = () => {
+      if (!host.isConnected) return;
+      let r; try { r = v.getBoundingClientRect(); } catch (_) { return; }
+      const onScreen = r.width > 40 && r.height > 40 && r.bottom > 0 && r.top < innerHeight;
+      const x = onScreen ? r.left + r.width / 2 : innerWidth / 2;
+      const y = onScreen ? Math.min(Math.max(r.top + r.height / 2, 40), innerHeight - 40) : innerHeight / 2;
+      btn.style.left = Math.round(x) + "px"; btn.style.top = Math.round(y) + "px";
+    };
+    place();
+    const timer = setInterval(() => { if (!host.isConnected || !v.isConnected) { clearInterval(timer); removeSoundButton(); } else place(); }, 500);
+    btn.addEventListener("click", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      soundOn(v);
+      clearInterval(timer); host.remove();
+    });
+    // The user found the player's own 🔊 (or pressed M) — the button has done its job.
+    v.addEventListener("volumechange", function onVol() {
+      if (!v.muted && v.volume > 0 && !v.paused) { v.removeEventListener("volumechange", onVol); clearInterval(timer); host.remove(); }
+    });
+    (document.body || document.documentElement).appendChild(host);
+  }
+
+  async function playVideo(v, soundLabel) {
     const tryPlay = async () => {
       try {
         const p = v.play();
-        if (p && p.then) await p;
+        // A refused play() rejects at once; one that waits for data can stay pending for as long as
+        // the stream stalls — don't hang the agent on it (and never leave the user without a button).
+        if (p && p.then) return await Promise.race([p.then(() => true), new Promise((r) => setTimeout(() => r(!v.paused), 5000))]);
         return true;
       } catch (_) {
         return false;
       }
     };
-    const alreadyPlaying = () => ({ ok: true, playing: true, muted: !!v.muted,
-      hint: v.muted ? "Already playing (muted). Click 🔊 / press M to unmute." : undefined });
+    const alreadyPlaying = () => {
+      if (v.muted) offerSoundButton(v, soundLabel);
+      return { ok: true, playing: true, muted: !!v.muted, soundButton: !!v.muted || undefined,
+        hint: v.muted ? "Already playing (muted). A 🔊 button is shown on the video — the user clicks it once for sound." : undefined };
+    };
     // Autoplay already running → leave it alone (never toggle a playing video).
     if (!v.paused) {
       return alreadyPlaying();
@@ -496,17 +553,18 @@ function setHTML(el, html) { if (el) el.innerHTML = html == null ? "" : html; }
     if (!audible) {
       try { v.muted = true; } catch (_) {}
       if (v.paused) await tryPlay();
-    }
+      offerSoundButton(v, soundLabel);
+    } else removeSoundButton();
     return {
-      ok: true, playing: !v.paused, muted: !!v.muted,
+      ok: true, playing: !v.paused, muted: !!v.muted, soundButton: !audible || undefined,
       hint: v.paused
-        ? "The browser blocked autoplay. The user can click ▶, or allow autoplay for youtube.com once (Firefox: 🔒 → Autoplay → Allow Audio and Video) to make it work every time."
-        : (v.muted ? "Playing (muted) — the browser blocked autoplay WITH sound. Click 🔊 / press M to unmute, or allow autoplay for youtube.com once to get sound automatically." : undefined),
+        ? "The browser blocked autoplay. A 🔊 button is shown on the video — the user clicks it once to play with sound (or allows autoplay for youtube.com once: Firefox 🔒 → Autoplay → Allow Audio and Video)."
+        : (v.muted ? "Playing (muted) — the browser blocks sound until the page is clicked. A 🔊 button is shown on the video — the user clicks it once for sound." : undefined),
     };
   }
 
   // --- Media control (play a video, toggle YouTube autoplay) ----------------
-  function controlMedia(action) {
+  function controlMedia(action, soundLabel) {
     try {
       const isYT = /(^|\.)youtube\.com$/.test(location.hostname) || /(^|\.)youtu\.be$/.test(location.hostname);
       // The main video = the biggest visible <video>.
@@ -519,7 +577,7 @@ function setHTML(el, html) { if (el) el.innerHTML = html == null ? "" : html; }
       if (action === "play") {
         // Already on a page with a player → make sure it actually plays.
         if (v) {
-          return playVideo(v); // async: guarantees the video LAUNCHES, with sound when allowed
+          return playVideo(v, soundLabel); // async: guarantees the video LAUNCHES, with sound when allowed
         }
         // No player yet (search results / home / channel). Return the FIRST video's URL so the
         // tool layer can do a real navigation (a bare .click() triggers a YouTube SPA route change
@@ -534,6 +592,7 @@ function setHTML(el, html) { if (el) el.innerHTML = html == null ? "" : html; }
         return { ok: false, note: "No video found on this page (navigate to a video or a YouTube results page first)." };
       }
       if (action === "pause") {
+        removeSoundButton();
         if (v && v.pause) v.pause();
         return { ok: true, paused: v ? v.paused : true };
       }
@@ -1002,7 +1061,7 @@ function setHTML(el, html) { if (el) el.innerHTML = html == null ? "" : html; }
       case "scroll_page":
         return Promise.resolve(scrollPage(msg.direction));
       case "control_media":
-        return Promise.resolve(controlMedia(msg.action));
+        return Promise.resolve(controlMedia(msg.action, msg.soundLabel));
       case "mark_elements":
         return Promise.resolve(markElements());
       case "unmark_elements":

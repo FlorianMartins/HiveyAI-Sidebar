@@ -82,7 +82,18 @@ button { cursor: pointer; }
 }
 .topbar .row { margin-left: auto; } /* push the action icons to the right edge */
 /* On the Web tab, Search & History are irrelevant — hide them. */
-body.web-active #searchBtn, body.web-active:not(.web-has-history) #historyBtn { display: none; }
+body.web-active #searchBtn, body.web-active #historyBtn { display: none; }
+/* The Web tab must fit Firefox's default sidebar (~250 px, under the 320 px floor): the embedded
+   site gets the real width (its own header buttons stay on screen) and the header sheds the
+   wordmark, then the provider's name and the full-tab button, so the provider's history button and
+   the settings gear stay visible instead of being cut off at the right edge. */
+html:has(> body.web-active), body.web-active { min-width: 0; }
+#webHistory.hidden { display: none; }
+@media (max-width: 420px) { body.web-active .brand-word { display: none; } }
+@media (max-width: 340px) {
+  body.web-active #webProvLabel, body.web-active #expandTab { display: none; }
+  body.web-active .webprov-btn { gap: 5px; padding: 6px 8px; }
+}
 /* Top-left menu toggle (hamburger) — shows/hides the workspace rail, like the menu
    button on claude.ai / gemini. Accent when the menu is open, neutral when collapsed. */
 .menu-btn {
@@ -96,7 +107,7 @@ body:not(.rail-collapsed) .menu-btn { color: var(--accent); }
 /* Brand wordmark next to the logo — modern, premium, white. Hover peeks the menu, click locks it. */
 .brand-word {
   font: 600 15px/1 "Inter", "SF Pro Display", "Segoe UI Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  letter-spacing: -0.015em; color: #fff; cursor: pointer; user-select: none;
+  letter-spacing: -0.015em; color: var(--text); cursor: pointer; user-select: none;
   margin-left: -3px; padding: 3px 2px; transition: opacity 0.15s;
 }
 .brand-word:hover { opacity: 0.82; }
@@ -1547,6 +1558,10 @@ body.mode-code #confirmBar { display: none !important; }
 .agent-act-head { font-family: ui-monospace, monospace; font-size: 11.5px; color: var(--text); word-break: break-word; }
 .agent-act-res { font-family: ui-monospace, monospace; font-size: 11.5px; color: var(--muted); margin-top: 2px; }
 .agent-act-res.err { color: #e06c75; }
+.agent-sound-note {
+  margin: 4px 0 8px; padding: 8px 11px; border-radius: 10px; font-size: 12.5px;
+  color: var(--text); background: var(--grad-soft); border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+}
 /* Step in progress (e.g. a navigate waiting for the page to finish loading): a soft pulsing "…"
    so the user sees it's working, not stuck. */
 .agent-act.pending .agent-act-head::after {
@@ -1650,6 +1665,17 @@ body.web-active .web-only-head { display: inline-flex; }
 /* Claude wide-render: the frame is laid out wide & scaled down so its desktop nav shows. */
 .webframe.scaled { position: absolute; top: 0; left: 0; flex: none; }
 .wc-ext { margin-left: auto; color: var(--muted); font-size: 11px; }
+.webblocked {
+  position: absolute; left: 10px; right: 10px; bottom: 10px; z-index: 2;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center;
+  padding: 10px 12px; border-radius: 12px; font-size: 12.5px; text-align: center;
+  color: var(--text); background: var(--panel); border: 1px solid var(--border); box-shadow: 0 10px 28px rgba(0,0,0,.34);
+}
+.webblocked.hidden { display: none; }
+.webblocked-open {
+  padding: 6px 12px; border-radius: 9px; border: 0; font-weight: 600;
+  background: var(--grad); color: var(--on-accent);
+}
 .webhint { font-size: 10.5px; color: var(--muted); padding: 5px 8px; background: var(--panel-2); border-top: 1px solid var(--border); text-align: center; flex-shrink: 0; transition: color .2s, background .2s; }
 /* No description by default — only takes space when it carries a transient toast. */
 .webhint:empty { display: none; }
