@@ -3,18 +3,26 @@
 
 import { executeTool, TOOLS } from "./tools.js";
 import { createHarness, runTurn } from "./harness.js";
+import { LANG_NAMES, REPLY_IN_OWN_WORDS } from "./user-language.js";
 
 // Build the system prompt. `mode` tailors the assistant for the active workspace
 // tab (chat / translate / improve / image), `agentMode` unlocks the browser
 // tools, and `blockPayments` documents the hard safety rule that is ALSO
 // enforced in code.
-export function buildSystemPrompt({ agentMode, targetLang, responseLang, mode, blockPayments, artifacts = true, thinkLevel = "off", skill = "", goal = "", interactive = false, region = "" }) {
+export function buildSystemPrompt({ agentMode, targetLang, responseLang, mode, blockPayments, artifacts = true, thinkLevel = "off", skill = "", goal = "", interactive = false, region = "", replyLanguage = "" }) {
   // "Auto" (or empty) → reply in the SAME language as the user's message; a specific
   // value forces that language. (This is independent of the UI language.)
   const fixedLang = responseLang && responseLang !== "Auto" ? responseLang : "";
+  // The user's language, named: « dans les réponses il continue de basculer entre les langues ».
+  // "The same language as the user's message" left the model to guess, and after reading an English
+  // page it often answered in English. Named, and said in the user's own words as well — measured in
+  // hivey-vscode, the order written in the language itself is the one that holds.
+  const named = !fixedLang && replyLanguage && LANG_NAMES[replyLanguage]
+    ? ` The user writes in ${LANG_NAMES[replyLanguage]}: every sentence you write for them is in ${LANG_NAMES[replyLanguage]}, even right after reading a page, a document or a tool result in another language.${REPLY_IN_OWN_WORDS[replyLanguage] ? ` ${REPLY_IN_OWN_WORDS[replyLanguage]}` : ""}`
+    : "";
   const langRule = fixedLang
     ? `Reply concisely and usefully, in ${fixedLang} (unless the user explicitly asks for another language).`
-    : "Reply concisely and usefully, in the SAME language as the user's message (detect it automatically; unless the user explicitly asks for another language).";
+    : "Reply concisely and usefully, in the SAME language as the user's message (detect it automatically; unless the user explicitly asks for another language)." + named;
   let p =
     "You are an assistant embedded as a sidebar inside the user's Firefox browser, " +
     "in the spirit of Sider. You have \"eyes\": the content of the page being viewed " +
@@ -202,40 +210,13 @@ export function buildSystemPrompt({ agentMode, targetLang, responseLang, mode, b
     }
   }
 
-  // UNIVERSAL THINKING (Anthropic-style, model-agnostic). Many models ignore the provider
-  // `reasoning` param (esp. coder models), so we get real thinking on ANY model the same way
-  // we handle artifacts: we ASK the model to write its reasoning inside a <think>…</think>
-  // block, and the sidebar extracts that block into the 💭 reasoning panel (kept OUT of the
-  // answer/artifact). Depth is driven by the level the user picked (High vs Max), so "Max"
-  // genuinely pushes harder instead of relying on a budget the model may not honour.
-  if ((thinkLevel === "high" || thinkLevel === "max") && mode !== "translate" && mode !== "improve") {
-    const depth =
-      thinkLevel === "max"
-        ? "Reason EXTENSIVELY and explore broadly: restate the goal, consider SEVERAL possible " +
-          "designs/approaches and pick the best, enumerate the FULL feature set a top-tier version " +
-          "needs, brainstorm multiple delightful extras and polish" +
-          (artifacts
-            ? " (e.g. for a game: scoring, levels, rising speed, next-piece preview, hold, pause, " +
-              "ghost piece, keyboard + touch controls, sound, particle effects, responsive modern UI)"
-            : "") +
-          ", and anticipate edge cases. Do NOT settle for the obvious minimal version — actively " +
-          "look for what would make this genuinely great."
-        : "Think it through: restate the goal, brainstorm the core feature set a polished version " +
-          "needs plus 2–3 extra touches users would love, pick the cleanest approach, and note the " +
-          "edge cases.";
-    p +=
-      "\n\nTHINKING PROTOCOL (the user turned Thinking " +
-      (thinkLevel === "max" ? "to MAX" : "ON") +
-      "): begin your reply with a SINGLE <think> … </think> block containing your private, " +
-      "step-by-step reasoning, THEN give the final answer after </think>. " +
-      depth +
-      " Put ONLY reasoning inside <think> (never the final code/answer), don't mention the tags, " +
-      "and after </think> deliver the most COMPLETE, feature-rich result your reasoning calls for " +
-      "— not a minimal stub. CORRECTNESS COMES FIRST: as part of your thinking, trace the code's " +
-      "load/run path and make sure it actually WORKS with no errors before adding more — a feature " +
-      "that breaks the whole thing is worse than not having it. End <think> with a quick self-check " +
-      "of the riskiest parts (init order, undefined values, the entry point).";
-  }
+  // ⚠️ There was a THINKING PROTOCOL here: on "high" / "max" the prompt asked every model to write
+  // its reasoning inside <think>…</think> before answering, so that a model without native thinking
+  // would "think" too. Removed, as in hivey-vscode: a model that reasons natively then reasoned twice
+  // (natively, and again in the answer it was billed for), and an instruction to produce reasoning
+  // in a given wrapper is what cloud safety filters read as an attempt to extract hidden reasoning.
+  // The level is now a real request parameter on every provider that has one (reasoning.js), and
+  // the menu offers no level on a model that has none.
 
   // 🐝 Slash-command modifiers (work on ANY model): an expert SKILL persona and/or GOAL mode.
   if (skill) {
@@ -404,12 +385,24 @@ export async function runConversation({
     history.push(...derived);
   }
 
+  // What the turn cost, summed over its requests, as the providers counted it.
+  const usage = { promptTokens: 0, completionTokens: 0, cachedTokens: 0 };
+  for (const e of ctx.events()) {
+    if (e.type !== "assistant/message" || !e.usage) continue;
+    usage.promptTokens += e.usage.promptTokens || 0;
+    usage.completionTokens += e.usage.completionTokens || 0;
+    usage.cachedTokens += e.usage.cachedTokens || 0;
+    if (typeof e.usage.costUsd === "number") usage.costUsd = (usage.costUsd || 0) + e.usage.costUsd;
+  }
+
   return {
     history,
     text: result.text,
     done: result.done,
     steps: result.steps,
     reason: result.reason,
+    usage,
+    ...(result.interrupted ? { interrupted: true } : {}),
     // The full session log: an exact record of what happened, for transcripts and debugging.
     events: ctx.events(),
   };

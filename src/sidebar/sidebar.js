@@ -11,6 +11,8 @@ import { getSettings, setSettings, onSettingsChanged } from "../lib/storage.js";
 import { parsePcap } from "../lib/pcap.js";
 import { makeProvider, listModels, listOpenRouterRich, generateImage, transcribeAudio, transcribeAudioViaChat } from "../lib/providers.js";
 import { buildSystemPrompt, activeTools, runConversation } from "../lib/agent.js";
+import { reasoningMenu, isSelfHostedProvider } from "../lib/reasoning.js";
+import { runChatTurn, replyLanguageOf } from "../lib/conversation.js";
 import { SKILLS, GOAL_SYSTEM, ENHANCE_SYSTEM, skillById } from "../lib/skills.js";
 import { executeTool, setAgentTab, clearAgentTab, getAgentTab } from "../lib/tools.js";
 import { initBenchmarkView } from "../lib/benchmarkView.js";
@@ -239,32 +241,74 @@ const sessions = {}; // mode -> { history, transcript, convId, lastUserContent, 
 // any user toggling) so turning Thinking on in Chat never leaks into Agent or the others.
 let initialToggles = null;
 // ── Thinking levels ─────────────────────────────────────────────────────────
-// The Thinking chip is a CYCLING button with three levels: off → high → max → off.
-//   off  = no reasoning (fast, cheap) · high = deep reasoning · max = maximum budget.
-// We keep the current level in the chip's data-level attribute (single source of truth)
-// and persist it as settings.thinkLevel (per-tab in each session's toggles).
-const THINK_LEVELS = ["off", "high", "max"];
+// ⚠️ The chip had three levels for every model — off / on / max — and they were not what the model
+// received: "off" sent nothing (so a model that thinks by default went on thinking), "on" and "max"
+// asked every model to write a <think> block. The levels shown now are the ones the SELECTED model
+// really has (reasoning.js `reasoningMenu`, the table hivey-vscode uses), under the same names —
+// Direct, Bref, Standard, Approfondi, Extrême, Maximum — and each is a real request parameter.
+// Nothing picked ("") = the model's own default on a cloud (nothing sent, nothing billed extra) and
+// Standard on the user's own server. The picked level lives in the hidden chip's data-level
+// (single source of truth) and is persisted as settings.thinkLevel (per-tab in each session).
+const THINK_IDS = ["none", "low", "medium", "high", "xhigh", "max"];
 function thinkLevelNorm(v) {
-  if (v === "high" || v === "max" || v === "off") return v;
-  return v ? "high" : "off"; // back-compat with the old boolean `thinking`
+  if (THINK_IDS.includes(v)) return v;
+  if (v === "high" || v === "max") return v;
+  return v === true ? "high" : ""; // the legacy "off" never turned thinking off: it was "nothing picked"
 }
-function getThink(el) { return thinkLevelNorm(el && el.dataset ? el.dataset.level : "off"); }
+/** The levels the selected model offers: [] when it cannot be steered, the usual four when unknown. */
+function thinkMenu(sel) {
+  const s = sel || currentSelection();
+  if (!s || !s.providerId || isHivey(s.modelId)) return THINK_IDS.slice(0, 4).map((id) => ({ id, native: id }));
+  const menu = reasoningMenu(s.providerId, s.modelId);
+  return menu === undefined ? THINK_IDS.slice(0, 4).map((id) => ({ id, native: id })) : menu;
+}
+/**
+ * The level a turn is sent with: the one picked, when this model has it; otherwise its own default
+ * (a level picked on another model is not forced on one that lacks it); "" when nothing is picked.
+ */
+function effectiveThink(picked, sel) {
+  const lvl = thinkLevelNorm(picked);
+  if (!lvl) return "";
+  const offered = thinkMenu(sel);
+  if (!offered.length) return "";
+  if (offered.some((c) => c.id === lvl)) return lvl;
+  if (lvl === "none") return offered[0].id; // Direct where thinking cannot be off: the least it does
+  const def = offered.find((c) => c.isDefault);
+  return def ? def.id : "";
+}
+function getThink(el) { return effectiveThink(el && el.dataset ? el.dataset.level : "", currentSelection()); }
 function setThink(el, lvl) {
   lvl = thinkLevelNorm(lvl);
   if (!el) return lvl;
   el.dataset.level = lvl;
-  el.classList.toggle("active", lvl !== "off");
-  el.setAttribute("aria-pressed", lvl !== "off" ? "true" : "false");
+  el.classList.toggle("active", !!lvl && lvl !== "none");
+  el.setAttribute("aria-pressed", lvl && lvl !== "none" ? "true" : "false");
   const badge = el.querySelector(".lvl");
-  if (badge) badge.textContent = lvl === "high" ? "H" : lvl === "max" ? "MAX" : "";
-  el.title =
-    lvl === "off" ? t("chip.thinkOff") : lvl === "high" ? t("chip.thinkHigh") : t("chip.thinkMax");
-  if (el.id === "thinking") refreshThinkSegs(lvl);
+  if (badge) badge.textContent = lvl ? t("think.lvl." + lvl) : "";
+  if (el.id === "thinking") refreshThinkSegs();
   return lvl;
 }
-// Reflect the active Thinking level onto its 3 segment buttons (off / on / max).
-function refreshThinkSegs(lvl) {
-  document.querySelectorAll(".ts-btn").forEach((b) => b.classList.toggle("on", b.dataset.lvl === lvl));
+// Rebuild the level buttons for the selected model and light the one in effect: the level picked,
+// or — nothing picked — the model's own default (Standard on a self-hosted server).
+function refreshThinkSegs() {
+  const sel = currentSelection();
+  const offered = thinkMenu(sel);
+  const picked = effectiveThink(els.thinking && els.thinking.dataset.level, sel);
+  const selfHosted = sel && isSelfHostedProvider(sel.providerId);
+  const lit = picked || (selfHosted && offered.some((c) => c.id === "medium") ? "medium" : (offered.find((c) => c.isDefault) || {}).id || "");
+  document.querySelectorAll(".think-seg").forEach((seg) => {
+    const row = seg.closest(".think-row");
+    if (row) row.hidden = !offered.length;
+    seg.replaceChildren(...offered.map((c) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "ts-btn" + (c.id === lit ? " on" : "");
+      b.dataset.lvl = c.id;
+      b.textContent = t("think.lvl." + c.id);
+      b.title = t("think.native", { name: t("think.lvl." + c.id), native: c.native }) + (c.isDefault ? " · " + t("think.default") : "");
+      return b;
+    }));
+  });
 }
 function seedToggles() {
   const src = initialToggles || settings || {};
@@ -280,7 +324,7 @@ function blankSession(m) {
   const toggles = seedToggles();
   // Thinking is a CHAT-ONLY feature — never seed it on for Agent/Translate/Improve/etc.,
   // so enabling it in Chat can't leak into the other tabs.
-  if (m !== "chat") toggles.thinking = "off";
+  if (m !== "chat") toggles.thinking = "";
   return { history: [], transcript: [], convId: newConversationId(), lastUserContent: "", lastRunMode: m, lastForceWeb: false, nodes: null, pageCtxKeys: new Set(), customTitle: "", importedSources: [], toggles };
 }
 // Visual persistence per tab: instead of re-deriving the DOM from `transcript`
@@ -336,7 +380,7 @@ function loadSessionToGlobals(m) {
 function applyModeToggles(m) {
   const tg = getSession(m).toggles || (getSession(m).toggles = seedToggles());
   // Thinking only ever applies on the Chat tab (bulletproofs against any stale state).
-  setThink(els.thinking, m === "chat" ? tg.thinking : "off");
+  setThink(els.thinking, m === "chat" ? tg.thinking : "");
   els.artifactMode.checked = tg.artifacts;
   // Security mode analyses local evidence (pcap/logs) — never auto web-search.
   els.webSearch.checked = m === "security" ? false : tg.webSearch;
@@ -851,14 +895,14 @@ function fillBadge(el, it) {
 }
 // 🐝 Hivey thinking budget by tier: auto reasoning on the "reasoning" tier (where it actually
 // helps), off elsewhere (cheap/utility turns must stay cheap). The user's manual choice wins if higher.
-const THINK_ORDER = { off: 0, high: 1, max: 2 };
+const THINK_ORDER = { "": 0, off: 0, none: 0, low: 1, medium: 2, high: 3, xhigh: 4, max: 5 };
 function hiveyThink(tierKey, userLevel) {
   // 🐝 Hivey Smart = best result, no compromise → MAX reasoning on every turn.
   if (activeHiveyId() === "hivey/smart") return "max";
   // Plan-first: give the AGENT a reasoning budget too (so it plans instead of flailing), plus the
   // reasoning tier. Cheap/utility turns stay off. The user's manual choice still wins if higher.
-  const auto = (tierKey === "reasoning" || tierKey === "agent") ? "high" : "off";
-  const u = userLevel || "off";
+  const auto = (tierKey === "reasoning" || tierKey === "agent") ? "high" : "";
+  const u = userLevel || "";
   return (THINK_ORDER[auto] > THINK_ORDER[u]) ? auto : u;
 }
 // 3-state sort cycle: "" (normal) → "desc" (best/highest first) → "asc" (lowest first) → "".
@@ -1332,6 +1376,7 @@ async function applyModelChoice(value) {
   settings.provider = sel.providerId;
   settings.models = { ...(settings.models || {}), [sel.providerId]: sel.modelId };
   await setSettings({ provider: sel.providerId, models: settings.models });
+  refreshThinkSegs(); // the levels are the new model's own
   return sel;
 }
 
@@ -4153,10 +4198,16 @@ function wire() {
     if (CHAT_MODES.includes(mode)) getSession(mode).toggles.thinking = next;
     await setSettings({ thinkLevel: next });
   }
-  document.querySelectorAll(".think-seg .ts-btn").forEach((b) => {
-    b.addEventListener("click", (e) => { e.preventDefault(); setThinkLevel(b.dataset.lvl); });
+  // Delegated: the buttons are rebuilt for each model (see refreshThinkSegs).
+  document.querySelectorAll(".think-seg").forEach((seg) => {
+    seg.addEventListener("click", (e) => {
+      const b = e.target.closest && e.target.closest(".ts-btn");
+      if (!b) return;
+      e.preventDefault();
+      setThinkLevel(b.dataset.lvl);
+    });
   });
-  refreshThinkSegs(getThink(els.thinking));
+  refreshThinkSegs();
   bindToggle(els.artifactMode, "artifacts", () => setArtifactsLive(els.artifactMode.checked));
   // Web and DeepSearch are two flavours of the SAME thing (web research) → mutually exclusive: turning
   // one ON turns the other OFF, so the user picks EITHER Web OR DeepSearch.
@@ -5572,13 +5623,15 @@ async function onWisebaseSend() {
   try {
     if (currentKeyMissing(sel.providerId)) { addMessage("error", t("err.noKeyModel"), "wisebase"); endBusy(); return; }
     const pending = addPendingIndicator("wisebase");
-    const sink = makeSink("📚 " + t("wb.title"), getThink(els.thinking) !== "off", pending, "wisebase");
+    const sink = makeSink("📚 " + t("wb.title"), true, pending, "wisebase");
     const provider = makeProvider(
       { ...settings, provider: sel.providerId, models: { ...settings.models, [sel.providerId]: sel.modelId } },
-      { thinking: getThink(els.thinking), webSearch: false }
+      { thinkLevel: getThink(els.thinking), webSearch: false }
     );
-    const system = buildSystemPrompt({ agentMode: false, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: "chat", blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked });
-    const turn = await provider.runTurn({ system, history: [{ role: "user", content: modelContent }], tools: [], onText: sink.onText, onThink: sink.onThink, signal });
+    const system = buildSystemPrompt({ agentMode: false, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: "chat", blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked, replyLanguage: replyLanguageOf(q, settings) });
+    // Through lib/conversation.js like the Chat: a cut stream is continued, an oversized set of
+    // passages is reported by the server's own refusal rather than guessed at.
+    const turn = await runChatTurn({ provider, providerId: sel.providerId, modelId: sel.modelId, settings, system, history: [{ role: "user", content: modelContent }], tools: [], onText: sink.onText, onThink: sink.onThink, signal });
     sink.finalize();
     const answer = (turn && turn.text) || sink.getRaw();
     sess.transcript.push({ role: "assistant", text: answer });
@@ -5774,10 +5827,10 @@ async function runDeepSearch(question) {
     const synthContent = `[Question]\n${question}\n\n[Gathered search findings]\n${findBlock}${pageBlock ? `\n\n[Deep-read sources]\n${pageBlock}` : ""}${sourceList ? `\n\n[SOURCES — cite these as [n]; do not use any other URL]\n${sourceList}` : ""}`;
 
     const pending = addPendingIndicator("chat");
-    const sink = makeSink("🔎 " + t("deep.badge"), getThink(els.thinking) !== "off", pending, "chat");
+    const sink = makeSink("🔎 " + t("deep.badge"), true, pending, "chat");
     const provider = makeProvider(
       { ...settings, provider: synthSel.providerId, models: { ...settings.models, [synthSel.providerId]: synthSel.modelId } },
-      { thinking: getThink(els.thinking), webSearch: false }
+      { thinkLevel: getThink(els.thinking), webSearch: false }
     );
     const system = buildSystemPrompt({ agentMode: false, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: "chat", blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked });
     const turn = await provider.runTurn({ system: system + "\n\n" + sysReport, history: [{ role: "user", content: synthContent }], tools: [], onText: sink.onText, onThink: sink.onThink, signal });
@@ -6954,18 +7007,6 @@ function cleanText(s) {
   }
   return out.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
-// Total characters across a native history (≈4 chars/token) — used only to decide
-// WHEN to compact the conversation.
-function historyChars(h) {
-  let n = 0;
-  for (const m of h || []) {
-    const c = m && m.content;
-    if (typeof c === "string") n += c.length;
-    else if (Array.isArray(c)) for (const p of c) n += (p && p.text ? p.text.length : 0);
-  }
-  return n;
-}
-
 // The cheap "housekeeping" model used for summaries / compaction / auto-titles when
 // smartRouting is on, so the premium model the user picked is spent only on answers.
 // settings.utilityModel pins one; "" = auto-pick the cheapest FREE connected model
@@ -7113,65 +7154,8 @@ async function hiveyCodePlan(hid, task, signal) {
   } catch (_) { return ""; }
 }
 
-// Compact a session's NATIVE history when it grows past the budget: summarise the
-// OLD turns with the cheap model and keep only the recent ones verbatim. The UI
-// transcript is untouched — the user still sees everything; only the model payload
-// shrinks (that's the token saving). No-op for agent mode (tool messages) or when
-// disabled. Returns true if it compacted.
-const COMPRESS_TRIGGER_CHARS = 28000; // ~7k tokens of native history → start compacting
-const COMPRESS_KEEP_TAIL = 6;         // recent native messages always kept verbatim
-let compressing = false;
-async function maybeCompressSession(sess, sessMode, signal) {
-  if (!settings.compressHistory || compressing) return false;
-  if (sessMode === "agent") return false; // keep tool-call sequences intact
-  const h = sess.history;
-  if (!Array.isArray(h) || h.length <= COMPRESS_KEEP_TAIL + 2) return false;
-  if (historyChars(h) < COMPRESS_TRIGGER_CHARS) return false;
-  // Find a cut point that keeps the tail starting on a USER message (valid for both
-  // wire formats), so we never break role alternation.
-  let cut = Math.max(1, h.length - COMPRESS_KEEP_TAIL);
-  while (cut < h.length && h[cut].role !== "user") cut++;
-  if (cut >= h.length) return false;
-  const older = h.slice(0, cut);
-  const olderText = older.map((m) => {
-    const c = m.content;
-    const txt = typeof c === "string" ? c : Array.isArray(c) ? c.map((p) => p && p.text || "").join(" ") : "";
-    return `${m.role === "assistant" ? "Assistant" : "User"}: ${txt}`;
-  }).join("\n").slice(0, 24000);
-  if (!olderText.trim()) return false;
-  let summary = "";
-  try {
-    compressing = true;
-    const sel = settings.smartRouting ? utilitySelection() : currentSelection();
-    summary = await runUtilityCompletion(
-      sel,
-      "You compress chat history. Produce a dense, faithful summary that preserves names, facts, decisions, code identifiers and open questions, so the assistant can continue seamlessly. No preamble.",
-      `Summarise the earlier part of this conversation in under 200 words:\n\n${olderText}`,
-      signal
-    );
-  } catch (_) {
-    summary = ""; // on any failure, fall back to a local truncation below
-  } finally {
-    compressing = false;
-  }
-  if (!summary) summary = olderText.slice(0, 1500); // safe local fallback
-  const note = `[Earlier conversation summary — older messages were compacted to save tokens]\n${summary}\n\n[End of summary]`;
-  // Prepend the summary INTO the first kept (user) message so we don't introduce a
-  // stray message that could break alternation on strict APIs.
-  const tail = h.slice(cut);
-  const first = tail[0];
-  if (typeof first.content === "string") {
-    first.content = note + "\n\n" + first.content;
-  } else if (Array.isArray(first.content)) {
-    const ti = first.content.findIndex((p) => p && p.type === "text");
-    if (ti >= 0) first.content[ti] = { ...first.content[ti], text: note + "\n\n" + first.content[ti].text };
-    else first.content.unshift({ type: "text", text: note });
-  }
-  sess.history = tail;
-  if (mode === sessMode) history = sess.history; // keep the live global pointing at the compacted array
-  if (mode === sessMode) addMessage("tool", t("ctx.compacted"));
-  return true;
-}
+// Compaction now lives in lib/conversation.js (runChatTurn): by the selected model's real window,
+// at three quarters of it, as in hivey-vscode — not past a fixed 28 000 characters whatever the model.
 
 function pageContextBlock() {
   if (!currentPage) return "";
@@ -7554,7 +7538,7 @@ async function compareRun(list, btn) {
         );
         const system = buildSystemPrompt({ agentMode: false, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: lastRunMode, blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked, thinkLevel: getThink(els.thinking) });
         cmpPending = addPendingIndicator();
-        const sink = makeSink(badge, getThink(els.thinking) !== "off", cmpPending);
+        const sink = makeSink(badge, true, cmpPending);
         await runConversation({ provider, system, history: [{ role: "user", content: lastUserContent }], tools: [], onText: sink.onText, onThink: sink.onThink, signal: abortController.signal });
         sink.finalize();
         if (sink.getRaw()) transcript.push({ role: "assistant", text: `**${badge}**\n\n${sink.getRaw()}` });
@@ -7746,11 +7730,12 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
     ? buildTurn({ userText: "", untrusted }).messages.slice(0, -1)
     : [];
   let turnHistory;
+  let turnStart = 0;
   if (isolated) {
     turnHistory = [...untrustedMsgs, { role: "user", content: userContent }];
   } else {
-    // Token saving: summarise older turns before this one when the thread is long.
-    await maybeCompressSession(sess, sessMode, abortController && abortController.signal);
+    // Where this question starts: its page block and the question itself are never summarized away.
+    turnStart = boundHistory.length;
     boundHistory.push(...untrustedMsgs, { role: "user", content: userContent });
     turnHistory = boundHistory;
   }
@@ -7761,11 +7746,11 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
     { ...settings, provider: turnSel.providerId, models: { ...settings.models, [turnSel.providerId]: turnSel.modelId } },
     { thinkLevel: effThink, webSearch: webPlugin }
   );
-  const system = buildSystemPrompt({ agentMode, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: runMode, blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked, thinkLevel: effThink, skill: activeSkill ? activeSkill.system : "", goal: goalMode ? GOAL_SYSTEM : "", interactive: agentMode && !!settings.agentInteractive, region: userRegion() });
+  const system = buildSystemPrompt({ agentMode, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: runMode, blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked, thinkLevel: effThink, skill: activeSkill ? activeSkill.system : "", goal: goalMode ? GOAL_SYSTEM : "", interactive: agentMode && !!settings.agentInteractive, region: userRegion(), replyLanguage: replyLanguageOf(displayText || modelContent, settings) });
   const tools = activeTools({ agentMode });
   if (hstep) hstep.set(t("step.generate"));
   const pending = addPendingIndicator(sessMode);
-  const sink = makeSink(badge, getThink(els.thinking) !== "off", pending, sessMode);
+  const sink = makeSink(badge, true, pending, sessMode);
   // Agent mode: collapse the agent's tool calls into ONE foldable "Actions" block for
   // a cleaner, more immersive run — the steps are hidden but consultable on click.
   const agentActs = agentMode ? makeAgentActions() : null;
@@ -7775,8 +7760,12 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
     agentGlowActiveTab();   // glow the page border while the agent works
   }
   try {
-    const runOnce = () => runConversation({
-      provider, system, history: turnHistory, tools,
+    // Through lib/conversation.js: compacted by the model's real window when it nears it, summarized
+    // and asked again when the server says it no longer fits, continued when the stream was cut.
+    const runOnce = () => runChatTurn({
+      provider, providerId: turnSel.providerId, modelId: turnSel.modelId, settings, turnStart,
+      onCompact: (why) => addMessage("tool", why === "overflow" ? t("ctx.overflow") : t("ctx.compacted"), sessMode),
+      system, history: turnHistory, tools,
       onText: sink.onText, onThink: sink.onThink,
       onToolStart: (call) => {
         sink.finalize();

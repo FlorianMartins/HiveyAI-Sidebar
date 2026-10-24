@@ -188,6 +188,7 @@ export async function runTurn(ctx, { maxSteps = 24, signal } = {}) {
   ctx.append("turn/start");
   let steps = 0;
   let lastText = "";
+  let interrupted = false;
   let stopped = false;
 
   while (!stopped) {
@@ -213,7 +214,13 @@ export async function runTurn(ctx, { maxSteps = 24, signal } = {}) {
     const turn = await ctx.waterfall("agent/request", request, (req) => llm.runTurn(req));
 
     lastText = turn.text || "";
-    ctx.append("assistant/message", { text: lastText, raw: turn.message, calls: (turn.toolCalls || []).length });
+    // Whether the reply was cut (the connection closed, or the window filled) travels with it: the
+    // caller decides whether to ask for the rest, and only the last reply of a turn is ever cut.
+    interrupted = Boolean(turn.interrupted);
+    ctx.append("assistant/message", {
+      text: lastText, raw: turn.message, calls: (turn.toolCalls || []).length,
+      ...(turn.interrupted ? { interrupted: true } : {}), ...(turn.stopReason ? { stopReason: turn.stopReason } : {}), ...(turn.usage ? { usage: turn.usage } : {}),
+    });
 
     const calls = turn.toolCalls || [];
     if (calls.length && tools) {
@@ -251,7 +258,7 @@ export async function runTurn(ctx, { maxSteps = 24, signal } = {}) {
   }
 
   ctx.append("turn/end", { reason: "done" });
-  return { text: lastText, steps, done: true, reason: "done" };
+  return { text: lastText, steps, done: true, reason: "done", ...(interrupted ? { interrupted: true } : {}) };
 }
 
 // Inject context the model should see on its next step. Deliberately the ONLY way in, and it
