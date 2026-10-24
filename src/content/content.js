@@ -450,13 +450,23 @@ function setHTML(el, html) { if (el) el.innerHTML = html == null ? "" : html; }
     if (!v.paused) {
       return alreadyPlaying(); // autoplay started it on its own — don't touch it
     }
-    // Genuinely paused → start it MUTED. Firefox always allows muted playback and lets it run
-    // CONTINUOUSLY. We do NOT auto-unmute: a programmatic play WITH SOUND — or unmuting a video that
-    // started without a real user gesture — gets PAUSED ~3 s later by the autoplay policy (that's
-    // the "plays 3 s then stops" bug). So we stay muted; the user clicks 🔊 once (a real gesture)
-    // to get persistent sound, or allows autoplay-with-sound for the site.
-    try { v.muted = true; } catch (_) {}
-    await tryPlay();
+    // Genuinely paused → try WITH SOUND first. ⚠️ « il lance la musique en mute par défaut »: it used
+    // to mute before every play, so even a site the user had allowed to autoplay with sound (Firefox:
+    // 🔒 → Autoplay → Allow Audio and Video; Chrome: a site the user often plays media on) started
+    // silent. A browser that refuses sound without a click on the page rejects play() at once, or
+    // pauses the video within a few seconds — then, and only then, it starts muted, and the hint
+    // says the one setting that gives sound every time. No extension can unmute without a click on
+    // the page: unmuting a video that started silently gets it paused by the autoplay policy.
+    let audible = false;
+    try { v.muted = false; } catch (_) {}
+    if (await tryPlay()) {
+      for (let i = 0; i < 12 && !v.paused; i++) await new Promise((r) => setTimeout(r, 250));
+      audible = !v.paused && !v.muted;
+    }
+    if (!audible) {
+      try { v.muted = true; } catch (_) {}
+      if (v.paused) await tryPlay();
+    }
     return {
       ok: true, playing: !v.paused, muted: !!v.muted,
       hint: v.paused
