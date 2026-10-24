@@ -26,7 +26,7 @@
 <body>
 <main>
   <h1>Hivey AI — Privacy Policy</h1>
-  <p class="muted">Last updated: 23 June 2026</p>
+  <p class="muted">Last updated: 24 October 2026</p>
 
   <div class="card tldr">
     <strong>In short:</strong> Hivey AI is <strong>100% BYOK</strong> (“bring your own key”). It has
@@ -39,7 +39,7 @@
   <h2>1. Who operates this extension</h2>
   <p>Hivey AI is an open-source browser extension developed by Florian Martins. The full source code is
     available at
-    <a href="https://github.com/FlorianMartins/ai-sidebar-open-router">github.com/FlorianMartins/ai-sidebar-open-router</a>.</p>
+    <a href="https://github.com/FlorianMartins/HiveyAI-Sidebar">github.com/FlorianMartins/HiveyAI-Sidebar</a>.</p>
 
   <h2>2. Data the extension handles (all stored locally)</h2>
   <p>The following is kept <strong>only</strong> in your browser via <code>storage.local</code>. It is
@@ -49,6 +49,17 @@
     <li><strong>Your settings</strong> (chosen provider/model, language, layout, toggles, etc.).</li>
     <li><strong>Conversation history</strong>, if you enable saving it (off-by-default options exist; you can clear it any time).</li>
   </ul>
+
+  <h2>2 bis. Anonymisation before a cloud provider</h2>
+  <p>Requests to a <strong>local</strong> model (Ollama, LM Studio, a server on your network) or to
+    <strong>your own gateway</strong> are sent as they are. Before a request leaves for a
+    <strong>cloud</strong> provider, the extension replaces sensitive values — credentials, e-mail
+    addresses, phone numbers, IBANs, card numbers, company and VAT numbers, company names, amounts you
+    write, and any terms you list — with markers such as <code>⟨EMAIL_1⟩</code>, and puts the real
+    values back in the answer on your device. When a request would carry a credential, or personal or
+    company data you did not type yourself, the extension shows you where it is and asks before
+    sending. The level (strict, balanced, credentials only) is set in the extension's settings. The
+    mapping between markers and values lives in memory on your device only and is never sent or logged.</p>
 
   <h2>3. Page, tab and element content</h2>
   <p>When <em>you</em> ask for it — by enabling the “Page” context, picking tabs, using the element

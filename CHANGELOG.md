@@ -10,6 +10,15 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+### Documentation
+
+- **Guide d'utilisation** complet ([docs/GUIDE.md](docs/GUIDE.md)) : installer, choisir entre local,
+  passerelle et cloud, niveaux de réflexion, agent, contexte, confidentialité, chaque onglet.
+- **Nouveautés dans les réglages** : un lien ouvre ce journal, inclus dans l'extension.
+- README, modèle de menaces et politique de confidentialité à jour ; guide de contribution.
+- **Chat** : un message tapé pendant qu'une réponse s'écrit n'est plus perdu — il reste dans le
+  champ, avec un avis.
+
 ### Un contexte maîtrisé, dans tous les onglets
 
 - **Mettre en veille un échange** (question + réponse) : il reste affiché, grisé et marqué « Hors

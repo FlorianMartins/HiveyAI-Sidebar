@@ -27,7 +27,7 @@ echo "  node $(node --version) · npm $(npm --version 2>/dev/null || echo n/a)"
 rm -rf .build
 mkdir -p .build
 rsync -a --delete src icons vendor rules .build/
-cp LICENSE README.md manifest.json .build/
+cp LICENSE README.md CHANGELOG.md manifest.json .build/
 
 FX_ZIP="ai-sidebar-${VER}-firefox.zip"
 python3 - .build "$FX_ZIP" <<'PY'

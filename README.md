@@ -10,6 +10,13 @@ de Firefox ne permet pas. Un équivalent libre n'existait pas.
 **Aucun backend, aucune télémétrie, aucune clé fournie.** Tout (clés, conversations,
 base de connaissance, embeddings) reste dans votre navigateur.
 
+**Confidentialité d'abord** : vous choisissez où tourne le modèle — 🏠 **local** (rien ne sort),
+🔒 **votre passerelle** (vos données restent chez vous) ou ☁️ **cloud** (les données sensibles sont
+anonymisées avant l'envoi, puis remises en clair dans la réponse).
+
+📖 **Nouveau venu ?** Le [guide d'utilisation](docs/GUIDE.md) part de zéro : installer, choisir son
+modèle, réflexion, agent, contexte, confidentialité.
+
 ## 11 espaces de travail
 
 Une **barre latérale d'activité** à gauche (convention « activity bar » façon
@@ -31,6 +38,23 @@ VS Code / Slack — scale mieux qu'une rangée d'onglets) donne accès à :
 
 ## Fonctionnalités
 
+- 🔒 **Confidentialité d'abord — local, passerelle ou cloud** : les fournisseurs sont rangés du plus
+  privé au moins privé. Avant toute requête vers un modèle **cloud**, identifiants secrets, e-mails,
+  téléphones, IBAN, cartes, numéros d'entreprise, noms de sociétés et vos propres termes deviennent
+  des marqueurs (`⟨EMAIL_1⟩`…), constants dans la conversation, **remis en clair** dans la réponse,
+  la réflexion et les actions de l'agent. Une **fenêtre des données sensibles** montre où se trouve
+  chaque donnée (fichier et ligne, page) avant l'envoi : *Envoyer* / *Toujours envoyer (cette
+  conversation)* / *Annuler*. Votre machine et votre passerelle reçoivent vos données telles quelles.
+- 🧠 **Les vrais niveaux de réflexion de chaque modèle** : Direct, Bref, Standard, Approfondi,
+  Extrême, Maximum — seulement ceux que le modèle choisi possède, chacun envoyé comme son fournisseur
+  le documente (table reprise de [Hivey Code](https://github.com/FlorianMartins/hivey-vscode)).
+- 📏 **Aucune limite manuelle** : ni plafond de longueur de réponse, ni nombre d'étapes de l'agent, ni
+  coupe fixe des pages lues — c'est la fenêtre réelle du modèle qui décide. La conversation est
+  résumée d'elle-même à 75 % de cette fenêtre, et un serveur qui la refuse la voit résumée puis la
+  question reposée.
+- 🎛 **Un contexte maîtrisé, dans tous les onglets** : mettre un échange **en veille** (affiché mais
+  plus envoyé), l'**épingler** (gardé mot pour mot dans les résumés), le **supprimer** ; une **jauge
+  de contexte** cliquable pour résumer et libérer la fenêtre.
 - 🐝 **Moteur Hivey — orchestration multi-modèles** : au lieu de choisir un modèle,
   choisissez une **intention**. Trois variantes (**🎁 Free**, **⚡ Smart**, **✨ Pro**)
   routent chaque message vers le meilleur modèle pour la tâche — un dispatcher LLM
@@ -104,10 +128,14 @@ VS Code / Slack — scale mieux qu'une rangée d'onglets) donne accès à :
   **sélection**, Expliquer, Améliorer, **Rédiger une réponse**.
 - 🔍 **Recherche dans la conversation**, **glisser-déposer** de fichiers, et un
   **outil de capture de zone** (📸) qui ajoute une capture d'écran de la page au contexte.
-- 💭 **Thinking** : le raisonnement du modèle (extended thinking de Claude,
-  `reasoning` de DeepSeek / o-series) s'affiche dans un bloc repliable.
+- 💭 **Réflexion** : le raisonnement du modèle (thinking adaptatif de Claude, `reasoning` d'OpenRouter,
+  `reasoning_content` de DeepSeek et des serveurs llama.cpp) s'affiche dans un bloc repliable, et
+  **revient au modèle à l'étape suivante** — il reprend son raisonnement au lieu de tout recommencer.
 - 🤖 **Espace Agent** (onglet dédié) : l'IA peut lire la page/les onglets, naviguer,
-  cliquer, remplir des champs. **Autorisations réglables** : *Autoriser* (par défaut —
+  cliquer, remplir des champs. **Sans limite d'étapes** : il s'arrête quand la tâche est finie, sur
+  ■, ou quand il tourne en rond (la même lecture sans que rien n'ait changé — il écrit alors où il
+  en est). Un message tapé pendant qu'il travaille **corrige sa trajectoire** à l'étape suivante.
+  **Autorisations réglables** : *Autoriser* (par défaut —
   exécution automatique, mais les **actions sensibles** comme télécharger, réserver,
   supprimer, s'inscrire demandent quand même confirmation) ou *validation manuelle*
   (confirmation avant chaque action). Un **liseré lumineux** s'affiche sur la page
@@ -126,7 +154,7 @@ VS Code / Slack — scale mieux qu'une rangée d'onglets) donne accès à :
   préserve preview, terminal et Expo Go.
 - 🔒 **100% BYOK, zéro rétention serveur** : aucune clé fournie, **aucun serveur**,
   aucune télémétrie. Vos clés et données restent **locales** (`storage.local`),
-  jamais synchronisées, envoyées uniquement à l'API que vous choisissez.
+  jamais synchronisées, envoyées uniquement à l'API que vous choisissez — anonymisées si c'est un cloud.
 
 ## Capture
 
@@ -177,6 +205,12 @@ manifest dédié (`side_panel` + service worker au lieu de `sidebar_action`).
 
 ## Fournisseurs
 
+Trois catégories, présentées dans cet ordre dans les réglages :
+🏠 **local** (rien ne quitte la machine), 🔒 **passerelle / serveur personnel** (votre serveur
+compatible OpenAI — une URL hors du réseau local est traitée comme une passerelle), ☁️ **cloud**
+(anonymisation avant l'envoi). La fenêtre de contexte de chaque modèle vient du catalogue OpenRouter
+(régénéré chaque jour) ou, pour votre serveur, de son propre `/v1/models`.
+
 | Fournisseur | Type | Clé requise | Notes |
 |---|---|---|---|
 | Claude (Anthropic) | natif | ✅ | thinking + recherche web ; liste `/v1/models` |
@@ -188,7 +222,7 @@ manifest dédié (`side_panel` + service worker au lieu de `sidebar_action`).
 | OpenRouter | compatible OpenAI | ✅ (ou OAuth) | catalogue géant, **connexion par compte** |
 | Local (Ollama) | compatible OpenAI | ❌ | `http://localhost:11434/v1` |
 | Local (LM Studio) | compatible OpenAI | ❌ | `http://localhost:1234/v1` |
-| Personnalisé | compatible OpenAI | optionnel | n'importe quelle URL `/v1` |
+| Passerelle / serveur personnel | compatible OpenAI | optionnel | n'importe quelle URL `/v1` (llama.cpp, llama-swap, vLLM…) ; budget de réflexion par niveau sur llama.cpp |
 
 > Les serveurs locaux fonctionnent sans configuration CORS : l'extension dispose
 > des *host permissions* et n'est donc pas soumise au CORS du navigateur.
@@ -207,7 +241,16 @@ src/
   options/               Réglages générés dynamiquement (clés BYOK par fournisseur)
   lib/
     models.js            Catalogue des fournisseurs + modèles + presets d'écriture
-    providers.js         Client Anthropic natif + client générique OpenAI ; images
+    providers.js         Client Anthropic natif + client générique OpenAI ; images ; aucun plafond fixe,
+                         champ refusé retiré puis renvoyé, connexion coupée reprise, cache de prompt
+    reasoning.js         Niveaux de réflexion par fournisseur et par modèle (table de Hivey Code)
+    model-catalog.generated.js  GÉNÉRÉ : fenêtres de contexte + profils de réflexion (OpenRouter)
+    conversation.js      Un tour de chat : budget = fenêtre réelle, résumé à 75 %, reprise sur débordement
+    context-control.js   Veille / épingle / suppression par échange (clés `_` jamais envoyées)
+    agent-guards.js      Freins de l'agent : boucles, réflexion qui tourne, fenêtre, correction en route
+    privacy.js           Local / passerelle / cloud ; anonymisation et fenêtre des données sensibles
+    redaction/           Détecteurs, coffre de marqueurs, restitution en flux (repris de Hivey Code)
+    user-language.js     Langue de l'utilisateur (7 langues), nommée au modèle
     harness.js           Noyau de raisonnement : coutures, journal de session, événements
     agent.js             Tour d'agent monté sur le noyau (prompt système + greffons)
     tools.js             Outils navigateur (onglets, DOM) + exécuteur
@@ -232,6 +275,8 @@ src/
     i18n.js / i18n-langs.js  Traductions UI (en, fr, es, de, it, pt)
     dom.js               Point d'insertion HTML unique (audit sécurité)
 tests/                   Suite node:test — `npm test`, aucune dépendance
+bench/                   Banc chat + agent : tâches vérifiées par des faits, web simulé
+scripts/bench.mjs        Lance le banc sur une ou deux versions (`--root`) côte à côte
 scripts/bench-hivey.mjs  Banc de qualité Hivey (routage + code exécuté) ; `--candidates=` = comparatif
 scripts/auto-tier.mjs    Réaffectation des rôles au meilleur modèle MESURÉ (timer hebdomadaire)
 scripts/update-benchmarks.mjs  Collecte des classements publiés (timer quotidien)
@@ -261,11 +306,24 @@ scripts/update-benchmarks.mjs  Collecte des classements publiés (timer quotidie
 - **Les « yeux »** : la sidebar écoute `tabs.onActivated` / `tabs.onUpdated` et les
   notifications SPA du content script ; à chaque navigation elle relit la page,
   l'affiche dans un chip et l'injecte (mode chat) ou la laisse à l'agent (mode agent).
-- **Thinking** : blocs `thinking` d'Anthropic (avec signature conservée pour rester
-  valide au tour suivant) et `reasoning`/`reasoning_content` côté OpenAI/DeepSeek.
+- **Réflexion** : blocs `thinking` d'Anthropic (avec signature conservée pour rester
+  valide au tour suivant), `reasoning_details` d'OpenRouter et `reasoning_content`
+  (DeepSeek, llama.cpp) renvoyés au modèle à l'étape suivante ; les niveaux passent par
+  `reasoning.js` (adaptive + `output_config.effort` sur les Claude récents, `reasoning.effort`
+  sur OpenRouter, `reasoning_effort` ailleurs, budget de réflexion sur llama.cpp).
+- **Aucune limite manuelle** : pas de `max_tokens` fixe (celui qu'exige Anthropic est appris de
+  son refus), pas de plafond d'étapes, sorties d'outils dimensionnées à la fenêtre du modèle ;
+  quand un tour d'agent approche de la fenêtre, les plus anciens résultats sont raccourcis puis le
+  travail est résumé en direct (`context/compacted` dans le journal de session).
 
 ## Sécurité & confidentialité
 
+- **Anonymisation avant le cloud** (`src/lib/privacy.js`, détecteurs de `src/lib/redaction/`) :
+  toutes les requêtes vers un fournisseur cloud — de tous les onglets, tâches annexes comprises —
+  passent par un coffre de marqueurs réversible et constant sur la conversation. Les marqueurs écrits
+  par le modèle sont remis en clair dans la réponse (même coupés entre deux paquets du flux), la
+  réflexion et les **arguments des outils de l'agent**. Une tâche annexe qui devrait demander une
+  confirmation n'est pas envoyée. Le modèle n'est informé des marqueurs que lorsqu'il y en a.
 - **Zéro rétention serveur** : l'extension n'a **aucun backend**. Aucune donnée
   (clés, conversations, contenu des pages) ne transite par un serveur tiers — tout
   reste dans le navigateur et n'est envoyé qu'à l'API IA que **vous** choisissez.
@@ -380,15 +438,33 @@ Menaces, mitigations codées et **résiduels assumés** : [docs/THREAT-MODEL.md]
 
 ```sh
 npm test              # suite complète (node:test, zéro dépendance)
+npm run check:numbers # les chiffres de la doc (version, nombre de tests) sont-ils vrais ?
 npm run models:check  # le catalogue de modèles est-il à jour ?
 npm run vendor:check  # les bibliothèques tierces sont-elles les originaux amont ?
+npm run bench -- --url http://127.0.0.1:8080/v1 --model qwen-27b   # le banc chat + agent
 ```
 
-66 tests couvrent le noyau de raisonnement (tours, étapes, admission avant appel,
-greffons réversibles), le tour d'agent de bout en bout (ce que le fournisseur
-reçoit, ce que l'historique contient ensuite, le vérificateur indépendant), le
-routage Hivey, et **la complétude des six langues** — une clé manquante ne plante
-pas, elle s'affiche telle quelle à l'écran, ce qu'aucun build ne signalait.
+**368 tests** (node:test) couvrent le noyau de raisonnement et le tour d'agent de bout en bout, les
+niveaux de réflexion de chaque fournisseur (le corps exact de chaque requête), l'anonymisation
+(détecteurs, faux positifs, restitution, fenêtre des données sensibles), la gestion du contexte, les
+freins de l'agent, le routage Hivey, et **la complétude des six langues**. Les tests des niveaux de
+réflexion et de l'anonymisation sont ceux de [Hivey Code](https://github.com/FlorianMartins/hivey-vscode),
+transposés.
+
+**CI** (chaque PR et chaque envoi sur `main`) : tests sur Node 20, 22 et 24 (Linux et Windows),
+contrôle des chiffres de la doc, empreinte des bibliothèques tierces, `web-ext lint` de Mozilla sur
+le paquet exact, paquets Firefox et Chromium avec attestation de provenance, CodeQL, gitleaks,
+actionlint + zizmor. `main` est protégée par ces contrôles.
+
+### Le banc chat + agent
+
+`bench/` contient 27 tâches sur les onglets Chat, Agent, Sécurité et Wisebase, décidées par des
+**faits** — un chiffre, une langue, du code exécuté, ce que l'agent a envoyé, visité ou payé —
+jamais par un modèle juge. L'agent y agit avec ses vrais outils sur un **web simulé**
+(`bench/browser.mjs`, mêmes formats que `content.js`), pour mesurer le modèle et l'extension, pas
+l'état d'internet ce jour-là. `scripts/bench.mjs --root DIR` charge le code d'une version donnée :
+deux versions tournent côte à côte sur le même serveur. **Règle** : une modification du chat ou de
+l'agent n'est fusionnée que si elle fait au moins aussi bien que la version précédente.
 
 Le banc `scripts/bench-hivey.mjs` mesure la qualité réelle des variantes Hivey :
 précision du routeur sur un jeu de prompts étiquetés (FR + EN), et exactitude du
@@ -413,7 +489,10 @@ rôle code, en **exécutant** le code produit contre des assertions.
       collecte de données
 - [ ] Soumission **AMO** (canal *listed*)
 - [ ] Soumission **Chrome Web Store**
-- [ ] Capture d'écran du README à régénérer (UI à 10 espaces)
+- [x] **Confidentialité d'abord** : local / passerelle / cloud, anonymisation et fenêtre des données sensibles
+- [x] **Niveaux de réflexion propres à chaque modèle**, sans limite manuelle de longueur ni d'étapes
+- [x] **Contexte maîtrisé** : veille, épingle, suppression par échange, jauge et résumé à la demande
+- [x] **CI/CD** au niveau de Hivey Code + **banc chat + agent** comme condition de fusion
 
 ## Licence
 

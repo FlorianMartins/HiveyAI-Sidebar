@@ -16,7 +16,7 @@ ZIP="ai-sidebar-chrome-${VER}.zip"
 
 rm -rf "$OUT" "$ZIP"
 mkdir -p "$OUT"
-cp -r LICENSE README.md icons src vendor rules "$OUT/"
+cp -r LICENSE README.md CHANGELOG.md icons src vendor rules "$OUT/"
 cp manifest.chrome.json "$OUT/manifest.json"
 
 # Zip with Python (no dependency on the `zip` binary).
