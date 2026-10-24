@@ -13,7 +13,7 @@ import { makeProvider, listModels, listOpenRouterRich, generateImage, transcribe
 import { buildSystemPrompt, activeTools, runConversation } from "../lib/agent.js";
 import { reasoningMenu, isSelfHostedProvider } from "../lib/reasoning.js";
 import { runChatTurn, replyLanguageOf } from "../lib/conversation.js";
-import { Vault, privacyClass } from "../lib/privacy.js";
+import { Vault } from "../lib/privacy.js";
 import { newTurnId, tagTurn, setTurnState, removeTurn } from "../lib/context-control.js";
 import { compactHistory, contextWindowFor, contextBudget, estimateTokens } from "../lib/conversation.js";
 import { SKILLS, GOAL_SYSTEM, ENHANCE_SYSTEM, skillById } from "../lib/skills.js";
