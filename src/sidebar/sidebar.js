@@ -6656,6 +6656,8 @@ function updateModelChip() {
   const slug = sel && sel.providerId ? vendorSlug(sel.providerId, sel.modelId) : undefined;
   const svg = isHivey(sel && sel.modelId) ? null : vendorIcon(slug, 14);
   els.modelIcon.replaceChildren(svg || document.createTextNode(isHivey(sel && sel.modelId) ? "🐝" : "◆"));
+  // On a narrow sidebar only the mark shows: the name stays in the tooltip.
+  els.modelWrap.title = t("model.chipTitle") + (els.modelInput && els.modelInput.value ? " — " + els.modelInput.value : "");
   // As wide as its name, no wider — then the row shrinks it if it must (an <input> has no
   // content-sized width of its own in every engine).
   if (els.modelInput) els.modelInput.style.width = `${Math.min(28, Math.max(6, (els.modelInput.value || "").length + 1))}ch`;

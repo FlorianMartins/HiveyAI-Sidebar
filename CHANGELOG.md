@@ -16,6 +16,9 @@ Version de développement, toujours à jour :
   un élément, onglets ouverts…, surveiller cette page (et, dans Sécurité, les en-têtes de sécurité de
   la page). Les quatre icônes au-dessus de la conversation disparaissent ; il ne reste là que « N
   onglets en contexte » quand il y en a.
+- **Tient dans la sidebar de Firefox** (environ 250 px à l'ouverture) : plus de défilement de côté
+  dans aucun onglet. Quand la place manque, le nom « Hivey » s'efface, puis le modèle et la réflexion
+  se montrent par leur icône (leur nom reste au survol et dans les menus).
 - **Thème clair** : le nom « Hivey » en haut prend la couleur du texte (il était blanc sur fond clair).
 - **Des icônes cohérentes** : `+`, micro, icône du fournisseur, réflexion (une ampoule), options —
   toutes à la même taille et à la couleur de votre thème. **Envoyer** retrouve son rond en dégradé

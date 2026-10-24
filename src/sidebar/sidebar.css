@@ -38,9 +38,8 @@ html.theme-ready body { animation: hvReveal .12s ease-out both; }
 * { box-sizing: border-box; }
 html, body {
   margin: 0; height: 100%;
-  /* Floor the width so the panel never collapses below a usable size
-     (matches a Firefox-native-sidebar-like minimum); narrower drags scroll. */
-  min-width: 320px;
+  /* No width floor: Firefox opens its sidebar about 250 px wide, and every tab fits it (see the
+     narrow-width rules at the end) rather than scrolling sideways. */
   font: 13.5px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
   font-family: var(--ui-font, system-ui, -apple-system, "Segoe UI", sans-serif); /* user-chosen UI font (Settings) */
   /* A single accent glow in the TOP-LEFT corner (dynamic — follows the theme / custom accents),
@@ -87,7 +86,6 @@ body.web-active #searchBtn, body.web-active #historyBtn { display: none; }
    site gets the real width (its own header buttons stay on screen) and the header sheds the
    wordmark, then the provider's name and the full-tab button, so the provider's history button and
    the settings gear stay visible instead of being cut off at the right edge. */
-html:has(> body.web-active), body.web-active { min-width: 0; }
 #webHistory.hidden { display: none; }
 @media (max-width: 420px) { body.web-active .brand-word { display: none; } }
 @media (max-width: 340px) {
@@ -2545,3 +2543,21 @@ body.theme-light { --hv-arc: color-mix(in srgb, var(--accent) 70%, #000); --hv-a
 .composer-tools .ctool.send-btn { background: var(--grad) !important; color: var(--on-accent) !important; border-radius: 50%; }
 .composer-tools .ctool.send-btn:hover { filter: brightness(1.1); }
 body.theme-light .model-chip .combo-input { border: 0 !important; background: transparent !important; box-shadow: none !important; }
+
+/* ── Narrow sidebars (Firefox opens its sidebar about 250 px wide) ─────────────────────────────
+   The header sheds the wordmark; the composer row keeps every control but shows the model and the
+   thinking level by their icons (names in the tooltip and in the menus). */
+@media (max-width: 420px) { .brand-word { display: none; } }
+@media (max-width: 380px) {
+  .composer-tools .model-chip .combo-input, .composer-tools .model-chip .combo-caret,
+  .composer-tools .cchip .tc-label, .composer-tools .cchip .tc-caret { display: none; }
+  .composer-tools .combo.model-chip, .composer-tools .cchip { padding: 0 6px; }
+  .composer-foot .ctx-gauge .cg-tokens { display: none; }
+}
+@media (max-width: 300px) {
+  .topbar #expandTab { display: none; }
+  .composer-box { padding: 6px 6px; }
+  .composer-tools .tools-left, .composer-tools .tools-right { gap: 0; }
+}
+.ctx-pop { width: min(264px, calc(100vw - 16px)); }
+.plus-menu { min-width: min(220px, calc(100vw - 16px)); }
