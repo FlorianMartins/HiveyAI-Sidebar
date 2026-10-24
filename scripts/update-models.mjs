@@ -513,12 +513,18 @@ const EFFORT_WORDS = new Set(["none", "minimal", "low", "medium", "high", "xhigh
 
 function catalogBody(all) {
   const windows = {};
+  const prices = {};
   const reasoning = [];
   const efforts = {};
+  // USD per MILLION tokens: prompt, completion, prompt read from the cache (0 when not offered).
+  const perM = (v) => { const n = Number(v); return Number.isFinite(n) && n >= 0 && n < 1 ? Math.round(n * 1e6 * 10000) / 10000 : null; };
   for (const m of [...all].filter((x) => typeof x.id === "string" && SAFE_ID.test(x.id)).sort((a, b) => a.id.localeCompare(b.id))) {
     if (/:batch$/.test(m.id)) continue;
     const ctx = Number(m.context_length);
     if (Number.isInteger(ctx) && ctx > 0 && ctx < 1e9) windows[m.id] = ctx;
+    const p = m.pricing || {};
+    const pin = perM(p.prompt), pout = perM(p.completion), pcache = perM(p.input_cache_read);
+    if (pin !== null && pout !== null) prices[m.id] = pcache ? [pin, pout, pcache] : [pin, pout];
     if ((m.supported_parameters || []).includes("reasoning")) reasoning.push(m.id);
     const r = m.reasoning;
     if (r && typeof r === "object" && (r.mandatory || Array.isArray(r.supported_efforts))) {
@@ -532,11 +538,14 @@ function catalogBody(all) {
   }
   return `// GENERATED FILE — do not edit by hand.
 // Written daily by \`npm run models\` (scripts/update-models.mjs) from OpenRouter's public /models catalogue.
-// ${Object.keys(windows).length} context windows, ${reasoning.length} reasoning models, ${Object.keys(efforts).length} reasoning profiles.
+// ${Object.keys(windows).length} context windows, ${Object.keys(prices).length} prices, ${reasoning.length} reasoning models, ${Object.keys(efforts).length} reasoning profiles.
 // Profiles — m: thinking cannot be turned off; e: the efforts it accepts; d: its default.
 // https://openrouter.ai/docs/use-cases/reasoning-tokens
 
 export const CONTEXT_WINDOWS = ${JSON.stringify(windows)};
+
+// USD per million tokens: [prompt, completion, prompt read from cache?].
+export const PRICES = ${JSON.stringify(prices)};
 
 export const REASONING_MODELS = ${JSON.stringify(reasoning)};
 

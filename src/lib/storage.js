@@ -145,6 +145,7 @@ const DEFAULTS = {
   cleanContext: true, // strip boilerplate/whitespace/duplicate lines from page & tab
                       // text before sending, AND send a page's content only ONCE per
                       // conversation (not re-attached on every follow-up message).
+  suggestNext: true,     // after an answer, suggest the next request greyed in the composer (Tab takes it)
   verifyAnswers: false,  // OFF by default: Hivey double-checks & auto-fixes each answer only
                          // when the user turns the Verify chip on (it costs extra tokens).
   // Privacy (lib/privacy.js): what a CLOUD request pseudonymizes — "strict" (+ IP addresses,

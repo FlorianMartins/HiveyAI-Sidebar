@@ -13,9 +13,14 @@ import { makeProvider, listModels, listOpenRouterRich, generateImage, transcribe
 import { buildSystemPrompt, activeTools, runConversation } from "../lib/agent.js";
 import { reasoningMenu, isSelfHostedProvider } from "../lib/reasoning.js";
 import { runChatTurn, replyLanguageOf } from "../lib/conversation.js";
-import { Vault } from "../lib/privacy.js";
+import { Vault, privacyClass } from "../lib/privacy.js";
 import { newTurnId, tagTurn, setTurnState, removeTurn } from "../lib/context-control.js";
 import { compactHistory, contextWindowFor, contextBudget, estimateTokens } from "../lib/conversation.js";
+import { costOf, formatUsd, formatTokens } from "../lib/cost.js";
+import { vendorSlug, vendorIcon } from "../lib/vendor-icon.js";
+import { redactsFor } from "../lib/privacy.js";
+import { nextStepMessages, parseNextStep } from "../lib/next-step.js";
+import { detectUserLanguage } from "../lib/user-language.js";
 import { SKILLS, GOAL_SYSTEM, ENHANCE_SYSTEM, skillById } from "../lib/skills.js";
 import { executeTool, setAgentTab, clearAgentTab, getAgentTab } from "../lib/tools.js";
 import { initBenchmarkView } from "../lib/benchmarkView.js";
@@ -178,6 +183,11 @@ const els = {
   confirmBar: $("confirmBar"),
   privacyBar: $("privacyBar"),
   ctxGauge: $("ctxGauge"),
+  privBadge: $("privBadge"),
+  thinkChip: $("thinkChip"),
+  thinkPop: $("thinkPop"),
+  sendBtn: $("sendBtn"),
+  modelIcon: $("modelIcon"),
   privacyText: $("privacyText"),
   privacyList: $("privacyList"),
   privacySend: $("privacySend"),
@@ -311,9 +321,12 @@ function refreshThinkSegs() {
   const picked = effectiveThink(els.thinking && els.thinking.dataset.level, sel);
   const selfHosted = sel && isSelfHostedProvider(sel.providerId);
   const lit = picked || (selfHosted && offered.some((c) => c.id === "medium") ? "medium" : (offered.find((c) => c.isDefault) || {}).id || "");
+  if (els.thinkChip) {
+    els.thinkChip.classList.toggle("hidden", !offered.length);
+    els.thinkChip.querySelector(".tc-label").textContent = lit ? t("think.lvl." + lit) : t("think.default");
+    els.thinkChip.title = t("chip.thinkingTitle") + (lit ? " — " + t("think.lvl." + lit) : "");
+  }
   document.querySelectorAll(".think-seg").forEach((seg) => {
-    const row = seg.closest(".think-row");
-    if (row) row.hidden = !offered.length;
     seg.replaceChildren(...offered.map((c) => {
       const b = document.createElement("button");
       b.type = "button";
@@ -1628,7 +1641,7 @@ function comboPasses(it, q) {
 // Reusable searchable combobox. `input` shows the selected label and is type-to-filter;
 // `menu` is a floating list. `items()` returns {value,label,provider,subprovider,tier,
 // color,group}; `getValue()`/`onPick(value)` read & set the selection.
-function makeCombo({ input, menu, items, getValue, onPick, header }) {
+function makeCombo({ input, menu, items, getValue, onPick, header, onSync }) {
   let openState = false;
   function curLabel() {
     const v = getValue();
@@ -1640,7 +1653,7 @@ function makeCombo({ input, menu, items, getValue, onPick, header }) {
     const id = v.includes("|") ? v.split("|")[1] : v;
     return (HIVEY_VARIANTS[id] && HIVEY_VARIANTS[id].label) || id;
   }
-  function syncLabel() { input.value = curLabel(); } // the trigger always shows the CURRENT model
+  function syncLabel() { input.value = curLabel(); if (onSync) onSync(); } // the trigger always shows the CURRENT model
   let searchEl = null, listEl = null;
   // Rebuild ONLY the rows (keeps the in-menu search input + its focus intact).
   function buildList() {
@@ -1702,7 +1715,9 @@ function makeCombo({ input, menu, items, getValue, onPick, header }) {
     menu.classList.remove("hidden");
     const wrap = (input.closest && input.closest(".combo")) || input;
     const r = wrap.getBoundingClientRect();
-    menu.style.minWidth = Math.max(Math.round(r.width), 300) + "px"; // as wide as the model picker
+    // A chip in the composer is narrow: the list takes the composer's width (and at least 300 px).
+    const box = (wrap.closest && wrap.closest(".composer-box")) || wrap;
+    menu.style.minWidth = Math.max(Math.round(box.getBoundingClientRect().width), 300) + "px";
     const mw = menu.offsetWidth, mh = menu.offsetHeight;
     const left = Math.max(8, Math.min(r.left, window.innerWidth - mw - 8));
     let top = r.bottom + 4;
@@ -2813,25 +2828,10 @@ function setMode(next) {
   const composeExtras = ["chat", "agent", "translate", "improve", "image", "security", "wisebase", "pdf"].includes(next);
   els.attachBtn.hidden = !composeExtras;
   if (!composeExtras && attachments.length) clearAttachments();
-  // On the Chat tab the "+" sits at the bottom-left (beside the toggles), with the 🎙 mic
-  // right after it; on every other tab the "+" sits next to the text in the first row and the
-  // mic stays at the end of that row.
-  // Stop button: stays in the bottom-right toggles row on Chat/Web/Code; on the other composer tabs
-  // (agent/translate/improve/image/pdf/security) it sits just LEFT of the mic on the input row.
-  const stopLeftOfMic = !["chat", "web", "code", "wisebase"].includes(next);
-  const toolsRight = document.querySelector(".tools-right");
-  if (["chat", "wisebase"].includes(next)) {
-    // Wisebase uses the EXACT Chat composer layout (attach + mic bottom-left, stop on the right).
-    els.toolsLeft.appendChild(els.attachBtn);
-    if (els.dictateBtn) els.toolsLeft.appendChild(els.dictateBtn); // mic to the right of "+"
-  } else {
-    els.composerMain.insertBefore(els.attachBtn, els.input);
-    if (stopLeftOfMic && els.stop) els.composerMain.appendChild(els.stop); // stop → left of the mic
-    if (els.dictateBtn) els.composerMain.appendChild(els.dictateBtn); // mic at the row's end
-  }
-  if (!stopLeftOfMic && els.stop && toolsRight && els.stop.parentElement !== toolsRight) {
-    toolsRight.appendChild(els.stop); // back to its home on Chat/Web/Code
-  }
+  // The composer is the same on every tab (attach, dictate, model, thinking — then options and
+  // send/stop); only the thinking chip depends on whether the tab talks to a chat model.
+  els.thinkChip.classList.toggle("tab-off", !["chat", "agent", "translate", "improve", "security", "wisebase", "pdf"].includes(next));
+  closeThinkPop();
   els.modelFilterPanel.classList.add("hidden");
   if (mainCombo) mainCombo.close();
   document.body.classList.toggle("mode-code", next === "code");
@@ -2850,6 +2850,7 @@ function setMode(next) {
   document.body.classList.toggle("mode-benchmark", next === "benchmark");
   if (next === "benchmark") benchmarkView().open();
   els.input.placeholder = placeholderFor(next);
+  showSuggestion(CHAT_MODES.includes(next) ? getSession(next).suggestion : null);
   applyModeModel(next); // each tab keeps its own model — restore it before the picker refreshes
   refreshModelUI(); // Image tab lists image models; others list chat models.
   if (CHAT_MODES.includes(next)) restoreMode(next); // re-attach this tab's own message nodes
@@ -3584,6 +3585,7 @@ function renderTranscriptItem(item) {
     el.appendChild(body);
     enhanceArtifacts(body);
     el._raw = item.text || "";
+    if (item.usage) answerMeta(el, item.usage, item.cost);
     if (item.turnId) el._ctxTurn = item.turnId;
     attachAssistantActions(el, () => el._raw);
     if (item.turnId) queueMicrotask(() => applyTurnMarks(item.turnId));
@@ -4134,6 +4136,7 @@ function wire() {
     items: () => (mode === "image" ? imageComboItems() : chatComboItems()),
     getValue: () => mainValue, onPick: onMainPick,
     header: buildMetricToggle,
+    onSync: updateModelChip,
   });
   // Close the combo menu when clicking outside it; also cancel element-pick mode when
   // the user clicks back in the sidebar (anywhere but the pick button).
@@ -4291,6 +4294,7 @@ function wire() {
       if (!b) return;
       e.preventDefault();
       setThinkLevel(b.dataset.lvl);
+      closeThinkPop();
     });
   });
   refreshThinkSegs();
@@ -4555,8 +4559,18 @@ function wire() {
     else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); closePalette(); }
   }, true);
   els.input.addEventListener("keydown", (e) => {
+    // The suggested next request (greyed in the empty box): Tab or → makes it the message.
+    const sug = getSession(mode).suggestion;
+    if (sug && !els.input.value && (e.key === "Tab" || e.key === "ArrowRight") && !e.shiftKey) {
+      e.preventDefault();
+      els.input.value = sug;
+      els.input.setSelectionRange(sug.length, sug.length);
+      showSuggestion(null);
+      return;
+    }
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(); }
   });
+  els.input.addEventListener("input", () => { if (els.input.value) showSuggestion(null); });
   // Global Enter: send even when focus left the composer (e.g. after picking the
   // translation language or image size in a <select>) — no need to click back in.
   // Real text fields (search boxes, model filter) keep their own Enter behaviour.
@@ -4605,6 +4619,12 @@ function wire() {
   els.input.addEventListener("input", onComposerInput);
   els.stop.addEventListener("click", () => abortController && abortController.abort());
   if (els.ctxGauge) els.ctxGauge.addEventListener("click", () => compactNow());
+  if (els.sendBtn) els.sendBtn.addEventListener("click", () => onSend());
+  if (els.thinkChip) els.thinkChip.addEventListener("click", (e) => { e.stopPropagation(); toggleThinkPop(); });
+  if (els.privBadge) els.privBadge.addEventListener("click", () => browser.runtime.openOptionsPage());
+  document.addEventListener("mousedown", (e) => {
+    if (els.thinkPop && !els.thinkPop.classList.contains("hidden") && !els.thinkPop.contains(e.target) && !els.thinkChip.contains(e.target)) closeThinkPop();
+  });
   // + New: on the Web tab it resets the embedded site (fresh session, like the provider's own
   // "new chat"); otherwise it starts a new Hivey conversation.
   els.newChat.addEventListener("click", () => {
@@ -5731,8 +5751,11 @@ async function onWisebaseSend() {
     }
     sink.finalize();
     const answer = (turn && turn.text) || sink.getRaw();
-    sess.transcript.push({ role: "assistant", text: answer, turnId });
+    const wbCost = costOf(sel.providerId, sel.modelId, turn && turn.usage, settings);
+    sess.transcript.push({ role: "assistant", text: answer, turnId, ...(turn && turn.usage ? { usage: turn.usage } : {}), ...(wbCost ? { cost: wbCost } : {}) });
     const aEl = sink.getEl();
+    if (aEl) answerMeta(aEl, turn && turn.usage, wbCost);
+    suggestNextAfter(q, answer, sess, "wisebase", sel);
     if (aEl) { aEl._raw = answer; aEl._ctxTurn = turnId; attachAssistantActions(aEl, () => answer); }
     try { await saveSession(sess, "wisebase", sel); } catch (_) {}
     if (mode === "wisebase") updateCtxGauge();
@@ -6444,13 +6467,19 @@ function applyTurnMarks(id) {
     let tag = b.querySelector(":scope > .ctx-tag");
     const label = e.muted ? "⏸ " + t("ctx.tag.muted") : e.pinned ? "📌 " + t("ctx.tag.pinned") : "";
     if (!label) { if (tag) tag.remove(); continue; }
-    if (!tag) { tag = document.createElement("div"); tag.className = "ctx-tag"; b.prepend(tag); }
+    if (!tag) {
+      tag = document.createElement("button");
+      tag.type = "button";
+      tag.className = "ctx-tag";
+      tag.addEventListener("click", () => { const cur = turnEntry(id) || {}; setTurnFlags(id, cur.muted ? { muted: false } : { pinned: false }); });
+      b.prepend(tag);
+    }
     tag.textContent = label;
     tag.title = e.muted ? t("ctx.tag.mutedTitle") : t("ctx.tag.pinnedTitle");
     const mute = b.querySelector(".mact-bar .mctxmute");
-    if (mute) mute.title = e.muted ? t("ctx.unmute") : t("ctx.mute");
+    if (mute) { mute.title = e.muted ? t("ctx.unmute") : t("ctx.mute"); const w = mute.querySelector(".mact-word"); if (w) w.textContent = e.muted ? t("ctx.btn.unmute") : t("ctx.btn.mute"); mute.classList.toggle("on", !!e.muted); }
     const pin = b.querySelector(".mact-bar .mctxpin");
-    if (pin) { pin.title = e.pinned ? t("ctx.unpin") : t("ctx.pin"); pin.classList.toggle("on", !!e.pinned); }
+    if (pin) { pin.title = e.pinned ? t("ctx.unpin") : t("ctx.pin"); const w = pin.querySelector(".mact-word"); if (w) w.textContent = e.pinned ? t("ctx.btn.unpin") : t("ctx.btn.pin"); pin.classList.toggle("on", !!e.pinned); }
   }
 }
 function setTurnFlags(id, patch) {
@@ -6466,11 +6495,21 @@ function setTurnFlags(id, patch) {
 function addContextActions(bar, el) {
   if (!el || !el._ctxTurn) return;
   const id = el._ctxTurn;
-  bar.appendChild(makeActBtn("mctxmute", STANDBY_GLYPH, t("ctx.mute"), () => {
+  // Labelled, not icon-only: « il n'y a sur aucun onglet la possibilité de mettre un message en
+  // standby » — the icons were there and nobody could tell what they were.
+  const labelled = (cls, glyph, title, word, fn) => {
+    const b = makeActBtn(cls + " mact-labelled", glyph, title, fn);
+    const w = document.createElement("span");
+    w.className = "mact-word";
+    w.textContent = word;
+    b.appendChild(w);
+    return b;
+  };
+  bar.appendChild(labelled("mctxmute", STANDBY_GLYPH, t("ctx.mute"), t("ctx.btn.mute"), () => {
     const e = turnEntry(id) || {};
     setTurnFlags(id, { muted: !e.muted });
   }));
-  bar.appendChild(makeActBtn("mctxpin", PIN_GLYPH, t("ctx.pin"), () => {
+  bar.appendChild(labelled("mctxpin", PIN_GLYPH, t("ctx.pin"), t("ctx.btn.pin"), () => {
     const e = turnEntry(id) || {};
     setTurnFlags(id, { pinned: !e.pinned });
   }));
@@ -6479,6 +6518,109 @@ function addContextActions(bar, el) {
 // ----- The context gauge ------------------------------------------------------
 // How full the selected model's window is with this conversation — what is actually sent (exchanges
 // in standby left out) — and a click to summarize it and free the context, at any time.
+// The model chip: its maker's mark before the name (hivey-vscode's picker), a generic chip otherwise.
+function updateModelChip() {
+  if (!els.modelIcon) return;
+  const sel = mode === "image" ? parseSel(mainValue || "") : currentSelection();
+  const slug = sel && sel.providerId ? vendorSlug(sel.providerId, sel.modelId) : undefined;
+  const svg = isHivey(sel && sel.modelId) ? null : vendorIcon(slug, 14);
+  els.modelIcon.replaceChildren(svg || document.createTextNode(isHivey(sel && sel.modelId) ? "🐝" : "◆"));
+  // As wide as its name, no wider — then the row shrinks it if it must (an <input> has no
+  // content-sized width of its own in every engine).
+  if (els.modelInput) els.modelInput.style.width = `${Math.min(28, Math.max(6, (els.modelInput.value || "").length + 1))}ch`;
+  updatePrivBadge();
+}
+// Where the selected model runs, said under the composer: 🏠 local, 🔒 your gateway, ☁️ cloud.
+function updatePrivBadge() {
+  const b = els.privBadge;
+  if (!b) return;
+  const sel = currentSelection();
+  if (!sel || !sel.providerId) { b.classList.add("hidden"); return; }
+  const cls = privacyClass(sel.providerId, settings);
+  const anon = cls === "cloud" && redactsFor(sel.providerId, settings);
+  b.classList.remove("hidden");
+  b.dataset.kind = cls;
+  b.textContent = t("priv.badge." + cls) + (anon ? " · " + t("priv.badge.anon") : "");
+  b.title = t("priv.badgeTitle." + cls);
+}
+function positionThinkPop() {
+  const r = els.thinkChip.getBoundingClientRect();
+  const p = els.thinkPop;
+  const left = Math.max(8, Math.min(r.left, window.innerWidth - p.offsetWidth - 8));
+  p.style.left = left + "px";
+  p.style.top = Math.max(8, r.top - p.offsetHeight - 6) + "px";
+}
+function toggleThinkPop() {
+  if (!els.thinkPop) return;
+  const opening = els.thinkPop.classList.contains("hidden");
+  if (!opening) return closeThinkPop();
+  refreshThinkSegs();
+  els.thinkPop.classList.remove("hidden");
+  els.thinkChip.setAttribute("aria-expanded", "true");
+  positionThinkPop();
+}
+function closeThinkPop() {
+  if (!els.thinkPop) return;
+  els.thinkPop.classList.add("hidden");
+  if (els.thinkChip) els.thinkChip.setAttribute("aria-expanded", "false");
+}
+// ----- The suggested next request (lib/next-step.js) ---------------------------
+/** Show a suggestion greyed in the empty composer, or put the tab's usual placeholder back. */
+function showSuggestion(text) {
+  if (!text) {
+    if (CHAT_MODES.includes(mode)) getSession(mode).suggestion = null;
+    els.input.placeholder = placeholderFor(mode);
+    els.input.classList.remove("has-suggestion");
+    return;
+  }
+  els.input.placeholder = `${text}   ⇥ ${t("suggest.tab")}`;
+  els.input.classList.add("has-suggestion");
+}
+/**
+ * Ask for the next request once a turn is over — a side task: thinking off, the same model (or the
+ * Hivey preset's cheap tier), pseudonymized for a cloud and never asking (a value that would need the
+ * sensitive-data window simply means no suggestion). Dropped if the conversation moved on meanwhile.
+ */
+async function suggestNextAfter(question, answer, sess, m, sel) {
+  if (settings.suggestNext === false || !answer || !String(answer).trim() || !sess) return;
+  const convAt = sess.convId, lenAt = sess.transcript.length;
+  try {
+    const hid = isHivey(sel.modelId) ? sel.modelId : null;
+    const use = hid ? ensureUsable(parseSel(hiveyTiers(hid).utility || hiveyTiers(hid).chat), hid) : sel;
+    const provider = makeProvider({ ...settings, provider: use.providerId, models: { ...settings.models, [use.providerId]: use.modelId } }, {});
+    const { system, history } = nextStepMessages(question, answer, detectUserLanguage(String(question || ""), getLang() === "fr" ? "fr" : "en"));
+    const r = await provider.runTurn({ system, history, tools: [], chore: true });
+    const next = parseNextStep(r && r.text);
+    if (!next || sess.convId !== convAt || sess.transcript.length !== lenAt) return;
+    sess.suggestion = next;
+    if (mode === m && !busy && !els.input.value) showSuggestion(next);
+  } catch (_) { /* no suggestion: nothing to say about it */ }
+}
+
+/** What the conversation has cost so far, from its answers: `{ usd, exact, any }`. */
+function conversationCost(sess) {
+  let usd = 0, exact = true, any = false;
+  for (const e of sess.transcript || []) {
+    if (!e || !e.cost || e.cost.free) continue;
+    any = true;
+    usd += e.cost.usd || 0;
+    if (!e.cost.exact) exact = false;
+  }
+  return { usd, exact, any };
+}
+/** The small line under an answer: tokens in → out, and what it cost. */
+function answerMeta(el, usage, cost) {
+  if (!el || !usage || !(usage.promptTokens || usage.completionTokens)) return;
+  let line = el.querySelector(":scope > .answer-meta");
+  if (!line) { line = document.createElement("div"); line.className = "answer-meta"; el.appendChild(line); }
+  const lang = getLang();
+  const parts = [t("cost.tokens", { in: formatTokens(usage.promptTokens || 0, lang), out: formatTokens(usage.completionTokens || 0, lang) })];
+  if (cost && cost.free) parts.push(t("cost.free"));
+  else if (cost) parts.push(formatUsd(cost.usd, { exact: cost.exact, lang }));
+  line.textContent = parts.join(" · ");
+  line.title = cost && !cost.free ? (cost.exact ? t("cost.exactTitle") : t("cost.estimateTitle")) : "";
+}
+
 let gaugeSeq = 0;
 async function updateCtxGauge() {
   const g = els.ctxGauge;
@@ -6486,7 +6628,7 @@ async function updateCtxGauge() {
   const seq = ++gaugeSeq;
   const sess = CHAT_MODES.includes(mode) && mode !== "image" ? getSession(mode) : null;
   const hist = (sess && sess.history) || [];
-  if (!hist.length) { g.classList.add("hidden"); return; }
+  if (!sess) { g.classList.add("hidden"); return; }
   const sel = currentSelection();
   let win = 0;
   try { win = sel && sel.providerId && !isHivey(sel.modelId) ? await contextWindowFor(settings, sel.providerId, sel.modelId) : 0; } catch (_) { win = 0; }
@@ -6499,6 +6641,10 @@ async function updateCtxGauge() {
   g.classList.toggle("warn", pct >= 60);
   g.classList.toggle("full", pct >= 75);
   g.querySelector(".cg-pct").textContent = pct + " %";
+  const lang = getLang();
+  g.querySelector(".cg-tokens").textContent = `${formatTokens(used, lang)} / ${formatTokens(budget, lang)}`;
+  const spent = conversationCost(sess);
+  g.querySelector(".cg-cost").textContent = spent.any ? formatUsd(spent.usd, { exact: spent.exact, lang }) : "";
   g.title = t("ctx.gauge", { pct, used: used.toLocaleString(), budget: budget.toLocaleString(), model: (sel && sel.modelId) || "?" }) + (win ? "" : " " + t("ctx.gaugeUnknown"));
 }
 async function compactNow() {
@@ -7303,13 +7449,15 @@ async function getSelection() {
 }
 function startBusy() {
   busy = true;
-  els.stop.classList.remove("hidden"); // Stop button appears while streaming (no Send button — Enter sends)
+  els.stop.classList.remove("hidden"); // Stop replaces Send while the model works
+  if (els.sendBtn) els.sendBtn.classList.add("hidden");
   const cb = document.querySelector(".composer-box");
   if (cb) cb.classList.add("is-busy"); // AI working → coloured frame (animation only when focused)
   abortController = new AbortController();
 }
 function endBusy() {
   els.stop.classList.add("hidden");
+  if (els.sendBtn) els.sendBtn.classList.remove("hidden");
   const cb = document.querySelector(".composer-box");
   if (cb) cb.classList.remove("is-busy");
   abortController = null;
@@ -7958,8 +8106,9 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
     // on ANY error — EXCEPT a data-policy gate, which is account-wide so trying other free
     // models would just repeat the same error (we surface the fix link for that one instead).
     let attempt = 0;
+    let turnResult = null;
     while (true) {
-      try { await runOnce(); break; }
+      try { turnResult = await runOnce(); break; }
       catch (runErr) {
         const kind = classifyOpenRouterError(turnSel.providerId, runErr && runErr.message);
         // NEVER replay an AGENT run: re-running the conversation re-executes its tools (it would
@@ -7988,9 +8137,14 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
     markTabDone(sessMode, boundConvId); // dot on the workspace icon if the user has switched away
     if (sink.getRaw()) {
       maybePlayDone(); // optional "answer ready" chime (Settings → Appearance toggle)
-      boundTranscript.push({ role: "assistant", text: sink.getRaw(), badge: badge || undefined, turnId });
+      // What this answer cost: OpenRouter's own figure, else priced from the catalogue (cost.js).
+      const usage = turnResult && turnResult.usage;
+      const cost = costOf(turnSel.providerId, turnSel.modelId, usage, settings);
+      boundTranscript.push({ role: "assistant", text: sink.getRaw(), badge: badge || undefined, turnId, ...(usage ? { usage } : {}), ...(cost ? { cost } : {}) });
       const ansIdx = sess.transcript.length - 1; // slot to REPLACE if it gets corrected
       const aEl = sink.getEl();
+      if (aEl) answerMeta(aEl, usage, cost);
+      if (!["translate", "improve"].includes(runMode)) suggestNextAfter(displayText || modelContent, sink.getRaw(), sess, sessMode, turnSel);
       if (aEl) { aEl._raw = sink.getRaw(); aEl._ctxTurn = turnId; aEl._modelSel = sel.providerId && sel.modelId ? `${sel.providerId}|${sel.modelId}` : ""; attachAssistantActions(aEl, sink.getRaw); }
       // Versioning: tie this answer to its user bubble (non-agent chat turns) so an in-place edit
       // keeps the previous answer switchable via ‹ k/n › arrows. Fresh sends create version 0;
@@ -8081,6 +8235,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
 // ----- Send dispatch (per mode) ---------------------------------------------
 async function onSend() {
   resetComposerHeight();
+  showSuggestion(null);
   if (mode === "translate") return runTranslateFromInput();
   if (mode === "improve") return runImproveFromInput();
   if (mode === "image") return runImageFromInput();
