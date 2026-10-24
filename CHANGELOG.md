@@ -15,6 +15,10 @@ Version de développement, toujours à jour :
 - Ces quatre langues étaient proposées dans les réglages, mais l'interface restait en anglais (seul
   le français était appliqué). Elles s'appliquent maintenant, ainsi qu'à la dictée et à la langue de
   réponse par défaut.
+- Les quatre langues ES/DE/IT/PT sont maintenant complètes dans l'interface : les libellés qui
+  restaient en anglais (Wisebase, analyses de sécurité, tons et longueurs d'Améliorer, raccourcis
+  clavier, catégories de la bibliothèque de prompts, chats web, accueil…) sont traduits. Les
+  consignes envoyées au modèle pour ces nouvelles fonctions restent en anglais.
 
 ### L'agent et la musique sur Firefox : un seul clic, avec le son
 
