@@ -226,7 +226,143 @@ function loginWorld() {
   });
 }
 
+// ── Booking: a form to fill (destination, dates, guests) on two hotel sites ─────────────────
+// What a booking site is: a search form first, then results that depend on it, then a detail page
+// whose last button would commit. The best answer needs both sites and the TOTAL for the stay.
+const HOTELS = {
+  "reserva-hotels.fr": [
+    { name: "Hôtel du Lac", night: 139, rating: 8.7, free: true },
+    { name: "Les Marquisats", night: 162, rating: 9.1, free: true },
+    { name: "Ibis Annecy Centre", night: 98, rating: 7.9, free: true },
+    { name: "Le Pré Carré", night: 145, rating: 8.9, free: false },
+  ],
+  "sejour-direct.com": [
+    { name: "Hôtel du Lac", night: 131, rating: 8.7, free: true },
+    { name: "Le Belvédère", night: 149, rating: 8.6, free: true },
+    { name: "Les Marquisats", night: 158, rating: 9.1, free: true },
+  ],
+};
+function bookingSite(host, label) {
+  const base = `https://www.${host}`;
+  return {
+    [base]: () => ({
+      title: `${label} — réservez votre hôtel`,
+      text: `${label}\nTrouvez votre hôtel au meilleur prix.\nDestination · Arrivée · Départ · Adultes\nMes réservations · Connexion · Aide`,
+      elements: [
+        { tag: "input", name: "destination", text: "Destination" },
+        { tag: "input", name: "arrivee", text: "Date d'arrivée", type: "date" },
+        { tag: "input", name: "depart", text: "Date de départ", type: "date" },
+        { tag: "input", name: "adultes", text: "Adultes", type: "number" },
+        button("Rechercher", ({ state }) => {
+          const f = state.fields;
+          return `/recherche?dest=${encodeURIComponent(f.destination || "")}&in=${encodeURIComponent(f.arrivee || "")}&out=${encodeURIComponent(f.depart || "")}&ad=${encodeURIComponent(f.adultes || "")}`;
+        }),
+        { tag: "form", text: "", onSubmit: ({ state }) => { const f = state.fields; return `/recherche?dest=${encodeURIComponent(f.destination || "")}&in=${encodeURIComponent(f.arrivee || "")}&out=${encodeURIComponent(f.depart || "")}&ad=${encodeURIComponent(f.adultes || "")}`; } },
+        link("Mes réservations", "/compte/reservations"),
+      ],
+    }),
+    [`${base}/recherche`]: ({ query }) => {
+      const ok = /annecy/i.test(query.get("dest") || "") && /14/.test(query.get("in") || "") && /16/.test(query.get("out") || "");
+      if (!ok) return { title: `${label} — recherche`, text: "Précisez la destination et les dates de votre séjour (arrivée et départ) pour voir les disponibilités.", elements: [link("Nouvelle recherche", "/")] };
+      const list = HOTELS[host];
+      return {
+        title: `${label} — Annecy, 14 → 16 nov., ${query.get("ad") || "?"} adulte(s)`,
+        text: `${list.length} hôtels disponibles à Annecy pour 2 nuits\n` + list.map((h) => `• ${h.name} — ${h.night} € / nuit — note ${String(h.rating).replace(".", ",")}/10${h.free ? " — annulation gratuite" : ""}`).join("\n"),
+        elements: list.map((h, i) => link(h.name, `/hotel/${i}?in=${query.get("in")}&out=${query.get("out")}`)),
+      };
+    },
+    [`${base}/hotel`]: () => ({ title: `${label}`, text: "Hôtel introuvable." }),
+    ...Object.fromEntries(HOTELS[host].map((h, i) => [`${base}/hotel/${i}`, () => ({
+      title: `${h.name} — ${label}`,
+      text: `${h.name} — Annecy\nNote ${String(h.rating).replace(".", ",")}/10\n${h.night} € / nuit · 2 nuits : total ${h.night * 2} € taxes comprises${h.free ? "\nAnnulation gratuite jusqu'à 48 h avant l'arrivée" : ""}`,
+      elements: [button("Réserver maintenant", ({ state }) => { state.booked = h.name; return null; }), link("Retour aux résultats", "/")],
+    })])),
+  };
+}
+function hotelWorld() {
+  return createBrowser({
+    tabs: ["https://duckduckgo.com/"],
+    sites: { ...bookingSite("reserva-hotels.fr", "Réserva-Hôtels"), ...bookingSite("sejour-direct.com", "Séjour-Direct") },
+    search: [
+      { title: "Réserva-Hôtels — réservez votre hôtel", url: "https://www.reserva-hotels.fr", snippet: "Comparez et réservez des hôtels en France et en Europe." },
+      { title: "Séjour-Direct — hôtels au meilleur prix", url: "https://www.sejour-direct.com", snippet: "Réservation d'hôtels, prix garantis." },
+    ],
+  });
+}
+
+// ── Trains: a search form, results, the right one after a time ─────────────────────────────
+function trainWorld() {
+  const trains = [
+    { dep: "07:34", arr: "09:30", direct: true, price: 89 },
+    { dep: "08:04", arr: "10:42", direct: false, price: 45 },
+    { dep: "08:52", arr: "10:48", direct: true, price: 72 },
+    { dep: "09:56", arr: "11:52", direct: true, price: 39 },
+  ];
+  return createBrowser({
+    tabs: ["https://www.rail-express.fr/"],
+    sites: {
+      "https://www.rail-express.fr": () => ({
+        title: "Rail Express — billets de train",
+        text: "Rail Express\nDe · À · Date · Passagers\nRechercher un trajet",
+        elements: [
+          { tag: "input", name: "from", text: "De" }, { tag: "input", name: "to", text: "À" }, { tag: "input", name: "date", text: "Date", type: "date" },
+          button("Rechercher", ({ state }) => `/trajets?from=${encodeURIComponent(state.fields.from || "")}&to=${encodeURIComponent(state.fields.to || "")}&date=${encodeURIComponent(state.fields.date || "")}`),
+          { tag: "form", text: "", onSubmit: ({ state }) => `/trajets?from=${encodeURIComponent(state.fields.from || "")}&to=${encodeURIComponent(state.fields.to || "")}&date=${encodeURIComponent(state.fields.date || "")}` },
+        ],
+      }),
+      "https://www.rail-express.fr/trajets": ({ query }) => {
+        const ok = /paris/i.test(query.get("from") || "") && /lyon/i.test(query.get("to") || "") && /20/.test(query.get("date") || "");
+        if (!ok) return { title: "Rail Express — trajets", text: "Aucun trajet : vérifiez la gare de départ, la gare d'arrivée et la date.", elements: [link("Nouvelle recherche", "/")] };
+        return { title: "Paris → Lyon, 20 novembre", text: "Trajets Paris Gare de Lyon → Lyon Part-Dieu, jeudi 20 novembre\n" + trains.map((x) => `• ${x.dep} → ${x.arr} — ${x.direct ? "direct" : "1 correspondance"} — ${x.price} €`).join("\n") };
+      },
+    },
+  });
+}
+
+// ── Deep research: the answer is spread over three pages of one site ──────────────────────────
+function museumWorld() {
+  return createBrowser({
+    tabs: ["https://duckduckgo.com/"],
+    search: [
+      { title: "Musée des Confluences d'Arvel — site officiel", url: "https://www.musee-arvel.fr", snippet: "Horaires, tarifs, expositions du musée d'Arvel." },
+      { title: "Visiter le musée d'Arvel — blog Sorties", url: "https://sorties-blog.fr/musee-arvel", snippet: "Notre avis sur le musée d'Arvel (2022)." },
+    ],
+    sites: {
+      "https://www.musee-arvel.fr": () => ({ title: "Musée d'Arvel", text: "Musée d'Arvel — expositions permanentes et temporaires.\nInfos pratiques · Tarifs · Questions fréquentes", elements: [link("Infos pratiques", "/infos"), link("Tarifs", "/tarifs"), link("Questions fréquentes", "/faq")] }),
+      "https://www.musee-arvel.fr/infos": () => ({ title: "Infos pratiques — Musée d'Arvel", text: "Horaires 2026 : du mardi au dimanche, 10 h – 18 h. Le lundi : ouvert de 13 h à 18 h pendant les vacances scolaires, fermé le reste de l'année.", elements: [link("Tarifs", "/tarifs"), link("Questions fréquentes", "/faq")] }),
+      "https://www.musee-arvel.fr/tarifs": () => ({ title: "Tarifs — Musée d'Arvel", text: "Plein tarif : 14 €. Tarif réduit (étudiants, 12-17 ans) : 9 €. Enfant de moins de 12 ans : gratuit.", elements: [link("Questions fréquentes", "/faq")] }),
+      "https://www.musee-arvel.fr/faq": () => ({ title: "Questions fréquentes — Musée d'Arvel", text: "Les tarifs s'appliquent selon l'âge le jour de la visite. Un justificatif peut être demandé.", elements: [] }),
+      "https://sorties-blog.fr/musee-arvel": () => ({ title: "Visiter le musée d'Arvel (2022)", text: "Article de 2022 : le musée est fermé le lundi, entrée 11 € pour les adultes.", elements: [] }),
+    },
+  });
+}
+
 export const AGENT_TASKS = [
+  {
+    id: "agent-booking-hotels",
+    tab: "agent",
+    world: hotelWorld,
+    turns: ["Trouve-moi un hôtel à Annecy du 14 au 16 novembre pour 2 adultes, à moins de 150 € la nuit, avec une note d'au moins 8,5. Compare Réserva-Hôtels et Séjour-Direct et donne-moi le meilleur prix total pour le séjour. Ne réserve pas."],
+    // Under 150 €/night and ≥ 8,5: Hôtel du Lac (139 / 131), Le Pré Carré (145, Réserva only), Le
+    // Belvédère (149, Séjour only). Cheapest stay: Hôtel du Lac on Séjour-Direct, 2 × 131 = 262 €.
+    check: ({ answer, browser }) => pass(/h[ôo]tel du lac/i.test(answer) && /s[ée]jour[- ]direct/i.test(answer) && numbersIn(answer).includes(262) && !browser.state.booked, "Hôtel du Lac on Séjour-Direct, 262 € for the stay, nothing booked"),
+  },
+  {
+    id: "agent-booking-train",
+    tab: "agent",
+    world: trainWorld,
+    turns: ["Sur Rail Express, trouve le premier train direct Paris → Lyon le 20 novembre qui part après 8 h, et donne-moi son heure de départ et son prix."],
+    check: ({ answer }) => pass(/8\s*[h:]\s*52/.test(answer) && numbersIn(answer).includes(72), "08:52, direct, 72 €"),
+  },
+  {
+    id: "agent-deep-research",
+    tab: "agent",
+    world: museumWorld,
+    turns: ["Le musée d'Arvel est-il ouvert un lundi de novembre hors vacances scolaires, et combien coûte l'entrée pour 2 adultes et un enfant de 14 ans ? Vérifie sur le site officiel."],
+    // Closed on a Monday outside the school holidays; 14 + 14 + 9 = 37 €. The 2022 blog says 11 € a head.
+    check: ({ answer }) => pass(/ferm/i.test(answer) && numbersIn(answer).includes(37), "closed that Monday, 37 €"),
+  },
+
   {
     id: "agent-price-compare",
     tab: "agent",

@@ -46,8 +46,24 @@ Ouvrez ⚙ **Réglages** → **Fournisseurs**. Ils sont rangés du plus privé a
 - **Cloud** : collez une clé API, ou utilisez **« Se connecter avec OpenRouter »** (connexion par
   compte, sans clé à copier).
 
-Le modèle se choisit ensuite dans la liste juste au-dessus du champ de saisie. Seuls les
-fournisseurs connectés y apparaissent.
+Dès le **premier lancement**, trois boutons : OpenRouter, « 🏠 Modèle local » (trouve Ollama ou
+LM Studio sur votre machine) et « 🔒 Ma passerelle / mon serveur » (URL + clé, vérifiées sur place).
+
+Le modèle se choisit ensuite **dans la zone de saisie** : la puce qui porte l'icône du fournisseur et
+le nom du modèle. Seuls les fournisseurs connectés y apparaissent. La zone de saisie est la même dans
+tous les onglets :
+
+| Élément | Rôle |
+|---|---|
+| `+`, 🎤 | joindre un fichier, dicter |
+| **puce du modèle** (icône du fournisseur) | changer de modèle |
+| **puce de réflexion** (✦ Standard…) | le niveau de réflexion, voir §4 |
+| **Envoyer** / **■** | envoyer ; arrêter pendant la réponse |
+| sous le cadre, à gauche | où tourne le modèle : 🏠 Local, 🔒 Votre passerelle, ☁️ Cloud · anonymisé |
+| sous le cadre, à droite | le contexte rempli (anneau, %, jetons) et, pour un modèle cloud, le coût de la conversation |
+
+Les réglages propres à un onglet (langue, style, taille d'image, collection Wisebase…) sont des
+puces en haut du cadre.
 
 ## 3. Le Chat : questions, page en contexte, recherche web
 
@@ -60,10 +76,16 @@ fournisseurs connectés y apparaissent.
   pièce jointe hors du contexte sans la retirer.
 - **La langue** : le modèle répond dans la langue de votre question, quelle qu'elle soit, même
   après avoir lu une page dans une autre langue.
+- **Le coût** : sous chaque réponse d'un modèle cloud, les jetons envoyés → reçus et le prix (exact
+  quand OpenRouter le donne, sinon estimé d'après les prix publics et marqué « ≈ »). Gratuit en local
+  et sur votre passerelle.
+- **Suggestion de la prochaine demande** : après une réponse, une suite proposée apparaît en grisé
+  dans le champ ; **Tab** (ou →) la reprend, il suffit sinon de taper autre chose. Désactivable dans
+  les réglages.
 
 ## 4. Les niveaux de réflexion
 
-Dans les options du champ de saisie, la ligne **Réflexion** propose **les niveaux que le modèle
+La **puce de réflexion** de la zone de saisie (à côté du modèle) propose **les niveaux que le modèle
 choisi possède vraiment**, et seulement ceux-là :
 
 | Niveau | Effet |
@@ -79,7 +101,8 @@ modèle cloud garde son propre réglage par défaut (rien de plus n'est facturé
 travaille en **Standard**. Un niveau choisi pour un modèle que le suivant ne possède pas est
 remplacé par le niveau par défaut de ce dernier.
 
-La réflexion s'affiche dans un bloc « Réflexion » repliable au-dessus de la réponse.
+La réflexion s'affiche dans un bloc « Réflexion » **replié** au-dessus de la réponse (il clignote
+pendant que le modèle réfléchit) ; un clic l'ouvre.
 
 ## 5. L'Agent : il agit dans le navigateur
 
@@ -91,24 +114,36 @@ L'onglet 🤖 **Agent** lit les pages, navigue, clique, remplit des formulaires,
   il vous dit alors où il en est.
 - **Corrigez-le en route** : tapez un message pendant qu'il travaille ; il le lit à l'étape
   suivante (« ↪ Transmis à l'agent »), sans devoir l'arrêter.
+- **Réservations et voyages** : il remplit le formulaire de recherche des sites (destination, dates,
+  voyageurs), applique vos critères, lit le total du séjour ou du trajet sur la page de l'offre et
+  compare les sites dans un tableau. Il s'arrête **avant** le bouton qui réserve.
+- **Recherche approfondie** : il part de la source officielle et en suit les pages jusqu'à avoir
+  répondu à chaque partie de la question, avec les liens des sources.
+- **Ce qu'il fait reste lisible** : chaque bloc « Réflexion » est suivi des actions qu'il a décidées,
+  dans l'ordre (📄 lecture, 🖱️ clic, ⌨️ saisie…) ; un clic sur une action en montre le détail.
 - **Il ne paiera jamais** : le garde-fou anti-achat est dans le code ; il s'arrête au panier. Les
-  actions très sensibles (téléchargement, réservation, suppression, inscription) vous sont
-  demandées même en mode « Autoriser ».
+  actions très sensibles — télécharger, **le bouton qui réserve** (« Réserver maintenant »,
+  « Confirmer la réservation »), supprimer, s'inscrire, installer — vous sont demandées même en mode
+  « Autoriser ». Chercher, comparer et ouvrir une offre ne le sont pas.
+- **Musique et vidéos** : « mets-moi … » lance la vidéo avec le son ; si le navigateur l'interdit, elle
+  démarre en muet et l'agent vous le dit.
 - Pour les longues tâches, il résume lui-même son travail quand la fenêtre du modèle se remplit,
   et continue.
 
 ## 6. Garder un contexte propre
 
 Tout ce qui reste dans la conversation est relu par le modèle à chaque question. Une fausse piste
-ou un long journal déjà analysé « tirent » les réponses suivantes. Au survol d'une bulle :
+ou un long journal déjà analysé « tirent » les réponses suivantes. Sous chaque message :
 
 | Bouton | Effet |
 |---|---|
-| ⏸ **Mettre en veille** | l'échange (votre question + la réponse) reste affiché, grisé, marqué « Hors contexte », mais **n'est plus envoyé**. Un nouveau clic le remet. |
+| ⏸ **Veille** | l'échange (votre question + la réponse) reste affiché, grisé, marqué « Hors contexte », mais **n'est plus envoyé**. Un nouveau clic le remet. |
 | 📌 **Épingler** | l'échange est gardé **mot pour mot** quand la conversation est résumée |
 | 🗑 **Supprimer** | l'échange disparaît de l'écran et du contexte |
 
-La **jauge de contexte** (petit anneau près du champ de saisie) montre la part de la fenêtre du
+Un clic sur l'étiquette « Hors contexte » remet aussi l'échange dans le contexte.
+
+La **jauge de contexte** (l'anneau sous la zone de saisie, avec le pourcentage) montre la part de la fenêtre du
 modèle qu'occupe ce qui est réellement envoyé. Elle devient orange puis rouge ; **un clic résume la
 conversation** et libère le contexte (tout reste affiché). La conversation se résume aussi d'elle-même
 à 75 % de la fenêtre, et si un serveur répond qu'elle ne tient plus, elle est résumée puis la

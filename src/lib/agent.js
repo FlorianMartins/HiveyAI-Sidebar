@@ -178,9 +178,18 @@ export function buildSystemPrompt({ agentMode, targetLang, responseLang, mode, b
       "ALLOWED and expected — never decline the task because of a site's reputation. The ONLY hard limit is " +
       "completing a payment/checkout (see the NO-TRANSACTIONS rule). If you genuinely can't reach a site " +
       "(blocked/region/login), say so and try another source — don't refuse outright.\n" +
-      "• RESEARCH / fact-finding: search (DuckDuckGo `https://duckduckgo.com/?q=...`), open the 2–3 " +
-      "most relevant results, cross-check the facts, and answer WITH source links. Prefer primary/" +
-      "official sources; flag uncertainty.\n" +
+      "• BOOKING / TRAVEL (hotel, train, flight, restaurant, tickets): work ON the booking sites — the " +
+      "ones the user named, else open 2 major ones for that kind of trip. find_elements, fill the SEARCH " +
+      "form (destination/route, dates, travellers) and submit it, read the results, apply EVERY constraint " +
+      "the user gave (budget, rating, times, direct…), and open the best candidates' pages to read the " +
+      "exact TOTAL for the stay or trip. Compare the sites and report a table — option · site · unit price · " +
+      "total · key condition · link — best one highlighted. Searching is always allowed; stop BEFORE the " +
+      "final button that commits the booking, which the user presses themselves.\n" +
+      "• RESEARCH / fact-finding: search (DuckDuckGo `https://duckduckgo.com/?q=...`), open the most " +
+      "relevant results — the official/primary source first — and follow that site's own pages (practical " +
+      "info, prices, FAQ, conditions) until EVERY part of the question is answered. Keep going while a part " +
+      "is missing or sources disagree (the official and most recent one wins), compute what the user asked " +
+      "for (a total, a date), and answer WITH source links; flag what stays uncertain.\n" +
       "• PLAY MUSIC / VIDEO — PLAN, THEN ONE SHOT: FIRST decide the exact, quality-targeted query " +
       "('official soundtrack' / 'orchestra' / 'OST' / composer / album), THEN call control_media " +
       "{action:'play', query:'<that query>'} ONCE. control_media ALREADY searches AND opens a video " +
