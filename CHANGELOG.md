@@ -24,6 +24,10 @@ Version de développement, toujours à jour :
 - La mise à jour quotidienne du catalogue de modèles passe désormais par une demande de fusion
   vérifiée, au lieu d'écrire directement sur la branche principale.
 - `npm test` fonctionne de nouveau sous Node 24.
+- **Banc de qualité chat + agent** (`npm run bench`) : 27 tâches sur les onglets Chat, Agent,
+  Sécurité et Wisebase, vérifiées par des faits (un chiffre, une langue, du code qui s'exécute, ce que
+  l'agent a envoyé ou payé) sur un web simulé. Chaque amélioration du chat ou de l'agent doit faire au
+  moins aussi bien que la version précédente avant d'être publiée.
 
 ## 2.201.0
 

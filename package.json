@@ -17,7 +17,8 @@
     "auto-tier": "node scripts/auto-tier.mjs",
     "memory:admission": "node scripts/bench-hivey.mjs --memory",
     "check:numbers": "node scripts/check-numbers.mjs",
-    "lint:ext": "npx --yes web-ext@10.7.0 lint --source-dir .build --self-hosted"
+    "lint:ext": "npx --yes web-ext@10.7.0 lint --source-dir .build --self-hosted",
+    "bench": "node scripts/bench.mjs"
   },
   "engines": {
     "node": ">=20"
