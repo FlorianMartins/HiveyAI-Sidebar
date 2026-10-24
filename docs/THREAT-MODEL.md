@@ -142,6 +142,37 @@ half and look like security.
 
 ---
 
+## 6. Sensitive data sent to a cloud model
+
+**Vector.** Every request to a cloud provider carries what the user typed, attached or is looking
+at: a customer list in a CSV, an IBAN in a PDF, a colleague's address on a webmail page, a token
+pasted into a question. The provider is a third party; its logs and its retention policy are not
+the user's.
+
+**Impact.** Personal and company data, and credentials, leave the user's control — sometimes
+without the user having noticed they were in the request (a page, a file, a tool result).
+
+**Mitigation in code.** `src/lib/privacy.js` wraps every provider `makeProvider` returns for a
+cloud (`privacyClass` — by what the provider is and where its address points), so no call site can
+forget it: chat, agent, security, wisebase, PDF, side tasks. The detectors of `src/lib/redaction/`
+(credentials by shape and entropy, e-mails, phones, IBAN with mod-97, cards with Luhn, company and
+VAT numbers, company names, amounts, the user's own terms) replace each value with a marker kept
+constant for the conversation; markers are restored in the streamed answer (split markers held
+back), the reasoning, the stored history and the agent's tool arguments. Before a request that
+carries a credential, or personal/company data the user did not type, the user is shown where each
+value is (file and line, page, tool result) — masked — and chooses to send with markers, always
+send for this conversation, or cancel; a side task that would need to ask is not sent. Nothing about
+the values is logged.
+
+**Residual, knowingly accepted.**
+- Detection is by shape: a name, an address written in prose, or a secret with no recognisable shape
+  goes through. The user's term list covers the names that matter to them.
+- Prices on public web pages are left readable on purpose — a model cannot compare or add markers.
+- Images are not pseudonymized (a screenshot sent to a vision model is sent as it is).
+- The user's own gateway is trusted by default; « Trust my own servers » can be switched off.
+
+---
+
 ## What is deliberately out of scope
 
 - **Proactivity.** An assistant that decides on its own when to speak, using memory, is a

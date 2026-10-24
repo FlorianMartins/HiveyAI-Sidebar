@@ -14,6 +14,15 @@ import { setHTML } from "./dom.js";
 let lang = "en";
 
 const EN = {
+  "ct.verify": "Verify",
+  "ct.web": "Web",
+  "ct.deep": "DeepSearch",
+  "ct.artifacts": "Artifacts",
+  "ct.page": "Page",
+  "ct.autoscroll": "Auto-scroll",
+  "ct.thinking": "Thinking",
+  "opt.changelog": "📝 What's new (changelog)",
+  "chat.busyKeep": "⏳ An answer is still being written: your message stays in the box — send it when the answer is done.",
   "img.useAsRef": "Use as reference",
   "img.useAsRefTitle": "Put this image in the context of the next generation (untick it in the attachments to take it out)",
   "img.generatedRef": "Generated image",
@@ -1080,6 +1089,15 @@ const EN = {
 };
 
 const FR = {
+  "ct.verify": "Vérifier",
+  "ct.web": "Web",
+  "ct.deep": "DeepSearch",
+  "ct.artifacts": "Artifacts",
+  "ct.page": "Page",
+  "ct.autoscroll": "Défilement auto",
+  "ct.thinking": "Réflexion",
+  "opt.changelog": "📝 Nouveautés (journal des modifications)",
+  "chat.busyKeep": "⏳ Une réponse est en cours : votre message reste dans le champ — envoyez-le quand elle est terminée.",
   "img.useAsRef": "Utiliser comme référence",
   "img.useAsRefTitle": "Mettre cette image dans le contexte de la prochaine génération (décochez-la dans les pièces jointes pour la retirer)",
   "img.generatedRef": "Image générée",
