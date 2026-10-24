@@ -14,6 +14,7 @@ import { setHTML } from "./dom.js";
 let lang = "en";
 
 const EN = {
+  "chat.busyKeep": "⏳ An answer is still being written: your message stays in the box — send it when the answer is done.",
   "img.useAsRef": "Use as reference",
   "img.useAsRefTitle": "Put this image in the context of the next generation (untick it in the attachments to take it out)",
   "img.generatedRef": "Generated image",
@@ -1080,6 +1081,7 @@ const EN = {
 };
 
 const FR = {
+  "chat.busyKeep": "⏳ Une réponse est en cours : votre message reste dans le champ — envoyez-le quand elle est terminée.",
   "img.useAsRef": "Utiliser comme référence",
   "img.useAsRefTitle": "Mettre cette image dans le contexte de la prochaine génération (décochez-la dans les pièces jointes pour la retirer)",
   "img.generatedRef": "Image générée",

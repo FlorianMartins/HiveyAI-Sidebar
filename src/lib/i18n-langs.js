@@ -3,6 +3,7 @@
 // back to English. Placeholders {name}, HTML tags and emojis are kept verbatim.
 
 export const ES = {
+  "chat.busyKeep": "⏳ Hay una respuesta en curso: su mensaje se queda en el campo; envíelo cuando termine.",
   "img.useAsRef": "Usar como referencia",
   "img.useAsRefTitle": "Poner esta imagen en el contexto de la próxima generación (desmárquela en los adjuntos para quitarla)",
   "img.generatedRef": "Imagen generada",
@@ -873,6 +874,7 @@ export const ES = {
 };
 
 export const DE = {
+  "chat.busyKeep": "⏳ Eine Antwort wird noch geschrieben: Ihre Nachricht bleibt im Feld – senden Sie sie, wenn die Antwort fertig ist.",
   "img.useAsRef": "Als Referenz verwenden",
   "img.useAsRefTitle": "Dieses Bild in den Kontext der nächsten Generierung aufnehmen (in den Anhängen abwählen, um es zu entfernen)",
   "img.generatedRef": "Erzeugtes Bild",
@@ -1743,6 +1745,7 @@ export const DE = {
 };
 
 export const IT = {
+  "chat.busyKeep": "⏳ Una risposta è in corso: il messaggio resta nel campo, invialo quando è terminata.",
   "img.useAsRef": "Usa come riferimento",
   "img.useAsRefTitle": "Metti questa immagine nel contesto della prossima generazione (deselezionala negli allegati per toglierla)",
   "img.generatedRef": "Immagine generata",
@@ -2613,6 +2616,7 @@ export const IT = {
 };
 
 export const PT = {
+  "chat.busyKeep": "⏳ Há uma resposta em curso: a sua mensagem fica no campo — envie-a quando terminar.",
   "img.useAsRef": "Usar como referência",
   "img.useAsRefTitle": "Colocar esta imagem no contexto da próxima geração (desmarque-a nos anexos para a retirar)",
   "img.generatedRef": "Imagem gerada",

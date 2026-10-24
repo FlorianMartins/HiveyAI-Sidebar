@@ -8184,6 +8184,12 @@ async function onChatSend() {
     addMessage("tool", t("agent.steered"), mode);
     return;
   }
+  // A chat answer is being written: the message used to be cleared from the box and then dropped
+  // by the busy turn. It stays in the box until the answer is done.
+  if (busy && text) {
+    addMessage("tool", t("chat.busyKeep"), mode);
+    return;
+  }
   const { imgs, textBlock, meta } = takeAttachments();
   if (!text && !meta.length) return;
   els.input.value = "";
