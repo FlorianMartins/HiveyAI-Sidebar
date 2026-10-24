@@ -143,9 +143,9 @@ export const PROVIDERS = {
       ["z-ai/glm-5.3-prime", "GLM 5.3 Prime (paid)"],
       ["z-ai/glm-5.3-flashx", "GLM 5.3 FlashX (paid)"],
       ["z-ai/glm-5.3-flash", "GLM 5.3 Flash (paid)"],
+      ["moonshotai/kimi-k3.1-pro", "Kimi K3.1 Pro (paid)"],
       ["moonshotai/kimi-k3", "Kimi K3 (paid)"],
       ["moonshotai/kimi-k2.7-code", "Kimi K2.7 Code (paid)"],
-      ["moonshotai/kimi-k2.6", "Kimi K2.6 (paid)"],
     ],
     // <models:openrouter:end>
   },
