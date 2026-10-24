@@ -22,6 +22,7 @@ import { isSelfHostedProvider } from "./reasoning.js";
 import { makeProvider } from "./providers.js";
 import { detectUserLanguage } from "./user-language.js";
 import { t } from "./i18n.js";
+import { activeMessages } from "./context-control.js";
 
 // ── The window ────────────────────────────────────────────────────────────────────────────────
 
@@ -107,7 +108,7 @@ export function contextOverflow(message) {
 export function estimateTokens(messages, system = "") {
   let chars = String(system || "").length;
   let images = 0;
-  for (const m of messages || []) {
+  for (const m of activeMessages(messages)) {
     const c = m && m.content;
     if (typeof c === "string") chars += c.length;
     else if (Array.isArray(c)) {
@@ -124,7 +125,7 @@ export function estimateTokens(messages, system = "") {
 }
 
 /** How many questions the history holds — summarizing two exchanges into fewer is not possible. */
-const exchanges = (h) => (h || []).filter((m) => m && m.role === "user" && !(Array.isArray(m.content) && m.content.every((p) => p && p.type === "tool_result"))).length;
+const exchanges = (h) => activeMessages(h).filter((m) => m && m.role === "user" && !(Array.isArray(m.content) && m.content.every((p) => p && p.type === "tool_result"))).length;
 
 /** hivey-vscode's thresholds: summarized by itself at 75 % of the budget, from 6 000 tokens and 4 exchanges. */
 export const AUTO_COMPACT_RATIO = 0.75;
@@ -168,7 +169,8 @@ const plain = (m) => {
  * starts the kept part (a user message, so the roles still alternate on strict APIs). Messages the
  * user pinned are kept word for word inside the summary's message. Returns whether it compacted.
  */
-export async function compactHistory(history, { provider, signal, keepFrom = history.length - 1, maxChars = 200000 }) {
+export async function compactHistory(history, { provider, signal, keepFrom = history.length - 1, maxChars = 200000, all = false }) {
+  if (all) return compactAll(history, { provider, signal, maxChars });
   // The kept part starts on a question — a user message that is not a batch of tool results, whose
   // calls would then be summarized away from them.
   const isQuestion = (m) => m.role === "user" && !(Array.isArray(m.content) && m.content.some((p) => p && p.type === "tool_result"));
@@ -176,7 +178,11 @@ export async function compactHistory(history, { provider, signal, keepFrom = his
   while (cut > 0 && !isQuestion(history[cut])) cut--;
   if (!isQuestion(history[cut])) return false;
   if (cut <= 0 || cut >= history.length) return false;
-  const older = history.slice(0, cut);
+  // Exchanges the user took out of the context are neither summarized nor lost: they stay, out of
+  // the context, where they can be put back.
+  const outOfContext = history.slice(0, cut).filter((m) => m._muted);
+  const older = history.slice(0, cut).filter((m) => !m._muted);
+  if (!older.length) return false;
   let transcript = older.map((m) => `${m.role === "assistant" ? "ASSISTANT" : m.role === "tool" ? "RESULT" : "USER"}: ${plain(m)}`).join("\n");
   if (transcript.length > maxChars) transcript = `${transcript.slice(0, maxChars * 0.25)}\n[… the middle, left out to fit …]\n${transcript.slice(-maxChars * 0.75)}`;
   if (!transcript.trim()) return false;
@@ -208,7 +214,24 @@ export async function compactHistory(history, { provider, signal, keepFrom = his
   }
   tail[0] = first;
   history.length = 0;
-  history.push(...tail);
+  history.push(...outOfContext, ...tail);
+  return true;
+}
+
+/**
+ * « Résumer maintenant »: the whole conversation into one summary the next question starts from —
+ * the user frees the context themselves. Exchanges out of the context are kept as they are.
+ */
+async function compactAll(history, { provider, signal, maxChars }) {
+  const outOfContext = history.filter((m) => m._muted);
+  const active = history.filter((m) => !m._muted);
+  if (exchanges(active) < 1) return false;
+  const marker = { role: "user", content: "", _summaryAnchor: true };
+  const work = [...active, marker];
+  if (!(await compactHistory(work, { provider, signal, keepFrom: work.length - 1, maxChars }))) return false;
+  const note = String(work[work.length - 1].content || "").trim();
+  history.length = 0;
+  history.push(...outOfContext, { role: "user", content: note }, { role: "assistant", content: "Noted — I will continue from this summary." });
   return true;
 }
 

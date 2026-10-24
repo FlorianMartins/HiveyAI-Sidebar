@@ -338,7 +338,8 @@ export async function runConversation({
       const compaction = all.filter((x) => x.type === "context/compacted").at(-1);
       if (compaction && e.seq <= compaction.upTo) return null;
       if (e.type === "context/compacted") return e === compaction ? { role: "user", content: e.text } : null;
-      if (e.type === "user/message") return e.native || { role: "user", content: e.text };
+      // An exchange the user took out of the context stays in the history, and is not sent.
+      if (e.type === "user/message") return e.native ? (e.native._muted ? null : e.native) : { role: "user", content: e.text };
       if (e.type === "assistant/message") return e.raw;
       if (e.type === "tool/result") {
         const first = all.find((x) => x.type === "tool/result" && x.step === e.step);
@@ -462,8 +463,10 @@ export async function runConversation({
 
   // Callers keep a reference to the array they passed in and persist it afterwards, so the
   // conversation is written back into that same array rather than returned as a new one.
+  // Exchanges out of the context were not sent, and are written back all the same — in place.
   if (Array.isArray(history)) {
-    const derived = ctx.deriveMessages(ctx.get("llm").project);
+    const project = ctx.get("llm").project;
+    const derived = ctx.deriveMessages((e, i, all) => (e.type === "user/message" && e.native && e.native._muted ? e.native : project(e, i, all)));
     history.length = 0;
     history.push(...derived);
   }

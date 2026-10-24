@@ -10,6 +10,21 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+### Un contexte maîtrisé, dans tous les onglets
+
+- **Mettre en veille un échange** (question + réponse) : il reste affiché, grisé et marqué « Hors
+  contexte », mais n'est plus envoyé au modèle — une fausse piste, un long journal déjà analysé, une
+  réponse hors sujet ne tirent plus les réponses suivantes. Un clic le remet dans le contexte.
+- **Épingler un échange** : il est gardé mot pour mot quand la conversation est résumée.
+- **Supprimer un échange** l'efface de l'écran et du contexte, question et réponse ensemble.
+- **Jauge de contexte** à côté du champ de saisie : la part de la fenêtre du modèle choisi qu'occupe
+  ce qui est réellement envoyé (les échanges en veille ne comptent pas) ; elle passe à l'orange puis
+  au rouge, et **un clic résume la conversation** pour libérer le contexte, tout restant affiché.
+- Disponible dans **Chat, Agent, Sécurité, Traduire, Améliorer, PDF et Wisebase** — qui devient
+  multi-tours (une question de suivi voit les précédentes). Dans l'onglet **Image**, chaque image
+  générée peut être **utilisée comme référence** de la génération suivante (et décochée pour la
+  retirer).
+
 ### Confidentialité d'abord : local, passerelle ou cloud — et anonymisation avant le cloud
 
 - **Trois façons d'utiliser un modèle, clairement séparées** dans les réglages : 🏠 **Local** (rien
