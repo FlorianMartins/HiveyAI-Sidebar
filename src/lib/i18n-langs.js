@@ -3,6 +3,13 @@
 // back to English. Placeholders {name}, HTML tags and emojis are kept verbatim.
 
 export const ES = {
+  "ct.verify": "Verificar",
+  "ct.web": "Web",
+  "ct.deep": "DeepSearch",
+  "ct.artifacts": "Artifacts",
+  "ct.page": "Página",
+  "ct.autoscroll": "Desplazamiento auto",
+  "ct.thinking": "Razonamiento",
   "opt.changelog": "📝 Novedades (registro de cambios)",
   "chat.busyKeep": "⏳ Hay una respuesta en curso: su mensaje se queda en el campo; envíelo cuando termine.",
   "img.useAsRef": "Usar como referencia",
@@ -875,6 +882,13 @@ export const ES = {
 };
 
 export const DE = {
+  "ct.verify": "Prüfen",
+  "ct.web": "Web",
+  "ct.deep": "DeepSearch",
+  "ct.artifacts": "Artifacts",
+  "ct.page": "Seite",
+  "ct.autoscroll": "Auto-Scroll",
+  "ct.thinking": "Denken",
   "opt.changelog": "📝 Neuigkeiten (Änderungsprotokoll)",
   "chat.busyKeep": "⏳ Eine Antwort wird noch geschrieben: Ihre Nachricht bleibt im Feld – senden Sie sie, wenn die Antwort fertig ist.",
   "img.useAsRef": "Als Referenz verwenden",
@@ -1747,6 +1761,13 @@ export const DE = {
 };
 
 export const IT = {
+  "ct.verify": "Verifica",
+  "ct.web": "Web",
+  "ct.deep": "DeepSearch",
+  "ct.artifacts": "Artifacts",
+  "ct.page": "Pagina",
+  "ct.autoscroll": "Scorrimento auto",
+  "ct.thinking": "Ragionamento",
   "opt.changelog": "📝 Novità (registro delle modifiche)",
   "chat.busyKeep": "⏳ Una risposta è in corso: il messaggio resta nel campo, invialo quando è terminata.",
   "img.useAsRef": "Usa come riferimento",
@@ -2619,6 +2640,13 @@ export const IT = {
 };
 
 export const PT = {
+  "ct.verify": "Verificar",
+  "ct.web": "Web",
+  "ct.deep": "DeepSearch",
+  "ct.artifacts": "Artifacts",
+  "ct.page": "Página",
+  "ct.autoscroll": "Rolagem auto",
+  "ct.thinking": "Raciocínio",
   "opt.changelog": "📝 Novidades (registo de alterações)",
   "chat.busyKeep": "⏳ Há uma resposta em curso: a sua mensagem fica no campo — envie-a quando terminar.",
   "img.useAsRef": "Usar como referência",

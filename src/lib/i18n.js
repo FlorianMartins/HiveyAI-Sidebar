@@ -14,6 +14,13 @@ import { setHTML } from "./dom.js";
 let lang = "en";
 
 const EN = {
+  "ct.verify": "Verify",
+  "ct.web": "Web",
+  "ct.deep": "DeepSearch",
+  "ct.artifacts": "Artifacts",
+  "ct.page": "Page",
+  "ct.autoscroll": "Auto-scroll",
+  "ct.thinking": "Thinking",
   "opt.changelog": "📝 What's new (changelog)",
   "chat.busyKeep": "⏳ An answer is still being written: your message stays in the box — send it when the answer is done.",
   "img.useAsRef": "Use as reference",
@@ -1082,6 +1089,13 @@ const EN = {
 };
 
 const FR = {
+  "ct.verify": "Vérifier",
+  "ct.web": "Web",
+  "ct.deep": "DeepSearch",
+  "ct.artifacts": "Artifacts",
+  "ct.page": "Page",
+  "ct.autoscroll": "Défilement auto",
+  "ct.thinking": "Réflexion",
   "opt.changelog": "📝 Nouveautés (journal des modifications)",
   "chat.busyKeep": "⏳ Une réponse est en cours : votre message reste dans le champ — envoyez-le quand elle est terminée.",
   "img.useAsRef": "Utiliser comme référence",
