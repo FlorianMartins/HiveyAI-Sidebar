@@ -76,6 +76,12 @@ const els = {
   filterClose: $("filterClose"),
   freeConnect: $("freeConnect"),
   emptyOptions: $("emptyOptions"),
+  onbLocal: $("onbLocal"),
+  onbGateway: $("onbGateway"),
+  onbGatewayForm: $("onbGatewayForm"),
+  onbGwUrl: $("onbGwUrl"),
+  onbGwKey: $("onbGwKey"),
+  onbStatus: $("onbStatus"),
   historyBtn: $("historyBtn"),
   newChat: $("newChat"),
   openOptions: $("openOptions"),
@@ -159,7 +165,6 @@ const els = {
   deepSearch: $("deepSearch"),
   deepSeg: $("deepSeg"),
   pageCtx: $("pageCtx"),
-  autoScroll: $("autoScroll"),
   verifyAnswers: $("verifyAnswers"),
   dictateBtn: $("dictateBtn"),
   translateLang: $("translateLang"),
@@ -1438,6 +1443,54 @@ async function doFreeConnect() {
   } finally {
     els.freeConnect.disabled = false;
     els.freeConnect.textContent = prev;
+  }
+}
+
+// First run, privacy first: a model on this machine, or the user's own server, in two clicks —
+// next to OpenRouter rather than behind "Other providers". Both are checked on the spot: the
+// server's own model list answers, and its first model is selected.
+function onbSay(text, bad) {
+  els.onbStatus.textContent = text;
+  els.onbStatus.classList.toggle("bad", !!bad);
+  els.onbStatus.classList.remove("hidden");
+}
+async function onbUse(providerId, patch, models) {
+  Object.assign(settings, patch);
+  settings.provider = providerId;
+  settings.models = { ...(settings.models || {}), [providerId]: models[0] };
+  await setSettings({ ...patch, provider: providerId, models: settings.models });
+  populateModelSelector();
+  autoListConnected();
+  refreshModelUI();
+  updateEmptyState();
+  flashTopBanner(t("onboard.connected", { model: models[0] }));
+}
+async function doLocalConnect() {
+  onbSay(t("onboard.localSearching"));
+  for (const id of ["ollama", "lmstudio"]) {
+    try {
+      const models = await listModels(id, { ...settings, localEnabled: { ...(settings.localEnabled || {}), [id]: true } });
+      if (models && models.length) {
+        return onbUse(id, { localEnabled: { ...(settings.localEnabled || {}), [id]: true } }, models);
+      }
+    } catch (_) { /* not running: try the next one */ }
+  }
+  onbSay(t("onboard.localNone"), true);
+}
+async function doGatewayConnect(e) {
+  e.preventDefault();
+  let url = els.onbGwUrl.value.trim().replace(/\/+$/, "");
+  if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+  if (!/\/v\d+$/.test(url)) url += "/v1";
+  const key = els.onbGwKey.value.trim();
+  onbSay(t("onboard.gwChecking"));
+  try {
+    const trial = { ...settings, baseUrls: { ...(settings.baseUrls || {}), custom: url }, keys: { ...(settings.keys || {}), custom: key } };
+    const models = await listModels("custom", trial);
+    if (!models || !models.length) throw new Error(t("onboard.gwNoModel"));
+    await onbUse("custom", { baseUrls: trial.baseUrls, keys: trial.keys }, models);
+  } catch (err) {
+    onbSay(t("onboard.gwFailed", { msg: err && err.message ? err.message : String(err) }), true);
   }
 }
 
@@ -4271,12 +4324,6 @@ function wire() {
   els.pageCtx.addEventListener("change", () => { if (els.pageCtx.checked) ensurePagePermission(); });
   // Auto-scroll is a GLOBAL preference (not per-tab): whether the view follows the AI's
   // answer as it streams. OFF = stay put so you can read/scroll freely while it types.
-  els.autoScroll.checked = settings.autoScroll !== false;
-  els.autoScroll.addEventListener("change", async () => {
-    settings.autoScroll = els.autoScroll.checked;
-    await setSettings({ autoScroll: settings.autoScroll });
-    if (els.autoScroll.checked) scrollMessages(true);
-  });
   // Verification is also a GLOBAL preference: when ON, Hivey double-checks & auto-fixes
   // each substantive answer (extra tokens); OFF = no check (cheaper/faster).
   els.verifyAnswers.checked = settings.verifyAnswers === true;
@@ -4586,6 +4633,9 @@ function wire() {
   });
   els.modelConnect.addEventListener("click", () => browser.runtime.openOptionsPage());
   if (els.emptyOptions) els.emptyOptions.addEventListener("click", () => browser.runtime.openOptionsPage());
+  if (els.onbLocal) els.onbLocal.addEventListener("click", () => doLocalConnect());
+  if (els.onbGateway) els.onbGateway.addEventListener("click", () => { els.onbGatewayForm.classList.toggle("hidden"); if (!els.onbGatewayForm.classList.contains("hidden")) els.onbGwUrl.focus(); });
+  if (els.onbGatewayForm) els.onbGatewayForm.addEventListener("submit", doGatewayConnect);
   if (els.freeConnect) els.freeConnect.addEventListener("click", doFreeConnect);
 
   // 🌐 Web chats — embed the provider web UIs (Gemini/Claude/ChatGPT/Copilot/Mistral) so you
@@ -5907,150 +5957,11 @@ async function runDeepSearch(question) {
   }
 }
 
-// ----- 🧠 Mindmap / Flowchart (Mermaid) --------------------------------------
-// Turn any answer (or pasted text / hand-written Mermaid) into a diagram, rendered IN-PAGE via
-// mermaid.render (not a sandboxed iframe) so we can export it as SVG or PNG. The mermaid lib is
-// already vendored; we load it into the page lazily on first use.
-let mermaidPagePromise = null;
-let mmOverlayEl = null;
-function mermaidThemeForCurrent() { return document.body.classList.contains("theme-light") ? "default" : "dark"; }
-function loadMermaidInPage() {
-  if (mermaidPagePromise) return mermaidPagePromise;
-  mermaidPagePromise = new Promise((resolve, reject) => {
-    if (window.mermaid) return resolve(window.mermaid);
-    const s = document.createElement("script");
-    s.src = browser.runtime.getURL("vendor/mermaid.min.js");
-    s.onload = () => {
-      try { window.mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: mermaidThemeForCurrent(), htmlLabels: false, flowchart: { htmlLabels: false } }); resolve(window.mermaid); }
-      catch (e) { reject(e); }
-    };
-    s.onerror = () => reject(new Error("mermaid load failed"));
-    document.head.appendChild(s);
-  });
-  return mermaidPagePromise;
-}
-function stripFences(code) {
-  let c = (code || "").trim();
-  const m = c.match(/```(?:mermaid)?\s*([\s\S]*?)```/i);
-  if (m) c = m[1].trim();
-  return c;
-}
+// Save a Blob as a file (Wisebase export).
 function downloadBlob(blob, name) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a"); a.href = url; a.download = name; document.body.appendChild(a); a.click();
   a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
-}
-
-async function openMindmapFrom(sourceText) {
-  const src = (sourceText || "").trim();
-  if (!src) { flashTopBanner(t("mind.empty")); return; }
-  openMindmapPanel();
-  setMindmapState("loading", t("mind.generating"));
-  try {
-    const sel = resolveHivey(currentSelection(), "chat", src);
-    if (currentKeyMissing(sel.providerId)) { setMindmapState("error", t("err.noKeyModel")); return; }
-    const code = stripFences(await runUtilityCompletion(sel, t("mind.system"), src.slice(0, 12000), null));
-    if (!code) { setMindmapState("error", t("mind.failed")); return; }
-    await renderMindmap(code);
-  } catch (e) {
-    setMindmapState("error", e instanceof Error ? e.message : String(e));
-  }
-}
-
-function openMindmapPanel() {
-  if (!mmOverlayEl) {
-    mmOverlayEl = document.createElement("div"); mmOverlayEl.className = "mm-overlay";
-    mmOverlayEl.addEventListener("click", (e) => { if (e.target === mmOverlayEl) closeMindmap(); });
-    mmOverlayEl.innerHTML =
-      '<div class="mm-card">' +
-      '<div class="mm-head"><span class="mm-title">🧠 <span class="mm-title-t"></span></span>' +
-      '<div class="mm-tools">' +
-      '<button type="button" class="mm-btn" data-act="regen"></button>' +
-      '<button type="button" class="mm-btn" data-act="code"></button>' +
-      '<button type="button" class="mm-btn" data-act="svg"></button>' +
-      '<button type="button" class="mm-btn" data-act="png"></button>' +
-      '<button type="button" class="mm-close" data-act="close">✕</button>' +
-      '</div></div>' +
-      '<div class="mm-body"><div class="mm-diagram" id="mmDiagram"></div>' +
-      '<div class="mm-codewrap" id="mmCodeWrap" hidden><textarea class="mm-code" id="mmCode" spellcheck="false"></textarea>' +
-      '<button type="button" class="mm-btn mm-render" data-act="render"></button></div></div>' +
-      '</div>';
-    document.body.appendChild(mmOverlayEl);
-    mmOverlayEl.querySelector(".mm-title-t").textContent = t("mind.title");
-    mmOverlayEl.querySelector('[data-act="regen"]').textContent = t("mind.regen");
-    mmOverlayEl.querySelector('[data-act="code"]').textContent = t("mind.code");
-    mmOverlayEl.querySelector('[data-act="svg"]').textContent = "SVG";
-    mmOverlayEl.querySelector('[data-act="png"]').textContent = "PNG";
-    mmOverlayEl.querySelector('[data-act="render"]').textContent = t("mind.render");
-    mmOverlayEl.querySelector('[data-act="close"]').title = t("wb.close");
-    mmOverlayEl.addEventListener("click", (e) => {
-      const act = e.target.closest("[data-act]"); if (!act) return;
-      const a = act.dataset.act;
-      if (a === "close") closeMindmap();
-      else if (a === "code") { const w = document.getElementById("mmCodeWrap"); w.hidden = !w.hidden; }
-      else if (a === "render") renderMindmap(document.getElementById("mmCode").value).catch(() => {});
-      else if (a === "svg") exportMindmap("svg");
-      else if (a === "png") exportMindmap("png");
-      else if (a === "regen") { const c = document.getElementById("mmCode").value; if (c.trim()) renderMindmap(c); }
-    });
-  }
-  mmOverlayEl.classList.remove("hidden");
-}
-function closeMindmap() { if (mmOverlayEl) mmOverlayEl.classList.add("hidden"); }
-function setMindmapState(kind, msg) {
-  const d = document.getElementById("mmDiagram"); if (!d) return;
-  setHTML(d, `<div class="mm-msg ${kind === "error" ? "mm-err" : ""}">${escapeHtmlSafe(msg)}</div>`);
-}
-function escapeHtmlSafe(s) { return String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
-
-async function renderMindmap(code) {
-  const clean = stripFences(code);
-  const codeEl = document.getElementById("mmCode"); if (codeEl) codeEl.value = clean;
-  setMindmapState("loading", t("mind.rendering"));
-  try {
-    const mermaid = await loadMermaidInPage();
-    try { mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: mermaidThemeForCurrent(), htmlLabels: false, flowchart: { htmlLabels: false } }); } catch (_) {}
-    const { svg } = await mermaid.render("mmSvg" + Date.now().toString(36), clean);
-    const d = document.getElementById("mmDiagram");
-    if (d) {
-      // Defense-in-depth: the Mermaid source is LLM output that a malicious page could steer via
-      // prompt injection. mermaid already runs with securityLevel:"strict" + htmlLabels:false, but we
-      // ALSO sanitize the rendered SVG (DOMPurify SVG profile) before it touches the privileged
-      // sidebar DOM — so even a Mermaid sanitizer bypass can't land script in an origin that can read
-      // the stored BYOK keys. This is the one model-output→DOM path that wasn't already sanitized.
-      const safe = window.DOMPurify ? window.DOMPurify.sanitize(svg, { USE_PROFILES: { svg: true, svgFilters: true } }) : svg;
-      setHTML(d, safe); d._svg = safe;
-    }
-  } catch (e) {
-    // Invalid diagram → show the error and reveal the code so the user can fix it.
-    setMindmapState("error", t("mind.invalid") + " " + (e && e.message ? e.message : ""));
-    const w = document.getElementById("mmCodeWrap"); if (w) w.hidden = false;
-  }
-}
-function exportMindmap(kind) {
-  const d = document.getElementById("mmDiagram");
-  const svg = d && d._svg;
-  if (!svg) { flashTopBanner(t("mind.nothing")); return; }
-  if (kind === "svg") { downloadBlob(new Blob([svg], { type: "image/svg+xml" }), "mindmap.svg"); return; }
-  // PNG: rasterize the SVG onto a 2× canvas.
-  const svgEl = d.querySelector("svg");
-  const w = (svgEl && svgEl.viewBox && svgEl.viewBox.baseVal && svgEl.viewBox.baseVal.width) || (svgEl && svgEl.getBoundingClientRect().width) || 1200;
-  const h = (svgEl && svgEl.viewBox && svgEl.viewBox.baseVal && svgEl.viewBox.baseVal.height) || (svgEl && svgEl.getBoundingClientRect().height) || 800;
-  const scale = 2;
-  const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
-  const img = new Image();
-  img.onload = () => {
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.round(w * scale); canvas.height = Math.round(h * scale);
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = document.body.classList.contains("theme-light") ? "#ffffff" : "#0b0b0f";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    URL.revokeObjectURL(url);
-    canvas.toBlob((blob) => { if (blob) downloadBlob(blob, "mindmap.png"); }, "image/png");
-  };
-  img.onerror = () => { URL.revokeObjectURL(url); flashTopBanner(t("mind.pngFail")); };
-  img.src = url;
 }
 
 // ----- 📚 Prompt library -----------------------------------------------------
@@ -6270,11 +6181,13 @@ function setupPromptLibrary() {
 }
 
 // ----- Message rendering ----------------------------------------------------
-// --- Auto-scroll manager -----------------------------------------------------
-// Keep the thread pinned to the bottom while the AI streams, BUT pause as soon as the
-// user scrolls up (so they can read), and show a "↓ jump to latest" button. The whole
-// auto-scroll behaviour can be disabled with the `autoScroll` setting.
-let stickBottom = true, scrollWired = false;
+// --- Smart scrolling -----------------------------------------------------------
+// At the bottom, the thread follows what the model writes; scrolled up, it stays exactly where the
+// reader is, however much is streamed in, and a "↓ jump to latest" button appears; back at the
+// bottom, it follows again. Only the USER's scrolling decides — wheel, touch, keys, the scrollbar —
+// because a scroll event alone cannot tell the reader's hand from the content growing under it,
+// which is what the old toggle ("Auto-scroll") made people switch off.
+let stickBottom = true, scrollWired = false, userScrollAt = 0;
 function isAtBottom() {
   const m = els.messages;
   return (m.scrollHeight - m.scrollTop - m.clientHeight) < 48;
@@ -6301,7 +6214,12 @@ function updateScrollBtn() {
 function wireScroll() {
   if (scrollWired || !els.messages) return;
   scrollWired = true;
-  els.messages.addEventListener("scroll", () => { stickBottom = isAtBottom(); updateScrollBtn(); });
+  const byUser = () => { userScrollAt = Date.now(); };
+  for (const ev of ["wheel", "touchmove", "pointerdown", "keydown"]) els.messages.addEventListener(ev, byUser, { passive: true });
+  els.messages.addEventListener("scroll", () => {
+    if (Date.now() - userScrollAt < 1200) stickBottom = isAtBottom();
+    updateScrollBtn();
+  });
   const btn = document.createElement("button");
   btn.id = "scrollBottomBtn"; btn.type = "button"; btn.className = "scroll-bottom-btn";
   btn.title = t("scroll.toBottom");
@@ -6312,12 +6230,12 @@ function wireScroll() {
   els.scrollBottomBtn = btn;
   window.addEventListener("resize", () => { if (btn.classList.contains("show")) positionScrollBtn(); });
 }
-// Scroll to the bottom when appropriate. force=true (user sent / clicked ↓) always scrolls
-// and re-pins; otherwise only if auto-scroll is on AND the user hasn't scrolled up.
+// Scroll to the bottom when appropriate. force=true (user sent / clicked ↓) always scrolls and
+// re-pins; otherwise only while the reader has not scrolled away from the bottom.
 function scrollMessages(force) {
   wireScroll();
   if (force) stickBottom = true;
-  if (force || (settings.autoScroll !== false && stickBottom)) {
+  if (force || stickBottom) {
     els.messages.scrollTop = els.messages.scrollHeight;
   }
   updateScrollBtn();
@@ -6608,7 +6526,7 @@ async function compactNow() {
 }
 
 // One consistent SVG icon set for the message hover actions (all stroke-based, same 24-viewBox
-// weight) so the copy / edit / resend / markdown / mindmap / delete row reads as ONE clean toolbar
+// weight) so the copy / edit / resend / markdown / delete row reads as ONE clean toolbar
 // instead of a mix of text glyphs (⧉ ✎ ↻ M) and SVGs.
 const DEL_GLYPH = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>';
 const COPY_GLYPH = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
@@ -6742,7 +6660,6 @@ function attachAssistantActions(el, getRaw) {
   bar.className = "mact-bar assistant";
   bar.appendChild(makeActBtn("mcopy", COPY_GLYPH, t("msg.copyText"), (b) => copyToClipboard(plainTextFromEl(el), b)));
   bar.appendChild(makeActBtn("mcopymd", COPYMD_GLYPH, t("msg.copyMd"), (b) => copyToClipboard((getRaw && getRaw()) || el._raw || "", b)));
-  bar.appendChild(makeActBtn("mmind", '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="19" cy="18" r="2"/><path d="M7 12h4"/><path d="M11 12 17 7"/><path d="M11 12l6 5"/></svg>', t("mind.make"), () => openMindmapFrom((getRaw && getRaw()) || el._raw || "")));
   addContextActions(bar, el);
   bar.appendChild(makeActBtn("mdel", DEL_GLYPH, t("msg.delete"), () => deleteMessageBubble(el, "assistant", (getRaw && getRaw()) || el._raw || "")));
   el.appendChild(bar);
@@ -6847,8 +6764,10 @@ function makeAgentActions() {
 function addThinkBlock(m) {
   const home = homeFor(m);
   const d = document.createElement("details");
-  d.className = "think";
-  d.open = true;
+  // Folded, as in hivey-vscode: the reasoning is there for whoever opens it, and does not push the
+  // answer out of view. The summary pulses while the model is still thinking (see makeSink).
+  d.className = "think live";
+  d.open = false;
   const s = document.createElement("summary");
   s.textContent = t("chip.thinking");
   const body = document.createElement("div");
@@ -7015,6 +6934,7 @@ function makeSink(badgeLabel, showThink = true, pendingEl = null, m = null) {
       renderThink();
     },
     finalize() {
+      if (think && think.parentElement) think.parentElement.classList.remove("live");
       dropPending();
       stopRaf();                  // stop the typewriter and show the COMPLETE answer at once
       // Safety net: if the model opened a <think> block but never closed it (so the answer

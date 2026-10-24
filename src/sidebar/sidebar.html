@@ -122,8 +122,16 @@
           </p>
           <div class="empty-actions">
             <button id="freeConnect" class="btn-grad" data-i18n="onboard.free">🎁 Connect (OpenRouter — free)</button>
+            <button id="onbLocal" class="btn-ghost" data-i18n="onboard.local">🏠 Local model (Ollama / LM Studio)</button>
+            <button id="onbGateway" class="btn-ghost" data-i18n="onboard.gateway">🔒 My gateway / my server</button>
             <button id="emptyOptions" class="btn-ghost" data-i18n="onboard.others">⚙ Other providers / API key</button>
           </div>
+          <form id="onbGatewayForm" class="onb-form hidden" autocomplete="off">
+            <input id="onbGwUrl" type="url" required data-i18n-ph="onboard.gwUrl" placeholder="https://ai.example.com/v1" />
+            <input id="onbGwKey" type="password" data-i18n-ph="onboard.gwKey" placeholder="Key (if your server asks for one)" />
+            <button type="submit" class="btn-grad" data-i18n="onboard.gwConnect">Connect</button>
+          </form>
+          <p id="onbStatus" class="muted onb-status hidden" role="status"></p>
           <p class="muted" style="font-size:11.5px" data-i18n-html="onboard.lead2">
             Or: Claude, OpenAI, Gemini, Mistral, Groq, DeepSeek… (API key, often
             free) or a <b>local</b> model (Ollama / LM Studio).
@@ -399,7 +407,6 @@
               <div class="deep-seg-row" id="deepSeg" hidden><button type="button" class="ts-btn" data-depth="fast" data-i18n="deep.fast">Fast</button><button type="button" class="ts-btn" data-depth="standard" data-i18n="deep.standard">Standard</button><button type="button" class="ts-btn" data-depth="deep" data-i18n="deep.deep">Deep</button></div>
               <label class="ctoggle" data-i18n-title="chip.artifactTitle" title="Artifacts — build runnable apps, games & diagrams"><input type="checkbox" id="artifactMode" /><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 12l8-4.5"/><path d="M12 12v9"/><path d="M12 12L4 7.5"/></svg><span class="ct-name" data-i18n="ct.artifacts">Artifacts</span></label>
               <label class="ctoggle" data-i18n-title="chip.pageTitle" title="Page — the AI sees the current page"><input type="checkbox" id="pageCtx" /><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h6"/></svg><span class="ct-name" data-i18n="ct.page">Page</span></label>
-              <label class="ctoggle" data-i18n-title="chip.autoscrollTitle" title="Auto-scroll — follow the AI's answer"><input type="checkbox" id="autoScroll" /><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v13"/><path d="M6 11l6 6 6-6"/><path d="M5 21h14"/></svg><span class="ct-name" data-i18n="ct.autoscroll">Auto-scroll</span></label>
               <div class="ctoggle think-row" data-i18n-title="chip.thinkingTitle" title="Thinking level"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.8.8 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg><span class="ct-name" data-i18n="ct.thinking">Thinking</span><span class="think-seg" role="group" aria-label="Thinking level"></span><button type="button" id="thinking" class="think-state" data-level="" hidden aria-hidden="true"><span class="lvl"></span></button></div>
             </div>
             <button id="stop" class="ctool stop hidden" data-i18n-title="stop.title" title="Stop">■</button>

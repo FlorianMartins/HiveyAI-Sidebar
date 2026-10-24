@@ -10,6 +10,18 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+### Interface : plus simple, et le local dès le premier lancement
+
+- **Premier lancement** : « 🏠 Modèle local » trouve Ollama ou LM Studio sur votre machine et le
+  sélectionne ; « 🔒 Ma passerelle / mon serveur » demande l'URL (et la clé si besoin), vérifie le
+  serveur et choisit son premier modèle — à côté d'OpenRouter, plus derrière « autres fournisseurs ».
+- **Défilement intelligent** : en bas, la conversation suit la réponse ; remontez pour lire, elle
+  reste où vous êtes même pendant que le modèle écrit ; le bouton ↓ ou un retour en bas la fait suivre
+  de nouveau. L'option « Défilement auto » disparaît.
+- **La réflexion est repliée par défaut** : « Réflexion… » clignote pendant que le modèle réfléchit,
+  un clic l'ouvre.
+- L'action « Transformer en carte mentale / diagramme » est retirée.
+
 ### Documentation
 
 - **Guide d'utilisation** complet ([docs/GUIDE.md](docs/GUIDE.md)) : installer, choisir entre local,
