@@ -160,6 +160,10 @@ VS Code / Slack — scale mieux qu'une rangée d'onglets) donne accès à :
 |---|---|---|
 | ![Une adresse e-mail anonymisée avant l'envoi, remise en clair dans la réponse](docs/screenshots/sidebar-privacy.png) | ![Un échange mis en veille : grisé, « Hors contexte »](docs/screenshots/sidebar-context.png) | ![Le menu de réflexion : Direct, Bref, Approfondi, Maximum pour DeepSeek V4.1 Flash](docs/screenshots/sidebar-thinking.png) |
 
+| L'agent dans le navigateur | L'onglet Benchmark | Le rapport, ouvert à la fin du test |
+|---|---|---|
+| ![L'agent sur Wikipédia : sa réflexion, puis la réponse sourcée](docs/screenshots/sidebar-agent.png) | ![Trois modèles testés, une carte par modèle avec une barre par famille](docs/screenshots/sidebar-benchmark.png) | ![Le rapport : meilleur modèle, scores, détail par famille, temps et coût](docs/screenshots/bench-report.png) |
+
 | Réglages de confidentialité | Fournisseurs : local d'abord |
 |---|---|
 | ![Niveau d'anonymisation, termes, confiance dans ses serveurs](docs/screenshots/settings-privacy.png) | ![Les fournisseurs rangés local, passerelle, cloud](docs/screenshots/settings-providers.png) |
