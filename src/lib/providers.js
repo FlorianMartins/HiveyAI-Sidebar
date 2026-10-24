@@ -14,6 +14,7 @@
 import { PROVIDERS, baseUrlFor, modelFor, keyFor } from "./models.js";
 import { anthropicThinking, wireReasoning, selfHostedThinkingBudget, isSelfHostedProvider } from "./reasoning.js";
 import { privateProvider, redactsFor } from "./privacy.js";
+import { stripPrivate } from "./context-control.js";
 
 // Pull the real, resolvable source URLs out of web-plugin annotations (OpenRouter/OpenAI
 // `url_citation`). These are the ACTUAL search-result links — unlike URLs the model types into its
@@ -275,7 +276,8 @@ function anthropicProvider({ apiKey, model, baseUrl, thinkLevel, webSearch }) {
       // a tenth of the input price instead of paying full price for the whole transcript again,
       // which made a long agent turn cost the SQUARE of its length. Marked on a copy: the stored
       // history never carries a breakpoint (Anthropic accepts four).
-      const messages = history.slice();
+      // No `_` key leaves the browser (exchange ids, flags — see context-control.js).
+      const messages = history.map(stripPrivate);
       const total = roughTokens(system) + roughTokens(history);
       if (total >= CACHE_WORTH_IT_TOKENS && messages.length) {
         const last = messages[messages.length - 1];
@@ -483,7 +485,8 @@ function openaiProvider({ apiKey, model, baseUrl, webSearch, providerId, thinkLe
   // REQUIRES it with tools and thinking on, OpenRouter asks for `reasoning_details` back unchanged.
   const wire = (m) => {
     if (!m || typeof m !== "object") return m;
-    const { _reasoning, _reasoningDetails, ...rest } = m;
+    const { _reasoning, _reasoningDetails } = m;
+    const rest = { ...stripPrivate(m) };
     if (m.role !== "assistant") return rest;
     if (_reasoning && (selfHosted || providerId === "deepseek")) rest.reasoning_content = _reasoning;
     else if (_reasoningDetails && _reasoningDetails.length && providerId === "openrouter") rest.reasoning_details = _reasoningDetails;

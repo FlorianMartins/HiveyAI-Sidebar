@@ -14,6 +14,8 @@ import { buildSystemPrompt, activeTools, runConversation } from "../lib/agent.js
 import { reasoningMenu, isSelfHostedProvider } from "../lib/reasoning.js";
 import { runChatTurn, replyLanguageOf } from "../lib/conversation.js";
 import { Vault } from "../lib/privacy.js";
+import { newTurnId, tagTurn, setTurnState, removeTurn } from "../lib/context-control.js";
+import { compactHistory, contextWindowFor, contextBudget, estimateTokens } from "../lib/conversation.js";
 import { SKILLS, GOAL_SYSTEM, ENHANCE_SYSTEM, skillById } from "../lib/skills.js";
 import { executeTool, setAgentTab, clearAgentTab, getAgentTab } from "../lib/tools.js";
 import { initBenchmarkView } from "../lib/benchmarkView.js";
@@ -170,6 +172,7 @@ const els = {
   imageSize: $("imageSize"),
   confirmBar: $("confirmBar"),
   privacyBar: $("privacyBar"),
+  ctxGauge: $("ctxGauge"),
   privacyText: $("privacyText"),
   privacyList: $("privacyList"),
   privacySend: $("privacySend"),
@@ -1384,6 +1387,7 @@ async function applyModelChoice(value) {
   settings.models = { ...(settings.models || {}), [sel.providerId]: sel.modelId };
   await setSettings({ provider: sel.providerId, models: settings.models });
   refreshThinkSegs(); // the levels are the new model's own
+  updateCtxGauge(); // and so is the window
   return sel;
 }
 
@@ -1890,6 +1894,23 @@ async function extractPdfText(buf) {
   return { text: text.trim(), pages: doc.numPages };
 }
 function attachIcon(a) { return a.type === "image" ? "🖼" : a.isPdf ? "📄" : "📎"; }
+// The Image tab's context is what is attached: a generated image put back there becomes the
+// reference of the next generation (edit, variation, mix), and its tick takes it out again.
+function imageAsReferenceButton(url) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "ghost small img-ref-btn";
+  b.textContent = "↺ " + t("img.useAsRef");
+  b.title = t("img.useAsRefTitle");
+  b.addEventListener("click", () => {
+    if (attachments.some((a) => a.type === "image" && a.dataUrl === url)) return;
+    attachments.push({ type: "image", name: t("img.generatedRef"), dataUrl: url, mediaType: "image/png", ctxIncluded: true });
+    renderAttachStrip();
+    b.disabled = true;
+    b.textContent = "✓ " + t("img.usedAsRef");
+  });
+  return b;
+}
 function renderAttachStrip() {
   els.attachStrip.innerHTML = "";
   els.attachStrip.classList.toggle("hidden", attachments.length === 0);
@@ -2722,6 +2743,7 @@ function setMode(next) {
     if (b.dataset.mode === next) b.classList.remove("tab-done"); // clear the "answer ready" dot
   });
   refreshBrandDone(); // update the logo's "answer ready" dot after clearing the entered tab
+  updateCtxGauge(); // the gauge is the entered tab's conversation
   // The Thinking/Web/Page toggles (now inside the composer) belong to Chat only.
   els.chatControls.classList.toggle("hidden", !["chat", "wisebase"].includes(next));
   els.translateControls.classList.toggle("hidden", next !== "translate");
@@ -3476,8 +3498,10 @@ function renderTranscriptItem(item) {
     return addMessage("tool", item.text); // discreet system note (e.g. imported context)
   } else if (item.role === "user") {
     const d = addMessage("user", item.text);
+    if (item.turnId) d._ctxTurn = item.turnId;
     if (item.atts) renderUserAttachments(d, item.atts);
     attachUserActions(d, item.text);
+    if (item.turnId && (item.muted || item.pinned)) queueMicrotask(() => applyTurnMarks(item.turnId));
     return d;
   } else if (item.kind === "image") {
     const wrap = addMessage("assistant", "");
@@ -3507,7 +3531,9 @@ function renderTranscriptItem(item) {
     el.appendChild(body);
     enhanceArtifacts(body);
     el._raw = item.text || "";
+    if (item.turnId) el._ctxTurn = item.turnId;
     attachAssistantActions(el, () => el._raw);
+    if (item.turnId) queueMicrotask(() => applyTurnMarks(item.turnId));
     return el;
   }
 }
@@ -4531,6 +4557,7 @@ function wire() {
   window.addEventListener("blur", () => { if (els.tabsPanel) els.tabsPanel.classList.add("hidden"); });
   els.input.addEventListener("input", onComposerInput);
   els.stop.addEventListener("click", () => abortController && abortController.abort());
+  if (els.ctxGauge) els.ctxGauge.addEventListener("click", () => compactNow());
   // + New: on the Web tab it resets the embedded site (fresh session, like the provider's own
   // "new chat"); otherwise it starts a new Hivey conversation.
   els.newChat.addEventListener("click", () => {
@@ -5599,8 +5626,12 @@ async function onWisebaseSend() {
   const sess = getSession("wisebase");
   // ONE user bubble (streamed manually below — do NOT also call sendToModel, which would add a 2nd).
   const userDiv = addMessage("user", q, "wisebase");
+  // An exchange like the Chat's: follow-up questions see the earlier ones, and each can be put in
+  // standby, pinned or deleted (lib/context-control.js).
+  const turnId = newTurnId();
+  userDiv._ctxTurn = turnId;
   attachUserActions(userDiv, q);
-  sess.transcript.push({ role: "user", text: q });
+  sess.transcript.push({ role: "user", text: q, turnId });
 
   const status = addMessage("tool", t("wb.retrieving"), "wisebase");
   let hits = [];
@@ -5638,11 +5669,23 @@ async function onWisebaseSend() {
     const system = buildSystemPrompt({ agentMode: false, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: "chat", blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked, replyLanguage: replyLanguageOf(q, settings) });
     // Through lib/conversation.js like the Chat: a cut stream is continued, an oversized set of
     // passages is reported by the server's own refusal rather than guessed at.
-    const turn = await runChatTurn({ provider, providerId: sel.providerId, modelId: sel.modelId, settings, system, history: [{ role: "user", content: modelContent }], tools: [], onText: sink.onText, onThink: sink.onThink, signal });
+    if (!Array.isArray(sess.history)) sess.history = [];
+    const history = sess.history;
+    const turnStart = history.length;
+    history.push({ role: "user", content: modelContent, _turn: turnId });
+    let turn;
+    try {
+      turn = await runChatTurn({ provider, providerId: sel.providerId, modelId: sel.modelId, settings, system, history, turnStart, tools: [], onText: sink.onText, onThink: sink.onThink, signal });
+    } finally {
+      tagTurn(history, turnStart, turnId);
+    }
     sink.finalize();
     const answer = (turn && turn.text) || sink.getRaw();
-    sess.transcript.push({ role: "assistant", text: answer });
+    sess.transcript.push({ role: "assistant", text: answer, turnId });
+    const aEl = sink.getEl();
+    if (aEl) { aEl._raw = answer; aEl._ctxTurn = turnId; attachAssistantActions(aEl, () => answer); }
     try { await saveSession(sess, "wisebase", sel); } catch (_) {}
+    if (mode === "wisebase") updateCtxGauge();
 
     // Sources footer — each numbered passage is expandable to read the exact cited text.
     const foot = wbEl("div", "wb-answer-sources");
@@ -6427,6 +6470,22 @@ function makeActBtn(cls, glyph, title, fn) {
 // Delete a message bubble from the view AND (best-effort) from the current session transcript, so it
 // stays gone after reload. Also drops a trailing Wisebase "Sources" footer that belongs to an answer.
 function deleteMessageBubble(div, role, rawText) {
+  // An exchange known by its id goes as one: both bubbles, both transcript entries, and every
+  // message of it in the model's history — a question without its answer is not a history.
+  if (div && div._ctxTurn) {
+    const id = div._ctxTurn;
+    const sess = getSession(mode);
+    for (const b of bubblesOfTurn(id)) {
+      const n = b.nextElementSibling;
+      if (n && n.classList && n.classList.contains("wb-answer-sources")) n.remove();
+      b.remove();
+    }
+    for (let i = sess.transcript.length - 1; i >= 0; i--) if (sess.transcript[i].turnId === id) sess.transcript.splice(i, 1);
+    removeTurn(sess.history || [], id);
+    saveSession(sess, mode, currentSelection());
+    updateCtxGauge();
+    return;
+  }
   const next = div.nextElementSibling;
   div.remove();
   if (role === "assistant" && next && next.classList && next.classList.contains("wb-answer-sources")) next.remove();
@@ -6450,6 +6509,104 @@ function deleteMessageBubble(div, role, rawText) {
     saveSession(sess, mode, currentSelection());
   } catch (_) {}
 }
+// ----- Context control: standby, pin, per exchange (lib/context-control.js) -----
+const STANDBY_GLYPH = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 9v6"/><path d="M14 9v6"/></svg>';
+const PIN_GLYPH = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17v5"/><path d="M9 3h6l-1 6 3 3v2H7v-2l3-3z"/></svg>';
+function bubblesOfTurn(id) {
+  const root = (els.messages && els.messages.parentElement) || document;
+  return [...root.querySelectorAll(".msg")].filter((b) => b._ctxTurn === id);
+}
+function turnEntry(id) { return getSession(mode).transcript.find((e) => e.turnId === id && e.role === "user") || null; }
+/** Show an exchange's state on its bubbles: faded and tagged when out of the context, marked when pinned. */
+function applyTurnMarks(id) {
+  const e = turnEntry(id) || {};
+  for (const b of bubblesOfTurn(id)) {
+    b.classList.toggle("ctx-muted", !!e.muted);
+    b.classList.toggle("ctx-pinned", !!e.pinned);
+    let tag = b.querySelector(":scope > .ctx-tag");
+    const label = e.muted ? "⏸ " + t("ctx.tag.muted") : e.pinned ? "📌 " + t("ctx.tag.pinned") : "";
+    if (!label) { if (tag) tag.remove(); continue; }
+    if (!tag) { tag = document.createElement("div"); tag.className = "ctx-tag"; b.prepend(tag); }
+    tag.textContent = label;
+    tag.title = e.muted ? t("ctx.tag.mutedTitle") : t("ctx.tag.pinnedTitle");
+    const mute = b.querySelector(".mact-bar .mctxmute");
+    if (mute) mute.title = e.muted ? t("ctx.unmute") : t("ctx.mute");
+    const pin = b.querySelector(".mact-bar .mctxpin");
+    if (pin) { pin.title = e.pinned ? t("ctx.unpin") : t("ctx.pin"); pin.classList.toggle("on", !!e.pinned); }
+  }
+}
+function setTurnFlags(id, patch) {
+  const sess = getSession(mode);
+  const n = setTurnState(sess.history || [], id, patch);
+  for (const e of sess.transcript) if (e.turnId === id) Object.assign(e, patch);
+  applyTurnMarks(id);
+  saveSession(sess, mode, currentSelection());
+  updateCtxGauge();
+  return n;
+}
+/** « Mettre en veille » and « Épingler » on a bubble whose exchange is known. */
+function addContextActions(bar, el) {
+  if (!el || !el._ctxTurn) return;
+  const id = el._ctxTurn;
+  bar.appendChild(makeActBtn("mctxmute", STANDBY_GLYPH, t("ctx.mute"), () => {
+    const e = turnEntry(id) || {};
+    setTurnFlags(id, { muted: !e.muted });
+  }));
+  bar.appendChild(makeActBtn("mctxpin", PIN_GLYPH, t("ctx.pin"), () => {
+    const e = turnEntry(id) || {};
+    setTurnFlags(id, { pinned: !e.pinned });
+  }));
+}
+
+// ----- The context gauge ------------------------------------------------------
+// How full the selected model's window is with this conversation — what is actually sent (exchanges
+// in standby left out) — and a click to summarize it and free the context, at any time.
+let gaugeSeq = 0;
+async function updateCtxGauge() {
+  const g = els.ctxGauge;
+  if (!g) return;
+  const seq = ++gaugeSeq;
+  const sess = CHAT_MODES.includes(mode) && mode !== "image" ? getSession(mode) : null;
+  const hist = (sess && sess.history) || [];
+  if (!hist.length) { g.classList.add("hidden"); return; }
+  const sel = currentSelection();
+  let win = 0;
+  try { win = sel && sel.providerId && !isHivey(sel.modelId) ? await contextWindowFor(settings, sel.providerId, sel.modelId) : 0; } catch (_) { win = 0; }
+  if (seq !== gaugeSeq) return;
+  const used = estimateTokens(hist);
+  const budget = contextBudget(win);
+  const pct = Math.min(100, Math.round((used / budget) * 100));
+  g.classList.remove("hidden");
+  g.style.setProperty("--fill", pct + "%");
+  g.classList.toggle("warn", pct >= 60);
+  g.classList.toggle("full", pct >= 75);
+  g.querySelector(".cg-pct").textContent = pct + " %";
+  g.title = t("ctx.gauge", { pct, used: used.toLocaleString(), budget: budget.toLocaleString(), model: (sel && sel.modelId) || "?" }) + (win ? "" : " " + t("ctx.gaugeUnknown"));
+}
+async function compactNow() {
+  if (busy) return;
+  const sess = getSession(mode);
+  const hist = sess.history || [];
+  if (!hist.length) return;
+  const sel = currentSelection();
+  const note = addMessage("tool", t("ctx.compacting"));
+  startBusy();
+  try {
+    const provider = makeProvider(
+      { ...settings, provider: sel.providerId, models: { ...settings.models, [sel.providerId]: sel.modelId } },
+      { privacy: privacyOpts(sess, sess.convId, mode) }
+    );
+    const ok = await compactHistory(hist, { provider, signal: abortController && abortController.signal, all: true });
+    if (note) note.textContent = ok ? t("ctx.compactedNow") : t("ctx.nothingToCompact");
+    await saveSession(sess, mode, sel);
+  } catch (e) {
+    if (note) note.textContent = t("err.generic", { msg: e && e.message ? e.message : String(e) });
+  } finally {
+    endBusy();
+    updateCtxGauge();
+  }
+}
+
 // One consistent SVG icon set for the message hover actions (all stroke-based, same 24-viewBox
 // weight) so the copy / edit / resend / markdown / mindmap / delete row reads as ONE clean toolbar
 // instead of a mix of text glyphs (⧉ ✎ ↻ M) and SVGs.
@@ -6468,6 +6625,7 @@ function attachUserActions(div, rawText) {
   bar.appendChild(makeActBtn("mcopy", COPY_GLYPH, t("msg.copy"), (b) => copyToClipboard(div._raw, b)));
   bar.appendChild(makeActBtn("medit", EDIT_GLYPH, t("msg.edit"), () => beginEditUserMessage(div)));
   bar.appendChild(makeActBtn("mresend", RESEND_GLYPH, t("msg.resend"), () => resendPrompt(div._raw)));
+  addContextActions(bar, div);
   bar.appendChild(makeActBtn("mdel", DEL_GLYPH, t("msg.delete"), () => deleteMessageBubble(div, "user", div._raw)));
   div.appendChild(bar);
   div.addEventListener("dblclick", () => beginEditUserMessage(div));
@@ -6585,6 +6743,7 @@ function attachAssistantActions(el, getRaw) {
   bar.appendChild(makeActBtn("mcopy", COPY_GLYPH, t("msg.copyText"), (b) => copyToClipboard(plainTextFromEl(el), b)));
   bar.appendChild(makeActBtn("mcopymd", COPYMD_GLYPH, t("msg.copyMd"), (b) => copyToClipboard((getRaw && getRaw()) || el._raw || "", b)));
   bar.appendChild(makeActBtn("mmind", '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="19" cy="18" r="2"/><path d="M7 12h4"/><path d="M11 12 17 7"/><path d="M11 12l6 5"/></svg>', t("mind.make"), () => openMindmapFrom((getRaw && getRaw()) || el._raw || "")));
+  addContextActions(bar, el);
   bar.appendChild(makeActBtn("mdel", DEL_GLYPH, t("msg.delete"), () => deleteMessageBubble(el, "assistant", (getRaw && getRaw()) || el._raw || "")));
   el.appendChild(bar);
 }
@@ -7638,17 +7797,22 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   const boundTranscript = sess.transcript;
   const boundHistory = sess.history;
   const boundSess = () => ({ convId: boundConvId, transcript: boundTranscript, history: boundHistory, customTitle: sess.customTitle, importedSources: sess.importedSources });
+  // One id for the exchange — the question, what goes with it, and the whole answer — so the user
+  // can take it out of the context, pin it or delete it as one (lib/context-control.js).
+  const turnId = newTurnId();
   let userDiv;
   if (reuseUserEl) {
     // Editing an existing turn: reuse its bubble (don't add a second one or a duplicate transcript
     // entry) — just refresh its visible text. The new answer becomes a new VERSION below.
     userDiv = reuseUserEl;
     setUserText(userDiv, displayText);
+    userDiv._ctxTurn = turnId;
   } else {
     userDiv = addMessage("user", displayText, sessMode);
+    userDiv._ctxTurn = turnId;
     if (attMeta && attMeta.length) renderUserAttachments(userDiv, attMeta);
     attachUserActions(userDiv, displayText);
-    boundTranscript.push({ role: "user", text: displayText, atts: attMeta && attMeta.length ? attMeta : undefined });
+    boundTranscript.push({ role: "user", text: displayText, atts: attMeta && attMeta.length ? attMeta : undefined, turnId });
   }
   userDiv._modelContent = modelContent;
   lastUserContent = modelContent;
@@ -7787,7 +7951,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   } else {
     // Where this question starts: its page block and the question itself are never summarized away.
     turnStart = boundHistory.length;
-    boundHistory.push(...untrustedMsgs, { role: "user", content: userContent });
+    boundHistory.push(...untrustedMsgs.map((m) => ({ ...m, _turn: turnId })), { role: "user", content: userContent, _turn: turnId });
     turnHistory = boundHistory;
   }
   // 🐝 Hivey auto-thinking: spend a reasoning budget ONLY on the reasoning tier (where it pays
@@ -7904,10 +8068,10 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
     markTabDone(sessMode, boundConvId); // dot on the workspace icon if the user has switched away
     if (sink.getRaw()) {
       maybePlayDone(); // optional "answer ready" chime (Settings → Appearance toggle)
-      boundTranscript.push({ role: "assistant", text: sink.getRaw(), badge: badge || undefined });
+      boundTranscript.push({ role: "assistant", text: sink.getRaw(), badge: badge || undefined, turnId });
       const ansIdx = sess.transcript.length - 1; // slot to REPLACE if it gets corrected
       const aEl = sink.getEl();
-      if (aEl) { aEl._raw = sink.getRaw(); aEl._modelSel = sel.providerId && sel.modelId ? `${sel.providerId}|${sel.modelId}` : ""; attachAssistantActions(aEl, sink.getRaw); }
+      if (aEl) { aEl._raw = sink.getRaw(); aEl._ctxTurn = turnId; aEl._modelSel = sel.providerId && sel.modelId ? `${sel.providerId}|${sel.modelId}` : ""; attachAssistantActions(aEl, sink.getRaw); }
       // Versioning: tie this answer to its user bubble (non-agent chat turns) so an in-place edit
       // keeps the previous answer switchable via ‹ k/n › arrows. Fresh sends create version 0;
       // an edited resend (versioned) adds a new version.
@@ -7985,8 +8149,10 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
     removePending(pending);
     if (agentActs) agentActs.finish(); // collapse the Actions block + show the final count
     if (agentMode) { clearAgentGlow(); clearAgentTab(); steerQueue = null; } // stop glow + unpin the agent's tab
+    if (!isolated) tagTurn(boundHistory, turnStart, turnId); // what the model added belongs to this exchange
     endBusy();
     await saveSession(boundSess(), sessMode, sel);
+    if (mode === sessMode) updateCtxGauge();
     // Keep an open history panel in sync (e.g. the new conversation gets its title).
     if (mode === sessMode && !els.historyPanel.classList.contains("hidden")) renderHistoryList();
   }
@@ -8301,6 +8467,7 @@ async function runImage(prompt, initImages, genPrompt) {
       const img = document.createElement("img");
       img.src = u; img.alt = prompt; img.className = "gen-image";
       wrap.appendChild(img);
+      wrap.appendChild(imageAsReferenceButton(u));
     }
     transcript.push({ role: "assistant", kind: "image", urls });
     attachImageCompareBar(wrap); // ⚖ compare the result with another image model
