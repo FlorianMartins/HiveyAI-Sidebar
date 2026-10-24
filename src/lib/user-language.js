@@ -15,10 +15,10 @@ export const LANG_NAMES = {
   nl: "Dutch",
 };
 /**
-* The reply rule in the user's own words. An order about French written in English is the weakest
-* form of it: measured on Qwen3.8, the English sentence moved nothing that the same order in the
-* language itself did. None for English, whose rule is already in its own words.
-*/
+ * The reply rule in the user's own words. An order about French written in English is the weakest
+ * form of it: measured on Qwen3.8, the English sentence moved nothing that the same order in the
+ * language itself did. None for English, whose rule is already in its own words.
+ */
 export const REPLY_IN_OWN_WORDS = {
   fr: "Réponds en français : chaque phrase que tu écris pour l'utilisateur, notes entre les outils comprises.",
   es: "Responde en español: cada frase que escribas para el usuario, incluidas las notas entre herramientas.",
@@ -48,11 +48,11 @@ const LETTERS = {
   pt: /[ãõ]/,
 };
 /**
-* The language of `text`, or `fallback` when it is too short or too technical to tell.
-*
-* English and French read exactly as `detectLanguage` reads them (a test holds the two together), so a
-* question in either is treated as before; another language wins only when it is clearly ahead.
-*/
+ * The language of `text`, or `fallback` when it is too short or too technical to tell.
+ *
+ * English and French read exactly as `detectLanguage` reads them (a test holds the two together), so a
+ * question in either is treated as before; another language wins only when it is clearly ahead.
+ */
 export function detectUserLanguage(text, fallback) {
   const words = text.toLowerCase().replace(/`[^`]*`/g, " ").match(/[a-zàâãçèéêëîïñôõöûùüÿœß¿¡']+/g) ?? [];
   const score = { en: 0, fr: 0, es: 0, de: 0, it: 0, pt: 0, nl: 0 };
