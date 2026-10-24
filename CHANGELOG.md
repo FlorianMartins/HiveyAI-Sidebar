@@ -41,6 +41,34 @@ Version de développement, toujours à jour :
 - **Correctif** : choisir une taille de contexte changeait aussi le niveau de réflexion (les deux
   menus partageaient leurs boutons).
 
+### Des réglages refaits, un accès rapide, des raccourcis qui marchent
+
+- **La page des réglages est refaite** : une colonne de cartes, chaque réglage avec son nom (et une
+  aide courte) à gauche et sa commande à droite. Les champs ne débordent plus de leur carte et les
+  textes de gauche ne sont plus coupés ; sur une fenêtre étroite (jusqu'à 360 px), la commande passe
+  sous son nom et la liste « Aller à » devient une bande qui défile. La page suit votre thème, clair
+  ou sombre — listes déroulantes et interrupteurs compris.
+- **Accès rapide** : en tête de page, des interrupteurs pour ce que l'on bascule le plus —
+  anonymisation (même effet que le badge « ☁️ Cloud » : l'éteindre retient votre niveau, la rallumer
+  le rend), recherche web, suggestion de la prochaine demande, artefacts, vérification des réponses,
+  compaction automatique, mémoire, son et notifications, thème clair (et retour à votre thème sombre
+  avec ses couleurs), effets du titre, côté du menu, langue de l'interface. Chacun est enregistré
+  aussitôt et montre son état ; la sidebar ouverte suit sans être rechargée.
+- **Raccourcis clavier réparés** : les champs dépassaient de la carte et coupaient les libellés ;
+  `Ctrl+Shift+1/2/3/5` ne faisaient rien sur un clavier QWERTY (Maj+1 y donne « ! ») ; un raccourci
+  modifié n'agissait qu'après avoir rechargé la sidebar ; deux actions pouvaient partager la même
+  combinaison sans avertissement. Désormais : on clique, on appuie, **Échap** annule, **Retour
+  arrière** désactive, ↺ rétablit la valeur par défaut ; une combinaison déjà prise passe à la
+  nouvelle action (la page le dit) ; les touches s'affichent comme sur votre clavier (⌃ ⇧ ⌘ sur
+  Mac). Les combinaisons gardées par le navigateur sont signalées : « recherche web » passe de
+  `Ctrl+Shift+W` (qui ferme la fenêtre) à `Ctrl+Shift+E`, la bibliothèque de prompts de
+  `Ctrl+Shift+P` (fenêtre privée de Firefox) à `Ctrl+Shift+K`. Un raccourci que vous aviez déjà
+  choisi est gardé tel quel.
+- **Fournisseurs repliés** : chaque fournisseur tient sur une ligne avec son état (connecté ou non) ;
+  un clic l'ouvre. La recherche ouvre ceux qui correspondent.
+- La sauvegarde chiffrée et les raccourcis ont enfin leur place dans la liste « Aller à » et dans
+  la recherche.
+
 ### La zone de saisie, plus nette — et le contexte à votre main
 
 - **Le `+` ouvre un menu** : joindre un fichier, ou apporter la page — capturer une zone, choisir

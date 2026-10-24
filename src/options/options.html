@@ -8,352 +8,369 @@
     <title data-i18n="opt.title">Hivey AI — Settings</title>
   </head>
   <body>
-    <!-- Left column: jump-to nav, then the Quick actions panel underneath it. -->
-    <div class="leftcol">
-      <nav id="quicknav" class="quicknav" aria-label="Settings sections"></nav>
-      <a id="changelogLink" class="changelog-link" href="../../CHANGELOG.md" target="_blank" rel="noopener" data-i18n="opt.changelog">📝 What's new (changelog)</a>
-      <div class="quick-actions" id="sec-quickactions">
-        <span class="qa-label" data-i18n="opt.qa.h">Quick actions</span>
-        <span class="qa-cat" data-i18n="opt.qa.catDesign">Design</span>
-        <button class="qa-chip" id="qaNeon" type="button"><span class="qa-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg></span><span class="qa-txt" data-i18n="opt.qa.neon">Neon glow</span></button>
-        <button class="qa-chip" id="qaContour" type="button"><span class="qa-ic"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9z"/></svg></span><span class="qa-txt" data-i18n="opt.qa.contour">Title outline</span></button>
-        <button class="qa-chip" id="qaReplyOutline" type="button"><span class="qa-ic"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/></svg></span><span class="qa-txt" data-i18n="opt.qa.replyOutline">Reply outline</span></button>
-        <span class="qa-cat" data-i18n="opt.qa.catAccess">Accessibility &amp; feedback</span>
-        <button class="qa-chip" id="qaSmooth" type="button"><span class="qa-ic"><svg viewBox="0 0 24 24"><path d="M3 12h3l2-6 4 14 3-9 2 4h4"/></svg></span><span class="qa-txt" data-i18n="opt.qa.smooth">Smooth replies</span></button>
-        <button class="qa-chip" id="qaSound" type="button"><span class="qa-ic"><svg viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg></span><span class="qa-txt" data-i18n="opt.qa.sound">Done sound</span></button>
-        <button class="qa-chip" id="qaTabNotif" type="button"><span class="qa-ic"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span><span class="qa-txt" data-i18n="opt.qa.tabNotif">Tab notifications</span></button>
-        <span class="qa-cat" data-i18n="opt.qa.catLayout">Layout</span>
-        <button class="qa-chip" id="qaRail" type="button"><span class="qa-ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></span><span class="qa-txt" data-i18n="opt.qa.rail">Menu side</span></button>
+    <!-- One readable column of cards. Each setting is a row: its name (and a short help line) on
+         the left, its control on the right — stacked under the text on a narrow window. The jump
+         list sits on the left on a wide window and becomes a scrollable strip on a narrow one. -->
+    <header class="topbar">
+      <div class="topbar-in">
+        <h1 data-i18n="opt.title">Hivey AI — Settings</h1>
+        <input type="search" id="settingsSearch" class="settings-search" data-i18n-ph="opt.search.ph" placeholder="Search settings…" autocomplete="off" />
+        <span id="status" class="save-pill" role="status" aria-live="polite" data-i18n="opt.autosaveNote">Changes are saved automatically.</span>
       </div>
+    </header>
+
+    <div class="layout">
+      <nav class="sidenav" aria-label="Settings sections">
+        <div id="quicknav" class="quicknav"></div>
+        <a id="changelogLink" class="changelog-link" href="../../CHANGELOG.md" target="_blank" rel="noopener" data-i18n="opt.changelog">📝 What's new (changelog)</a>
+      </nav>
+
+      <main>
+        <p class="intro muted" data-i18n-html="opt.intro">
+          100% <b>BYOK</b>: your keys are stored <b>locally</b> in this browser
+          (<code>storage.local</code>), never synced, and sent only to the API you choose.
+        </p>
+
+        <!-- Quick access: switches for the settings people flip most. Built by options.js
+             (buildQuickAccess) — each one saves on the spot; the sidebar follows live. -->
+        <section id="sec-quickaccess" class="card">
+          <h2 data-i18n="opt.qa.h">Quick access</h2>
+          <p class="card-desc" data-i18n="opt.qa.p">The settings you flip most. Each switch is saved at once.</p>
+          <div id="quickToggles" class="qa-groups"></div>
+        </section>
+
+        <section id="sec-quick" class="card quickconnect">
+          <h2 data-i18n="opt.quick.h">Quick connect</h2>
+          <p class="card-desc" data-i18n-html="opt.quick.p">Simplest: connect your <b>OpenRouter</b> account in 1 click.</p>
+          <div class="btn-row">
+            <button id="quickConnect" class="grad" data-i18n="opt.quick.btn">Connect to OpenRouter (free, 1-click)</button>
+            <span id="quickStatus" class="muted"></span>
+          </div>
+        </section>
+
+        <section id="sec-appearance" class="card">
+          <h2 data-i18n="opt.layout.h">Appearance &amp; layout</h2>
+          <div class="row">
+            <div class="row-text"><label class="row-title" for="theme" data-i18n="opt.theme.label">Theme</label><p class="row-help" data-i18n="opt.theme.note">Pick a theme, then optionally fine-tune individual colours on top of it.</p></div>
+            <div class="row-ctl"><select id="theme"></select></div>
+          </div>
+          <div class="row">
+            <div class="row-text"><label class="row-title" for="uiFont" data-i18n="opt.font.label">Interface font</label><p class="row-help" data-i18n="opt.font.note">Fonts are bundled in the extension, so they work offline.</p></div>
+            <div class="row-ctl"><select id="uiFont"></select></div>
+          </div>
+
+          <h3 class="subhead" data-i18n="opt.colors.base">Base colours</h3>
+          <!-- The canvas first (background → surface), then the text on it, then the accents. -->
+          <div class="swatches">
+            <label class="swatch"><span data-i18n="opt.theme.bg">Background</span><input type="color" id="col_bg" /></label>
+            <label class="swatch"><span data-i18n="opt.theme.panel">Surface</span><input type="color" id="col_panel" /></label>
+            <label class="swatch"><span data-i18n="opt.theme.text">Text</span><input type="color" id="col_text" /></label>
+            <label class="swatch"><span data-i18n="opt.theme.muted">Secondary text</span><input type="color" id="col_muted" /></label>
+            <label class="swatch"><span data-i18n="opt.theme.accent">Accent</span><input type="color" id="col_accent" /></label>
+            <label class="swatch"><span data-i18n="opt.theme.accent2">Accent 2 (gradient)</span><input type="color" id="col_accent2" /></label>
+          </div>
+
+          <h3 class="subhead" data-i18n="opt.colors.elements">Element colours</h3>
+          <!-- Top → bottom of the sidebar: top-bar icons, the menu icons, then the reply area. -->
+          <div class="swatches">
+            <label class="swatch"><span data-i18n="opt.colors.topIcon">Top bar icons</span><input type="color" id="topIconColor" /></label>
+            <label class="swatch"><span data-i18n="opt.colors.topIcon2">Top bar icons — 2nd (gradient)</span><input type="color" id="topIconColor2" /></label>
+            <label class="swatch"><span data-i18n="opt.layout.railIconColor">Menu / tab icons</span><input type="color" id="railIconColor" /></label>
+            <label class="swatch"><span data-i18n="opt.reply.borderColor">Reply outline / neon</span><input type="color" id="msgBorderColor" /></label>
+            <label class="swatch"><span data-i18n="opt.reply.contourColor">Title contour</span><input type="color" id="contourColor" /></label>
+          </div>
+          <label class="row row-switch">
+            <span class="row-text"><span class="row-title" data-i18n="opt.colors.topIconGrad">Gradient on the top bar icons</span></span>
+            <span class="switch"><input type="checkbox" id="topIconGradient" /><span class="track"></span></span>
+          </label>
+          <div class="btn-row"><button id="opacityBtn" class="ghost" type="button" data-i18n="opt.opacity.btn">⚙ Adjust opacity…</button></div>
+
+          <h3 class="subhead" data-i18n="opt.colors.gradient">Gradient (titles, logo, buttons)</h3>
+          <label class="row row-switch">
+            <span class="row-text"><span class="row-title" data-i18n="opt.colors.gradientOn">Use the accent gradient</span><span class="row-help" data-i18n="opt.colors.gradientNote">Off = flat accent colour.</span></span>
+            <span class="switch"><input type="checkbox" id="gradientOn" /><span class="track"></span></span>
+          </label>
+          <div class="row">
+            <div class="row-text"><label class="row-title" for="gradientSplit" data-i18n="opt.colors.gradientSplit">Two-colour balance</label></div>
+            <div class="row-ctl range-ctl"><input type="range" id="gradientSplit" min="0" max="100" step="5" /><output id="gradientSplitVal" class="range-val"></output></div>
+          </div>
+
+          <h3 class="subhead" data-i18n="opt.colors.aura">Background aura</h3>
+          <p class="row-help" data-i18n="opt.colors.auraNote">The two soft background glows. Also mirrored into Hivey Code.</p>
+          <div class="swatches">
+            <label class="swatch"><span data-i18n="opt.aura.color">Aura colour</span><input type="color" id="auraColor" /></label>
+          </div>
+          <div class="row">
+            <div class="row-text"><label class="row-title" for="auraOpacity" data-i18n="opt.aura.opacity">Aura intensity</label></div>
+            <div class="row-ctl range-ctl"><input type="range" id="auraOpacity" min="0" max="30" step="1" /><output id="auraOpacityVal" class="range-val"></output></div>
+          </div>
+          <div class="row">
+            <div class="row-text"><label class="row-title" for="auraSize" data-i18n="opt.aura.size">Aura size</label></div>
+            <div class="row-ctl range-ctl"><input type="range" id="auraSize" min="300" max="1200" step="20" /><output id="auraSizeVal" class="range-val"></output></div>
+          </div>
+          <div class="btn-row"><button id="themeReset" class="ghost" type="button" data-i18n="opt.theme.reset">Reset colours to theme</button></div>
+
+          <h3 class="subhead" data-i18n="opt.sub.menu">Menu &amp; layout</h3>
+          <div class="row">
+            <div class="row-text"><label class="row-title" for="railSide" data-i18n="opt.layout.rail">Tabs menu position</label><p class="row-help" data-i18n-html="opt.layout.note">Moves the workspace tabs inside the sidebar.</p></div>
+            <div class="row-ctl">
+              <select id="railSide">
+                <option value="left" data-i18n="opt.layout.left">Left (default)</option>
+                <option value="right" data-i18n="opt.layout.right">Right</option>
+              </select>
+            </div>
+          </div>
+          <details class="opt-dropdown">
+            <summary><span class="row-title" data-i18n="opt.layout.tabs">Workspace icons to show</span><svg class="dd-caret" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+            <p class="row-help" data-i18n="opt.layout.tabsNote">Untick a workspace to hide its icon from the tabs menu.</p>
+            <div id="railTabsList" class="rail-tabs-list"></div>
+          </details>
+
+          <h3 class="subhead" data-i18n="opt.sub.effects">Effects &amp; feedback</h3>
+          <label class="row row-switch"><span class="row-text"><span class="row-title" data-i18n="opt.reply.borderOn">Show an outline around replies</span></span><span class="switch"><input type="checkbox" id="msgBorderOn" /><span class="track"></span></span></label>
+          <label class="row row-switch"><span class="row-text"><span class="row-title" data-i18n="opt.reply.textOutline">Neon (title + icon)</span></span><span class="switch"><input type="checkbox" id="textOutlineOn" /><span class="track"></span></span></label>
+          <label class="row row-switch"><span class="row-text"><span class="row-title" data-i18n="opt.reply.contour">Contour (title + icon)</span></span><span class="switch"><input type="checkbox" id="contourOn" /><span class="track"></span></span></label>
+          <label class="row row-switch"><span class="row-text"><span class="row-title" data-i18n="opt.reply.smoothStream">Smooth streaming animation</span></span><span class="switch"><input type="checkbox" id="smoothStream" /><span class="track"></span></span></label>
+          <label class="row row-switch"><span class="row-text"><span class="row-title" data-i18n="opt.reply.sound">Play a sound when the answer is ready</span></span><span class="switch"><input type="checkbox" id="soundOnDone" /><span class="track"></span></span></label>
+          <label class="row row-switch"><span class="row-text"><span class="row-title" data-i18n="opt.reply.tabDone">Visual notification on tabs when the answer is ready</span><span class="row-help" data-i18n="opt.reply.note2">Colours for these effects live in “Element colours” above.</span></span><span class="switch"><input type="checkbox" id="tabDoneIndicator" /><span class="track"></span></span></label>
+        </section>
+
+        <section id="sec-lang" class="card">
+          <h2 data-i18n="opt.lang.h">Language &amp; writing</h2>
+          <div class="row">
+            <div class="row-text"><label class="row-title" for="uiLang" data-i18n="opt.lang.ui">Interface language (sidebar)</label></div>
+            <div class="row-ctl">
+              <select id="uiLang">
+                <option value="en" data-i18n="opt.uiEn">English (default)</option>
+                <option value="fr" data-i18n="opt.uiFr">French</option>
+                <option value="es">Español</option>
+                <option value="de">Deutsch</option>
+                <option value="it">Italiano</option>
+                <option value="pt">Português</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <div class="row-text"><label class="row-title" for="responseLang" data-i18n="opt.lang.resp">AI response language</label></div>
+            <div class="row-ctl"><select id="responseLang"></select></div>
+          </div>
+          <div class="row">
+            <div class="row-text"><label class="row-title" for="improvePreset" data-i18n="opt.lang.preset">Default writing style (Improve mode)</label></div>
+            <div class="row-ctl"><select id="improvePreset"></select></div>
+          </div>
+          <div class="row">
+            <div class="row-text"><label class="row-title" for="targetLang" data-i18n="opt.lang.target">Translation target language</label></div>
+            <div class="row-ctl"><select id="targetLang"></select></div>
+          </div>
+        </section>
+
+        <section id="sec-behavior" class="card">
+          <h2 data-i18n="opt.behavior.h">Behavior</h2>
+          <p class="card-desc" data-i18n-html="opt.behavior.reasoning">The reasoning is controlled directly from the sidebar.</p>
+          <label class="row row-switch"><span class="row-text"><span class="row-title" data-i18n-html="opt.behavior.suggestNext"><b>Suggest the next request</b></span></span><span class="switch"><input type="checkbox" id="suggestNext" /><span class="track"></span></span></label>
+          <label class="row row-switch"><span class="row-text"><span class="row-title" data-i18n-html="opt.behavior.webDefault"><b>Open Web chats by default</b></span></span><span class="switch"><input type="checkbox" id="webDefault" /><span class="track"></span></span></label>
+          <label class="row row-switch"><span class="row-text"><span class="row-title" data-i18n="opt.behavior.orFreeOnly">OpenRouter: show only free models</span></span><span class="switch"><input type="checkbox" id="orFreeOnly" /><span class="track"></span></span></label>
+          <label class="row row-switch"><span class="row-text"><span class="row-title" data-i18n="opt.behavior.web">Web search on by default</span></span><span class="switch"><input type="checkbox" id="webSearch" /><span class="track"></span></span></label>
+          <label class="row row-switch"><span class="row-text"><span class="row-title" data-i18n="opt.behavior.page">The AI sees the current page</span></span><span class="switch"><input type="checkbox" id="includePageContext" /><span class="track"></span></span></label>
+          <label class="row row-switch"><span class="row-text"><span class="row-title" data-i18n="opt.behavior.autoread">Re-read the page on each navigation</span></span><span class="switch"><input type="checkbox" id="autoReadPage" /><span class="track"></span></span></label>
+          <div class="row">
+            <div class="row-text"><label class="row-title" for="maxPageChars" data-i18n="opt.behavior.maxchars">Max page context size (characters)</label></div>
+            <div class="row-ctl"><input type="number" id="maxPageChars" class="num" min="1000" max="100000" step="1000" /></div>
+          </div>
+        </section>
+
+        <section id="sec-agent" class="card">
+          <h2 data-i18n="opt.agent.h">Agent mode</h2>
+          <p class="card-desc" data-i18n-html="opt.agent.p">In Agent mode the AI drives the browser through tools.</p>
+          <div class="row">
+            <div class="row-text"><label class="row-title" for="agentModel" data-i18n="opt.agent.model">Agent model</label></div>
+            <div class="row-ctl"><select id="agentModel"></select></div>
+          </div>
+          <div class="row row-stack">
+            <div class="row-text"><label class="row-title" for="agentPermission" data-i18n="opt.agent.perm">Agent permissions</label><p class="row-help" data-i18n-html="opt.agent.p2">With manual approval (recommended), every state-changing action asks for consent.</p></div>
+            <div class="row-ctl">
+              <select id="agentPermission">
+                <option value="manual" data-i18n="opt.agent.permManual">Manual approval — ask before each action</option>
+                <option value="auto" data-i18n="opt.agent.permAuto">Allow everything — no approval prompt</option>
+              </select>
+            </div>
+          </div>
+          <label class="row row-switch"><span class="row-text"><span class="row-title" data-i18n="opt.agent.verify">Independent verification at the end of a task</span></span><span class="switch"><input type="checkbox" id="agentVerify" /><span class="track"></span></span></label>
+          <label class="row row-switch"><span class="row-text"><span class="row-title" data-i18n="opt.agent.interactive">Interaction mode</span></span><span class="switch"><input type="checkbox" id="agentInteractive" /><span class="track"></span></span></label>
+        </section>
+
+        <section id="sec-memory" class="card">
+          <h2 data-i18n="opt.mem.h">Memory</h2>
+          <p class="card-desc" data-i18n-html="opt.mem.p">Lets the assistant remember durable facts you state about yourself.</p>
+          <label class="row row-switch"><span class="row-text"><span class="row-title" data-i18n="opt.mem.enable">Enable memory</span></span><span class="switch"><input type="checkbox" id="memoryEnabled" /><span class="track"></span></span></label>
+
+          <h3 class="subhead" data-i18n="opt.mem.modelsH">Models</h3>
+          <p class="row-help" data-i18n-html="opt.mem.modelsP"><b>Which model does the memory work.</b></p>
+          <div class="row row-stack">
+            <div class="row-text"><label class="row-title" for="memoryModelRecall" data-i18n="opt.mem.roleRecall">Recall — reads candidates, writes the briefing</label></div>
+            <div class="row-ctl"><select id="memoryModelRecall"></select></div>
+          </div>
+          <div class="row row-stack">
+            <div class="row-text"><label class="row-title" for="memoryModelExtract" data-i18n="opt.mem.roleExtract">Extraction — proposes durable facts, in the background</label></div>
+            <div class="row-ctl"><select id="memoryModelExtract"></select></div>
+          </div>
+          <div class="row row-stack">
+            <div class="row-text"><label class="row-title" for="memoryModelConsolidate" data-i18n="opt.mem.roleConsolidate">Consolidation — folds related memories into one</label><p class="row-help" id="memoryRouteNote" data-i18n="opt.mem.routeNote">With nothing selected, memory uses the free tier.</p></div>
+            <div class="row-ctl"><select id="memoryModelConsolidate"></select></div>
+          </div>
+
+          <h3 class="subhead" data-i18n="opt.mem.limitsH">Limits</h3>
+          <div class="row">
+            <div class="row-text"><label class="row-title" for="memoryRecallBudget" data-i18n="opt.mem.budget">Tokens per lookup</label></div>
+            <div class="row-ctl"><input type="number" id="memoryRecallBudget" class="num" min="60" max="1200" step="20" /></div>
+          </div>
+          <div class="row">
+            <div class="row-text"><label class="row-title" for="memoryReviewEvery" data-i18n="opt.mem.every">Background review every N messages</label></div>
+            <div class="row-ctl"><input type="number" id="memoryReviewEvery" class="num" min="1" max="50" step="1" /></div>
+          </div>
+          <div class="row">
+            <div class="row-text"><label class="row-title" for="memoryQuotaMb" data-i18n="opt.mem.quota">Storage ceiling (MB)</label></div>
+            <div class="row-ctl"><input type="number" id="memoryQuotaMb" class="num" min="5" max="500" step="5" /></div>
+          </div>
+          <div class="row">
+            <div class="row-text"><label class="row-title" for="memoryAgentName" data-i18n="opt.mem.agentName">Name used in the status line (optional)</label></div>
+            <div class="row-ctl"><input type="text" id="memoryAgentName" maxlength="24" data-i18n-ph="opt.mem.agentNamePh" placeholder="The assistant" /></div>
+          </div>
+          <label class="row row-switch"><span class="row-text"><span class="row-title" data-i18n="opt.mem.encrypt">Encrypt stored memories at rest</span><span class="row-help" data-i18n-html="opt.mem.encryptNote"><b>What this protects:</b> a stolen disk.</span></span><span class="switch"><input type="checkbox" id="memoryEncrypt" /><span class="track"></span></span></label>
+
+          <h3 class="subhead" data-i18n="opt.mem.auditH">What has been stored</h3>
+          <p class="row-help" data-i18n="opt.mem.auditP">Every write, and every refusal with its reason.</p>
+          <div class="mem-audit-bar">
+            <select id="memoryAuditFilter">
+              <option value="" data-i18n="opt.mem.filterAll">All</option>
+              <option value="wrote" data-i18n="opt.mem.filterWrote">Stored</option>
+              <option value="refused" data-i18n="opt.mem.filterRefused">Refused</option>
+              <option value="deleted" data-i18n="opt.mem.filterDeleted">Deleted</option>
+            </select>
+            <button id="memoryPurge" class="danger" type="button" data-i18n="opt.mem.purge">Delete every memory</button>
+          </div>
+          <div id="memoryAuditList" class="mem-audit"></div>
+        </section>
+
+        <section id="sec-web" class="card">
+          <h2 data-i18n="opt.web.h">Web search</h2>
+          <p class="card-desc" data-i18n-html="opt.web.p">In Web mode the request is sent to a web-capable model.</p>
+          <div class="row">
+            <div class="row-text"><label class="row-title" for="searchModel" data-i18n="opt.web.model">Web search model</label></div>
+            <div class="row-ctl"><select id="searchModel"></select></div>
+          </div>
+        </section>
+
+        <section id="sec-image" class="card">
+          <h2 data-i18n="opt.img.h">Image generation</h2>
+          <p class="card-desc" data-i18n-html="opt.img.p">Uses the OpenAI-compatible /images/generations endpoint.</p>
+          <div class="row">
+            <div class="row-text"><label class="row-title" for="imageProvider" data-i18n="opt.img.provider">Image provider</label></div>
+            <div class="row-ctl"><select id="imageProvider"></select></div>
+          </div>
+          <div class="row">
+            <div class="row-text"><label class="row-title" for="imageModel" data-i18n="opt.img.model">Image model</label></div>
+            <div class="row-ctl"><input type="text" id="imageModel" placeholder="gpt-image-1" /></div>
+          </div>
+          <div class="row">
+            <div class="row-text"><label class="row-title" for="imageSize" data-i18n="opt.img.size">Default size</label></div>
+            <div class="row-ctl"><select id="imageSize"></select></div>
+          </div>
+        </section>
+
+        <section id="sec-efficiency" class="card">
+          <h2 data-i18n="opt.eff.h">Speed &amp; token cost</h2>
+          <p class="card-desc" data-i18n="opt.eff.lead">Trim what is sent to the model so you only pay for tokens that matter.</p>
+          <label class="row row-switch"><span class="row-text"><span class="row-title" data-i18n="opt.eff.clean">Clean &amp; de-duplicate page text</span></span><span class="switch"><input type="checkbox" id="cleanContext" /><span class="track"></span></span></label>
+          <label class="row row-switch"><span class="row-text"><span class="row-title" data-i18n="opt.eff.compress">Summarise older messages in long conversations</span></span><span class="switch"><input type="checkbox" id="compressHistory" /><span class="track"></span></span></label>
+          <label class="row row-switch"><span class="row-text"><span class="row-title" data-i18n="opt.eff.routing">Smart routing</span></span><span class="switch"><input type="checkbox" id="smartRouting" /><span class="track"></span></span></label>
+          <div class="row">
+            <div class="row-text"><label class="row-title" for="utilityModel" data-i18n="opt.eff.utility">Utility model (housekeeping)</label></div>
+            <div class="row-ctl"><select id="utilityModel"></select></div>
+          </div>
+        </section>
+
+        <section id="sec-security" class="card">
+          <h2 data-i18n="opt.sec.h">Security &amp; privacy</h2>
+          <p class="card-desc" data-i18n-html="opt.sec.p">Zero server retention: this extension has no server.</p>
+          <label class="row row-switch"><span class="row-text"><span class="row-title" data-i18n-html="opt.sec.block"><b>Anti-purchase guardrail</b></span></span><span class="switch"><input type="checkbox" id="blockPayments" /><span class="track"></span></span></label>
+          <label class="row row-switch"><span class="row-text"><span class="row-title" data-i18n="opt.sec.save">Save conversation history (local only)</span></span><span class="switch"><input type="checkbox" id="saveHistory" /><span class="track"></span></span></label>
+          <div class="btn-row"><button id="clearHistoryBtn" class="ghost" type="button" data-i18n="opt.sec.clearBtn">Clear all history</button></div>
+
+          <h3 class="subhead" data-i18n="opt.priv.h">Anonymisation before a cloud model</h3>
+          <p class="row-help" data-i18n-html="opt.priv.p">Before a request leaves for a cloud provider, sensitive values are replaced by markers.</p>
+          <div class="row row-stack">
+            <div class="row-text"><label class="row-title" for="privacyLevel" data-i18n="opt.priv.level">What is anonymised</label></div>
+            <div class="row-ctl">
+              <select id="privacyLevel">
+                <option value="strict" data-i18n="opt.priv.strict">Strict — also IP addresses, internal hosts and user names in paths</option>
+                <option value="balanced" data-i18n="opt.priv.balanced">Balanced — credentials, personal and company data, your listed terms</option>
+                <option value="off" data-i18n="opt.priv.off">Credentials only</option>
+              </select>
+            </div>
+          </div>
+          <div class="row row-stack">
+            <div class="row-text"><label class="row-title" for="privacyTerms" data-i18n="opt.priv.terms">Always anonymise these words — one per line</label></div>
+            <div class="row-ctl"><textarea id="privacyTerms" rows="3" spellcheck="false"></textarea></div>
+          </div>
+          <label class="row row-switch"><span class="row-text"><span class="row-title" data-i18n-html="opt.priv.trust"><b>Trust my own servers</b></span></span><span class="switch"><input type="checkbox" id="privacyTrustOwn" /><span class="track"></span></span></label>
+        </section>
+
+        <section id="sec-shortcuts" class="card">
+          <h2 data-i18n="opt.shortcuts.title">Keyboard shortcuts</h2>
+          <p class="card-desc" data-i18n="opt.shortcuts.hint">Click a shortcut, then press the new combination.</p>
+          <div id="shortcutsList" class="sc-list"></div>
+          <div class="btn-row"><button id="shortcutsReset" class="ghost" type="button" data-i18n="opt.shortcuts.reset">Reset to defaults</button></div>
+        </section>
+
+        <section id="sec-code" class="card">
+          <h2 data-i18n-html="opt.code.h">Code workshop</h2>
+          <p class="card-desc" data-i18n-html="opt.code.p">The Code tab opens Hivey Code in a new tab.</p>
+          <div class="row">
+            <div class="row-text"><label class="row-title" for="codeAppUrl" data-i18n="opt.code.url">Code workshop URL</label></div>
+            <div class="row-ctl"><input type="text" id="codeAppUrl" placeholder="https://app.hivey.be" /></div>
+          </div>
+          <h3 class="subhead" data-i18n="opt.judge0.h">Judge0 — compile &amp; run</h3>
+          <p class="row-help" data-i18n="opt.judge0.p">Lets the sidebar compile &amp; run code blocks in compiled languages.</p>
+          <div class="row">
+            <div class="row-text"><label class="row-title" for="judge0Endpoint" data-i18n="opt.judge0.url">Judge0 endpoint</label></div>
+            <div class="row-ctl"><input type="text" id="judge0Endpoint" placeholder="https://ce.judge0.com" /></div>
+          </div>
+          <div class="row">
+            <div class="row-text"><label class="row-title" for="judge0Key" data-i18n="opt.judge0.key">Judge0 API key (optional)</label></div>
+            <div class="row-ctl"><input type="text" id="judge0Key" autocomplete="off" placeholder="RapidAPI key / X-Auth-Token" /></div>
+          </div>
+        </section>
+
+        <section id="sec-sync" class="card">
+          <h2 data-i18n="opt.sync.title">Encrypted backup / sync</h2>
+          <p class="card-desc" data-i18n="opt.sync.hint">Export your settings as a passphrase-encrypted file.</p>
+          <div class="btn-row">
+            <button id="syncExport" class="ghost" type="button" data-i18n="opt.sync.export">Export encrypted settings</button>
+            <button id="syncImport" class="ghost" type="button" data-i18n="opt.sync.import">Import encrypted settings</button>
+            <input type="file" id="syncFile" accept=".hivey,application/json" hidden />
+          </div>
+        </section>
+
+        <section id="sec-providers" class="card">
+          <h2 data-i18n="opt.providers.h">AI providers</h2>
+          <p class="card-desc" data-i18n-html="opt.providers.p">Click « 🔐 Connect » on a provider to open its sign-in page.</p>
+          <div id="providers"></div>
+        </section>
+      </main>
     </div>
-    <main>
-      <h1 data-i18n="opt.title">Hivey AI — Settings</h1>
-      <p class="muted" data-i18n-html="opt.intro">
-        100% <b>BYOK</b>: your keys are stored <b>locally</b> in this browser
-        (<code>storage.local</code>), never synced, and sent only to the API you choose.
-      </p>
-      <input type="search" id="settingsSearch" class="settings-search" data-i18n-ph="opt.search.ph" placeholder="Search settings…" autocomplete="off" />
-
-      <section class="quickconnect" id="sec-quick">
-        <h2 style="margin-top:0" data-i18n="opt.quick.h">Quick connect</h2>
-        <p class="muted" data-i18n-html="opt.quick.p">
-          Simplest: connect your <b>OpenRouter</b> account in 1 click.
-        </p>
-        <button id="quickConnect" class="grad" data-i18n="opt.quick.btn">Connect to OpenRouter (free, 1-click)</button>
-        <span id="quickStatus" class="muted"></span>
-      </section>
-
-
-      <section id="sec-agent">
-        <h2 data-i18n="opt.agent.h">Agent mode</h2>
-        <p class="muted" data-i18n-html="opt.agent.p">
-          In Agent mode the AI drives the browser through tools.
-        </p>
-        <label><span data-i18n="opt.agent.model">Agent model</span>
-          <select id="agentModel"></select>
-        </label>
-        <label><span data-i18n="opt.agent.perm">Agent permissions</span>
-          <select id="agentPermission">
-            <option value="manual" data-i18n="opt.agent.permManual">Manual approval — ask before each action</option>
-            <option value="auto" data-i18n="opt.agent.permAuto">Allow everything — no approval prompt</option>
-          </select>
-        </label>
-        <p class="muted" data-i18n-html="opt.agent.p2">
-          With manual approval (recommended), every state-changing action asks for consent.
-        </p>
-        <label class="switch" style="margin-top:10px"><input type="checkbox" id="agentVerify" /><span class="track"></span><span class="lbl" data-i18n="opt.agent.verify">Independent verification at the end of a task (more reliable, uses a few extra tokens)</span></label>
-        <label class="switch" style="margin-top:10px"><input type="checkbox" id="agentInteractive" /><span class="track"></span><span class="lbl" data-i18n="opt.agent.interactive">Interaction mode — the internet agent reads the page + researches the web, then the agent PROPOSES several options in the chat and asks you which to pick instead of acting on its own</span></label>
-      </section>
-
-      <section id="sec-memory">
-        <h2 data-i18n="opt.mem.h">Memory</h2>
-        <p class="muted" data-i18n-html="opt.mem.p">
-          Lets the assistant remember durable facts you state about yourself, and look them up when
-          they are relevant. Off by default. Off means no lookup at all — not a lookup whose result
-          is discarded.
-        </p>
-        <label class="switch"><input type="checkbox" id="memoryEnabled" /><span class="track"></span><span class="lbl" data-i18n="opt.mem.enable">Enable memory</span></label>
-
-        <p class="muted" style="margin-top:14px" data-i18n-html="opt.mem.modelsP">
-          <b>Which model does the memory work.</b> The candidate memories are read by this model, not
-          by your main one — that is what keeps a lookup cheap. A local server or the free tier costs
-          nothing; any model you pick is your call, with its price shown.
-        </p>
-        <label><span data-i18n="opt.mem.roleRecall">Recall — reads candidates, writes the briefing</span>
-          <select id="memoryModelRecall"></select>
-        </label>
-        <label><span data-i18n="opt.mem.roleExtract">Extraction — proposes durable facts, in the background</span>
-          <select id="memoryModelExtract"></select>
-        </label>
-        <label><span data-i18n="opt.mem.roleConsolidate">Consolidation — folds related memories into one</span>
-          <select id="memoryModelConsolidate"></select>
-        </label>
-        <p class="muted" id="memoryRouteNote" data-i18n="opt.mem.routeNote">
-          With nothing selected and no local server running, memory uses the free tier. If that is
-          unavailable, a lookup is skipped rather than charged to your main model.
-        </p>
-
-        <label><span data-i18n="opt.mem.budget">Tokens per lookup</span>
-          <input type="number" id="memoryRecallBudget" min="60" max="1200" step="20" />
-        </label>
-        <label><span data-i18n="opt.mem.every">Background review every N messages</span>
-          <input type="number" id="memoryReviewEvery" min="1" max="50" step="1" />
-        </label>
-        <label><span data-i18n="opt.mem.quota">Storage ceiling (MB)</span>
-          <input type="number" id="memoryQuotaMb" min="5" max="500" step="5" />
-        </label>
-        <label><span data-i18n="opt.mem.agentName">Name used in the status line (optional)</span>
-          <input type="text" id="memoryAgentName" maxlength="24" data-i18n-ph="opt.mem.agentNamePh" placeholder="The assistant" />
-        </label>
-        <label class="switch" style="margin-top:10px"><input type="checkbox" id="memoryEncrypt" /><span class="track"></span><span class="lbl" data-i18n="opt.mem.encrypt">Encrypt stored memories at rest (asks for a passphrase)</span></label>
-        <p class="muted" data-i18n-html="opt.mem.encryptNote">
-          <b>What this protects:</b> a stolen disk, a backup, a shared machine. <b>What it does not:</b>
-          a running profile with the extension unlocked — the key has to be in memory to search.
-        </p>
-
-        <h3 data-i18n="opt.mem.auditH">What has been stored</h3>
-        <p class="muted" data-i18n="opt.mem.auditP">Every write, and every refusal with its reason. Delete one, or clear everything.</p>
-        <div class="mem-audit-bar">
-          <select id="memoryAuditFilter">
-            <option value="" data-i18n="opt.mem.filterAll">All</option>
-            <option value="wrote" data-i18n="opt.mem.filterWrote">Stored</option>
-            <option value="refused" data-i18n="opt.mem.filterRefused">Refused</option>
-            <option value="deleted" data-i18n="opt.mem.filterDeleted">Deleted</option>
-          </select>
-          <button id="memoryPurge" class="danger" data-i18n="opt.mem.purge">Delete every memory</button>
-        </div>
-        <div id="memoryAuditList" class="mem-audit"></div>
-      </section>
-
-      <section id="sec-web">
-        <h2 data-i18n="opt.web.h">Web search</h2>
-        <p class="muted" data-i18n-html="opt.web.p">
-          In Web mode the request is sent to a web-capable model.
-        </p>
-        <label><span data-i18n="opt.web.model">Web search model</span>
-          <select id="searchModel"></select>
-        </label>
-      </section>
-
-      <section id="sec-image">
-        <h2 data-i18n="opt.img.h">Image generation</h2>
-        <label><span data-i18n="opt.img.provider">Image provider</span>
-          <select id="imageProvider"></select>
-        </label>
-        <label><span data-i18n="opt.img.model">Image model</span>
-          <input type="text" id="imageModel" placeholder="gpt-image-1" />
-        </label>
-        <label><span data-i18n="opt.img.size">Default size</span>
-          <select id="imageSize"></select>
-        </label>
-        <p class="muted" data-i18n-html="opt.img.p">
-          Uses the OpenAI-compatible /images/generations endpoint.
-        </p>
-      </section>
-
-      <section id="sec-code">
-        <h2 data-i18n-html="opt.code.h">Code workshop</h2>
-        <p class="muted" data-i18n-html="opt.code.p">
-          The Code tab opens Hivey Code in a new tab.
-        </p>
-        <label><span data-i18n="opt.code.url">Code workshop URL</span>
-          <input type="text" id="codeAppUrl" placeholder="https://app.hivey.be" />
-        </label>
-        <h3 style="margin:18px 0 4px" data-i18n="opt.judge0.h">Judge0 — compile &amp; run</h3>
-        <p class="muted" data-i18n="opt.judge0.p">
-          Lets the sidebar compile &amp; run code blocks in compiled languages (C, C++, Rust, Go, Python, Java…) and show the output. Uses a Judge0 instance (the public ce.judge0.com, api.judge0.com, the RapidAPI endpoint, or your own).
-        </p>
-        <label><span data-i18n="opt.judge0.url">Judge0 endpoint</span>
-          <input type="text" id="judge0Endpoint" placeholder="https://ce.judge0.com" />
-        </label>
-        <label><span data-i18n="opt.judge0.key">Judge0 API key (optional)</span>
-          <input type="text" id="judge0Key" autocomplete="off" placeholder="RapidAPI key / X-Auth-Token" />
-        </label>
-      </section>
-
-      <section id="sec-lang">
-        <h2 data-i18n="opt.lang.h">Language &amp; writing</h2>
-        <label><span data-i18n="opt.lang.ui">Interface language (sidebar)</span>
-          <select id="uiLang">
-            <option value="en" data-i18n="opt.uiEn">English (default)</option>
-            <option value="fr" data-i18n="opt.uiFr">French</option>
-            <option value="es">Español</option>
-            <option value="de">Deutsch</option>
-            <option value="it">Italiano</option>
-            <option value="pt">Português</option>
-          </select>
-        </label>
-        <label><span data-i18n="opt.lang.resp">AI response language</span>
-          <select id="responseLang"></select>
-        </label>
-        <label><span data-i18n="opt.lang.preset">Default writing style (Improve mode)</span>
-          <select id="improvePreset"></select>
-        </label>
-        <label><span data-i18n="opt.lang.target">Translation target language</span>
-          <select id="targetLang"></select>
-        </label>
-      </section>
-
-      <section id="sec-appearance">
-        <h2 data-i18n="opt.layout.h">Appearance &amp; layout</h2>
-        <label><span data-i18n="opt.theme.label">Theme</span>
-          <select id="theme"></select>
-        </label>
-        <p class="muted" data-i18n="opt.theme.note">Pick a theme, then optionally fine-tune individual colours on top of it.</p>
-        <div class="color-group">
-          <span class="lbl-strong" data-i18n="opt.colors.base">Base colours</span>
-          <!-- Logical order: the canvas first (background → surface), then the text on it
-               (primary → secondary), then the brand accents (accent → its gradient end). -->
-          <div class="theme-colors">
-            <label class="colpick"><span data-i18n="opt.theme.bg">Background</span><input type="color" id="col_bg" /></label>
-            <label class="colpick"><span data-i18n="opt.theme.panel">Surface</span><input type="color" id="col_panel" /></label>
-            <label class="colpick"><span data-i18n="opt.theme.text">Text</span><input type="color" id="col_text" /></label>
-            <label class="colpick"><span data-i18n="opt.theme.muted">Secondary text</span><input type="color" id="col_muted" /></label>
-            <label class="colpick"><span data-i18n="opt.theme.accent">Accent</span><input type="color" id="col_accent" /></label>
-            <label class="colpick"><span data-i18n="opt.theme.accent2">Accent 2 (gradient)</span><input type="color" id="col_accent2" /></label>
-          </div>
-        </div>
-        <div class="color-group">
-          <span class="lbl-strong" data-i18n="opt.colors.elements">Element colours</span>
-          <!-- Logical order: top→bottom of the sidebar — top-bar icons (and their gradient
-               end), then the left menu/tab icons, then the reply area (outline, title contour). -->
-          <div class="theme-colors">
-            <label class="colpick"><span data-i18n="opt.colors.topIcon">Top bar icons</span><input type="color" id="topIconColor" /></label>
-            <label class="colpick"><span data-i18n="opt.colors.topIcon2">Top bar icons — 2nd (gradient)</span><input type="color" id="topIconColor2" /></label>
-            <label class="colpick"><span data-i18n="opt.layout.railIconColor">Menu / tab icons</span><input type="color" id="railIconColor" /></label>
-            <label class="colpick"><span data-i18n="opt.reply.borderColor">Reply outline / neon</span><input type="color" id="msgBorderColor" /></label>
-            <label class="colpick"><span data-i18n="opt.reply.contourColor">Title contour</span><input type="color" id="contourColor" /></label>
-          </div>
-          <label class="switch" style="margin-top:8px"><input type="checkbox" id="topIconGradient" /><span class="track"></span><span class="lbl" data-i18n="opt.colors.topIconGrad">Gradient on the top bar icons</span></label>
-          <button id="opacityBtn" class="ghost" type="button" style="margin-top:8px" data-i18n="opt.opacity.btn">⚙ Adjust opacity…</button>
-        </div>
-        <div class="color-group">
-          <span class="lbl-strong" data-i18n="opt.colors.gradient">Gradient (titles, logo, buttons)</span>
-          <label class="switch" style="margin-top:6px"><input type="checkbox" id="gradientOn" /><span class="track"></span><span class="lbl" data-i18n="opt.colors.gradientOn">Use the accent gradient</span></label>
-          <label class="rangepick"><span data-i18n="opt.colors.gradientSplit">Two-colour balance</span><input type="range" id="gradientSplit" min="0" max="100" step="5" /><span id="gradientSplitVal" class="muted"></span></label>
-          <p class="muted" data-i18n="opt.colors.gradientNote">Off = flat accent colour. The slider sets how aggressive the blend between the two accent colours is.</p>
-        </div>
-        <div class="color-group">
-          <span class="lbl-strong" data-i18n="opt.colors.aura">Background aura</span>
-          <div class="theme-colors">
-            <label class="colpick"><span data-i18n="opt.aura.color">Aura colour</span><input type="color" id="auraColor" /></label>
-          </div>
-          <label class="rangepick"><span data-i18n="opt.aura.opacity">Aura intensity</span><input type="range" id="auraOpacity" min="0" max="30" step="1" /><span id="auraOpacityVal" class="muted"></span></label>
-          <label class="rangepick"><span data-i18n="opt.aura.size">Aura size</span><input type="range" id="auraSize" min="300" max="1200" step="20" /><span id="auraSizeVal" class="muted"></span></label>
-          <p class="muted" data-i18n="opt.colors.auraNote">The two soft background glows. Also mirrored into Hivey Code.</p>
-        </div>
-        <button id="themeReset" class="ghost" data-i18n="opt.theme.reset">Reset colours to theme</button>
-        <h3 class="opt-subhead" data-i18n="opt.sub.typography">Typography</h3>
-        <label style="margin-top:6px"><span data-i18n="opt.font.label">Interface font</span>
-          <select id="uiFont"></select>
-        </label>
-        <p class="muted" data-i18n="opt.font.note">Pick a modern web font for the whole interface. Fonts are bundled in the extension, so they work offline.</p>
-        <h3 class="opt-subhead" data-i18n="opt.sub.menu">Menu &amp; layout</h3>
-        <label style="margin-top:6px"><span data-i18n="opt.layout.rail">Tabs menu position</span>
-          <select id="railSide">
-            <option value="left" data-i18n="opt.layout.left">Left (default)</option>
-            <option value="right" data-i18n="opt.layout.right">Right</option>
-          </select>
-        </label>
-        <p class="muted" data-i18n-html="opt.layout.note">
-          Moves the workspace tabs (Chat, Agent…) to the left or right <b>inside</b> the
-          sidebar. The sidebar's own left/right position is set by the browser, not the
-          extension (Firefox: right-click the sidebar header → « Move sidebar to the
-          right »; Chrome's side panel is right-only). Tip: the ⤢ « open in a tab »
-          button gives a full-screen view you can place anywhere.
-        </p>
-        <details class="opt-dropdown" style="margin-top:14px">
-          <summary><span class="lbl-strong" data-i18n="opt.layout.tabs">Workspace icons to show</span><svg class="dd-caret" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
-          <p class="muted" data-i18n="opt.layout.tabsNote">Untick a workspace to hide its icon from the tabs menu. You can also drag the icons in the sidebar to reorder them. Tip: right-click a tab in the sidebar to hide it.</p>
-          <div id="railTabsList" class="rail-tabs-list"></div>
-        </details>
-        <h3 class="opt-subhead" data-i18n="opt.sub.effects">Effects &amp; feedback</h3>
-        <div style="margin-top:2px">
-          <label class="switch" style="margin-top:4px"><input type="checkbox" id="msgBorderOn" /><span class="track"></span><span class="lbl" data-i18n="opt.reply.borderOn">Show an outline around replies</span></label>
-          <label class="switch"><input type="checkbox" id="textOutlineOn" /><span class="track"></span><span class="lbl" data-i18n="opt.reply.textOutline">Neon (title + icon)</span></label>
-          <label class="switch"><input type="checkbox" id="contourOn" /><span class="track"></span><span class="lbl" data-i18n="opt.reply.contour">Contour (title + icon)</span></label>
-          <label class="switch"><input type="checkbox" id="smoothStream" /><span class="track"></span><span class="lbl" data-i18n="opt.reply.smoothStream">Smooth streaming animation</span></label>
-          <label class="switch"><input type="checkbox" id="soundOnDone" /><span class="track"></span><span class="lbl" data-i18n="opt.reply.sound">Play a sound when the answer is ready</span></label>
-          <label class="switch"><input type="checkbox" id="tabDoneIndicator" /><span class="track"></span><span class="lbl" data-i18n="opt.reply.tabDone">Visual notification on tabs when the answer is ready</span></label>
-          <p class="muted" data-i18n="opt.reply.note2">Colours for these effects live in “Element colours” above. The eyedropper lets you pick any colour on screen.</p>
-        </div>
-      </section>
-
-      <section id="sec-security">
-        <h2 data-i18n="opt.sec.h">Security &amp; privacy</h2>
-        <p class="muted" data-i18n-html="opt.sec.p">
-          Zero server retention: this extension has no server.
-        </p>
-        <label class="switch"><input type="checkbox" id="blockPayments" /><span class="track"></span><span class="lbl" data-i18n-html="opt.sec.block"><b>Anti-purchase guardrail</b>: the agent can never pay/checkout</span></label>
-        <label class="switch"><input type="checkbox" id="saveHistory" /><span class="track"></span><span class="lbl" data-i18n="opt.sec.save">Save conversation history (local only)</span></label>
-        <button id="clearHistoryBtn" class="ghost" data-i18n="opt.sec.clearBtn">Clear all history</button>
-        <h3 data-i18n="opt.priv.h">Anonymisation before a cloud model</h3>
-        <p class="muted" data-i18n-html="opt.priv.p">Local models and your own gateway receive your data as it is. Before a request leaves for a cloud provider, sensitive values are replaced by markers such as ⟨EMAIL_1⟩, and put back in the answer.</p>
-        <label><span data-i18n="opt.priv.level">What is anonymised</span>
-          <select id="privacyLevel">
-            <option value="strict" data-i18n="opt.priv.strict">Strict — also IP addresses, internal hosts and user names in paths</option>
-            <option value="balanced" data-i18n="opt.priv.balanced">Balanced — credentials, personal and company data, your listed terms</option>
-            <option value="off" data-i18n="opt.priv.off">Credentials only</option>
-          </select>
-        </label>
-        <label><span data-i18n="opt.priv.terms">Always anonymise these words (clients, project code names…) — one per line</span>
-          <textarea id="privacyTerms" rows="3" spellcheck="false"></textarea>
-        </label>
-        <label class="switch"><input type="checkbox" id="privacyTrustOwn" /><span class="track"></span><span class="lbl" data-i18n-html="opt.priv.trust"><b>Trust my own servers</b>: nothing is anonymised for local models and my gateway</span></label>
-      </section>
-
-      <section id="sec-behavior">
-        <h2 data-i18n="opt.behavior.h">Behavior</h2>
-        <p class="muted" data-i18n-html="opt.behavior.reasoning">
-          The reasoning is controlled directly from the sidebar.
-        </p>
-        <label class="switch"><input type="checkbox" id="suggestNext" /><span class="track"></span><span class="lbl" data-i18n-html="opt.behavior.suggestNext"><b>Suggest the next request</b> in the composer after each answer (Tab to use it)</span></label>
-        <label class="switch"><input type="checkbox" id="webDefault" /><span class="track"></span><span class="lbl" data-i18n-html="opt.behavior.webDefault"><b>Open Web chats by default</b>: start on the embedded Gemini/Claude/ChatGPT… (no API needed)</span></label>
-        <label class="switch"><input type="checkbox" id="orFreeOnly" /><span class="track"></span><span class="lbl" data-i18n="opt.behavior.orFreeOnly">OpenRouter: show only free models (hide paid &amp; inaccessible)</span></label>
-        <label class="switch"><input type="checkbox" id="webSearch" /><span class="track"></span><span class="lbl" data-i18n="opt.behavior.web">Web search on by default (Perplexity / OpenRouter / Claude)</span></label>
-        <label class="switch"><input type="checkbox" id="includePageContext" /><span class="track"></span><span class="lbl" data-i18n="opt.behavior.page">The AI sees the current page (auto-injected in chat)</span></label>
-        <label class="switch"><input type="checkbox" id="autoReadPage" /><span class="track"></span><span class="lbl" data-i18n="opt.behavior.autoread">Re-read the page on each navigation (incl. subdomain)</span></label>
-        <label><span data-i18n="opt.behavior.maxchars">Max page context size (characters)</span>
-          <input type="number" id="maxPageChars" min="1000" max="100000" step="1000" />
-        </label>
-      </section>
-
-      <section id="sec-efficiency">
-        <h2 data-i18n="opt.eff.h">Speed &amp; token cost</h2>
-        <p class="muted" data-i18n="opt.eff.lead">Trim what is sent to the model so you only pay for tokens that matter — which also speeds up the first response.</p>
-        <label class="switch"><input type="checkbox" id="cleanContext" /><span class="track"></span><span class="lbl" data-i18n="opt.eff.clean">Clean &amp; de-duplicate page text, and send a page only once per conversation</span></label>
-        <label class="switch"><input type="checkbox" id="compressHistory" /><span class="track"></span><span class="lbl" data-i18n="opt.eff.compress">Summarise older messages in long conversations to save tokens</span></label>
-        <label class="switch"><input type="checkbox" id="smartRouting" /><span class="track"></span><span class="lbl" data-i18n="opt.eff.routing">Smart routing: use a cheap/free model for summaries &amp; compaction (premium model kept for answers)</span></label>
-        <label><span data-i18n="opt.eff.utility">Utility model (housekeeping)</span>
-          <select id="utilityModel"></select>
-        </label>
-      </section>
-
-      <section id="sec-providers">
-        <h2 data-i18n="opt.providers.h">AI providers</h2>
-        <p class="muted" data-i18n-html="opt.providers.p">
-          Click « 🔐 Connect » on a provider to open its sign-in page.
-        </p>
-        <div id="providers"></div>
-      </section>
-
-      <div class="actions">
-        <span class="muted" data-i18n="opt.autosaveNote">Changes are saved automatically.</span>
-        <span id="status" class="muted"></span>
-      </div>
-    </main>
 
     <!-- Element colour opacity config popup -->
     <div id="opacityModal" class="modal-overlay hidden">
-      <div class="modal-card">
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="opacityTitle">
         <div class="modal-head">
-          <span class="lbl-strong" data-i18n="opt.opacity.h">Element colour opacity</span>
-          <button id="opacityClose" class="icon" type="button" title="Close">✕</button>
+          <span id="opacityTitle" class="row-title" data-i18n="opt.opacity.h">Element colour opacity</span>
+          <button id="opacityClose" class="icon" type="button" data-i18n-title="opt.close" title="Close">✕</button>
         </div>
         <label class="rangepick"><span data-i18n="opt.layout.railIconColor">Menu / tab icons</span><input type="range" id="op_railIcon" min="0" max="100" step="5" /><span class="op-val muted"></span></label>
         <label class="rangepick"><span data-i18n="opt.opacity.neon">Neon colour</span><input type="range" id="op_msgBorder" min="0" max="100" step="5" /><span class="op-val muted"></span></label>
         <label class="rangepick"><span data-i18n="opt.reply.contourColor">Title contour</span><input type="range" id="op_contour" min="0" max="100" step="5" /><span class="op-val muted"></span></label>
-        <p class="muted" data-i18n="opt.opacity.note">0% = fully transparent, 100% = solid. Changes apply live.</p>
+        <p class="row-help" data-i18n="opt.opacity.note">0% = fully transparent, 100% = solid. Changes apply live.</p>
       </div>
     </div>
 

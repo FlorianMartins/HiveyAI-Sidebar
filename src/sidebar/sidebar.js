@@ -7,7 +7,7 @@
 // available. Comparison is done per-message (a "Comparer" button on the latest
 // answer). Conversations are kept locally for privacy.
 
-import { getSettings, setSettings, onSettingsChanged } from "../lib/storage.js";
+import { getSettings, setSettings, onSettingsChanged, DEFAULTS } from "../lib/storage.js";
 import { parsePcap } from "../lib/pcap.js";
 import { makeProvider, listModels, listOpenRouterRich, generateImage, transcribeAudio, transcribeAudioViaChat } from "../lib/providers.js";
 import { buildSystemPrompt, activeTools, runConversation } from "../lib/agent.js";
@@ -32,7 +32,7 @@ import { connectOpenRouter } from "../lib/auth.js";
 import { applyTheme, effectivePalette, applyFont, withOpacity } from "../lib/theme.js";
 import { t, setLang, applyDom, getLang } from "../lib/i18n.js";
 import { PROMPT_CATEGORIES, BUILTIN_PROMPTS, builtinText, builtinTitle } from "../lib/prompts.js";
-import { SHORTCUT_ACTIONS, defaultShortcuts, comboFromEvent } from "../lib/shortcuts.js";
+import { defaultShortcuts, comboFromEvent, actionForCombo } from "../lib/shortcuts.js";
 import { downloadMarkdown, printConversation } from "../lib/exportConversation.js";
 import {
   listConversations, getConversation, saveConversation, deleteConversation,
@@ -5126,6 +5126,7 @@ function wire() {
     // A UI-language switch in Settings: reload so every static + dynamic string is
     // rebuilt in the new language (simplest and fully consistent).
     if (changes.uiLang) { location.reload(); return; }
+    applyPrefChanges(changes);
     if (changes.railSide) document.body.classList.toggle("rail-right", changes.railSide.newValue === "right");
     if (changes.railHidden) { settings.railHidden = !!changes.railHidden.newValue; applyRailPinned(); }
     if (changes.railTabsHidden || changes.railOrder) {
@@ -5157,6 +5158,34 @@ function wire() {
     if (j0Changed) setJudge0Config({ endpoint: settings.judge0Endpoint, key: settings.judge0Key });
     if (connChanged) autoListConnected();
   });
+}
+
+// Preferences flipped on the Settings page (its Quick access switches, the shortcut editor…) take
+// effect in an open sidebar at once instead of on its next reload. Only these user preferences are
+// merged — never the sidebar's own runtime state (mode, sessions, model lists…).
+const PREF_KEYS = ["shortcuts", "suggestNext", "privacyLevel", "privacyLevelOn", "compressHistory", "memoryEnabled",
+  "soundOnDone", "tabDoneIndicator", "smoothStream", "verifyAnswers", "artifacts", "webSearch"];
+function applyPrefChanges(changes) {
+  let hit = false;
+  for (const k of PREF_KEYS) {
+    if (!changes[k]) continue;
+    const v = changes[k].newValue === undefined ? DEFAULTS[k] : changes[k].newValue;
+    if (settings[k] === v) continue; // our own write coming back
+    settings[k] = v;
+    hit = true;
+    if (k === "verifyAnswers" && els.verifyAnswers) els.verifyAnswers.checked = settings.verifyAnswers === true;
+    // The composer chips are per tab: a switch flipped in the settings applies to the tab on screen.
+    if (k === "artifacts" && els.artifactMode) {
+      els.artifactMode.checked = settings.artifacts !== false;
+      if (CHAT_MODES.includes(mode)) getSession(mode).toggles.artifacts = els.artifactMode.checked;
+      setArtifactsLive(els.artifactMode.checked);
+    }
+    if (k === "webSearch" && els.webSearch && mode !== "security") {
+      els.webSearch.checked = !!settings.webSearch;
+      if (CHAT_MODES.includes(mode)) getSession(mode).toggles.webSearch = els.webSearch.checked;
+    }
+  }
+  if (hit && (changes.privacyLevel || changes.privacyLevelOn)) updatePrivBadge();
 }
 
 function autoGrow() {
@@ -6319,13 +6348,11 @@ function setupShortcuts() {
   window.addEventListener("keydown", (e) => {
     const combo = comboFromEvent(e);
     if (!combo) return;
-    const map = { ...defaultShortcuts(), ...(settings.shortcuts || {}) };
-    for (const a of SHORTCUT_ACTIONS) {
-      if (map[a.id] && map[a.id] === combo && handlers[a.id]) {
-        e.preventDefault();
-        handlers[a.id]();
-        return;
-      }
+    // settings.shortcuts follows the Settings page live (see PREF_KEYS in the settings listener).
+    const id = actionForCombo({ ...defaultShortcuts(), ...(settings.shortcuts || {}) }, combo);
+    if (id && handlers[id]) {
+      e.preventDefault();
+      handlers[id]();
     }
   });
 }
