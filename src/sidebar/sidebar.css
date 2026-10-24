@@ -2587,3 +2587,5 @@ body.rail-right.rail-pinned .codeview, body.rail-right.rail-peek .codeview {
   body.rail-pinned #messages { padding-left: calc(var(--rail-w, 56px) + 8px); }
   body.rail-right.rail-pinned #messages { padding-left: 12px; padding-right: calc(var(--rail-w, 56px) + 8px); }
 }
+/* Standby and pin are icons like the rest of the row; on = accent. */
+.mact-bar .mact.mctxmute.on, .mact-bar .mact.mctxpin.on { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }

@@ -6627,9 +6627,9 @@ function applyTurnMarks(id) {
     tag.textContent = label;
     tag.title = e.muted ? t("ctx.tag.mutedTitle") : t("ctx.tag.pinnedTitle");
     const mute = b.querySelector(".mact-bar .mctxmute");
-    if (mute) { mute.title = e.muted ? t("ctx.unmute") : t("ctx.mute"); const w = mute.querySelector(".mact-word"); if (w) w.textContent = e.muted ? t("ctx.btn.unmute") : t("ctx.btn.mute"); mute.classList.toggle("on", !!e.muted); }
+    if (mute) { mute.title = e.muted ? t("ctx.unmute") : t("ctx.mute"); mute.setAttribute("aria-label", mute.title); mute.classList.toggle("on", !!e.muted); }
     const pin = b.querySelector(".mact-bar .mctxpin");
-    if (pin) { pin.title = e.pinned ? t("ctx.unpin") : t("ctx.pin"); const w = pin.querySelector(".mact-word"); if (w) w.textContent = e.pinned ? t("ctx.btn.unpin") : t("ctx.btn.pin"); pin.classList.toggle("on", !!e.pinned); }
+    if (pin) { pin.title = e.pinned ? t("ctx.unpin") : t("ctx.pin"); pin.setAttribute("aria-label", pin.title); pin.classList.toggle("on", !!e.pinned); }
   }
 }
 function setTurnFlags(id, patch) {
@@ -6645,21 +6645,14 @@ function setTurnFlags(id, patch) {
 function addContextActions(bar, el) {
   if (!el || !el._ctxTurn) return;
   const id = el._ctxTurn;
-  // Labelled, not icon-only: « il n'y a sur aucun onglet la possibilité de mettre un message en
-  // standby » — the icons were there and nobody could tell what they were.
-  const labelled = (cls, glyph, title, word, fn) => {
-    const b = makeActBtn(cls + " mact-labelled", glyph, title, fn);
-    const w = document.createElement("span");
-    w.className = "mact-word";
-    w.textContent = word;
-    b.appendChild(w);
-    return b;
-  };
-  bar.appendChild(labelled("mctxmute", STANDBY_GLYPH, t("ctx.mute"), t("ctx.btn.mute"), () => {
+  // Icons, like the rest of the row (user, 2026-10-24: « garder uniquement les icônes avec la
+  // description en survol »); the state shows in the accent colour and the « Hors contexte » tag.
+  const iconBtn = (cls, glyph, title, fn) => { const b = makeActBtn(cls, glyph, title, fn); b.setAttribute("aria-label", title); return b; };
+  bar.appendChild(iconBtn("mctxmute", STANDBY_GLYPH, t("ctx.mute"), () => {
     const e = turnEntry(id) || {};
     setTurnFlags(id, { muted: !e.muted });
   }));
-  bar.appendChild(labelled("mctxpin", PIN_GLYPH, t("ctx.pin"), t("ctx.btn.pin"), () => {
+  bar.appendChild(iconBtn("mctxpin", PIN_GLYPH, t("ctx.pin"), () => {
     const e = turnEntry(id) || {};
     setTurnFlags(id, { pinned: !e.pinned });
   }));

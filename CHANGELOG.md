@@ -10,6 +10,16 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+### L'agent et la musique sur Firefox : un seul clic, avec le son
+
+- Quand le navigateur n'autorise le son qu'après un clic sur la page (Firefox), l'agent **ne lance
+  plus la vidéo en sourdine** : elle attend **en pause, son activé**. Un seul clic sur Lecture (ou
+  sur « ▶ Lire avec le son ») la lance avec le son — fini « couper le son puis le remettre ». Une
+  vidéo que le site avait déjà lancée en sourdine (YouTube) est mise dans le même état. Vérifié
+  dans Firefox : avant le clic, en pause et non muette ; 4 s après, elle joue avec le son.
+- **Sous les messages**, « Veille » et « Épingler » ne sont plus que des icônes, comme les autres ;
+  leur description s'affiche au survol, et l'icône prend la couleur du thème quand elle est active.
+
 ### Zone de saisie : la lumière du cadre, fluide — et plus épurée
 
 - **L'animation du cadre** : un arc violet clair (plus blanc) qui fait le tour du cadre **à vitesse

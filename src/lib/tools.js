@@ -306,7 +306,7 @@ async function playMedia(query) {
   // protected URL the agent was pinned to) — there sendToTab THROWS. Don't let that abort the
   // whole action: swallow it and, if we know what to play, just navigate this tab to YouTube.
   const tryPlay = async () => {
-    // soundLabel: the button put on the video when the browser only allows muted playback.
+    // soundLabel: the button put on the paused video when the browser allows sound only after a click.
     try { return await sendToTab(tab.id, { type: "control_media", action: "play", soundLabel: t("agent.media.soundOn") }); }
     catch (_) { return null; }
   };
@@ -321,7 +321,8 @@ async function playMedia(query) {
 
   // Nothing playable here (no player, or page unreachable) and we know WHAT to play → go to
   // YouTube results IN THIS TAB (works even from a protected page: we only change its URL).
-  if (query && !(res && res.watchUrl) && !(res && res.playing)) {
+  // A video held paused for one click (the browser allows sound only after a click) is found too.
+  if (query && !(res && res.watchUrl) && !(res && (res.playing || res.soundButton))) {
     // YouTube's default RELEVANCE order (no &sp=) surfaces the best-matching result for the query
     // (official soundtracks, full versions…), not just the most-viewed — the agent refines the
     // query itself when it wants a specific quality.
