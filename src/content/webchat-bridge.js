@@ -13,6 +13,9 @@
   try {
     if (window.top === window.self) return; // only inside our embed
   } catch (_) {}
+  // Tell the sidebar this frame really holds the provider's page — a frame that loads without this
+  // hello is the browser's "can't open this page" error, and the sidebar offers a tab instead.
+  try { if (window.parent === window.top) window.parent.postMessage({ __hiveyWeb: "hello" }, "*"); } catch (_) {}
 
   // ── Page-world worker (stringified & injected). Self-contained: no outer refs. ──
   function HIVEY_PW() {

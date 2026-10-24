@@ -11,6 +11,7 @@
 // can fill a cart but can never complete a purchase.
 
 import { isWebChatUrl } from "./memory-policy.js";
+import { t } from "./i18n.js";
 
 export const TOOLS = [
   {
@@ -305,7 +306,8 @@ async function playMedia(query) {
   // protected URL the agent was pinned to) — there sendToTab THROWS. Don't let that abort the
   // whole action: swallow it and, if we know what to play, just navigate this tab to YouTube.
   const tryPlay = async () => {
-    try { return await sendToTab(tab.id, { type: "control_media", action: "play" }); }
+    // soundLabel: the button put on the video when the browser only allows muted playback.
+    try { return await sendToTab(tab.id, { type: "control_media", action: "play", soundLabel: t("agent.media.soundOn") }); }
     catch (_) { return null; }
   };
   // Poll a few times after a navigation: a freshly-loaded YouTube page (SPA) often isn't ready

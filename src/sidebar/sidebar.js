@@ -102,6 +102,9 @@ const els = {
   openOptions: $("openOptions"),
   webChatsChip: $("webChatsChip"),
   webHeadCtl: $("webHeadCtl"),
+  webHistory: $("webHistory"),
+  webBlocked: $("webBlocked"),
+  webBlockedOpen: $("webBlockedOpen"),
   webToolsSlot: $("webToolsSlot"),
   cmdChips: $("cmdChips"),
   cmdPalette: $("cmdPalette"),
@@ -274,8 +277,6 @@ const ATT_TXT_BUDGET = 16000; // chars of EACH attached text file folded into th
 // The price/provider filter persists in settings.
 let mainValue = "";
 let mainCombo = null;
-// The Web tab's provider page listing past conversations ("" when the site has none we know).
-let webHistoryUrl = "";
 let filterPersistTimer = null;
 
 // Per-workspace isolation: Chat, Agent, Translate, Improve and Image each keep
@@ -4549,9 +4550,6 @@ function wire() {
   els.searchClose.addEventListener("click", closeSearch);
 
   els.historyBtn.addEventListener("click", async () => {
-    // On the Web tab the button opens the SITE's own conversation list: in a panel this narrow
-    // claude.ai switches to its mobile layout, where its menu of past chats cannot be reached.
-    if (!els.webPanel.classList.contains("hidden")) { if (webHistoryUrl) els.webFrame.src = webHistoryUrl; return; }
     const show = els.historyPanel.classList.contains("hidden");
     if (show) { historyQuery = ""; if (els.historySearch) els.historySearch.value = ""; await renderHistoryList(); }
     els.historyPanel.classList.toggle("hidden");
@@ -4752,10 +4750,12 @@ function wire() {
     if (els.webProvBtn) els.webProvBtn.setAttribute("aria-expanded", "false");
   }
   let webCurProv = "claude";
+  // The site's own list of past conversations (claude.ai/recents): in a panel this narrow
+  // claude.ai switches to its mobile layout, where its menu of past chats cannot be reached.
+  let webHistoryUrl = "";
   function setWebHistory(url) {
     webHistoryUrl = url || "";
-    document.body.classList.toggle("web-has-history", !!webHistoryUrl);
-    els.historyBtn.title = webHistoryUrl ? t("web.history") : t("history.title");
+    if (els.webHistory) els.webHistory.classList.toggle("hidden", !webHistoryUrl);
   }
   function selectWebChat(opt) {
     if (!opt) return;
@@ -4772,6 +4772,8 @@ function wire() {
     setWebHistory(opt.dataset.history);
     els.webFrame.src = opt.dataset.url;
     if (els.webProvLabel) els.webProvLabel.textContent = opt.textContent.trim();
+    // The label is hidden when the sidebar is very narrow — keep the name in the tooltip.
+    if (els.webProvBtn) els.webProvBtn.title = opt.textContent.trim();
     if (els.webProvDot) {
       const dot = opt.querySelector(".webprov-dot");
       els.webProvDot.style.background = dot ? dot.style.background : "var(--accent)";
@@ -4786,7 +4788,6 @@ function wire() {
       selectWebChat(webOpts().find((o) => o.dataset.prov === prov) || webOpts()[0]);
     }
     els.webPanel.classList.remove("hidden");
-    setWebHistory(webHistoryUrl);
     if (els.webOverlay) els.webOverlay.classList.remove("hidden");
     document.body.classList.add("web-active"); // reveals the web-only header controls
     els.rail.querySelectorAll(".railtab").forEach((b) => b.classList.toggle("active", b.dataset.mode === "web"));
@@ -4794,7 +4795,6 @@ function wire() {
   }
   function closeWebPanel() {
     els.webPanel.classList.add("hidden"); closeWebMenu();
-    els.historyBtn.title = t("history.title");
     document.body.classList.remove("web-active");
     els.rail.querySelectorAll(".railtab").forEach((b) => b.classList.toggle("active", b.dataset.mode === mode));
     updatePageBar();
@@ -4807,6 +4807,30 @@ function wire() {
   }
   if (els.closeWeb) els.closeWeb.addEventListener("click", closeWebPanel);
   if (els.webOpenTab) els.webOpenTab.addEventListener("click", () => browser.tabs.create({ url: webCurUrl }));
+  // A site that refuses to be framed (or redirects to one that does, e.g. copilot.microsoft.com →
+  // copilot.com before it was allowed) leaves the browser's error page in the frame — Firefox:
+  // « Firefox ne peut pas ouvrir cette page ». Every provider page carries our bridge, which says
+  // hello to us as soon as it starts; a frame that finishes loading without that hello is offered
+  // in a tab instead.
+  let webHello = false, webBlockedTimer = null;
+  const hideWebBlocked = () => { clearTimeout(webBlockedTimer); if (els.webBlocked) els.webBlocked.classList.add("hidden"); };
+  window.addEventListener("message", (e) => {
+    if (!e.data || e.data.__hiveyWeb !== "hello" || !els.webFrame || e.source !== els.webFrame.contentWindow) return;
+    webHello = true; hideWebBlocked();
+  });
+  if (els.webFrame) els.webFrame.addEventListener("load", () => {
+    const seen = webHello; webHello = false;
+    if (seen || !els.webFrame.getAttribute("src")) { hideWebBlocked(); return; }
+    clearTimeout(webBlockedTimer);
+    webBlockedTimer = setTimeout(() => { if (!webHello && els.webBlocked) els.webBlocked.classList.remove("hidden"); }, 1500);
+  });
+  if (els.webBlockedOpen) els.webBlockedOpen.addEventListener("click", () => {
+    let url = webCurUrl;
+    try { const cur = els.webFrame.contentWindow.location.href; if (/^https?:/.test(cur)) url = cur; } catch (_) {} // cross-origin: keep the provider's URL
+    try { browser.tabs.create({ url }); } catch (_) {}
+    hideWebBlocked();
+  });
+  if (els.webHistory) els.webHistory.addEventListener("click", () => { if (webHistoryUrl) els.webFrame.src = webHistoryUrl; });
   // ✚ New conversation: reload the provider to its fresh-chat URL (works on every provider).
   if (els.webNewChat) els.webNewChat.addEventListener("click", () => { if (webCurUrl) els.webFrame.src = webCurUrl; });
   // ☰ Hivey menu: a vertical dropdown of Hivey's own workspaces — clicking one CLOSES web mode
@@ -4849,7 +4873,7 @@ function wire() {
   // global header (a web-only group), then drop the whole web sub-header. Result: a clean
   // iframe that fills the conversation area below ONE header — like the native chat view.
   const webProvEl = $("webProv"), webOverlayEl = $("webOverlay");
-  if (els.webHeadCtl && webProvEl) els.webHeadCtl.appendChild(webProvEl); // provider → LEFT (next to ☰)
+  if (els.webHeadCtl && webProvEl) els.webHeadCtl.insertBefore(webProvEl, els.webHeadCtl.firstChild); // provider → LEFT (next to ☰), before its history button
   if (els.webToolsSlot && webOverlayEl) els.webToolsSlot.appendChild(webOverlayEl); // 📄 tools → RIGHT row
   const subHead = els.webPanel && els.webPanel.querySelector(".webchats-head");
   if (subHead) subHead.remove();
@@ -6632,6 +6656,8 @@ function updateModelChip() {
   const slug = sel && sel.providerId ? vendorSlug(sel.providerId, sel.modelId) : undefined;
   const svg = isHivey(sel && sel.modelId) ? null : vendorIcon(slug, 14);
   els.modelIcon.replaceChildren(svg || document.createTextNode(isHivey(sel && sel.modelId) ? "🐝" : "◆"));
+  // On a narrow sidebar only the mark shows: the name stays in the tooltip.
+  els.modelWrap.title = t("model.chipTitle") + (els.modelInput && els.modelInput.value ? " — " + els.modelInput.value : "");
   // As wide as its name, no wider — then the row shrinks it if it must (an <input> has no
   // content-sized width of its own in every engine).
   if (els.modelInput) els.modelInput.style.width = `${Math.min(28, Math.max(6, (els.modelInput.value || "").length + 1))}ch`;
@@ -7113,6 +7139,15 @@ function makeAgentActions() {
       currentRow.appendChild(res);
       currentRow = null;
       if (out && (out.blocked || out.error)) failed = true;
+      // Playback could only start muted (Firefox refuses sound until the PAGE is clicked, and a
+      // click here in the sidebar doesn't count): say where the one click goes, outside the folded
+      // block so it stays in view — instead of leaving the user to find the player's 🔊 or the M key.
+      if (call && call.name === "control_media" && out && out.soundButton && !(wrap.nextElementSibling && wrap.nextElementSibling.classList.contains("agent-sound-note"))) {
+        const note = document.createElement("div");
+        note.className = "agent-sound-note";
+        note.textContent = t("agent.media.soundNote");
+        wrap.after(note);
+      }
       count++;
     },
     finish() { close(); },

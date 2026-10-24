@@ -156,7 +156,7 @@ test("every embedded chat provider is recognised, including subdomains", () => {
   assert.ok(WEB_CHAT_HOSTS.length >= 10);
   for (const u of [
     "https://chatgpt.com/", "https://claude.ai/new", "https://gemini.google.com/app",
-    "https://copilot.microsoft.com/", "https://chat.mistral.ai/chat", "https://chat.deepseek.com/",
+    "https://copilot.microsoft.com/", "https://copilot.com/", "https://chat.mistral.ai/chat", "https://chat.deepseek.com/",
     "https://chat.qwen.ai/", "https://chat.z.ai/", "https://www.kimi.com/", "https://huggingface.co/chat/",
   ]) assert.equal(isWebChatUrl(u), true, `${u} should be recognised`);
   assert.equal(isWebChatUrl("https://sub.claude.ai/x"), true, "subdomains too");
