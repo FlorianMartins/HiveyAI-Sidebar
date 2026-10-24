@@ -224,133 +224,10 @@
       </div>
     </div>
 
-    <!-- Adaptive control row (per-mode controls: translate / improve / image / PDF).
-         The chat toggles (Thinking / Web / Page) now live inside the composer below. -->
-    <div class="controls" id="controls">
-      <!-- The label now lives INSIDE the dropdown as a disabled placeholder (its resting display),
-           with a hover description on the <select> itself — no separate label text. -->
-      <div class="ctl-group hidden" id="translateControls">
-        <select id="translateLang" class="ctl-select" data-i18n-title="translate.toTitle" title="Choose the language to translate into">
-          <option value="" disabled selected data-i18n="translate.to">Translate to</option>
-          <option value="French" data-i18n="lang.French">French — Français</option>
-          <option value="English" data-i18n="lang.English">English</option>
-          <option value="Spanish" data-i18n="lang.Spanish">Spanish — Español</option>
-          <option value="German" data-i18n="lang.German">German — Deutsch</option>
-          <option value="Italian" data-i18n="lang.Italian">Italian — Italiano</option>
-          <option value="Portuguese" data-i18n="lang.Portuguese">Portuguese — Português</option>
-          <option value="Dutch" data-i18n="lang.Dutch">Dutch — Nederlands</option>
-          <option value="Arabic" data-i18n="lang.Arabic">Arabic — العربية</option>
-          <option value="Chinese" data-i18n="lang.Chinese">Chinese (Simplified) — 简体中文</option>
-          <option value="Traditional Chinese">Chinese (Traditional) — 繁體中文</option>
-          <option value="Japanese" data-i18n="lang.Japanese">Japanese — 日本語</option>
-          <option value="Korean">Korean — 한국어</option>
-          <option value="Russian" data-i18n="lang.Russian">Russian — Русский</option>
-          <option value="Hindi">Hindi — हिन्दी</option>
-          <option value="Bengali">Bengali — বাংলা</option>
-          <option value="Turkish">Turkish — Türkçe</option>
-          <option value="Polish">Polish — Polski</option>
-          <option value="Ukrainian">Ukrainian — Українська</option>
-          <option value="Romanian">Romanian — Română</option>
-          <option value="Greek">Greek — Ελληνικά</option>
-          <option value="Czech">Czech — Čeština</option>
-          <option value="Swedish">Swedish — Svenska</option>
-          <option value="Danish">Danish — Dansk</option>
-          <option value="Norwegian">Norwegian — Norsk</option>
-          <option value="Finnish">Finnish — Suomi</option>
-          <option value="Hungarian">Hungarian — Magyar</option>
-          <option value="Hebrew">Hebrew — עברית</option>
-          <option value="Thai">Thai — ไทย</option>
-          <option value="Vietnamese">Vietnamese — Tiếng Việt</option>
-          <option value="Indonesian">Indonesian — Bahasa Indonesia</option>
-          <option value="Malay">Malay — Bahasa Melayu</option>
-          <option value="Filipino">Filipino — Tagalog</option>
-          <option value="Persian">Persian — فارسی</option>
-          <option value="Urdu">Urdu — اردو</option>
-          <option value="Swahili">Swahili — Kiswahili</option>
-          <option value="Catalan">Catalan — Català</option>
-          <option value="Croatian">Croatian — Hrvatski</option>
-          <option value="Serbian">Serbian — Српски</option>
-          <option value="Slovak">Slovak — Slovenčina</option>
-          <option value="Slovenian">Slovenian — Slovenščina</option>
-          <option value="Bulgarian">Bulgarian — Български</option>
-          <option value="Lithuanian">Lithuanian — Lietuvių</option>
-          <option value="Latvian">Latvian — Latviešu</option>
-          <option value="Estonian">Estonian — Eesti</option>
-          <option value="Icelandic">Icelandic — Íslenska</option>
-          <option value="Irish">Irish — Gaeilge</option>
-          <option value="Welsh">Welsh — Cymraeg</option>
-          <option value="Afrikaans">Afrikaans</option>
-          <option value="Tamil">Tamil — தமிழ்</option>
-          <option value="Telugu">Telugu — తెలుగు</option>
-          <option value="Marathi">Marathi — मराठी</option>
-          <option value="Gujarati">Gujarati — ગુજરાતી</option>
-          <option value="Punjabi">Punjabi — ਪੰਜਾਬੀ</option>
-          <option value="Kannada">Kannada — ಕನ್ನಡ</option>
-          <option value="Malayalam">Malayalam — മലയാളം</option>
-          <option value="Nepali">Nepali — नेपाली</option>
-          <option value="Sinhala">Sinhala — සිංහල</option>
-          <option value="Khmer">Khmer — ខ្មែរ</option>
-          <option value="Lao">Lao — ລາວ</option>
-          <option value="Burmese">Burmese — မြန်မာ</option>
-          <option value="Mongolian">Mongolian — Монгол</option>
-          <option value="Kazakh">Kazakh — Қазақ</option>
-          <option value="Azerbaijani">Azerbaijani — Azərbaycan</option>
-          <option value="Georgian">Georgian — ქართული</option>
-          <option value="Armenian">Armenian — Հայերեն</option>
-          <option value="Albanian">Albanian — Shqip</option>
-          <option value="Macedonian">Macedonian — Македонски</option>
-          <option value="Belarusian">Belarusian — Беларуская</option>
-          <option value="Basque">Basque — Euskara</option>
-          <option value="Galician">Galician — Galego</option>
-          <option value="Esperanto">Esperanto</option>
-          <option value="Latin">Latin — Latina</option>
-        </select>
-      </div>
-
-      <div class="ctl-group hidden" id="improveControls">
-        <div class="improve-seg">
-          <select id="improvePreset" class="ctl-select" data-i18n-title="improve.styleTitle" title="Choose the writing style"></select>
-          <select id="improveTone" class="ctl-select" data-i18n-title="improve.toneTitle" title="Choose the tone of voice"></select>
-        </div>
-      </div>
-
-      <div class="ctl-group hidden" id="imageControls">
-        <select id="imageSize" class="ctl-select" data-i18n-title="image.sizeTitle" title="Sizes depend on the model. Native 4K/1440p doesn't exist on current image models — upscale the image afterwards."></select>
-      </div>
-
-      <div class="ctl-group hidden" id="pdfControls">
-        <input type="file" id="pdfFile" accept="application/pdf,.pdf" multiple hidden />
-        <span class="muted" id="pdfInfo"></span>
-        <button id="pdfSummarize" class="chip hidden" data-i18n="pdf.summarize">📝 Summarize</button>
-        <button id="pdfImages" class="chip hidden" data-i18n="pdf.images">🖼 Page images</button>
-        <button id="pdfText" class="chip hidden" data-i18n="pdf.text">📄 Extract text</button>
-      </div>
-      <!-- 📚 Wisebase (local RAG): pick the collection(s) to search in, manage sources, quick-add
-           the current page. The management panel is built dynamically (see renderWbPanel). -->
-      <div class="ctl-group hidden" id="wisebaseControls">
-        <select id="wbScope" class="ctl-select" data-i18n-title="wb.searchInTitle" title="Search in"></select>
-        <button id="wbManageBtn" class="icon wb-ctl-btn" type="button" data-i18n-title="wb.manageTitle" title="Manage collections & sources" aria-label="Manage"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></button>
-        <button id="wbAddPageBtn" class="icon wb-ctl-btn" type="button" data-i18n-title="wb.addPageTitle" title="Add the current page to a collection" aria-label="Add current page"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M12 11v6"/><path d="M9 14h6"/></svg></button>
-      </div>
-      <!-- Page tools toggle (translate/improve/image/pdf): opens a popup with the current page
-           reading + capture tools (screenshot / element), like the Chat tab's Page bar. -->
-      <button id="selPageToggle" class="ctoggle ctl-page-btn hidden" type="button" data-i18n-title="pagebar.selToggle" title="Show page tools (read page, screenshot, element)"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h6"/></svg></button>
-    </div>
-
     <!-- 🛡 Defensive-security recipes (Security tab only): one-tap analysis actions, sits ABOVE the
          model picker for a clean, prominent layout. -->
     <div id="secRecipes" class="sec-recipes hidden"></div>
 
-    <!-- Model picker (API mode): a searchable combobox just above the chat input.
-         Type to filter the list (e.g. "gemi" → Gemini models). Hidden in site mode. -->
-    <div class="modelbar">
-      <div class="combo" id="modelWrap">
-        <input id="modelInput" class="combo-input" type="text" autocomplete="off" spellcheck="false" data-i18n-ph="model.searchPh" placeholder="Search a model…" />
-        <span class="combo-caret">▾</span>
-      </div>
-      <button id="modelFilterBtn" class="model-filter-btn" data-i18n-title="filter.title" title="Filter models (provider / price)"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18l-7 8v5l-4 2v-7z"/></svg></button>
-      <button id="modelConnect" class="btn-grad hidden"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2v6"/><path d="M15 2v6"/><path d="M7 8h10v3a5 5 0 0 1-10 0z"/><path d="M12 16v6"/></svg><span data-i18n="model.connect">Connect a provider</span></button>
-    </div>
     <!-- Floating list of models for the searchable combobox. -->
     <div id="modelMenu" class="combo-menu hidden"></div>
     <!-- Model filter popover: price tiers + providers (with OpenRouter sub-vendors).
@@ -386,18 +263,136 @@
            the chat toggles + stop on a bottom row at the right. No send button — Enter sends. -->
       <div class="composer-box">
         <div id="cmdPalette" class="cmd-palette hidden" role="listbox"></div>
+            <!-- The tab's own settings (language, style, size, collection…), as chips at the top of
+                 the composer — the same frame on every tab. -->
+        <div class="controls" id="controls">
+          <!-- The label now lives INSIDE the dropdown as a disabled placeholder (its resting display),
+               with a hover description on the <select> itself — no separate label text. -->
+          <div class="ctl-group hidden" id="translateControls">
+            <select id="translateLang" class="ctl-select" data-i18n-title="translate.toTitle" title="Choose the language to translate into">
+              <option value="" disabled selected data-i18n="translate.to">Translate to</option>
+              <option value="French" data-i18n="lang.French">French — Français</option>
+              <option value="English" data-i18n="lang.English">English</option>
+              <option value="Spanish" data-i18n="lang.Spanish">Spanish — Español</option>
+              <option value="German" data-i18n="lang.German">German — Deutsch</option>
+              <option value="Italian" data-i18n="lang.Italian">Italian — Italiano</option>
+              <option value="Portuguese" data-i18n="lang.Portuguese">Portuguese — Português</option>
+              <option value="Dutch" data-i18n="lang.Dutch">Dutch — Nederlands</option>
+              <option value="Arabic" data-i18n="lang.Arabic">Arabic — العربية</option>
+              <option value="Chinese" data-i18n="lang.Chinese">Chinese (Simplified) — 简体中文</option>
+              <option value="Traditional Chinese">Chinese (Traditional) — 繁體中文</option>
+              <option value="Japanese" data-i18n="lang.Japanese">Japanese — 日本語</option>
+              <option value="Korean">Korean — 한국어</option>
+              <option value="Russian" data-i18n="lang.Russian">Russian — Русский</option>
+              <option value="Hindi">Hindi — हिन्दी</option>
+              <option value="Bengali">Bengali — বাংলা</option>
+              <option value="Turkish">Turkish — Türkçe</option>
+              <option value="Polish">Polish — Polski</option>
+              <option value="Ukrainian">Ukrainian — Українська</option>
+              <option value="Romanian">Romanian — Română</option>
+              <option value="Greek">Greek — Ελληνικά</option>
+              <option value="Czech">Czech — Čeština</option>
+              <option value="Swedish">Swedish — Svenska</option>
+              <option value="Danish">Danish — Dansk</option>
+              <option value="Norwegian">Norwegian — Norsk</option>
+              <option value="Finnish">Finnish — Suomi</option>
+              <option value="Hungarian">Hungarian — Magyar</option>
+              <option value="Hebrew">Hebrew — עברית</option>
+              <option value="Thai">Thai — ไทย</option>
+              <option value="Vietnamese">Vietnamese — Tiếng Việt</option>
+              <option value="Indonesian">Indonesian — Bahasa Indonesia</option>
+              <option value="Malay">Malay — Bahasa Melayu</option>
+              <option value="Filipino">Filipino — Tagalog</option>
+              <option value="Persian">Persian — فارسی</option>
+              <option value="Urdu">Urdu — اردو</option>
+              <option value="Swahili">Swahili — Kiswahili</option>
+              <option value="Catalan">Catalan — Català</option>
+              <option value="Croatian">Croatian — Hrvatski</option>
+              <option value="Serbian">Serbian — Српски</option>
+              <option value="Slovak">Slovak — Slovenčina</option>
+              <option value="Slovenian">Slovenian — Slovenščina</option>
+              <option value="Bulgarian">Bulgarian — Български</option>
+              <option value="Lithuanian">Lithuanian — Lietuvių</option>
+              <option value="Latvian">Latvian — Latviešu</option>
+              <option value="Estonian">Estonian — Eesti</option>
+              <option value="Icelandic">Icelandic — Íslenska</option>
+              <option value="Irish">Irish — Gaeilge</option>
+              <option value="Welsh">Welsh — Cymraeg</option>
+              <option value="Afrikaans">Afrikaans</option>
+              <option value="Tamil">Tamil — தமிழ்</option>
+              <option value="Telugu">Telugu — తెలుగు</option>
+              <option value="Marathi">Marathi — मराठी</option>
+              <option value="Gujarati">Gujarati — ગુજરાતી</option>
+              <option value="Punjabi">Punjabi — ਪੰਜਾਬੀ</option>
+              <option value="Kannada">Kannada — ಕನ್ನಡ</option>
+              <option value="Malayalam">Malayalam — മലയാളം</option>
+              <option value="Nepali">Nepali — नेपाली</option>
+              <option value="Sinhala">Sinhala — සිංහල</option>
+              <option value="Khmer">Khmer — ខ្មែរ</option>
+              <option value="Lao">Lao — ລາວ</option>
+              <option value="Burmese">Burmese — မြန်မာ</option>
+              <option value="Mongolian">Mongolian — Монгол</option>
+              <option value="Kazakh">Kazakh — Қазақ</option>
+              <option value="Azerbaijani">Azerbaijani — Azərbaycan</option>
+              <option value="Georgian">Georgian — ქართული</option>
+              <option value="Armenian">Armenian — Հայերեն</option>
+              <option value="Albanian">Albanian — Shqip</option>
+              <option value="Macedonian">Macedonian — Македонски</option>
+              <option value="Belarusian">Belarusian — Беларуская</option>
+              <option value="Basque">Basque — Euskara</option>
+              <option value="Galician">Galician — Galego</option>
+              <option value="Esperanto">Esperanto</option>
+              <option value="Latin">Latin — Latina</option>
+            </select>
+          </div>
+
+          <div class="ctl-group hidden" id="improveControls">
+            <div class="improve-seg">
+              <select id="improvePreset" class="ctl-select" data-i18n-title="improve.styleTitle" title="Choose the writing style"></select>
+              <select id="improveTone" class="ctl-select" data-i18n-title="improve.toneTitle" title="Choose the tone of voice"></select>
+            </div>
+          </div>
+
+          <div class="ctl-group hidden" id="imageControls">
+            <select id="imageSize" class="ctl-select" data-i18n-title="image.sizeTitle" title="Sizes depend on the model. Native 4K/1440p doesn't exist on current image models — upscale the image afterwards."></select>
+          </div>
+
+          <div class="ctl-group hidden" id="pdfControls">
+            <input type="file" id="pdfFile" accept="application/pdf,.pdf" multiple hidden />
+            <span class="muted" id="pdfInfo"></span>
+            <button id="pdfSummarize" class="chip hidden" data-i18n="pdf.summarize">📝 Summarize</button>
+            <button id="pdfImages" class="chip hidden" data-i18n="pdf.images">🖼 Page images</button>
+            <button id="pdfText" class="chip hidden" data-i18n="pdf.text">📄 Extract text</button>
+          </div>
+          <!-- 📚 Wisebase (local RAG): pick the collection(s) to search in, manage sources, quick-add
+               the current page. The management panel is built dynamically (see renderWbPanel). -->
+          <div class="ctl-group hidden" id="wisebaseControls">
+            <select id="wbScope" class="ctl-select" data-i18n-title="wb.searchInTitle" title="Search in"></select>
+            <button id="wbManageBtn" class="icon wb-ctl-btn" type="button" data-i18n-title="wb.manageTitle" title="Manage collections & sources" aria-label="Manage"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></button>
+            <button id="wbAddPageBtn" class="icon wb-ctl-btn" type="button" data-i18n-title="wb.addPageTitle" title="Add the current page to a collection" aria-label="Add current page"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M12 11v6"/><path d="M9 14h6"/></svg></button>
+          </div>
+          <!-- Page tools toggle (translate/improve/image/pdf): opens a popup with the current page
+               reading + capture tools (screenshot / element), like the Chat tab's Page bar. -->
+          <button id="selPageToggle" class="ctoggle ctl-page-btn hidden" type="button" data-i18n-title="pagebar.selToggle" title="Show page tools (read page, screenshot, element)"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h6"/></svg></button>
+        </div>
         <div class="composer-main" id="composerMain">
-          <button id="attachBtn" class="attach-btn" data-i18n-title="attach.title" title="Attach files or images"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
           <textarea id="input" rows="1" data-i18n-ph="composer.ph" placeholder="Write a message…"></textarea>
-          <!-- Voice dictation (local speech-to-text) — available on every chat-capable tab. -->
-          <button type="button" id="dictateBtn" class="mic-btn" aria-pressed="false" data-i18n-title="chip.dictateTitle" title="Dictation — speak your message (local speech-to-text)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/><path d="M8 21h8"/></svg></button>
         </div>
         <div class="composer-tools">
-          <!-- On the Chat tab, the "+" is moved here (bottom-left, beside the toggles).
-               On every other tab it stays next to the text in .composer-main above. -->
-          <div class="tools-left" id="toolsLeft"></div>
+          <!-- The same row on every tab: attach, dictate, the model (with its maker's mark), the
+               thinking level — then the options, and send / stop (as in hivey-vscode). -->
+          <div class="tools-left" id="toolsLeft">
+            <button id="attachBtn" class="attach-btn" data-i18n-title="attach.title" title="Attach files or images"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+            <button type="button" id="dictateBtn" class="mic-btn" aria-pressed="false" data-i18n-title="chip.dictateTitle" title="Dictation — speak your message (local speech-to-text)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/><path d="M8 21h8"/></svg></button>
+            <div class="combo model-chip" id="modelWrap" data-i18n-title="model.chipTitle" title="Model">
+              <span class="mc-icon" id="modelIcon" aria-hidden="true"></span>
+        <input id="modelInput" class="combo-input" type="text" autocomplete="off" spellcheck="false" data-i18n-ph="model.searchPh" placeholder="Search a model…" />
+        <span class="combo-caret">▾</span>
+      </div>
+            <button type="button" id="thinkChip" class="cchip think-chip hidden" data-i18n-title="chip.thinkingTitle" title="Thinking level" aria-haspopup="true" aria-expanded="false"><span class="tc-icon" aria-hidden="true">✦</span><span class="tc-label"></span><span class="tc-caret" aria-hidden="true">▾</span></button>
+            <button id="modelConnect" class="btn-grad hidden"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2v6"/><path d="M15 2v6"/><path d="M7 8h10v3a5 5 0 0 1-10 0z"/><path d="M12 16v6"/></svg><span data-i18n="model.connect">Connect a provider</span></button>
+          </div>
           <div class="tools-right">
-            <button type="button" id="ctxGauge" class="ctool ctx-gauge hidden" data-i18n-title="ctx.gaugeTitle" title="Context"><span class="cg-ring" aria-hidden="true"></span><span class="cg-pct">0 %</span></button>
             <button type="button" id="optsToggle" class="ctool opts-toggle" data-i18n-title="opts.title" title="Options" aria-label="Options" aria-expanded="false"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></button>
             <div class="chat-toggles" id="chatControls">
               <div class="opts-head" data-i18n="opts.title">Options</div>
@@ -407,12 +402,20 @@
               <div class="deep-seg-row" id="deepSeg" hidden><button type="button" class="ts-btn" data-depth="fast" data-i18n="deep.fast">Fast</button><button type="button" class="ts-btn" data-depth="standard" data-i18n="deep.standard">Standard</button><button type="button" class="ts-btn" data-depth="deep" data-i18n="deep.deep">Deep</button></div>
               <label class="ctoggle" data-i18n-title="chip.artifactTitle" title="Artifacts — build runnable apps, games & diagrams"><input type="checkbox" id="artifactMode" /><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 12l8-4.5"/><path d="M12 12v9"/><path d="M12 12L4 7.5"/></svg><span class="ct-name" data-i18n="ct.artifacts">Artifacts</span></label>
               <label class="ctoggle" data-i18n-title="chip.pageTitle" title="Page — the AI sees the current page"><input type="checkbox" id="pageCtx" /><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h6"/></svg><span class="ct-name" data-i18n="ct.page">Page</span></label>
-              <div class="ctoggle think-row" data-i18n-title="chip.thinkingTitle" title="Thinking level"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.8.8 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg><span class="ct-name" data-i18n="ct.thinking">Thinking</span><span class="think-seg" role="group" aria-label="Thinking level"></span><button type="button" id="thinking" class="think-state" data-level="" hidden aria-hidden="true"><span class="lvl"></span></button></div>
             </div>
             <button id="stop" class="ctool stop hidden" data-i18n-title="stop.title" title="Stop">■</button>
+            <button id="sendBtn" class="ctool send-btn" type="button" data-i18n-title="send.title" title="Send"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></button>
           </div>
         </div>
       </div>
+      <!-- Under the frame: where the model runs, and how full its window is / what it has cost. -->
+      <div class="composer-foot">
+        <button type="button" id="privBadge" class="cf-priv"></button>
+        <button type="button" id="ctxGauge" class="ctx-gauge hidden" data-i18n-title="ctx.gaugeTitle" title="Context"><span class="cg-ring" aria-hidden="true"></span><span class="cg-pct">0 %</span><span class="cg-tokens"></span><span class="cg-cost"></span></button>
+      </div>
+      <!-- The thinking levels of the selected model (see refreshThinkSegs). -->
+      <div id="thinkPop" class="think-pop hidden" role="menu"><div class="tp-head" data-i18n="ct.thinking">Thinking</div><span class="think-seg" role="group" aria-label="Thinking level"></span><button type="button" id="thinking" class="think-state" data-level="" hidden aria-hidden="true"><span class="lvl"></span></button></div>
+      <div class="model-filter-holder" hidden><button id="modelFilterBtn" class="model-filter-btn" data-i18n-title="filter.title" title="Filter models (provider / price)"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18l-7 8v5l-4 2v-7z"/></svg></button></div>
       <input type="file" id="attachInput" multiple accept="image/*,.pdf,.zip,.txt,.md,.markdown,.csv,.json,.log,.html,.xml,.yaml,.yml,.js,.ts,.py,.java,.c,.cpp,.cs,.go,.rb,.rs,.php,.sh,.css,.pcap,.cap" hidden />
     </footer>
 
