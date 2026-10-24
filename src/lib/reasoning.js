@@ -67,11 +67,11 @@ const REASONING_SET = (() => {
 // families, which are stable for years, and the two words that describe the capability itself. A
 // fallback that named versions would be this same defect, one layer down.
 /**
-* Signals that are not versions.
-*
-* Vendor families and capability words only. `deepseek` is a house; `gpt-5` was a release. The first
-* is true next year and the second was false within months — which is the whole lesson here.
-*/
+ * Signals that are not versions.
+ *
+ * Vendor families and capability words only. `deepseek` is a house; `gpt-5` was a release. The first
+ * is true next year and the second was false within months — which is the whole lesson here.
+ */
 export const REASONING_FALLBACK = /claude|sonnet|opus|haiku|fable|deepseek|qwen|magistral|reason|think/i;
 export function reasoningSupport(id) {
   if (!id)
@@ -144,10 +144,10 @@ function effortOf(level) {
   return undefined;
 }
 /**
-* The menu for this model: thinking off, then each of its levels, weakest first — and only those.
-* Two levels that are the same effort to the panel (Qwen's "high" is its "xhigh") keep the stronger
-* name, which is the one the template actually runs.
-*/
+ * The menu for this model: thinking off, then each of its levels, weakest first — and only those.
+ * Two levels that are the same effort to the panel (Qwen's "high" is its "xhigh") keep the stronger
+ * name, which is the one the template actually runs.
+ */
 export function choicesFor(r) {
   const byEffort = new Map();
   for (const level of r.levels) {
@@ -191,10 +191,10 @@ function atLeast(v, major, minor) {
   return v[0] > major || (v[0] === major && v[1] >= minor);
 }
 /**
-* The family a Claude model id belongs to — any spelling: `claude-opus-4-8`, `claude-sonnet-4-5-20250929`,
-* `anthropic.claude-opus-5-5` (Bedrock), `us.anthropic.claude-haiku-4-5-20251001-v1:0`,
-* `claude-opus-4-5@20251101` (Vertex), `anthropic/claude-opus-4.8` (OpenRouter), `claude-3-7-sonnet-latest`.
-*/
+ * The family a Claude model id belongs to — any spelling: `claude-opus-4-8`, `claude-sonnet-4-5-20250929`,
+ * `anthropic.claude-opus-5-5` (Bedrock), `us.anthropic.claude-haiku-4-5-20251001-v1:0`,
+ * `claude-opus-4-5@20251101` (Vertex), `anthropic/claude-opus-4.8` (OpenRouter), `claude-3-7-sonnet-latest`.
+ */
 export function anthropicFamily(model) {
   const id = model.toLowerCase().replace(/@.*$/, "");
   // New naming: tier then version — `opus-4-8`, `opus-4.8`, `fable-5`, `opus-4` (4.0). A date suffix
@@ -254,9 +254,9 @@ function familyRules(tier, v) {
   }
 }
 /**
-* The effort a panel level is on this family: the effort of the same name, or — for a level picked on
-* another model that this one lacks — the nearest it has below it.
-*/
+ * The effort a panel level is on this family: the effort of the same name, or — for a level picked on
+ * another model that this one lacks — the nearest it has below it.
+ */
 function anthropicEffort(f, level) {
   if (level === "max")
     return f.max ? "max" : f.xhigh ? "xhigh" : "high";
@@ -265,9 +265,9 @@ function anthropicEffort(f, level) {
   return level;
 }
 /**
-* The thinking part of an Anthropic request for this model and level. `undefined` level = nothing
-* was chosen: the model's own default, untouched (only the sampling rule still applies).
-*/
+ * The thinking part of an Anthropic request for this model and level. `undefined` level = nothing
+ * was chosen: the model's own default, untouched (only the sampling rule still applies).
+ */
 export function anthropicThinking(model, level) {
   const f = anthropicFamily(model);
   const sampling = f.sampling === "allowed";
@@ -305,10 +305,10 @@ export function anthropicThinking(model, level) {
 // The level menu, per model
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
 /**
-* The levels the panel offers for a model, when this file knows that model's rules; `undefined`
-* keeps the usual four. Only levels that are a DIFFERENT request from one another, and none that
-* would be a 400 — so "Direct" is absent where thinking cannot be turned off.
-*/
+ * The levels the panel offers for a model, when this file knows that model's rules; `undefined`
+ * keeps the usual four. Only levels that are a DIFFERENT request from one another, and none that
+ * would be a 400 — so "Direct" is absent where thinking cannot be turned off.
+ */
 export function reasoningMenu(provider, model) {
   const all = [
     { id: "none", native: "none" },
@@ -465,10 +465,10 @@ export function profileFor(provider, model) {
   }
 }
 /**
-* The panel levels laid onto a profile — see the table above. Approfondi is the model's "high" (its
-* strongest effort when it has no "high"); "xhigh" and "max", when the model has them, are levels of
-* their own: « afficher les modes de réflexion des modèles de base ».
-*/
+ * The panel levels laid onto a profile — see the table above. Approfondi is the model's "high" (its
+ * strongest effort when it has no "high"); "xhigh" and "max", when the model has them, are levels of
+ * their own: « afficher les modes de réflexion des modèles de base ».
+ */
 export function assign(p) {
   const on = p.efforts.filter((e) => e !== "none");
   const out = {};
@@ -510,15 +510,15 @@ export function effortFor(p, level) {
   return near.length ? a[near[0]] : on[0];
 }
 /**
-* ⚙️ THE SELF-HOSTED MAPPING HOOK — the word sent to the user's own server (llama.cpp, vLLM,
-* Ollama, a llama-swap gateway) for each panel level.
-*
-* Today it is the panel's own word: "low", "medium", "high" (which Qwen3.8's template runs as its
-* "xhigh"), and "none" for thinking off. ⚠️ Measured on Qwen3.8: its "low" thinks LONGER than its
-* "medium" (3.7–7.4k against 1.3–3.9k characters on the same step), so on that template Bref is not
-* the lighter of the two. Which word each label should send there is for the owner's benchmark to
-* decide; change it here, and only here.
-*/
+ * ⚙️ THE SELF-HOSTED MAPPING HOOK — the word sent to the user's own server (llama.cpp, vLLM,
+ * Ollama, a llama-swap gateway) for each panel level.
+ *
+ * Today it is the panel's own word: "low", "medium", "high" (which Qwen3.8's template runs as its
+ * "xhigh"), and "none" for thinking off. ⚠️ Measured on Qwen3.8: its "low" thinks LONGER than its
+ * "medium" (3.7–7.4k against 1.3–3.9k characters on the same step), so on that template Bref is not
+ * the lighter of the two. Which word each label should send there is for the owner's benchmark to
+ * decide; change it here, and only here.
+ */
 export function selfHostedEffort(level) {
   // Bref sends "medium": on Qwen3.8 "low" thinks LONGER (above). What makes Bref brief is its budget —
   // see `selfHostedThinkingBudget`. A cloud's "xhigh" or "max" carried over is the server's deepest.
@@ -527,21 +527,21 @@ export function selfHostedEffort(level) {
   return level === "low" ? "medium" : level;
 }
 /**
-* The thinking budget of each level on the user's own server, in tokens — llama.cpp closes the
-* thought itself when it is spent (`reasoning_budget_tokens`, with `reasoning_budget_message` said
-* as the thought's last words). None for Direct (no thinking) or Deep (as long as it takes).
-*
-* ⚠️ « Il n'y a absolument aucune différence entre les modes de réflexion (il met 1 h en mode bref
-* et réfléchit trop) … il se contredit souvent en mode "Wait… hum" en continu ». A level was only
-* a word in the template — Qwen3.8 turns "low" into one sentence, "Keep your thinking brief", which
-* it stops following the moment a problem is hard; "medium" adds nothing at all. Measured over 12 229
-* recorded steps: half think under ~50 tokens, 95 % under ~1 000, 99 % under ~3 600 — and the rest
-* run to 23 000, with up to 138 "Wait / Hmm / Actually" in one step. Bref stops at the 95th
-* percentile — measured: as precise as before (20/24 against 20/24 on the tasks that moved), 29 %
-* faster. Standard is only there to stop a runaway: at 4096 it cut a 15 000-character thought a hard
-* task needed (ts-cursor-pagination, 1/3 against 3/3), so it stops at 8192 — above every step of
-* the bench, far below the 23 000 of a loop.
-*/
+ * The thinking budget of each level on the user's own server, in tokens — llama.cpp closes the
+ * thought itself when it is spent (`reasoning_budget_tokens`, with `reasoning_budget_message` said
+ * as the thought's last words). None for Direct (no thinking) or Deep (as long as it takes).
+ *
+ * ⚠️ « Il n'y a absolument aucune différence entre les modes de réflexion (il met 1 h en mode bref
+ * et réfléchit trop) … il se contredit souvent en mode "Wait… hum" en continu ». A level was only
+ * a word in the template — Qwen3.8 turns "low" into one sentence, "Keep your thinking brief", which
+ * it stops following the moment a problem is hard; "medium" adds nothing at all. Measured over 12 229
+ * recorded steps: half think under ~50 tokens, 95 % under ~1 000, 99 % under ~3 600 — and the rest
+ * run to 23 000, with up to 138 "Wait / Hmm / Actually" in one step. Bref stops at the 95th
+ * percentile — measured: as precise as before (20/24 against 20/24 on the tasks that moved), 29 %
+ * faster. Standard is only there to stop a runaway: at 4096 it cut a 15 000-character thought a hard
+ * task needed (ts-cursor-pagination, 1/3 against 3/3), so it stops at 8192 — above every step of
+ * the bench, far below the 23 000 of a loop.
+ */
 export function selfHostedThinkingBudget(level) {
   const tokens = level === "low" ? 1024 : level === "medium" ? 8192 : undefined;
   if (!tokens)
@@ -552,9 +552,9 @@ export function selfHostedThinkingBudget(level) {
   };
 }
 /**
-* The reasoning fields of an OpenAI-shaped request for this provider, model and level.
-* `level` undefined: nothing chosen, the model's own default — nothing is sent.
-*/
+ * The reasoning fields of an OpenAI-shaped request for this provider, model and level.
+ * `level` undefined: nothing chosen, the model's own default — nothing is sent.
+ */
 export function wireReasoning(provider, model, level, opts = {}) {
   const none = { fields: {}, dropTemperature: false };
   if (isSelfHosted(provider)) {
