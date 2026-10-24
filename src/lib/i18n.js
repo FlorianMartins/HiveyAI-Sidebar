@@ -2410,8 +2410,10 @@ const FR = {
 // to English and then to the RAW KEY, which is what a user sees printed on screen.
 export const DICT = { en: EN, fr: FR, es: ES, de: DE, it: IT, pt: PT };
 
+// Any of the six dictionaries (it used to keep only "fr", so Spanish, German, Italian and
+// Portuguese, offered in the settings, showed the interface in English).
 export function setLang(l) {
-  lang = l === "fr" ? "fr" : "en";
+  lang = Object.prototype.hasOwnProperty.call(DICT, l) ? l : "en";
 }
 
 export function getLang() {

@@ -4033,7 +4033,7 @@ function closeActionBubble() {
 function effLang() {
   const rl = settings.responseLang;
   if (rl && rl !== "Auto") return rl;
-  return getLang() === "fr" ? "français" : "English";
+  return { fr: "français", es: "español", de: "Deutsch", it: "italiano", pt: "português" }[getLang()] || "English";
 }
 // Append an explicit "answer in <lang>" directive to a prompt (read/summarize/explain actions).
 function inLang(content) { return content + "\n\n" + t("prompt.replyIn", { lang: effLang() }); }
@@ -6802,7 +6802,7 @@ async function suggestNextAfter(question, answer, sess, m, sel) {
     const hid = isHivey(sel.modelId) ? sel.modelId : null;
     const use = hid ? ensureUsable(parseSel(hiveyTiers(hid).utility || hiveyTiers(hid).chat), hid) : sel;
     const provider = makeProvider({ ...settings, provider: use.providerId, models: { ...settings.models, [use.providerId]: use.modelId } }, {});
-    const { system, history } = nextStepMessages(question, answer, detectUserLanguage(String(question || ""), getLang() === "fr" ? "fr" : "en"));
+    const { system, history } = nextStepMessages(question, answer, detectUserLanguage(String(question || ""), getLang()));
     const r = await provider.runTurn({ system, history, tools: [], chore: true });
     const next = parseNextStep(r && r.text);
     if (!next || sess.convId !== convAt || sess.transcript.length !== lenAt) return;
@@ -7764,7 +7764,7 @@ function endBusy() {
 // Dictation, Linux desktop dictation), which types straight into the focused composer. We never
 // call a paid transcription API.
 let _recog = null, _dictating = false, _mediaRec = null, _mediaStream = null;
-function dictationLang() { return getLang() === "fr" ? "fr-FR" : "en-US"; }
+function dictationLang() { return { fr: "fr-FR", es: "es-ES", de: "de-DE", it: "it-IT", pt: "pt-PT" }[getLang()] || "en-US"; }
 // How to transcribe the recording: Whisper (Groq free / OpenAI) when connected, otherwise via an
 // audio-capable CHAT model on OpenRouter (Gemini) so the mic works with just the OpenRouter key.
 function transcriptionMethod() {

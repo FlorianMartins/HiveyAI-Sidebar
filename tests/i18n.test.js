@@ -118,3 +118,13 @@ test("t() substitutes variables and leaves unknown ones visible", () => {
 test("t() returns the key itself for an unknown key rather than throwing", () => {
   assert.equal(t("this.key.does.not.exist"), "this.key.does.not.exist");
 });
+
+test("every offered interface language is applied, not only French", async () => {
+  const { setLang, getLang } = await import("../src/lib/i18n.js");
+  for (const l of ["es", "de", "it", "pt", "fr", "en"]) { setLang(l); assert.equal(getLang(), l); }
+  setLang("xx");
+  assert.equal(getLang(), "en", "an unknown language falls back to English");
+  setLang("de");
+  assert.notEqual(t("opt.qa.h"), DICT.en["opt.qa.h"], "German really shows German");
+  setLang("en");
+});

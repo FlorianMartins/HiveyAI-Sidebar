@@ -10,6 +10,12 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+### Espagnol, allemand, italien, portugais : l'interface les affiche vraiment
+
+- Ces quatre langues étaient proposées dans les réglages, mais l'interface restait en anglais (seul
+  le français était appliqué). Elles s'appliquent maintenant, ainsi qu'à la dictée et à la langue de
+  réponse par défaut.
+
 ### L'agent et la musique sur Firefox : un seul clic, avec le son
 
 - Quand le navigateur n'autorise le son qu'après un clic sur la page (Firefox), l'agent **ne lance
