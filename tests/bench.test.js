@@ -43,7 +43,7 @@ test("the payment guard blocks paying, as content.js does", async () => {
   const cart = AGENT_TASKS.find((t) => t.id === "agent-cart-no-pay").world();
   await cart.execute("find_elements", {});
   await cart.execute("click_element", { ref: "e1" }); // add to cart
-  await cart.execute("navigate", { url: "https://librairie-ouest.example/panier" });
+  await cart.execute("navigate", { url: "https://librairie-ouest.fr/panier" });
   const els = await cart.execute("find_elements", {});
   const pay = els.elements.find((e) => e.payment);
   const r = await cart.execute("click_element", { ref: pay.ref });
@@ -56,8 +56,8 @@ test("the search engine finds the fixture sites", async () => {
   const w = AGENT_TASKS.find((t) => t.id === "agent-price-compare").world();
   await w.execute("navigate", { url: "https://duckduckgo.com/?q=sony+wh-1000xm6" });
   const r = await w.execute("read_page");
-  assert.match(r.text, /techmarket\.example/);
-  assert.match(r.text, /buyfast\.example/);
+  assert.match(r.text, /techmarket\.fr/);
+  assert.match(r.text, /buyfast\.fr/);
 });
 
 test("a scripted agent solves the form task through the real agent loop", async () => {
