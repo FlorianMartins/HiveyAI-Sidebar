@@ -155,6 +155,12 @@ bases Wisebase et la mémoire restent dans votre navigateur.
   Les questions de suivi voient les précédentes.
 - 📄 **PDF** : ouvrez un document et posez des questions dessus ; un résumé en un clic.
 - 🎨 **Image** : génération et retouche d'images ; une image générée peut servir de référence.
+- 📊 **Benchmark** : « quel modèle choisir ? ». ① Choisissez les modèles à tester (le modèle actuel
+  est déjà sélectionné ; local, passerelle et cloud) ; ② **Lancer le test** : 20 questions notées
+  automatiquement (raisonnement, consignes, JSON, outils), environ une minute par modèle ; ③ un
+  **rapport** s'ouvre à la fin — le meilleur modèle, un graphique, le détail par famille, le coût et
+  chaque question manquée — à enregistrer en HTML ou imprimer en PDF. Les classements publics (Aider
+  pour le code, Vectara pour les inventions) sont en bas, avec leur retard en mois.
 
 ## 9. Questions fréquentes
 

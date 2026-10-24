@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Benchmark</title>
+  <style>
+    body { margin: 0; background: #0d0c10; color: #ecebef; font: 15px/1.5 system-ui, sans-serif; }
+    .bar { position: fixed; top: 12px; right: 12px; display: flex; gap: 8px; z-index: 2; }
+    .bar button { padding: 7px 12px; font: inherit; font-size: 13px; cursor: pointer; color: #fff; background: #7c5cff; border: 0; border-radius: 8px; }
+    .bar button.sec { color: #1d1b20; background: #fff; border: 1px solid #ddd8e0; }
+    @media (prefers-color-scheme: dark) { .bar button.sec { color: #ecebef; background: #16141b; border-color: #2a2731; } }
+    iframe { display: block; width: 100%; height: 100vh; border: 0; }
+    @media print { .bar { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="bar">
+    <button id="save" type="button">Save</button>
+    <button id="print" type="button" class="sec">Print / PDF</button>
+  </div>
+  <iframe id="report" title="Benchmark" sandbox="allow-same-origin allow-modals"></iframe>
+  <script type="module" src="bench-report.js"></script>
+</body>
+</html>

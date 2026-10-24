@@ -153,32 +153,50 @@
     <section id="benchmarkView" class="benchview hidden">
       <header class="bv-head">
         <h2 class="bv-title" data-i18n="bench.title">Benchmark</h2>
-        <p class="bv-sub muted" data-i18n="bench.sub">What the web publishes about a model, and what this browser measured. Kept apart on purpose — they answer different questions.</p>
-        <div class="bv-sources" id="bvSources"></div>
+        <p class="bv-sub" data-i18n="bench.sub">Which model should you use? Test yours here, on any connected provider, with questions graded automatically — then compare with the public leaderboards.</p>
       </header>
-      <div class="bv-bar">
+      <div class="bv-card">
+        <div class="bv-step"><span class="bv-num">1</span><span data-i18n="bench.step1">Models to test</span></div>
+        <div class="bv-picked" id="bvPicked"></div>
+        <div class="combo bv-add" id="bvAddWrap">
+          <input id="bvModelInput" class="combo-input" type="text" autocomplete="off" spellcheck="false" data-i18n-ph="bench.addModel" placeholder="+ Add a model" />
+        </div>
+        <p class="bv-what" id="bvWhat"></p>
+        <div class="bv-actions">
+          <button id="bvRun" class="btn-grad bv-run" data-i18n="bench.run">Run the test</button>
+          <button id="bvStop" class="bv-stop hidden" data-i18n="bench.stop">Stop</button>
+        </div>
+        <div id="bvProgress" class="bv-progress hidden">
+          <div class="bv-pbar"><span id="bvProgressFill"></span></div>
+          <div id="bvProgressText" class="bv-ptext"></div>
+        </div>
+      </div>
+      <div class="bv-card">
+        <div class="bv-step"><span class="bv-num">2</span><span data-i18n="bench.step2">Results</span>
+          <button id="bvReport" class="bv-report hidden" type="button" data-i18n="bench.report">📊 Open the report</button></div>
+        <div id="bvResults" class="bv-results"></div>
+      </div>
+      <details class="bv-card bv-published">
+        <summary class="bv-step"><span class="bv-num">3</span><span data-i18n="bench.step3">Public leaderboards</span></summary>
+        <p class="bv-sub" data-i18n="bench.pubSub">Measured by others, on many more tasks — but often months behind the newest models.</p>
+        <div class="bv-sources" id="bvSources"></div>
         <input id="bvSearch" class="bv-search" type="search" data-i18n-ph="bench.searchPh" placeholder="Search a model…" />
-        <label class="bv-check"><input type="checkbox" id="bvOnlyGap" /><span data-i18n="bench.onlyUncovered">Only models no leaderboard covers</span></label>
-        <button id="bvRun" class="btn-grad bv-run"><span data-i18n="bench.run">Run the live test</span></button>
-        <button id="bvStop" class="bv-stop hidden" data-i18n="bench.stop">Stop</button>
-      </div>
-      <div id="bvProgress" class="bv-progress hidden"></div>
-      <div class="bv-tablewrap">
-        <table class="bv-table">
-          <thead>
-            <tr>
-              <th data-sort="name" data-i18n="bench.colModel">Model</th>
-              <th data-sort="measured" class="num" data-i18n="bench.colMeasured">Measured here</th>
-              <th data-sort="aider" class="num" data-i18n="bench.colAider">Aider code %</th>
-              <th data-sort="halluc" class="num" data-i18n="bench.colHalluc">Hallucination %</th>
-              <th data-sort="price" class="num" data-i18n="bench.colPrice">$/M out</th>
-              <th data-sort="ctx" class="num" data-i18n="bench.colCtx">Context</th>
-            </tr>
-          </thead>
-          <tbody id="bvBody"></tbody>
-        </table>
-      </div>
-      <p class="bv-note muted" data-i18n="bench.note">The live test grades reasoning, instruction-following, strict JSON and tool use. It does not run generated code: the add-on forbids eval on purpose, and sending your model output to a third-party sandbox to earn a number is not a trade worth making. Executed code benchmarks live in scripts/bench-hivey.mjs.</p>
+        <div class="bv-tablewrap">
+          <table class="bv-table">
+            <thead>
+              <tr>
+                <th data-sort="name" data-i18n="bench.colModel">Model</th>
+                <th data-sort="aider" class="num" data-i18n="bench.colAider" data-i18n-title="bench.colAiderTitle" title="Coding exercises passed (Aider Polyglot) — higher is better">Code</th>
+                <th data-sort="halluc" class="num" data-i18n="bench.colHalluc" data-i18n-title="bench.colHallucTitle" title="Summaries containing an invented fact (Vectara) — lower is better">Invents</th>
+                <th data-sort="price" class="num" data-i18n="bench.colPrice" data-i18n-title="bench.colPriceTitle" title="Price in dollars per million tokens written">$/M</th>
+                <th data-sort="ctx" class="num" data-i18n="bench.colCtx" data-i18n-title="bench.colCtxTitle" title="Context window, in thousands of tokens">Context</th>
+              </tr>
+            </thead>
+            <tbody id="bvBody"></tbody>
+          </table>
+        </div>
+        <p class="bv-note" data-i18n="bench.note">The live test grades reasoning, instruction-following, strict JSON and tool use. It does not run generated code: this add-on forbids eval on purpose. Executed-code benchmarks live in scripts/bench-hivey.mjs.</p>
+      </details>
     </section>
     <section id="codeView" class="codeview hidden">
       <div class="code-launch">
@@ -230,6 +248,7 @@
 
     <!-- Floating list of models for the searchable combobox. -->
     <div id="modelMenu" class="combo-menu hidden"></div>
+    <div id="bvModelMenu" class="combo-menu hidden"></div>
     <!-- Model filter popover: price tiers + providers (with OpenRouter sub-vendors).
          The type-to-filter lives in the combobox itself, not here. -->
     <div id="modelFilterPanel" class="filter-panel hidden">
