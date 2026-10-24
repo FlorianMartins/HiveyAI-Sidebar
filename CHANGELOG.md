@@ -39,6 +39,9 @@ Version de développement, toujours à jour :
 - **La réflexion est repliée par défaut** : « Réflexion… » clignote pendant que le modèle réfléchit,
   un clic l'ouvre.
 - L'action « Transformer en carte mentale / diagramme » est retirée.
+- **Onglet Web : vos anciennes conversations Claude** — dans un panneau aussi étroit, claude.ai passe
+  en affichage mobile et son menu des conversations passées devenait inaccessible. L'icône
+  historique de l'en-tête (🕘) ouvre maintenant directement la liste de vos conversations Claude.
 
 ### L'onglet Benchmark, enfin lisible — avec un rapport à la fin
 
