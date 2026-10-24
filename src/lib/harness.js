@@ -47,6 +47,9 @@ export const DURABLE = new Set([
   "tool/result",
   "step/end",
   "turn/end",
+  // A live summary of the turn so far, when the window filled — the model reads it instead of what
+  // came before it (agent.js projects it); the log still holds everything.
+  "context/compacted",
 ]);
 
 // ── The kernel ───────────────────────────────────────────────────────────────────────────────
@@ -219,7 +222,7 @@ export async function runTurn(ctx, { maxSteps = 24, signal } = {}) {
     interrupted = Boolean(turn.interrupted);
     ctx.append("assistant/message", {
       text: lastText, raw: turn.message, calls: (turn.toolCalls || []).length,
-      ...(turn.interrupted ? { interrupted: true } : {}), ...(turn.stopReason ? { stopReason: turn.stopReason } : {}), ...(turn.usage ? { usage: turn.usage } : {}),
+      ...(turn.interrupted ? { interrupted: true } : {}), ...(turn.looped ? { looped: true } : {}), ...(turn.stopReason ? { stopReason: turn.stopReason } : {}), ...(turn.usage ? { usage: turn.usage } : {}),
     });
 
     const calls = turn.toolCalls || [];

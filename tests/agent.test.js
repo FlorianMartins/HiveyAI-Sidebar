@@ -117,19 +117,26 @@ test("a screenshot is kept out of the text dump and handed to the vision path", 
   assert.doesNotMatch(formatted[0].content, /base64,AAAA/, "the data URL never enters the text context");
 });
 
-test("a tool result is truncated so one huge page cannot blow the context", async () => {
-  const provider = fakeProvider([
-    { text: "", toolCalls: [{ id: "x", name: "read_page", input: {} }] },
-    { text: "ok" },
-  ]);
-  let formatted = null;
-  provider.formatToolResults = (r) => { formatted = r; return { role: "user", content: "" }; };
-  await runConversation({
-    provider, system: "S", history: [{ role: "user", content: "go" }],
-    tools: [{ name: "read_page" }],
-    execute: async () => ({ text: "x".repeat(50000) }),
-  });
-  assert.equal(formatted[0].content.length, 8000);
+test("a tool result takes a share of the model's window — the old 8 000 characters only when the window is unknown", async () => {
+  const run = async (contextWindow) => {
+    const provider = fakeProvider([
+      { text: "", toolCalls: [{ id: "x", name: "read_page", input: {} }] },
+      { text: "ok" },
+    ]);
+    let formatted = null;
+    provider.formatToolResults = (r) => { formatted = r; return { role: "user", content: "" }; };
+    await runConversation({
+      provider, system: "S", history: [{ role: "user", content: "go" }],
+      tools: [{ name: "read_page" }], contextWindow,
+      execute: async () => ({ text: "x".repeat(200000) }),
+    });
+    return formatted[0].content;
+  };
+  const unknown = await run(0);
+  assert.ok(unknown.startsWith(JSON.stringify({ text: "x".repeat(200000) }).slice(0, 8000)));
+  assert.match(unknown, /more characters were cut to fit the model's context window/);
+  const qwen = await run(69632);
+  assert.ok(qwen.length > 27000 && qwen.length < 29000, "a tenth of a 69 632-token window");
 });
 
 test("the step budget is enforced", async () => {
