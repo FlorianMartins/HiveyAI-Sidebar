@@ -6600,7 +6600,7 @@ async function suggestNextAfter(question, answer, sess, m, sel) {
 /** What the conversation has cost so far, from its answers: `{ usd, exact, any }`. */
 function conversationCost(sess) {
   let usd = 0, exact = true, any = false;
-  for (const e of (sess && sess.transcript) || []) {
+  for (const e of sess.transcript || []) {
     if (!e || !e.cost || e.cost.free) continue;
     any = true;
     usd += e.cost.usd || 0;

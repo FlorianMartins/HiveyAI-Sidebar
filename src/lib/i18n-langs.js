@@ -4,7 +4,6 @@
 
 export const ES = {
   "model.chipTitle": "Modelo — clic para cambiar",
-  "send.title": "Enviar (Intro)",
   "priv.badge.local": "🏠 Local",
   "priv.badge.gateway": "🔒 Su pasarela",
   "priv.badge.cloud": "☁️ Nube",
@@ -13,7 +12,6 @@ export const ES = {
   "priv.badgeTitle.gateway": "El modelo funciona en su propio servidor: sus datos se quedan con usted. Clic para los ajustes.",
   "priv.badgeTitle.cloud": "La nube de un proveedor: los datos sensibles se sustituyen por marcadores antes de salir. Clic para los ajustes.",
   "cost.tokens": "{in} → {out} tokens",
-  "cost.free": "gratis",
   "cost.exactTitle": "Coste exacto, según el proveedor",
   "cost.estimateTitle": "Estimado con los precios públicos del proveedor",
   "ctx.btn.mute": "En espera",
@@ -897,7 +895,6 @@ export const ES = {
 
 export const DE = {
   "model.chipTitle": "Modell — klicken zum Wechseln",
-  "send.title": "Senden (Eingabe)",
   "priv.badge.local": "🏠 Lokal",
   "priv.badge.gateway": "🔒 Ihr Gateway",
   "priv.badge.cloud": "☁️ Cloud",
@@ -906,7 +903,6 @@ export const DE = {
   "priv.badgeTitle.gateway": "Das Modell läuft auf Ihrem eigenen Server: Ihre Daten bleiben bei Ihnen. Klicken für die Einstellungen.",
   "priv.badgeTitle.cloud": "Die Cloud eines Anbieters: sensible Daten werden vor dem Senden durch Markierungen ersetzt. Klicken für die Einstellungen.",
   "cost.tokens": "{in} → {out} Tokens",
-  "cost.free": "kostenlos",
   "cost.exactTitle": "Genaue Kosten, laut Anbieter",
   "cost.estimateTitle": "Geschätzt nach den Listenpreisen des Anbieters",
   "ctx.btn.mute": "Pausieren",
@@ -1790,7 +1786,6 @@ export const DE = {
 
 export const IT = {
   "model.chipTitle": "Modello — clic per cambiare",
-  "send.title": "Invia (Invio)",
   "priv.badge.local": "🏠 Locale",
   "priv.badge.gateway": "🔒 Il tuo gateway",
   "priv.badge.cloud": "☁️ Cloud",
@@ -1799,7 +1794,6 @@ export const IT = {
   "priv.badgeTitle.gateway": "Il modello gira sul tuo server: i dati restano con te. Clic per le impostazioni.",
   "priv.badgeTitle.cloud": "Il cloud di un fornitore: i dati sensibili sono sostituiti da marcatori prima dell'invio. Clic per le impostazioni.",
   "cost.tokens": "{in} → {out} token",
-  "cost.free": "gratis",
   "cost.exactTitle": "Costo esatto, come indicato dal fornitore",
   "cost.estimateTitle": "Stimato dai prezzi di listino del fornitore",
   "ctx.btn.mute": "In pausa",
@@ -2683,7 +2677,6 @@ export const IT = {
 
 export const PT = {
   "model.chipTitle": "Modelo — clique para mudar",
-  "send.title": "Enviar (Enter)",
   "priv.badge.local": "🏠 Local",
   "priv.badge.gateway": "🔒 O seu gateway",
   "priv.badge.cloud": "☁️ Nuvem",
@@ -2692,7 +2685,6 @@ export const PT = {
   "priv.badgeTitle.gateway": "O modelo corre no seu próprio servidor: os dados ficam consigo. Clique para as definições.",
   "priv.badgeTitle.cloud": "A nuvem de um fornecedor: os dados sensíveis são substituídos por marcadores antes do envio. Clique para as definições.",
   "cost.tokens": "{in} → {out} tokens",
-  "cost.free": "grátis",
   "cost.exactTitle": "Custo exato, conforme o fornecedor",
   "cost.estimateTitle": "Estimado pelos preços de tabela do fornecedor",
   "ctx.btn.mute": "Em espera",

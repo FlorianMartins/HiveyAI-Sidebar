@@ -15,7 +15,6 @@ let lang = "en";
 
 const EN = {
   "model.chipTitle": "Model — click to change",
-  "send.title": "Send (Enter)",
   "priv.badge.local": "🏠 Local",
   "priv.badge.gateway": "🔒 Your gateway",
   "priv.badge.cloud": "☁️ Cloud",
@@ -24,7 +23,6 @@ const EN = {
   "priv.badgeTitle.gateway": "The model runs on your own server: your data stays with you. Click for the settings.",
   "priv.badgeTitle.cloud": "A provider's cloud: sensitive data is replaced by markers before it leaves. Click for the settings.",
   "cost.tokens": "{in} → {out} tokens",
-  "cost.free": "free",
   "cost.exactTitle": "Exact cost, as the provider reported it",
   "cost.estimateTitle": "Estimated from the provider's list prices",
   "ctx.btn.mute": "Standby",
@@ -1104,7 +1102,6 @@ const EN = {
 
 const FR = {
   "model.chipTitle": "Modèle — cliquer pour changer",
-  "send.title": "Envoyer (Entrée)",
   "priv.badge.local": "🏠 Local",
   "priv.badge.gateway": "🔒 Votre passerelle",
   "priv.badge.cloud": "☁️ Cloud",
@@ -1113,7 +1110,6 @@ const FR = {
   "priv.badgeTitle.gateway": "Le modèle tourne sur votre propre serveur : vos données restent chez vous. Cliquer pour les réglages.",
   "priv.badgeTitle.cloud": "Le cloud d'un fournisseur : les données sensibles sont remplacées par des marqueurs avant l'envoi. Cliquer pour les réglages.",
   "cost.tokens": "{in} → {out} jetons",
-  "cost.free": "gratuit",
   "cost.exactTitle": "Coût exact, tel que le fournisseur l'a indiqué",
   "cost.estimateTitle": "Estimé d'après les prix publics du fournisseur",
   "ctx.btn.mute": "Veille",
