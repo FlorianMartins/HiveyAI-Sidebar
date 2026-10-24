@@ -24,7 +24,7 @@ VS Code / Slack — scale mieux qu'une rangée d'onglets) donne accès à :
 
 | Espace | Rôle |
 |---|---|
-| 💬 **Chat** | Conversation avec la page comme contexte + DeepSearch, résumé, mindmap |
+| 💬 **Chat** | Conversation avec la page comme contexte + DeepSearch, résumé |
 | 🌐 **Web chats** | Gemini, Claude, ChatGPT, Copilot, Mistral, DeepSeek, Qwen, Kimi, Z.ai, HuggingFace **dans la sidebar, sans clé API** (votre session web) |
 | 🤖 **Agent** | L'IA lit, navigue, clique, remplit — autorisations réglables + garde-fou anti-achat |
 | 🌍 **Traduire** | Traduction page / sélection |
@@ -68,8 +68,6 @@ VS Code / Slack — scale mieux qu'une rangée d'onglets) donne accès à :
   purge la base.
 - 🔎 **DeepSearch** : bascule de recherche web approfondie dans le chat, avec une
   **profondeur réglable** (rapide / standard / approfondie).
-- 🗺 **Mindmap** : génère une **carte mentale ou un flowchart Mermaid** à partir d'une
-  réponse ou de la page courante, dans un panneau dédié.
 - 📚 **Prompt Library** : prompts prêts à l'emploi (rédaction, code, cybersec,
   marketing, productivité, apprentissage, business, data) + vos propres prompts,
   favoris et insertion en un clic.
@@ -356,8 +354,9 @@ scripts/update-benchmarks.mjs  Collecte des classements publiés (timer quotidie
 - **Modèle de menaces** : vecteurs, impacts, mitigations codées et **résiduels
   assumés** sont détaillés dans [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md).
 - **Autorisations de l'agent réglables** : en *Autoriser* (par défaut) l'agent
-  s'exécute seul mais **confirme les actions très sensibles** (téléchargement,
-  réservation, suppression, virement, inscription, installation…) ; en *validation
+  s'exécute seul mais **confirme les actions très sensibles** (téléchargement, le
+  bouton qui réserve, suppression, virement, inscription, installation…) — chercher et
+  comparer sur un site de réservation reste libre ; en *validation
   manuelle* chaque action modifiant l'état est confirmée ; en *tout autoriser* l'agent enchaîne
   sans demande — mais le **garde-fou anti-achat reste actif dans les deux cas**
   (refus codé en dur, indépendant du prompt). Le défaut sûr est la validation manuelle.
@@ -448,7 +447,7 @@ npm run vendor:check  # les bibliothèques tierces sont-elles les originaux amon
 npm run bench -- --url http://127.0.0.1:8080/v1 --model qwen-27b   # le banc chat + agent
 ```
 
-**377 tests** (node:test) couvrent le noyau de raisonnement et le tour d'agent de bout en bout, les
+**380 tests** (node:test) couvrent le noyau de raisonnement et le tour d'agent de bout en bout, les
 niveaux de réflexion de chaque fournisseur (le corps exact de chaque requête), l'anonymisation
 (détecteurs, faux positifs, restitution, fenêtre des données sensibles), la gestion du contexte, les
 freins de l'agent, le routage Hivey, et **la complétude des six langues**. Les tests des niveaux de
@@ -479,7 +478,7 @@ rôle code, en **exécutant** le code produit contre des assertions.
 - [x] Multi-fournisseurs + modèles locaux (Ollama / LM Studio / custom)
 - [x] Moteur **Hivey** : orchestration multi-modèles (Free / Smart / Pro) + auto-curation du catalogue
 - [x] **Wisebase** : base de connaissance locale + RAG, embeddings dans le navigateur
-- [x] **DeepSearch**, **Mindmap**, **Prompt Library**, **Skills** en slash-commands
+- [x] **DeepSearch**, **Prompt Library**, **Skills** en slash-commands
 - [x] **Web chats sans clé API** (10 IA grand public dans la sidebar)
 - [x] **Espace Sécurité défensive** + parseur `.pcap` anonymisant côté client
 - [x] Lecture auto de la page à chaque navigation (sous-domaine, SPA) + multi-onglets
