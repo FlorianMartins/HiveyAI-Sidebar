@@ -113,9 +113,13 @@ export function redactRequest(messages, vault, level, customTerms = []) {
   return { messages: out, findings };
 }
 
-/** Which findings the user is asked about: credentials anywhere, personal/company data they did not type. */
+/**
+ * Which findings the user is asked about: credentials anywhere, personal/company data they did not
+ * type — and never what the model only repeats from earlier in the conversation (`answer`): that
+ * value already went, as a marker, with the message it came from.
+ */
 export function findingsToAsk(findings) {
-  return findings.filter((f) => f.kind === "secret" || ((f.kind === "identity" || f.kind === "business" || f.kind === "term") && f.from !== "typed"));
+  return findings.filter((f) => f.from !== "answer" && (f.kind === "secret" || ((f.kind === "identity" || f.kind === "business" || f.kind === "term") && f.from !== "typed")));
 }
 
 /** A finding as one line of the warning: where — what (masked). `t` is the interface's translator. */
@@ -157,6 +161,11 @@ export function privateProvider(inner, { level, customTerms = [], vault = new Va
       const sysR = redactRequest([{ role: "user", content: req.system || "" }], vault, level, customTerms);
       const toAsk = findingsToAsk([...findings, ...sysR.findings]);
       const seen = accepted.get(conversation) || new Set();
+      // ⚠️ A value the user typed came back in the model's answer, and the next question asked about
+      // it — « une réponse précédente — adresse e-mail ». What the user wrote is theirs: accepted for
+      // the conversation the first time it is seen, wherever it shows up next.
+      for (const f of findings) if (f.from === "typed" && f.kind !== "secret") seen.add(f.value);
+      if (conversation) accepted.set(conversation, seen);
       const fresh = toAsk.filter((f) => !seen.has(f.value));
       if (fresh.length && !(conversation && always.has(conversation))) {
         if (!ask) throw Object.assign(new Error(t("priv.notSent")), { name: "PrivacyRefused" });
