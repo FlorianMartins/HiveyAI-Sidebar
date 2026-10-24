@@ -6,7 +6,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   contextBudget, shouldAutoCompact, contextOverflow, windowOfEntry, catalogWindow, estimateTokens,
-  compactHistory, runChatTurn, contextWindowFor, CONTEXT_FLOOR_TOKENS,
+  compactHistory, runChatTurn, contextWindowFor, ctxSizeKey, CONTEXT_FLOOR_TOKENS,
 } from "../src/lib/conversation.js";
 import { detectUserLanguage } from "../src/lib/user-language.js";
 import { buildSystemPrompt } from "../src/lib/agent.js";
@@ -118,6 +118,37 @@ test("nothing is summarized while the conversation fits", async () => {
   assert.equal(r.compacted, false);
   assert.equal(p.seen.length, 1);
   assert.ok(estimateTokens(history) > 6000);
+});
+
+test("a size the user chose for a model shrinks its window, never past a known one, and sets an unknown one", async () => {
+  const fake = async () => new Response(JSON.stringify({ data: [{ id: "qwen-27b", context_length: 69632 }] }), { status: 200 });
+  const gw = { ...SETTINGS, baseUrls: { custom: "http://gw-sizes.example/v1" } };
+  assert.equal(await contextWindowFor({ ...gw, ctxSizes: { [ctxSizeKey("custom", "qwen-27b")]: 32000 } }, "custom", "qwen-27b", fake), 32000);
+  assert.equal(await contextWindowFor({ ...gw, ctxSizes: { [ctxSizeKey("custom", "qwen-27b")]: 256000 } }, "custom", "qwen-27b", fake), 69632, "the server would refuse more");
+  assert.equal(await contextWindowFor({ ...gw, ctxSizes: { [ctxSizeKey("custom", "other")]: 32000 } }, "custom", "qwen-27b", fake), 69632, "another model's size is not this one's");
+  const none = async () => new Response("{}", { status: 404 });
+  const unknown = { ...SETTINGS, baseUrls: { custom: "http://gw-unknown.example/v1" } };
+  assert.equal(await contextWindowFor({ ...unknown, ctxSizes: { [ctxSizeKey("custom", "mystery")]: 64000 } }, "custom", "mystery", none), 64000);
+});
+
+test("with a smaller chosen size the conversation is summarized by itself sooner", async () => {
+  const build = () => {
+    const h = [];
+    for (let i = 0; i < 6; i++) h.push({ role: "user", content: "q".repeat(4000) }, { role: "assistant", content: "r" });
+    h.push({ role: "user", content: "last" });
+    return h;
+  };
+  const free = build();
+  const p1 = scripted(["ok"]);
+  const r1 = await runChatTurn({ provider: p1, providerId: "custom", modelId: "m", settings: SETTINGS, system: "", history: free, window: 200000, turnStart: free.length - 1 });
+  assert.equal(r1.compacted, false);
+  const small = build();
+  const p2 = scripted(["- résumé", "ok"]);
+  const events = [];
+  const r2 = await runChatTurn({ provider: p2, providerId: "custom", modelId: "m", settings: SETTINGS, system: "", history: small, window: 8192, turnStart: small.length - 1, onCompact: (why) => events.push(why) });
+  assert.equal(r2.compacted, true);
+  assert.deepEqual(events, ["auto"]);
+  assert.match(p2.seen[1].history.at(-1).content, /last$/, "the question is asked after the summary");
 });
 
 // ── The reply language (hivey-vscode, tests/userLanguage.test.ts) ─────────────────────────────

@@ -10,6 +10,37 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+### La zone de saisie, plus nette — et le contexte à votre main
+
+- **Le `+` ouvre un menu** : joindre un fichier, ou apporter la page — capturer une zone, choisir
+  un élément, onglets ouverts…, surveiller cette page (et, dans Sécurité, les en-têtes de sécurité de
+  la page). Les quatre icônes au-dessus de la conversation disparaissent ; il ne reste là que « N
+  onglets en contexte » quand il y en a.
+- **Des icônes cohérentes** : `+`, micro, icône du fournisseur, réflexion (une ampoule), options —
+  toutes à la même taille et à la couleur de votre thème. **Envoyer** retrouve son rond en dégradé
+  (il était invisible en thème clair).
+- **« ☁️ Cloud · anonymisé » se clique** : un clic désactive l'anonymisation (le badge passe en
+  orange, « non anonymisé »), un second la réactive au niveau des réglages. Les clés et mots de passe
+  restent masqués dans tous les cas ; l'anonymisation reste active par défaut.
+- **La taille du contexte se règle** : un clic sur la jauge (en bas à droite) montre les jetons
+  utilisés et propose, pour ce modèle, son maximum ou une taille plus petite (8 k à 512 k) — moins
+  cher et plus rapide, la conversation étant résumée plus tôt. Une taille ne dépasse jamais la vraie
+  fenêtre du modèle. « Résumer maintenant » est dans le même menu.
+- **Le résumé automatique, vérifié** : avec un vrai modèle (DeepSeek V4.1 Flash) et un contexte de
+  8 k, la conversation s'est résumée d'elle-même au 4ᵉ message (59 % → 24 %) et le modèle se
+  souvenait encore de la première note. Il fonctionne dans le Chat, l'Agent et Wisebase.
+- **La suggestion ne ressemble plus à du texte tapé** : italique pâle, sans icône ni « ⇥ Tab » (Tab
+  la reprend toujours ; c'est dit au survol).
+- **L'animation du cadre se voit** : un arc lumineux, presque blanc, qui tranche sur la bordure
+  violette quand vous écrivez ou que le modèle travaille (un arc foncé en thème clair).
+- **Traduire et Améliorer** : la langue, le style et le ton sont **au-dessus du cadre**, sur toute la
+  largeur, comme les analyses de Sécurité (Wisebase et PDF aussi).
+- **Image** : la taille est une puce « Taille » à gauche d'Envoyer ; elle affiche les dimensions
+  choisies (« 1024×1024 »).
+- **Wisebase ne bloque plus l'onglet** : la gestion des collections ne s'ouvre plus d'elle-même par-
+  dessus tout ; sans collection, un bouton « Créer ma première collection » attend dans la page. Le
+  panneau, quand vous l'ouvrez, couvre la conversation seulement — jamais la barre des onglets.
+
 ### Une zone de saisie unique, comme dans Hivey Code — avec le contexte et le coût
 
 - **La même zone de saisie dans tous les onglets** : le texte, puis une rangée `+`, micro, **le

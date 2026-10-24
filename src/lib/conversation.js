@@ -53,11 +53,25 @@ export function windowOfEntry(entry) {
   return 0;
 }
 
+/** Where the user's chosen size for a model is kept: `settings.ctxSizes[ctxSizeKey(…)]`, in tokens. */
+export const ctxSizeKey = (providerId, modelId) => `${providerId}::${modelId}`;
+
+/**
+ * The window a turn works with: the model's, or the smaller size the user chose for it (cheaper,
+ * summarized sooner). A size above a known window is never used — the server would refuse it.
+ */
+export async function contextWindowFor(settings, providerId, modelId, fetchImpl = globalThis.fetch) {
+  const native = await modelContextWindow(settings, providerId, modelId, fetchImpl);
+  const chosen = Number(settings && settings.ctxSizes && settings.ctxSizes[ctxSizeKey(providerId, modelId)]) || 0;
+  if (chosen <= 0) return native;
+  return native > 0 ? Math.min(chosen, native) : chosen;
+}
+
 /**
  * The model's context window in tokens, 0 when unknown. A self-hosted server is asked once — its
  * runtime window is what refuses a request, not the model's training maximum.
  */
-export async function contextWindowFor(settings, providerId, modelId, fetchImpl = globalThis.fetch) {
+export async function modelContextWindow(settings, providerId, modelId, fetchImpl = globalThis.fetch) {
   const key = keyOf(providerId, modelId, settings);
   if (learned.has(key)) return learned.get(key);
   let n = providerId === "openrouter" || !isSelfHostedProvider(providerId) ? catalogWindow(providerId, modelId) : 0;

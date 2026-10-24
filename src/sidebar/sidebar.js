@@ -15,10 +15,9 @@ import { reasoningMenu, isSelfHostedProvider } from "../lib/reasoning.js";
 import { runChatTurn, replyLanguageOf } from "../lib/conversation.js";
 import { Vault, privacyClass } from "../lib/privacy.js";
 import { newTurnId, tagTurn, setTurnState, removeTurn } from "../lib/context-control.js";
-import { compactHistory, contextWindowFor, contextBudget, estimateTokens } from "../lib/conversation.js";
+import { compactHistory, contextWindowFor, modelContextWindow, ctxSizeKey, contextBudget, estimateTokens } from "../lib/conversation.js";
 import { costOf, formatUsd, formatTokens } from "../lib/cost.js";
 import { vendorSlug, vendorIcon } from "../lib/vendor-icon.js";
-import { redactsFor } from "../lib/privacy.js";
 import { nextStepMessages, parseNextStep } from "../lib/next-step.js";
 import { detectUserLanguage } from "../lib/user-language.js";
 import { SKILLS, GOAL_SYSTEM, ENHANCE_SYSTEM, skillById } from "../lib/skills.js";
@@ -193,6 +192,16 @@ const els = {
   privBadge: $("privBadge"),
   thinkChip: $("thinkChip"),
   thinkPop: $("thinkPop"),
+  plusMenu: $("plusMenu"),
+  ctxPop: $("ctxPop"),
+  ctxPopUsed: $("ctxPopUsed"),
+  ctxPopSizesWrap: $("ctxPopSizesWrap"),
+  ctxPopSizes: $("ctxPopSizes"),
+  ctxPopHint: $("ctxPopHint"),
+  ctxPopCompact: $("ctxPopCompact"),
+  attachFileItem: $("attachFileItem"),
+  attachFileLabel: $("attachFileLabel"),
+  plusPageSep: $("plusPageSep"),
   sendBtn: $("sendBtn"),
   modelIcon: $("modelIcon"),
   privacyText: $("privacyText"),
@@ -204,6 +213,8 @@ const els = {
   confirmAllow: $("confirmAllow"),
   confirmDeny: $("confirmDeny"),
 };
+// Whether the current tab offers page tools (the "N tabs in context" bar shows only there).
+let pageBarAllowed = false;
 
 let settings;
 let history = [];        // provider-native message array (multi-turn continuation)
@@ -523,6 +534,9 @@ async function init() {
   // Themed dropdowns (same look/behaviour as "Choose an analysis") over the native selects.
   themeNativeSelect(els.translateLang);
   setupImprovePicker();               // Improve = one button → a 2-list (Action | Tone) popup
+  // Beside Send, the size is a short chip: "Size" until one is chosen, then its dimensions.
+  els.imageSize._labelFor = (o) => (o.value ? o.value.replace("x", "×") : t("image.sizeBtn"));
+  els.imageSize._menuWidth = 280;
   themeNativeSelect(els.imageSize);
   themeNativeSelect(els.wbScope);
   syncToggleVisibility();
@@ -2865,7 +2879,7 @@ function setMode(next) {
   els.wisebaseControls.classList.toggle("hidden", next !== "wisebase");
   // The per-mode controls row is only useful for translate/improve/image/pdf/wisebase; hide it
   // entirely on Chat/Agent/Code so there's no empty bar.
-  els.controls.hidden = !["translate", "improve", "image", "pdf", "wisebase"].includes(next)
+  els.controls.hidden = !["translate", "improve", "pdf", "wisebase"].includes(next)
     || (next === "pdf" && pdfs.length === 0); // PDF tab: no empty bar — it appears once a PDF is added via "+"
   // Attach (+) is offered on Chat/Agent/Translate/Improve/Image + Security (for .pcap/logs) + PDF
   // (the "+" replaces the old "Load PDF" button — a PDF-only picker in the composer).
@@ -2875,13 +2889,14 @@ function setMode(next) {
   // The composer is the same on every tab (attach, dictate, model, thinking — then options and
   // send/stop); only the thinking chip depends on whether the tab talks to a chat model.
   els.thinkChip.classList.toggle("tab-off", !["chat", "agent", "translate", "improve", "security", "wisebase", "pdf"].includes(next));
-  closeThinkPop();
+  closeThinkPop(); closePlusMenu(); closeCtxPop();
   els.modelFilterPanel.classList.add("hidden");
   if (mainCombo) mainCombo.close();
   document.body.classList.toggle("mode-code", next === "code");
   document.body.classList.toggle("mode-wisebase", next === "wisebase");
   document.body.classList.toggle("mode-chat", next === "chat"); // options ⚙ + first-line text are chat-only
   if (next === "wisebase" && typeof onEnterWisebase === "function") onEnterWisebase();
+  else if (wbPanelEl && !wbPanelEl.classList.contains("hidden")) closeWbPanel();
   // 📚 Prompt library button → Chat + Wisebase (both are full chat composers).
   const plb = document.getElementById("promptLibBtn");
   if (plb) plb.hidden = !["chat", "wisebase"].includes(next);
@@ -3056,13 +3071,19 @@ async function refreshWatchBtn() {
   els.watchBtn.disabled = false; // always clickable — it resolves the page on click
   els.watchBtn.classList.remove("dim");
   const target = await watchTargetPage();
-  if (!target) { els.watchBtn.classList.remove("on"); els.watchBtn.title = t("watch.title"); return; }
+  if (!target) { setWatchState(false); return; }
   try {
     const res = await browser.runtime.sendMessage({ type: "watch:list" });
     const on = !!(res && res.watches || []).some((w) => w.url === target.url);
-    els.watchBtn.classList.toggle("on", on);
-    els.watchBtn.title = t(on ? "watch.on" : "watch.title");
+    setWatchState(on);
   } catch (_) {}
+}
+// The "+" menu's watch item says what a click will do: start watching, or stop.
+function setWatchState(on) {
+  els.watchBtn.classList.toggle("on", on);
+  els.watchBtn.title = t(on ? "watch.on" : "watch.title");
+  const label = els.watchBtn.querySelector(".pm-label");
+  if (label) label.textContent = t(on ? "plus.watchOn" : "plus.watch");
 }
 async function toggleWatchCurrentPage() {
   const target = await watchTargetPage();
@@ -3071,8 +3092,7 @@ async function toggleWatchCurrentPage() {
   try {
     const res = await browser.runtime.sendMessage({ type: on ? "watch:remove" : "watch:add", url: target.url, title: target.title });
     if (res && res.ok) {
-      els.watchBtn.classList.toggle("on", !on);
-      els.watchBtn.title = t(!on ? "watch.on" : "watch.title");
+      setWatchState(!on);
       flashTopBanner(t(!on ? "watch.added" : "watch.removed"));
     }
   } catch (_) {}
@@ -3095,8 +3115,12 @@ function updatePageBar() {
   // (pick element + capture region + 📑 tab picker). No page reading anywhere — the "Page" option is
   // gone; context comes only from what the user explicitly picks/captures/selects.
   const show = !webOpen && pageCapable;
-  els.pageBar.classList.toggle("hidden", !show);
-  if (els.tabsBtn) els.tabsBtn.classList.toggle("hidden", !pageCapable);
+  // The tools themselves are items of the composer's "+" menu; the bar above the conversation only
+  // says how many tabs are in the context (see updateTabsIndicator).
+  for (const b of [els.captureRegion, els.pickEl, els.watchBtn]) if (b) b.classList.toggle("hidden", !show);
+  if (els.tabsBtn) els.tabsBtn.classList.toggle("hidden", !show || !tabsPickerAvailable());
+  if (els.plusPageSep) els.plusPageSep.classList.toggle("hidden", !plusMenuHasPageTools());
+  pageBarAllowed = show;
   els.pageBar.classList.toggle("selectors-only", pageCapable);
   els.pageBar.classList.remove("page-off");
   // The inline 👁 eye inside the bar is always hidden (no page reading here).
@@ -3121,6 +3145,7 @@ function updateTabsIndicator() {
   const n = (settings.selectedTabs || []).length;
   const has = n > 0 && tabsPickerAvailable();
   els.pageBar.classList.toggle("has-tabsel", has);
+  els.pageBar.classList.toggle("hidden", !(has && pageBarAllowed));
   if (els.pageTitle && has) {
     els.pageTitle.textContent = t("tabs.inContext", { n });
     els.pageTitle.title = t("tabs.inContextTitle");
@@ -4256,12 +4281,16 @@ function wire() {
   setupShortcuts();
 
   // Composer: attachments (+).
-  els.attachBtn.addEventListener("click", () => {
-    // On the PDF tab the "+" opens a PDF-ONLY picker that feeds the PDF workspace (summarize / page
-    // images / extract text). Everywhere else it's the normal multi-type attach picker.
-    if (mode === "pdf") els.pdfFile.click();
-    else els.attachInput.click();
+  // "+" opens a menu — attach a file, or bring the page in (area, element, tabs, watch) — or, on a
+  // tab without page tools (Agent), the file picker straight away.
+  els.attachBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (!plusMenuHasPageTools()) return openFilePicker();
+    togglePlusMenu();
   });
+  els.attachFileItem.addEventListener("click", () => openFilePicker());
+  // Every item closes the menu before its own handler runs (some stop the click from bubbling).
+  els.plusMenu.addEventListener("click", (e) => { if (e.target.closest(".pm-item")) closePlusMenu(); }, true);
   els.attachInput.addEventListener("change", async (e) => {
     await addAttachmentFiles(e.target.files);
     e.target.value = ""; // allow re-selecting the same file
@@ -4665,12 +4694,15 @@ function wire() {
   window.addEventListener("blur", () => { if (els.tabsPanel) els.tabsPanel.classList.add("hidden"); });
   els.input.addEventListener("input", onComposerInput);
   els.stop.addEventListener("click", () => abortController && abortController.abort());
-  if (els.ctxGauge) els.ctxGauge.addEventListener("click", () => compactNow());
+  if (els.ctxGauge) els.ctxGauge.addEventListener("click", (e) => { e.stopPropagation(); toggleCtxPop(); });
+  if (els.ctxPopCompact) els.ctxPopCompact.addEventListener("click", () => { closeCtxPop(); compactNow(); });
   if (els.sendBtn) els.sendBtn.addEventListener("click", () => onSend());
   if (els.thinkChip) els.thinkChip.addEventListener("click", (e) => { e.stopPropagation(); toggleThinkPop(); });
-  if (els.privBadge) els.privBadge.addEventListener("click", () => browser.runtime.openOptionsPage());
+  if (els.privBadge) els.privBadge.addEventListener("click", () => onPrivBadge());
   document.addEventListener("mousedown", (e) => {
     if (els.thinkPop && !els.thinkPop.classList.contains("hidden") && !els.thinkPop.contains(e.target) && !els.thinkChip.contains(e.target)) closeThinkPop();
+    if (els.plusMenu && !els.plusMenu.classList.contains("hidden") && !els.plusMenu.contains(e.target) && !els.attachBtn.contains(e.target)) closePlusMenu();
+    if (els.ctxPop && !els.ctxPop.classList.contains("hidden") && !els.ctxPop.contains(e.target) && !els.ctxGauge.contains(e.target)) closeCtxPop();
   });
   // + New: on the Web tab it resets the embedded site (fresh session, like the provider's own
   // "new chat"); otherwise it starts a new Hivey conversation.
@@ -5383,7 +5415,7 @@ function themeNativeSelect(sel) {
   const labelEl = btn.querySelector(".sa-label");
   const syncLabel = () => {
     const opt = Array.from(sel.options).find((o) => o.value === sel.value) || sel.options[sel.selectedIndex];
-    labelEl.textContent = opt ? opt.textContent : "";
+    labelEl.textContent = opt ? (sel._labelFor ? sel._labelFor(opt) : opt.textContent) : "";
   };
   let menuEl = null;
   const closeMenu = () => { if (menuEl) menuEl.classList.add("hidden"); };
@@ -5405,7 +5437,8 @@ function themeNativeSelect(sel) {
       menuEl.appendChild(item);
     }
     const r = btn.getBoundingClientRect();
-    menuEl.style.left = r.left + "px"; menuEl.style.width = Math.max(Math.round(r.width), 170) + "px";
+    const w = Math.min(window.innerWidth - 16, Math.max(Math.round(r.width), sel._menuWidth || 170));
+    menuEl.style.left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8)) + "px"; menuEl.style.width = w + "px";
     menuEl.classList.remove("hidden");
     const mh = menuEl.offsetHeight, above = r.top - 6 - mh;
     menuEl.style.top = (above > 8 ? above : Math.min(r.bottom + 6, window.innerHeight - mh - 8)) + "px";
@@ -5464,9 +5497,23 @@ async function renderWbScope() {
 function wbScopeIds() { const v = els.wbScope ? els.wbScope.value : ""; return v ? [v] : null; } // null = all
 
 // Entering the Wisebase tab: refresh the scope; open the manager automatically if it's empty.
+// Entering the tab never covers it with the management panel: with no collection yet, the empty
+// state offers to create the first one.
 async function onEnterWisebase() {
   await renderWbScope();
-  try { if (!(await (await wbLib()).listCollections()).length) openWbPanel(); } catch (_) {}
+  await refreshWbEmptyCta();
+}
+let wbEmptyCta = null;
+async function refreshWbEmptyCta() {
+  let none = false;
+  try { none = !(await (await wbLib()).listCollections()).length; } catch (_) { none = false; }
+  if (none && !wbEmptyCta && els.emptyFeatures) {
+    wbEmptyCta = wbEl("button", "btn-grad wb-empty-cta", t("wb.firstCollection"));
+    wbEmptyCta.type = "button";
+    wbEmptyCta.addEventListener("click", () => openWbPanel());
+    els.emptyFeatures.after(wbEmptyCta);
+  }
+  if (wbEmptyCta) wbEmptyCta.hidden = !none;
 }
 
 // ---- Management panel -------------------------------------------------------
@@ -5475,12 +5522,13 @@ function openWbPanel(collectionId) {
   if (!wbPanelEl) {
     wbPanelEl = wbEl("div", "wb-overlay");
     wbPanelEl.addEventListener("click", (e) => { if (e.target === wbPanelEl) closeWbPanel(); });
-    document.body.appendChild(wbPanelEl);
+    // Over the conversation only — the tab rail and the top bar stay usable.
+    (document.getElementById("workArea") || document.body).appendChild(wbPanelEl);
   }
   wbPanelEl.classList.remove("hidden");
   renderWbPanel();
 }
-function closeWbPanel() { if (wbPanelEl) wbPanelEl.classList.add("hidden"); renderWbScope(); }
+function closeWbPanel() { if (wbPanelEl) wbPanelEl.classList.add("hidden"); renderWbScope(); refreshWbEmptyCta(); }
 
 async function renderWbPanel() {
   if (!wbPanelEl || wbPanelEl.classList.contains("hidden")) return;
@@ -6592,11 +6640,26 @@ function updatePrivBadge() {
   const sel = currentSelection();
   if (!sel || !sel.providerId) { b.classList.add("hidden"); return; }
   const cls = privacyClass(sel.providerId, settings);
-  const anon = cls === "cloud" && redactsFor(sel.providerId, settings);
+  const anon = cls === "cloud" && (settings.privacyLevel || "balanced") !== "off";
   b.classList.remove("hidden");
   b.dataset.kind = cls;
-  b.textContent = t("priv.badge." + cls) + (anon ? " · " + t("priv.badge.anon") : "");
-  b.title = t("priv.badgeTitle." + cls);
+  b.classList.toggle("anon-off", cls === "cloud" && !anon);
+  if (cls !== "cloud") { b.textContent = t("priv.badge." + cls); b.title = t("priv.badgeTitle." + cls); return; }
+  b.textContent = t("priv.badge.cloud") + " · " + t(anon ? "priv.badge.anon" : "priv.badge.anonOff");
+  b.title = t(anon ? "priv.badgeTitle.cloudOn" : "priv.badgeTitle.cloudOff");
+}
+// On a cloud model the badge switches anonymisation off and on (the level chosen in the settings
+// comes back; credentials stay masked either way). Local and gateway: the settings.
+async function onPrivBadge() {
+  const sel = currentSelection();
+  if (!sel || !sel.providerId || privacyClass(sel.providerId, settings) !== "cloud") return browser.runtime.openOptionsPage();
+  const level = settings.privacyLevel || "balanced";
+  const patch = level === "off"
+    ? { privacyLevel: settings.privacyLevelOn && settings.privacyLevelOn !== "off" ? settings.privacyLevelOn : "balanced" }
+    : { privacyLevel: "off", privacyLevelOn: level };
+  Object.assign(settings, patch);
+  await setSettings(patch);
+  updatePrivBadge();
 }
 function positionThinkPop() {
   const r = els.thinkChip.getBoundingClientRect();
@@ -6614,6 +6677,31 @@ function toggleThinkPop() {
   els.thinkChip.setAttribute("aria-expanded", "true");
   positionThinkPop();
 }
+// On the PDF tab the file is a PDF for the workspace (summarize / page images / extract text).
+function openFilePicker() {
+  if (mode === "pdf") els.pdfFile.click();
+  else els.attachInput.click();
+}
+function plusMenuHasPageTools() {
+  return [els.captureRegion, els.pickEl, els.tabsBtn, els.watchBtn, els.secHeadersBtn].some((b) => b && !b.classList.contains("hidden"));
+}
+function togglePlusMenu() {
+  const p = els.plusMenu;
+  if (!p.classList.contains("hidden")) return closePlusMenu();
+  closeThinkPop();
+  els.attachFileLabel.textContent = t(mode === "pdf" ? "plus.pdf" : "plus.file");
+  refreshWatchBtn();
+  p.classList.remove("hidden");
+  els.attachBtn.setAttribute("aria-expanded", "true");
+  const r = els.attachBtn.getBoundingClientRect();
+  p.style.left = Math.max(8, Math.min(r.left, window.innerWidth - p.offsetWidth - 8)) + "px";
+  p.style.top = Math.max(8, r.top - p.offsetHeight - 6) + "px";
+}
+function closePlusMenu() {
+  if (!els.plusMenu) return;
+  els.plusMenu.classList.add("hidden");
+  els.attachBtn.setAttribute("aria-expanded", "false");
+}
 function closeThinkPop() {
   if (!els.thinkPop) return;
   els.thinkPop.classList.add("hidden");
@@ -6626,10 +6714,12 @@ function showSuggestion(text) {
     if (CHAT_MODES.includes(mode)) getSession(mode).suggestion = null;
     els.input.placeholder = placeholderFor(mode);
     els.input.classList.remove("has-suggestion");
+    els.input.removeAttribute("title");
     return;
   }
-  els.input.placeholder = `${text}   ⇥ ${t("suggest.tab")}`;
+  els.input.placeholder = text;
   els.input.classList.add("has-suggestion");
+  els.input.title = t("suggest.title");
 }
 /**
  * Ask for the next request once a turn is over — a side task: thinking off, the same model (or the
@@ -6701,6 +6791,57 @@ async function updateCtxGauge() {
   const spent = conversationCost(sess);
   g.querySelector(".cg-cost").textContent = spent.any ? formatUsd(spent.usd, { exact: spent.exact, lang }) : "";
   g.title = t("ctx.gauge", { pct, used: used.toLocaleString(), budget: budget.toLocaleString(), model: (sel && sel.modelId) || "?" }) + (win ? "" : " " + t("ctx.gaugeUnknown"));
+}
+// ----- The context popover: how full, the size the model works with, summarize now -----------
+const CTX_SIZES = [8000, 16000, 32000, 64000, 128000, 256000, 512000];
+function closeCtxPop() { if (els.ctxPop) els.ctxPop.classList.add("hidden"); }
+async function toggleCtxPop() {
+  const p = els.ctxPop;
+  if (!p) return;
+  if (!p.classList.contains("hidden")) return closeCtxPop();
+  closeThinkPop(); closePlusMenu();
+  await renderCtxPop();
+  p.classList.remove("hidden");
+  const r = els.ctxGauge.getBoundingClientRect();
+  p.style.left = Math.max(8, Math.min(r.right - p.offsetWidth, window.innerWidth - p.offsetWidth - 8)) + "px";
+  p.style.top = Math.max(8, r.top - p.offsetHeight - 6) + "px";
+}
+async function renderCtxPop() {
+  const sess = getSession(mode);
+  const sel = currentSelection();
+  const lang = getLang();
+  // A Hivey preset picks its model per request: the size is the model's, not the preset's.
+  const sizable = !!(sel && sel.providerId && !isHivey(sel.modelId));
+  let native = 0, win = 0;
+  if (sizable) {
+    try { native = await modelContextWindow(settings, sel.providerId, sel.modelId); } catch (_) { native = 0; }
+    try { win = await contextWindowFor(settings, sel.providerId, sel.modelId); } catch (_) { win = native; }
+  }
+  const used = estimateTokens((sess && sess.history) || []);
+  const budget = contextBudget(win);
+  els.ctxPopUsed.textContent = t("ctx.popUsed", { used: formatTokens(used, lang), budget: formatTokens(budget, lang), pct: Math.min(100, Math.round((used / budget) * 100)) });
+  els.ctxPopSizesWrap.hidden = !sizable;
+  els.ctxPopCompact.disabled = !(sess && sess.history && sess.history.length);
+  if (!sizable) return;
+  const key = ctxSizeKey(sel.providerId, sel.modelId);
+  const chosen = Number((settings.ctxSizes || {})[key]) || 0;
+  const options = [{ value: 0, label: native ? t("ctx.sizeAuto", { n: formatTokens(native, lang) }) : t("ctx.sizeAutoUnknown") }];
+  for (const n of CTX_SIZES) if (!native || n < native) options.push({ value: n, label: formatTokens(n, lang) });
+  els.ctxPopSizes.replaceChildren(...options.map((o) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "ts-btn" + (o.value === chosen || (!o.value && !options.some((x) => x.value && x.value === chosen)) ? " on" : "");
+    b.textContent = o.label;
+    b.addEventListener("click", async () => {
+      const sizes = { ...(settings.ctxSizes || {}) };
+      if (o.value) sizes[key] = o.value; else delete sizes[key];
+      settings.ctxSizes = sizes;
+      await setSettings({ ctxSizes: sizes });
+      await renderCtxPop();
+      updateCtxGauge();
+    });
+    return b;
+  }));
+  els.ctxPopHint.textContent = t(chosen ? "ctx.sizeHint" : "ctx.autoHint");
 }
 async function compactNow() {
   if (busy) return;

@@ -2376,3 +2376,92 @@ button.ctx-tag:hover { color: var(--text); text-decoration: underline; }
 .composer textarea.has-suggestion::placeholder { color: color-mix(in srgb, var(--accent) 45%, var(--muted)); font-style: italic; }
 /* The model list sits above the composer now. */
 .model-filter-holder { display: none; }
+
+/* ── Composer, round 3 ─────────────────────────────────────────────────────────────────────────
+   Every icon of the row is the same size and wears the theme's accent: +, mic, the maker's mark,
+   thinking, options. Send keeps the gradient. */
+.composer-tools { --ic: 18px; }
+.composer-tools .attach-btn svg, .composer-tools .mic-btn svg, .composer-tools .ctool:not(.send-btn) svg,
+.composer-tools .mc-icon svg, .composer-tools .tc-icon svg { width: var(--ic); height: var(--ic); }
+.composer-tools .attach-btn, .composer-tools .mic-btn, .composer-tools .ctool:not(.send-btn),
+.composer-tools .model-chip .mc-icon, .composer-tools .cchip .tc-icon { color: var(--accent); }
+.composer-tools .attach-btn:hover, .composer-tools .mic-btn:hover, .composer-tools .ctool:not(.send-btn):hover { color: var(--accent); }
+.composer-tools .tools-left .attach-btn, .composer-tools .tools-left .mic-btn, .composer-tools .ctool { width: 30px; height: 30px; }
+.composer-tools .model-chip .mc-icon { font-size: 15px; line-height: 1; }
+.composer-tools .cchip .tc-icon { display: inline-flex; }
+.composer-tools .model-chip .combo-caret, .composer-tools .cchip .tc-caret { color: var(--accent); opacity: .8; }
+.composer-tools .ctool.send-btn svg { width: 17px; height: 17px; }
+
+/* The "+" menu: attach a file, or bring the page in. */
+.plus-menu { min-width: 220px; padding: 6px; }
+.plus-menu .pm-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 0; border-radius: 8px;
+  background: transparent; color: var(--text); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
+.plus-menu .pm-item svg { flex: 0 0 auto; color: var(--accent); }
+.plus-menu .pm-item:hover { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.plus-menu .pm-item.hidden, .plus-menu .pm-sep.hidden { display: none; }
+.plus-menu .pm-item.watch-btn.on .pm-label { color: var(--accent); }
+.plus-menu .pm-sep { height: 1px; margin: 4px 6px; background: var(--border); }
+/* What is left of the page bar: "N tabs in context", only when there are some. */
+.pagebar:not(.has-tabsel) { display: none; }
+
+/* Cloud badge: anonymisation off reads as a warning. */
+.cf-priv.anon-off { color: #e0a100; }
+
+/* The context popover. */
+.ctx-pop { width: 240px; }
+.ctx-pop .cp-used { font-size: 12.5px; color: var(--text); padding: 0 6px 8px; }
+.ctx-pop .cp-sub { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); padding: 6px 6px 4px; border-top: 1px solid var(--border); }
+.ctx-pop .cp-hint { margin: 6px 6px 4px; font-size: 11.5px; color: var(--muted); line-height: 1.35; }
+.ctx-pop .cp-sizes[hidden] { display: none; }
+.ctx-pop .cp-compact { width: 100%; margin-top: 6px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px;
+  background: transparent; color: var(--accent); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.ctx-pop .cp-compact:hover:not(:disabled) { border-color: var(--accent); }
+.ctx-pop .cp-compact:disabled { opacity: .5; cursor: default; }
+
+/* The suggested next request: a faint italic hint, plainly not typed text. */
+.composer textarea.has-suggestion::placeholder { color: color-mix(in srgb, var(--muted) 55%, transparent); font-style: italic; }
+
+/* The frame's animation: a bright arc that stands out from the accent border in every theme. */
+:root { --hv-arc: color-mix(in srgb, var(--accent) 18%, #fff); --hv-arc-soft: color-mix(in srgb, var(--accent) 60%, #fff); }
+body.theme-light { --hv-arc: color-mix(in srgb, var(--accent) 70%, #000); --hv-arc-soft: var(--accent); }
+.composer-box::before {
+  inset: -2.5px; border-radius: 20.5px; padding: 2.5px;
+  background: conic-gradient(from var(--hvAngle),
+      transparent 0deg,
+      color-mix(in srgb, var(--hv-arc-soft) 55%, transparent) 30deg,
+      var(--hv-arc) 60deg,
+      color-mix(in srgb, var(--hv-arc-soft) 55%, transparent) 90deg,
+      transparent 125deg, transparent 360deg);
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--hv-arc) 80%, transparent));
+}
+.composer-box:focus-within, .composer-box.is-busy { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
+
+/* The tab's own settings sit above the frame, like the Security tab's analyses. */
+.controls.tab-options { padding: 2px 10px 8px; gap: 8px; flex-wrap: wrap; border: 0; background: transparent !important; }
+.controls.tab-options .ctl-group { flex: 1 1 auto; gap: 8px; flex-wrap: nowrap; min-width: 0; }
+.controls.tab-options .themed-sel-btn, .controls.tab-options .improve-seg { flex: 1 1 0; min-width: 0; width: 100%; max-width: none; height: 36px; }
+.controls.tab-options .themed-sel-btn .sa-label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.controls.tab-options .improve-seg > * { flex: 1 1 0; min-width: 0; max-width: none; height: 36px; }
+.controls.tab-options #wbScope + .themed-sel-btn { flex: 1 1 auto; }
+
+/* Image: the size is a short chip beside Send. */
+.img-size { display: inline-flex; align-items: center; }
+.img-size.hidden { display: none; }
+.img-size .themed-sel-btn { width: auto; min-width: 0; height: 30px; padding: 0 8px; gap: 4px; border: 0 !important; border-radius: 8px;
+  background: transparent !important; box-shadow: none !important; color: var(--muted); font-size: 12.5px; font-weight: 600; }
+.img-size .themed-sel-btn:hover { background: color-mix(in srgb, var(--text) 8%, transparent) !important; color: var(--text); }
+.img-size .themed-sel-btn .sa-caret { color: var(--accent); }
+
+/* Wisebase: the management panel covers the conversation only; the tab rail stays usable. */
+#workArea > .wb-overlay { position: absolute; inset: 0; z-index: 60; }
+.wb-empty-cta { margin: 14px auto 0; display: block; }
+.wb-empty-cta[hidden], body:not(.mode-wisebase) .wb-empty-cta { display: none; }
+.ctx-pop { width: 264px; }
+.ctx-pop .think-seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.ctx-pop .think-seg .ts-btn { text-align: center; padding: 6px 4px; font-size: 12px; white-space: nowrap; }
+.ctx-pop .think-seg .ts-btn:first-child { grid-column: 1 / -1; text-align: left; padding: 7px 10px; }
+/* Send wears the brand gradient (the transparent toolbar rule had left a white arrow on nothing,
+   invisible on a light theme). */
+.composer-tools .ctool.send-btn { background: var(--grad) !important; color: var(--on-accent) !important; border-radius: 50%; }
+.composer-tools .ctool.send-btn:hover { filter: brightness(1.1); }
+body.theme-light .model-chip .combo-input { border: 0 !important; background: transparent !important; box-shadow: none !important; }
