@@ -158,11 +158,11 @@ ou un long journal déjà analysé « tirent » les réponses suivantes. Sous ch
 
 | Bouton | Effet |
 |---|---|
-| ⏸ **Veille** (icône, décrite au survol) | l'échange (votre question + la réponse) reste affiché, grisé, marqué « Hors contexte », mais **n'est plus envoyé**. Un nouveau clic le remet. |
+| ⏸ **Veille** (icône, décrite au survol) | l'échange (votre question + la réponse) reste affiché mais **passe en gris** (question en pointillés), marqué « ⏸ En veille — n'est plus envoyé au modèle », et **n'est plus envoyé**. Un nouveau clic le remet. |
 | 📌 **Épingler** (icône) | l'échange est gardé **mot pour mot** quand la conversation est résumée |
 | 🗑 **Supprimer** | l'échange disparaît de l'écran et du contexte |
 
-Un clic sur l'étiquette « Hors contexte » remet aussi l'échange dans le contexte.
+Un clic sur l'étiquette « En veille » remet aussi l'échange dans le contexte.
 
 La **jauge de contexte** (l'anneau sous la zone de saisie, avec le pourcentage) montre la part de la fenêtre du
 modèle qu'occupe ce qui est réellement envoyé. Elle devient orange puis rouge. **Un clic** ouvre :

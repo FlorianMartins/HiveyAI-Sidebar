@@ -6700,9 +6700,14 @@ function applyTurnMarks(id) {
   const e = turnEntry(id) || {};
   for (const b of bubblesOfTurn(id)) {
     b.classList.toggle("ctx-muted", !!e.muted);
+    // The answer's reasoning block, just above it, goes grey with it.
+    const prev = b.classList.contains("assistant") ? b.previousElementSibling : null;
+    if (prev && prev.classList.contains("think")) prev.classList.toggle("ctx-muted", !!e.muted);
     b.classList.toggle("ctx-pinned", !!e.pinned);
     let tag = b.querySelector(":scope > .ctx-tag");
-    const label = e.muted ? "⏸ " + t("ctx.tag.muted") : e.pinned ? "📌 " + t("ctx.tag.pinned") : "";
+    // One tag per exchange, on the question: the greyed bubbles below it say the rest.
+    const onQuestion = b.classList.contains("user");
+    const label = !onQuestion ? "" : e.muted ? "⏸ " + t("ctx.tag.muted") : e.pinned ? "📌 " + t("ctx.tag.pinned") : "";
     if (!label) { if (tag) tag.remove(); continue; }
     if (!tag) {
       tag = document.createElement("button");

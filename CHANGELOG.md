@@ -10,6 +10,12 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+### Un échange en veille, ça se voit
+
+- La question perd sa couleur (gris, contour en pointillés), la réponse et sa réflexion passent en
+  gris pâle, et une seule étiquette au-dessus de la question dit **« ⏸ En veille — n'est plus envoyé
+  au modèle »** ; un clic dessus remet l'échange dans le contexte.
+
 ### Finitions : une vraie lueur, le bon niveau de réflexion, des listes qu'on parcourt au clavier
 
 - **La lueur du cadre** a l'épaisseur de la bordure et s'estompe des deux côtés — plus de « serpent »
