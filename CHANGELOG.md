@@ -10,6 +10,23 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+### Finitions : une vraie lueur, le bon niveau de réflexion, des listes qu'on parcourt au clavier
+
+- **La lueur du cadre** a l'épaisseur de la bordure et s'estompe des deux côtés — plus de « serpent »
+  qui fait le tour, et aucun flou hors du cadre.
+- **Le niveau de réflexion se retient par modèle** : chaque modèle démarre sur **son niveau
+  recommandé** (au lieu de « Direct » partout — un choix fait une fois s'appliquait à tous les
+  modèles), et garde ensuite celui que vous choisissez pour lui.
+- **La puce du modèle** a la largeur de son nom : plus d'espace vide avant la réflexion.
+- **Traduire** : « Choisissez la langue de traduction… » tant qu'aucune n'est choisie, puis la
+  dernière langue utilisée ; liste **alphabétique**, et **taper au clavier** y saute (« fr » →
+  Français ; flèches, Entrée, Échap). Vaut pour toutes les listes de ce type.
+- **Améliorer** : « Choisissez un style… », les derniers style et ton retenus, deux colonnes
+  **alphabétiques** ; l'entrée « Ton » inutile disparaît (recliquer sur le ton choisi le retire).
+- **Image** : les tailles s'affichent en entier dans leur menu.
+- **Agent** : plus de bloc « Réflexion » dans ses réponses — ses actions disent déjà ce qu'il fait
+  et décide.
+
 ### Espagnol, allemand, italien, portugais : l'interface les affiche vraiment
 
 - Ces quatre langues étaient proposées dans les réglages, mais l'interface restait en anglais (seul

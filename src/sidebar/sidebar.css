@@ -2407,7 +2407,7 @@ details.think.live > summary::after { content: "…"; animation: thinkPulse 1.2s
 .combo.model-chip:hover { background: color-mix(in srgb, var(--text) 8%, transparent); }
 .combo.model-chip.hidden { display: none; }
 .model-chip .mc-icon { display: inline-flex; flex: 0 0 auto; color: var(--text); font-size: 12px; }
-.model-chip .combo-input { flex: 0 1 auto; min-width: 0; height: auto; padding: 0; border: 0 !important;
+.model-chip .combo-input { flex: 0 1 auto; min-width: 0; height: auto; padding: 0; border: 0 !important; text-overflow: ellipsis;
   background: transparent !important; box-shadow: none !important; animation: none !important;
   font-size: 12.5px; font-weight: 600; color: var(--text); }
 .model-chip .combo-caret { position: static; transform: none; font-size: 10px; }
@@ -2556,15 +2556,20 @@ body.theme-light .model-chip .combo-input { border: 0 !important; background: tr
 }
 .cb-ring { position: absolute; inset: -1px; width: calc(100% + 2px); height: calc(100% + 2px); overflow: visible;
   pointer-events: none; z-index: 1; opacity: 0; transition: opacity .35s ease; }
-.cb-ring rect { fill: none;
-  stroke-dasharray: 18 82; animation: cbRun 4.2s linear infinite paused; }
-.cb-ring .cb-arc { stroke: color-mix(in srgb, var(--accent) 45%, #fff); stroke-width: 2px; stroke-linecap: round; }
-.cb-ring .cb-glow { stroke: color-mix(in srgb, var(--accent) 60%, #fff); stroke-width: 6px; stroke-linecap: round; opacity: .28; }
-body.theme-light .cb-ring .cb-arc { stroke: var(--accent); }
-body.theme-light .cb-ring .cb-glow { stroke: var(--accent); opacity: .18; }
+/* The light: five dashes of the border's own width, centred on the same point, longer ones fainter —
+   it brightens towards its middle and fades out on both sides (no blur, no glow outside). Each dash
+   is centred on the others: it starts 15 − its half-length along the frame (a negative delay). */
+.cb-ring rect { fill: none; stroke: color-mix(in srgb, var(--accent) 35%, #fff); stroke-width: 1.5px; stroke-linecap: butt;
+  animation: cbRun var(--cb-dur, 4.2s) linear infinite paused; }
+.cb-ring .cb-l1 { stroke-dasharray: 4 96;  opacity: .9; animation-delay: calc(var(--cb-dur, 4.2s) * -0.13); }
+.cb-ring .cb-l2 { stroke-dasharray: 9 91;  opacity: .4; animation-delay: calc(var(--cb-dur, 4.2s) * -0.105); }
+.cb-ring .cb-l3 { stroke-dasharray: 15 85; opacity: .15; animation-delay: calc(var(--cb-dur, 4.2s) * -0.075); }
+.cb-ring .cb-l4 { stroke-dasharray: 22 78; opacity: .09; animation-delay: calc(var(--cb-dur, 4.2s) * -0.04); }
+.cb-ring .cb-l5 { stroke-dasharray: 30 70; opacity: .05; animation-delay: calc(var(--cb-dur, 4.2s) * 0); }
+body.theme-light .cb-ring rect { stroke: var(--accent); }
 .composer-box:focus-within .cb-ring, .composer-box.is-busy .cb-ring { opacity: 1; }
 .composer-box:focus-within .cb-ring rect, .composer-box.is-busy .cb-ring rect { animation-play-state: running; }
-.composer-box.is-busy .cb-ring rect { animation-duration: 2.8s; }
+.composer-box.is-busy .cb-ring { --cb-dur: 2.8s; }
 @keyframes cbRun { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -100; } }
 @media (prefers-reduced-motion: reduce) { .cb-ring rect { animation: none; } }
 
@@ -2589,3 +2594,6 @@ body.rail-right.rail-pinned .codeview, body.rail-right.rail-peek .codeview {
 }
 /* Standby and pin are icons like the rest of the row; on = accent. */
 .mact-bar .mact.mctxmute.on, .mact-bar .mact.mctxpin.on { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+
+/* The image sizes' menu shows each size in full (it was cut: « Fond d'écran / paysage 16:9 — 179… »). */
+.themed-sel-menu.img-size-menu .sa-item span { white-space: normal; overflow: visible; text-overflow: clip; }

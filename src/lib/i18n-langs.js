@@ -3,9 +3,9 @@
 // back to English. Placeholders {name}, HTML tags and emojis are kept verbatim.
 
 export const ES = {
+  "improve.pick": "Elige un estilo…",
   "ctx.sizeAutoLabel": "Auto",
   "ctx.sizeAutoTitle": "Auto — la mayor ventana del modelo elegido ({n})",
-  "translate.into": "Traducir al: {lang}",
   "translate.pick": "Elija el idioma de destino…",
   "plus.title": "Adjuntar un archivo o traer la página",
   "plus.file": "Adjuntar un archivo",
@@ -1123,9 +1123,9 @@ export const ES = {
 };
 
 export const DE = {
+  "improve.pick": "Stil wählen…",
   "ctx.sizeAutoLabel": "Auto",
   "ctx.sizeAutoTitle": "Auto — das größte Fenster des gewählten Modells ({n})",
-  "translate.into": "Übersetzen ins: {lang}",
   "translate.pick": "Zielsprache wählen…",
   "plus.title": "Datei anhängen oder die Seite einbeziehen",
   "plus.file": "Datei anhängen",
@@ -2243,9 +2243,9 @@ export const DE = {
 };
 
 export const IT = {
+  "improve.pick": "Scegli uno stile…",
   "ctx.sizeAutoLabel": "Auto",
   "ctx.sizeAutoTitle": "Auto — la finestra più grande del modello scelto ({n})",
-  "translate.into": "Traduci in: {lang}",
   "translate.pick": "Scegli la lingua di destinazione…",
   "plus.title": "Allega un file o aggiungi la pagina",
   "plus.file": "Allega un file",
@@ -3363,9 +3363,9 @@ export const IT = {
 };
 
 export const PT = {
+  "improve.pick": "Escolha um estilo…",
   "ctx.sizeAutoLabel": "Auto",
   "ctx.sizeAutoTitle": "Auto — a maior janela do modelo escolhido ({n})",
-  "translate.into": "Traduzir para: {lang}",
   "translate.pick": "Escolha o idioma de destino…",
   "plus.title": "Anexar um arquivo ou trazer a página",
   "plus.file": "Anexar um arquivo",

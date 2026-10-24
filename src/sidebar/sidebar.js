@@ -228,9 +228,9 @@ const els = {
     const w = ring.clientWidth, h = ring.clientHeight;
     if (!w || !h) return;
     for (const r of ring.querySelectorAll("rect")) {
-      r.setAttribute("x", "1"); r.setAttribute("y", "1");
-      r.setAttribute("width", String(w - 2)); r.setAttribute("height", String(h - 2));
-      r.setAttribute("rx", "18"); r.setAttribute("ry", "18");
+      r.setAttribute("x", "0.5"); r.setAttribute("y", "0.5");
+      r.setAttribute("width", String(w - 1)); r.setAttribute("height", String(h - 1));
+      r.setAttribute("rx", "17.5"); r.setAttribute("ry", "17.5");
     }
   };
   new ResizeObserver(fit).observe(ring);
@@ -329,20 +329,38 @@ function thinkMenu(sel) {
   return menu === undefined ? THINK_IDS.slice(0, 4).map((id) => ({ id, native: id })) : menu;
 }
 /**
- * The level a turn is sent with: the one picked, when this model has it; otherwise its own default
- * (a level picked on another model is not forced on one that lacks it); "" when nothing is picked.
+ * The level each model is at: the one the user picked FOR THAT MODEL (settings.thinkByModel), else
+ * its recommended level. A level used to be one global choice: a « Direct » picked once on one
+ * model was then sent to every model.
+ */
+const thinkKey = (sel) => (sel && sel.providerId ? `${sel.providerId}|${sel.modelId}` : "");
+function pickedThinkFor(sel) {
+  const k = thinkKey(sel || currentSelection());
+  return k ? thinkLevelNorm((settings.thinkByModel || {})[k] || "") : "";
+}
+/** The model's recommended level: its declared default, else Standard, else its middle level. */
+function recommendedThink(offered, sel) {
+  if (!offered.length) return "";
+  const def = offered.find((c) => c.isDefault);
+  if (def) return def.id;
+  if (offered.some((c) => c.id === "medium")) return "medium";
+  return offered[Math.floor((offered.length - 1) / 2)].id;
+}
+/**
+ * The level a turn is sent with: the one picked for this model, when it has it; otherwise its
+ * recommended level.
  */
 function effectiveThink(picked, sel) {
   const lvl = thinkLevelNorm(picked);
-  if (!lvl) return "";
   const offered = thinkMenu(sel);
   if (!offered.length) return "";
+  // A Hivey preset picks its level per tier (hiveyThink) when nothing is picked.
+  if (!lvl) return sel && isHivey(sel.modelId) ? "" : recommendedThink(offered, sel);
   if (offered.some((c) => c.id === lvl)) return lvl;
   if (lvl === "none") return offered[0].id; // Direct where thinking cannot be off: the least it does
-  const def = offered.find((c) => c.isDefault);
-  return def ? def.id : "";
+  return recommendedThink(offered, sel);
 }
-function getThink(el) { return effectiveThink(el && el.dataset ? el.dataset.level : "", currentSelection()); }
+function getThink() { const sel = currentSelection(); return effectiveThink(pickedThinkFor(sel), sel); }
 function setThink(el, lvl) {
   lvl = thinkLevelNorm(lvl);
   if (!el) return lvl;
@@ -359,13 +377,10 @@ function setThink(el, lvl) {
 function refreshThinkSegs() {
   const sel = currentSelection();
   const offered = thinkMenu(sel);
-  const picked = effectiveThink(els.thinking && els.thinking.dataset.level, sel);
-  const selfHosted = sel && isSelfHostedProvider(sel.providerId);
-  const lit = picked || (selfHosted && offered.some((c) => c.id === "medium") ? "medium" : (offered.find((c) => c.isDefault) || {}).id || "");
+  const lit = effectiveThink(pickedThinkFor(sel), sel);
   if (els.thinkChip) {
     els.thinkChip.classList.toggle("hidden", !offered.length);
-    const shown = lit || (offered[0] && offered[0].id) || "";
-    els.thinkChip.querySelector(".tc-label").textContent = shown ? t("think.lvl." + shown) : "";
+    els.thinkChip.querySelector(".tc-label").textContent = lit ? t("think.lvl." + lit) : t("ctx.sizeAutoLabel"); // Hivey: per tier
     els.thinkChip.title = t("chip.thinkingTitle") + (lit ? " — " + t("think.lvl." + lit) : "");
   }
   document.querySelectorAll(".think-seg").forEach((seg) => {
@@ -548,19 +563,20 @@ async function init() {
   // Lists AUTOMATICALLY remember the last choice (shown as the resting value). The placeholder
   // label ("Translate to" / "Writing style" / "Custom size") only shows until the user picks once.
   populateImageSizes();
-  if (settings.targetLang) els.translateLang.value = settings.targetLang;
+  els.translateLang.value = settings.targetLang || ""; // the last language used, else « Choose the language… »
   if (settings.improvePreset) els.improvePreset.value = settings.improvePreset;
   els.improveTone.value = settings.improveTone || "auto";
   els.imageSize.value = settings.imageSize || "";
   decorateLangOptions();               // "French — Français", "Hindi — हिन्दी"… (endonyms) before theming
   // Themed dropdowns (same look/behaviour as "Choose an analysis") over the native selects.
   // The language list says what it is: "Translate into: French", or asks for one.
-  els.translateLang._labelFor = (o) => (o.value ? t("translate.into", { lang: o.textContent.split(" — ")[0] }) : t("translate.pick"));
+  els.translateLang._labelFor = (o) => (o.value ? o.textContent.split(" — ")[0] : t("translate.pick"));
   themeNativeSelect(els.translateLang);
   setupImprovePicker();               // Improve = one button → a 2-list (Action | Tone) popup
   // Beside Send, the size is a short chip: "Size" until one is chosen, then its dimensions.
   els.imageSize._labelFor = (o) => (o.value ? o.value.replace("x", "×") : t("image.sizeBtn"));
-  els.imageSize._menuWidth = 280;
+  els.imageSize._menuWidth = 360;
+  els.imageSize._menuClass = "img-size-menu";
   themeNativeSelect(els.imageSize);
   themeNativeSelect(els.wbScope);
   syncToggleVisibility();
@@ -1331,8 +1347,10 @@ function setupImprovePicker() {
   btn.innerHTML = '<span class="sa-label"></span><span class="sa-caret" aria-hidden="true"><svg viewBox="0 0 10 10" width="10" height="10"><path d="M1 3l4 4 4-4" stroke="currentColor" fill="none" stroke-width="1.6"/></svg></span>';
   const label = btn.querySelector(".sa-label");
   const syncLabel = () => {
-    const a = t("preset." + (els.improvePreset.value || "improve"));
+    // « Choose a style… » until one is picked; then the last style and tone used, remembered.
     const tone = els.improveTone.value;
+    if (!els.improvePreset.value) { label.textContent = t("improve.pick") + (tone && tone !== "auto" ? ` · ${t("tone." + tone)}` : ""); return; }
+    const a = t("preset." + els.improvePreset.value);
     label.textContent = tone && tone !== "auto" ? `${a} · ${t("tone." + tone)}` : a;
   };
   let menu = null;
@@ -1355,8 +1373,12 @@ function setupImprovePicker() {
     if (!menu) return;
     menu.innerHTML = "";
     const cols = document.createElement("div"); cols.className = "imp-cols";
-    cols.appendChild(mkCol("improve.style", WRITING_PRESETS.map(([id]) => [id, t("preset." + id)]), els.improvePreset.value || "improve", (v) => setSel(els.improvePreset, v)));
-    cols.appendChild(mkCol("improve.tone", WRITING_TONES.map((id) => [id, t("tone." + id)]), els.improveTone.value || "auto", (v) => setSel(els.improveTone, v)));
+    // Both columns alphabetical. No « Tone » entry among the tones: clicking the chosen tone again
+    // clears it (no tone directive).
+    const abc = (list) => list.sort((x, y) => x[1].localeCompare(y[1], getLang(), { sensitivity: "base" }));
+    cols.appendChild(mkCol("improve.style", abc(WRITING_PRESETS.map(([id]) => [id, t("preset." + id)])), els.improvePreset.value, (v) => setSel(els.improvePreset, v)));
+    cols.appendChild(mkCol("improve.tone", abc(WRITING_TONES.filter((id) => id !== "auto").map((id) => [id, t("tone." + id)])), els.improveTone.value,
+      (v) => setSel(els.improveTone, v === els.improveTone.value ? "auto" : v)));
     menu.appendChild(cols);
   }
   const openMenu = () => {
@@ -1439,6 +1461,13 @@ function decorateLangOptions() {
     const nat = LANG_NATIVE[o.value] || "";
     o.textContent = nat && nat.toLowerCase() !== base.toLowerCase() ? `${base} — ${nat}` : base;
   }
+  // Alphabetical in the interface language (the placeholder stays first).
+  const value = sel.value;
+  const opts = [...sel.options].filter((o) => o.value).sort((a, b) => a.textContent.localeCompare(b.textContent, getLang(), { sensitivity: "base" }));
+  for (const o of opts) sel.appendChild(o);
+  sel.value = value;
+  const ph = [...sel.options].find((o) => !o.value);
+  if (ph) ph.textContent = t("translate.pick");
 }
 
 // Apply a "providerId|modelId" choice from a picker. Provider + model are written
@@ -3964,7 +3993,7 @@ async function runOnPageBubble(action, providedText) {
   const tab = await getActiveTab();
   if (!tab || isRestrictedUrl(tab.url)) { openActionBubble(action, providedText); return; }
   bubbleCtx = { tabId: tab.id, action, text };
-  const reqInit = actionRequest(action, text, settings.targetLang || "French", settings.improvePreset);
+  const reqInit = actionRequest(action, text, settings.targetLang || uiLanguageName(), settings.improvePreset);
   const langs = reqInit && reqInit.translate
     ? Array.from(els.translateLang.options).map((o) => ({ value: o.value, label: o.textContent }))
     : null;
@@ -3975,7 +4004,7 @@ async function runOnPageBubble(action, providedText) {
     await sendToTab(tab.id, {
       type: "bubble_open", title: reqInit ? reqInit.label : "", source: text, note: t("bubble.note"),
       copyLabel: t("bubble.copy"), closeLabel: t("close.title"),
-      langs, presets, currentLang: settings.targetLang || "French", currentPreset: settings.improvePreset || "improve",
+      langs, presets, currentLang: settings.targetLang || uiLanguageName(), currentPreset: settings.improvePreset || "improve",
       ...themeAccents(),
     });
   } catch (_) { openActionBubble(action, providedText); return; } // can't inject → in-sidebar fallback
@@ -3986,7 +4015,7 @@ async function runBubbleModel() {
   if (!bubbleCtx) return;
   const { tabId, action, text } = bubbleCtx;
   const send = (m) => { try { browser.tabs.sendMessage(tabId, m); } catch (_) {} };
-  const lang = settings.targetLang || "French";
+  const lang = settings.targetLang || uiLanguageName();
   const req = actionRequest(action, text, lang, settings.improvePreset);
   if (!req) return;
   // 🐝 Hivey: route the quick action by its kind (translate/improve = light; else by complexity).
@@ -4074,7 +4103,7 @@ async function openActionBubble(action, providedText) {
   head.className = "ab-head";
   const title = document.createElement("span");
   title.className = "ab-title";
-  const reqInit = actionRequest(action, text, settings.targetLang || "French");
+  const reqInit = actionRequest(action, text, settings.targetLang || uiLanguageName());
   title.textContent = reqInit ? reqInit.label : "";
   const headActions = document.createElement("div");
   headActions.className = "ab-actions";
@@ -4086,7 +4115,7 @@ async function openActionBubble(action, providedText) {
     langSel = document.createElement("select");
     langSel.className = "ab-lang";
     for (const o of els.translateLang.options) langSel.appendChild(o.cloneNode(true));
-    langSel.value = settings.targetLang || "French";
+    langSel.value = settings.targetLang || uiLanguageName();
     langSel.addEventListener("change", () => {
       settings.targetLang = langSel.value;          // remember the last chosen language
       setSettings({ targetLang: langSel.value });
@@ -4188,7 +4217,7 @@ async function openActionBubble(action, providedText) {
   });
 
   async function run() {
-    const lang = langSel ? langSel.value : settings.targetLang || "French";
+    const lang = langSel ? langSel.value : settings.targetLang || uiLanguageName();
     const req = actionRequest(action, text, lang, presetSel ? presetSel.value : settings.improvePreset, toneSel ? toneSel.value : undefined);
     if (!req) return;
     const bubbleMode = action === "translate" ? "translate" : action === "improve" ? "improve" : "chat";
@@ -4379,10 +4408,13 @@ function wire() {
     });
   // Thinking level: 3 SEGMENT buttons (off / on / max) in the options popup.
   async function setThinkLevel(next) {
+    // Remembered for THIS model only; another model keeps its own level (or its recommended one).
+    const key = thinkKey(currentSelection());
+    if (key) {
+      settings.thinkByModel = { ...(settings.thinkByModel || {}), [key]: next };
+      await setSettings({ thinkByModel: settings.thinkByModel });
+    }
     setThink(els.thinking, next); // also refreshes the segment highlight (via refreshThinkSegs)
-    settings.thinkLevel = next;
-    if (CHAT_MODES.includes(mode)) getSession(mode).toggles.thinking = next;
-    await setSettings({ thinkLevel: next });
   }
   // Delegated: the buttons are rebuilt for each model (see refreshThinkSegs).
   document.querySelectorAll(".think-seg").forEach((seg) => {
@@ -5482,6 +5514,10 @@ async function analyzePageHeaders() {
 // Overlay a THEMED dropdown (same look/behaviour as the "Choose an analysis" list) on a native
 // <select>. The native <select> is kept (hidden) so all existing logic — value, populate, cloning,
 // change handlers — keeps working; picking in the themed menu just sets the value + fires "change".
+/** No translation language chosen yet: the interface's own. */
+function uiLanguageName() { return { fr: "French", es: "Spanish", de: "German", it: "Italian", pt: "Portuguese" }[getLang()] || "English"; }
+/** Lower-case, accents off — « fr » finds « Français », « e » finds « Él… ». */
+const foldText = (s) => String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 function themeNativeSelect(sel) {
   if (!sel || sel._themed) return;
   sel._themed = true;
@@ -5498,19 +5534,20 @@ function themeNativeSelect(sel) {
   const closeMenu = () => { if (menuEl) menuEl.classList.add("hidden"); };
   const openMenu = () => {
     if (menuEl && !menuEl.classList.contains("hidden")) { closeMenu(); return; }
-    if (!menuEl) { menuEl = document.createElement("div"); menuEl.className = "sec-analysis-menu themed-sel-menu hidden"; document.body.appendChild(menuEl); }
+    if (!menuEl) { menuEl = document.createElement("div"); menuEl.className = "sec-analysis-menu themed-sel-menu hidden" + (sel._menuClass ? " " + sel._menuClass : ""); document.body.appendChild(menuEl); }
     menuEl.innerHTML = "";
     for (const o of sel.options) {
       if (o.disabled) continue; // skip the placeholder / label option
       const item = document.createElement("button");
       item.type = "button"; item.className = "sa-item" + (o.value === sel.value ? " sel" : "");
       const s = document.createElement("span"); s.textContent = o.textContent; item.appendChild(s);
-      item.addEventListener("mousedown", (e) => {
-        e.preventDefault();
+      const pick = () => {
         sel.value = o.value;
         sel.dispatchEvent(new Event("change", { bubbles: true }));
-        syncLabel(); closeMenu();
-      });
+        syncLabel(); closeMenu(); btn.focus();
+      };
+      item.addEventListener("mousedown", (e) => { e.preventDefault(); pick(); });
+      item.addEventListener("click", pick); // Enter / Space on the focused item
       menuEl.appendChild(item);
     }
     const r = btn.getBoundingClientRect();
@@ -5521,6 +5558,28 @@ function themeNativeSelect(sel) {
     menuEl.style.top = (above > 8 ? above : Math.min(r.bottom + 6, window.innerHeight - mh - 8)) + "px";
     const closer = (e) => { if (menuEl && !menuEl.contains(e.target) && !btn.contains(e.target)) { closeMenu(); document.removeEventListener("mousedown", closer); } };
     setTimeout(() => document.addEventListener("mousedown", closer), 0);
+    // The keyboard finds an item: typing « fr » lands on Français, arrows move, Escape closes.
+    const items = [...menuEl.querySelectorAll(".sa-item")];
+    const start = menuEl.querySelector(".sa-item.sel") || items[0];
+    if (start) { start.focus({ preventScroll: true }); start.scrollIntoView({ block: "nearest" }); }
+    let typed = "", typedAt = 0;
+    menuEl.onkeydown = (e) => {
+      const i = items.indexOf(document.activeElement);
+      if (e.key === "Escape") { e.preventDefault(); closeMenu(); btn.focus(); return; }
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); if (i >= 0) items[i].click(); return; }
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        const next = items[Math.max(0, Math.min(items.length - 1, i + (e.key === "ArrowDown" ? 1 : -1)))];
+        if (next) { next.focus({ preventScroll: true }); next.scrollIntoView({ block: "nearest" }); }
+        return;
+      }
+      if (e.key.length !== 1 || e.ctrlKey || e.metaKey || e.altKey) return;
+      e.preventDefault();
+      typed = (Date.now() - typedAt > 900 ? "" : typed) + foldText(e.key);
+      typedAt = Date.now();
+      const hit = items.find((it) => foldText(it.textContent).split(" — ").some((part) => part.startsWith(typed)));
+      if (hit) { hit.focus({ preventScroll: true }); hit.scrollIntoView({ block: "nearest" }); }
+    };
   };
   btn.addEventListener("click", (e) => { e.stopPropagation(); openMenu(); });
   sel.parentNode.insertBefore(btn, sel.nextSibling);
@@ -6700,8 +6759,19 @@ function updateModelChip() {
   els.modelWrap.title = t("model.chipTitle") + (els.modelInput && els.modelInput.value ? " — " + els.modelInput.value : "");
   // As wide as its name, no wider — then the row shrinks it if it must (an <input> has no
   // content-sized width of its own in every engine).
-  if (els.modelInput) els.modelInput.style.width = `${Math.min(28, Math.max(6, (els.modelInput.value || "").length + 1))}ch`;
+  if (els.modelInput) els.modelInput.style.width = textWidth(els.modelInput, els.modelInput.value || els.modelInput.placeholder || "") + "px";
   updatePrivBadge();
+}
+// The width of a text in an input's own font — "ch" units over-reserved, leaving a gap after the
+// model's name in the chip.
+let measureCtx = null;
+function textWidth(input, text) {
+  try {
+    measureCtx = measureCtx || document.createElement("canvas").getContext("2d");
+    const cs = getComputedStyle(input);
+    measureCtx.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    return Math.ceil(measureCtx.measureText(text).width) + 2;
+  } catch (_) { return Math.min(28, Math.max(6, text.length + 1)) * 8; }
 }
 // Where the selected model runs, said under the composer: 🏠 local, 🔒 your gateway, ☁️ cloud.
 function updatePrivBadge() {
@@ -8330,7 +8400,8 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   const tools = activeTools({ agentMode });
   if (hstep) hstep.set(t("step.generate"));
   const pending = addPendingIndicator(sessMode);
-  const sink = makeSink(badge, true, pending, sessMode);
+  // Agent: no reasoning block — its actions already say what it does and decides (user, 2026-10-24).
+  const sink = makeSink(badge, !agentMode, pending, sessMode);
   // Agent mode: collapse the agent's tool calls into ONE foldable "Actions" block for
   // a cleaner, more immersive run — the steps are hidden but consultable on click.
   const agentActs = agentMode ? makeAgentActions() : null;
@@ -8622,7 +8693,7 @@ async function onChatSend() {
   await sendToModel(text, body, { attImgs: imgs, attMeta: meta, untrusted, runMode: mode === "security" ? "security" : "chat" });
 }
 async function runTranslateFromInput() {
-  const lang = els.translateLang.value || settings.targetLang || "French";
+  const lang = els.translateLang.value || settings.targetLang || uiLanguageName();
   let txt = els.input.value.trim();
   const { imgs, textBlock, meta } = takeAttachments();
   // Priority (per request): if NOTHING is typed and there's NO attachment, translate the live
@@ -8755,7 +8826,7 @@ async function runImageFromInput() {
 // ----- Quick actions / context menus ----------------------------------------
 async function runQuickAction(action, providedText) {
   if (busy) return;
-  const lang = settings.targetLang || "French";
+  const lang = settings.targetLang || uiLanguageName();
   if (action === "image") {
     const prompt = providedText || els.input.value.trim();
     if (!prompt) { setMode("image"); els.input.focus(); return; }
