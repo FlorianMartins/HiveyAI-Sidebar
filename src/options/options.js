@@ -441,7 +441,8 @@ function buildCard(id) {
   const sec = el("section", "provider-card");
 
   const head = el("div", "provider-head");
-  head.appendChild(el("h3", null, meta.label + (meta.local ? t("opt.localSuffix") : "")));
+  // "Local (Ollama)" already says it: the suffix only for a local server whose name does not.
+  head.appendChild(el("h3", null, meta.label + (meta.local && !/^local\b/i.test(meta.label) ? t("opt.localSuffix") : "")));
   const badge = el("span", "badge");
   head.appendChild(badge);
   if (FREE_TIER.has(id)) head.appendChild(el("span", "badge free", t("opt.badge.free")));

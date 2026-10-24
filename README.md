@@ -156,15 +156,19 @@ VS Code / Slack — scale mieux qu'une rangée d'onglets) donne accès à :
   aucune télémétrie. Vos clés et données restent **locales** (`storage.local`),
   jamais synchronisées, envoyées uniquement à l'API que vous choisissez — anonymisées si c'est un cloud.
 
-## Capture
+## Captures
 
-![Sidebar](docs/screenshots/sidebar-v14.png)
+| Anonymisation avant le cloud | Contexte maîtrisé | Niveaux de réflexion du modèle |
+|---|---|---|
+| ![Une adresse e-mail anonymisée avant l'envoi, remise en clair dans la réponse](docs/screenshots/sidebar-privacy.png) | ![Un échange mis en veille : grisé, « Hors contexte »](docs/screenshots/sidebar-context.png) | ![Le menu de réflexion : Direct, Bref, Approfondi, Maximum pour DeepSeek V4.1 Flash](docs/screenshots/sidebar-thinking.png) |
 
-> ⚠️ **Capture datée (v1.4, juin 2026)** — elle montre l'ancienne barre d'activité à
-> 7 espaces. L'interface actuelle en compte **10** (ajout de Web chats, Sécurité et
-> Wisebase) et le sélecteur Hivey a remplacé la liste brute de modèles.
-> Capture générée via `demo/index.html`, rendue dans Firefox sous Xvfb.
-> *Contribution bienvenue : une capture à jour.*
+| Réglages de confidentialité | Fournisseurs : local d'abord |
+|---|---|
+| ![Niveau d'anonymisation, termes, confiance dans ses serveurs](docs/screenshots/settings-privacy.png) | ![Les fournisseurs rangés local, passerelle, cloud](docs/screenshots/settings-providers.png) |
+
+Captures faites le 24 octobre 2026 dans Chromium avec l'extension réelle et un vrai modèle cloud
+(DeepSeek V4.1 Flash via OpenRouter). Artifacts : [aperçu HTML](docs/screenshots/artifact-html-preview.png),
+[Markdown et Mermaid](docs/screenshots/sidebar-markdown-mermaid.png).
 
 ## Installation
 
