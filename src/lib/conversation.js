@@ -17,6 +17,7 @@
 import { runConversation, buildSystemPrompt, activeTools } from "./agent.js";
 import { buildTurn } from "./untrusted.js";
 import { CONTEXT_WINDOWS } from "./model-catalog.generated.js";
+import { catalogWindowId } from "./model-ids.js";
 import { baseUrlFor, keyFor } from "./models.js";
 import { isSelfHostedProvider } from "./reasoning.js";
 import { makeProvider } from "./providers.js";
@@ -38,12 +39,8 @@ const keyOf = (providerId, modelId, settings) => `${baseUrlFor(providerId, setti
 
 /** The catalogue's window for a model id, any spelling: `anthropic/claude-opus-4.5`, `claude-opus-4-5`, `gpt-5`. */
 export function catalogWindow(providerId, modelId) {
-  const id = String(modelId || "");
-  if (CONTEXT_WINDOWS[id]) return CONTEXT_WINDOWS[id];
-  const vendor = { anthropic: "anthropic", openai: "openai", google: "google", mistral: "mistralai", deepseek: "deepseek", xai: "x-ai", perplexity: "perplexity", cohere: "cohere" }[providerId];
-  const dotted = id.replace(/^models\//, "").replace(/-(\d+)-(\d+)(?=$|-)/, "-$1.$2").replace(/-\d{8}$/, "");
-  for (const c of vendor ? [`${vendor}/${id}`, `${vendor}/${dotted}`] : [dotted]) if (CONTEXT_WINDOWS[c]) return CONTEXT_WINDOWS[c];
-  return 0;
+  const id = catalogWindowId(providerId, modelId, CONTEXT_WINDOWS);
+  return id ? CONTEXT_WINDOWS[id] : 0;
 }
 
 /** The runtime window a /models entry reports (llama.cpp, llama-swap, LM Studio, vLLM), 0 when none. */

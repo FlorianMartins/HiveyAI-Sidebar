@@ -13,9 +13,14 @@ import { makeProvider, listModels, listOpenRouterRich, generateImage, transcribe
 import { buildSystemPrompt, activeTools, runConversation } from "../lib/agent.js";
 import { reasoningMenu, isSelfHostedProvider } from "../lib/reasoning.js";
 import { runChatTurn, replyLanguageOf } from "../lib/conversation.js";
-import { Vault } from "../lib/privacy.js";
+import { Vault, privacyClass } from "../lib/privacy.js";
 import { newTurnId, tagTurn, setTurnState, removeTurn } from "../lib/context-control.js";
 import { compactHistory, contextWindowFor, contextBudget, estimateTokens } from "../lib/conversation.js";
+import { costOf, formatUsd, formatTokens } from "../lib/cost.js";
+import { vendorSlug, vendorIcon } from "../lib/vendor-icon.js";
+import { redactsFor } from "../lib/privacy.js";
+import { nextStepMessages, parseNextStep } from "../lib/next-step.js";
+import { detectUserLanguage } from "../lib/user-language.js";
 import { SKILLS, GOAL_SYSTEM, ENHANCE_SYSTEM, skillById } from "../lib/skills.js";
 import { executeTool, setAgentTab, clearAgentTab, getAgentTab } from "../lib/tools.js";
 import { initBenchmarkView } from "../lib/benchmarkView.js";
@@ -76,6 +81,12 @@ const els = {
   filterClose: $("filterClose"),
   freeConnect: $("freeConnect"),
   emptyOptions: $("emptyOptions"),
+  onbLocal: $("onbLocal"),
+  onbGateway: $("onbGateway"),
+  onbGatewayForm: $("onbGatewayForm"),
+  onbGwUrl: $("onbGwUrl"),
+  onbGwKey: $("onbGwKey"),
+  onbStatus: $("onbStatus"),
   historyBtn: $("historyBtn"),
   newChat: $("newChat"),
   openOptions: $("openOptions"),
@@ -159,7 +170,6 @@ const els = {
   deepSearch: $("deepSearch"),
   deepSeg: $("deepSeg"),
   pageCtx: $("pageCtx"),
-  autoScroll: $("autoScroll"),
   verifyAnswers: $("verifyAnswers"),
   dictateBtn: $("dictateBtn"),
   translateLang: $("translateLang"),
@@ -173,6 +183,11 @@ const els = {
   confirmBar: $("confirmBar"),
   privacyBar: $("privacyBar"),
   ctxGauge: $("ctxGauge"),
+  privBadge: $("privBadge"),
+  thinkChip: $("thinkChip"),
+  thinkPop: $("thinkPop"),
+  sendBtn: $("sendBtn"),
+  modelIcon: $("modelIcon"),
   privacyText: $("privacyText"),
   privacyList: $("privacyList"),
   privacySend: $("privacySend"),
@@ -306,9 +321,12 @@ function refreshThinkSegs() {
   const picked = effectiveThink(els.thinking && els.thinking.dataset.level, sel);
   const selfHosted = sel && isSelfHostedProvider(sel.providerId);
   const lit = picked || (selfHosted && offered.some((c) => c.id === "medium") ? "medium" : (offered.find((c) => c.isDefault) || {}).id || "");
+  if (els.thinkChip) {
+    els.thinkChip.classList.toggle("hidden", !offered.length);
+    els.thinkChip.querySelector(".tc-label").textContent = lit ? t("think.lvl." + lit) : t("think.default");
+    els.thinkChip.title = t("chip.thinkingTitle") + (lit ? " — " + t("think.lvl." + lit) : "");
+  }
   document.querySelectorAll(".think-seg").forEach((seg) => {
-    const row = seg.closest(".think-row");
-    if (row) row.hidden = !offered.length;
     seg.replaceChildren(...offered.map((c) => {
       const b = document.createElement("button");
       b.type = "button";
@@ -1441,6 +1459,54 @@ async function doFreeConnect() {
   }
 }
 
+// First run, privacy first: a model on this machine, or the user's own server, in two clicks —
+// next to OpenRouter rather than behind "Other providers". Both are checked on the spot: the
+// server's own model list answers, and its first model is selected.
+function onbSay(text, bad) {
+  els.onbStatus.textContent = text;
+  els.onbStatus.classList.toggle("bad", !!bad);
+  els.onbStatus.classList.remove("hidden");
+}
+async function onbUse(providerId, patch, models) {
+  Object.assign(settings, patch);
+  settings.provider = providerId;
+  settings.models = { ...(settings.models || {}), [providerId]: models[0] };
+  await setSettings({ ...patch, provider: providerId, models: settings.models });
+  populateModelSelector();
+  autoListConnected();
+  refreshModelUI();
+  updateEmptyState();
+  flashTopBanner(t("onboard.connected", { model: models[0] }));
+}
+async function doLocalConnect() {
+  onbSay(t("onboard.localSearching"));
+  for (const id of ["ollama", "lmstudio"]) {
+    try {
+      const models = await listModels(id, { ...settings, localEnabled: { ...(settings.localEnabled || {}), [id]: true } });
+      if (models && models.length) {
+        return onbUse(id, { localEnabled: { ...(settings.localEnabled || {}), [id]: true } }, models);
+      }
+    } catch (_) { /* not running: try the next one */ }
+  }
+  onbSay(t("onboard.localNone"), true);
+}
+async function doGatewayConnect(e) {
+  e.preventDefault();
+  let url = els.onbGwUrl.value.trim().replace(/\/+$/, "");
+  if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+  if (!/\/v\d+$/.test(url)) url += "/v1";
+  const key = els.onbGwKey.value.trim();
+  onbSay(t("onboard.gwChecking"));
+  try {
+    const trial = { ...settings, baseUrls: { ...(settings.baseUrls || {}), custom: url }, keys: { ...(settings.keys || {}), custom: key } };
+    const models = await listModels("custom", trial);
+    if (!models || !models.length) throw new Error(t("onboard.gwNoModel"));
+    await onbUse("custom", { baseUrls: trial.baseUrls, keys: trial.keys }, models);
+  } catch (err) {
+    onbSay(t("onboard.gwFailed", { msg: err && err.message ? err.message : String(err) }), true);
+  }
+}
+
 // Choose the MOST POWERFUL free OpenRouter model that's actually available on the
 // account, ranked by a curated preference (DeepSeek R1 first, then V3, Llama 70B…).
 // Falls back to any free model, then any model.
@@ -1575,7 +1641,7 @@ function comboPasses(it, q) {
 // Reusable searchable combobox. `input` shows the selected label and is type-to-filter;
 // `menu` is a floating list. `items()` returns {value,label,provider,subprovider,tier,
 // color,group}; `getValue()`/`onPick(value)` read & set the selection.
-function makeCombo({ input, menu, items, getValue, onPick, header }) {
+function makeCombo({ input, menu, items, getValue, onPick, header, onSync }) {
   let openState = false;
   function curLabel() {
     const v = getValue();
@@ -1587,7 +1653,7 @@ function makeCombo({ input, menu, items, getValue, onPick, header }) {
     const id = v.includes("|") ? v.split("|")[1] : v;
     return (HIVEY_VARIANTS[id] && HIVEY_VARIANTS[id].label) || id;
   }
-  function syncLabel() { input.value = curLabel(); } // the trigger always shows the CURRENT model
+  function syncLabel() { input.value = curLabel(); if (onSync) onSync(); } // the trigger always shows the CURRENT model
   let searchEl = null, listEl = null;
   // Rebuild ONLY the rows (keeps the in-menu search input + its focus intact).
   function buildList() {
@@ -1649,7 +1715,9 @@ function makeCombo({ input, menu, items, getValue, onPick, header }) {
     menu.classList.remove("hidden");
     const wrap = (input.closest && input.closest(".combo")) || input;
     const r = wrap.getBoundingClientRect();
-    menu.style.minWidth = Math.max(Math.round(r.width), 300) + "px"; // as wide as the model picker
+    // A chip in the composer is narrow: the list takes the composer's width (and at least 300 px).
+    const box = (wrap.closest && wrap.closest(".composer-box")) || wrap;
+    menu.style.minWidth = Math.max(Math.round(box.getBoundingClientRect().width), 300) + "px";
     const mw = menu.offsetWidth, mh = menu.offsetHeight;
     const left = Math.max(8, Math.min(r.left, window.innerWidth - mw - 8));
     let top = r.bottom + 4;
@@ -2760,25 +2828,10 @@ function setMode(next) {
   const composeExtras = ["chat", "agent", "translate", "improve", "image", "security", "wisebase", "pdf"].includes(next);
   els.attachBtn.hidden = !composeExtras;
   if (!composeExtras && attachments.length) clearAttachments();
-  // On the Chat tab the "+" sits at the bottom-left (beside the toggles), with the 🎙 mic
-  // right after it; on every other tab the "+" sits next to the text in the first row and the
-  // mic stays at the end of that row.
-  // Stop button: stays in the bottom-right toggles row on Chat/Web/Code; on the other composer tabs
-  // (agent/translate/improve/image/pdf/security) it sits just LEFT of the mic on the input row.
-  const stopLeftOfMic = !["chat", "web", "code", "wisebase"].includes(next);
-  const toolsRight = document.querySelector(".tools-right");
-  if (["chat", "wisebase"].includes(next)) {
-    // Wisebase uses the EXACT Chat composer layout (attach + mic bottom-left, stop on the right).
-    els.toolsLeft.appendChild(els.attachBtn);
-    if (els.dictateBtn) els.toolsLeft.appendChild(els.dictateBtn); // mic to the right of "+"
-  } else {
-    els.composerMain.insertBefore(els.attachBtn, els.input);
-    if (stopLeftOfMic && els.stop) els.composerMain.appendChild(els.stop); // stop → left of the mic
-    if (els.dictateBtn) els.composerMain.appendChild(els.dictateBtn); // mic at the row's end
-  }
-  if (!stopLeftOfMic && els.stop && toolsRight && els.stop.parentElement !== toolsRight) {
-    toolsRight.appendChild(els.stop); // back to its home on Chat/Web/Code
-  }
+  // The composer is the same on every tab (attach, dictate, model, thinking — then options and
+  // send/stop); only the thinking chip depends on whether the tab talks to a chat model.
+  els.thinkChip.classList.toggle("tab-off", !["chat", "agent", "translate", "improve", "security", "wisebase", "pdf"].includes(next));
+  closeThinkPop();
   els.modelFilterPanel.classList.add("hidden");
   if (mainCombo) mainCombo.close();
   document.body.classList.toggle("mode-code", next === "code");
@@ -2797,6 +2850,7 @@ function setMode(next) {
   document.body.classList.toggle("mode-benchmark", next === "benchmark");
   if (next === "benchmark") benchmarkView().open();
   els.input.placeholder = placeholderFor(next);
+  showSuggestion(CHAT_MODES.includes(next) ? getSession(next).suggestion : null);
   applyModeModel(next); // each tab keeps its own model — restore it before the picker refreshes
   refreshModelUI(); // Image tab lists image models; others list chat models.
   if (CHAT_MODES.includes(next)) restoreMode(next); // re-attach this tab's own message nodes
@@ -3531,6 +3585,7 @@ function renderTranscriptItem(item) {
     el.appendChild(body);
     enhanceArtifacts(body);
     el._raw = item.text || "";
+    if (item.usage) answerMeta(el, item.usage, item.cost);
     if (item.turnId) el._ctxTurn = item.turnId;
     attachAssistantActions(el, () => el._raw);
     if (item.turnId) queueMicrotask(() => applyTurnMarks(item.turnId));
@@ -4081,6 +4136,7 @@ function wire() {
     items: () => (mode === "image" ? imageComboItems() : chatComboItems()),
     getValue: () => mainValue, onPick: onMainPick,
     header: buildMetricToggle,
+    onSync: updateModelChip,
   });
   // Close the combo menu when clicking outside it; also cancel element-pick mode when
   // the user clicks back in the sidebar (anywhere but the pick button).
@@ -4238,6 +4294,7 @@ function wire() {
       if (!b) return;
       e.preventDefault();
       setThinkLevel(b.dataset.lvl);
+      closeThinkPop();
     });
   });
   refreshThinkSegs();
@@ -4271,12 +4328,6 @@ function wire() {
   els.pageCtx.addEventListener("change", () => { if (els.pageCtx.checked) ensurePagePermission(); });
   // Auto-scroll is a GLOBAL preference (not per-tab): whether the view follows the AI's
   // answer as it streams. OFF = stay put so you can read/scroll freely while it types.
-  els.autoScroll.checked = settings.autoScroll !== false;
-  els.autoScroll.addEventListener("change", async () => {
-    settings.autoScroll = els.autoScroll.checked;
-    await setSettings({ autoScroll: settings.autoScroll });
-    if (els.autoScroll.checked) scrollMessages(true);
-  });
   // Verification is also a GLOBAL preference: when ON, Hivey double-checks & auto-fixes
   // each substantive answer (extra tokens); OFF = no check (cheaper/faster).
   els.verifyAnswers.checked = settings.verifyAnswers === true;
@@ -4508,8 +4559,18 @@ function wire() {
     else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); closePalette(); }
   }, true);
   els.input.addEventListener("keydown", (e) => {
+    // The suggested next request (greyed in the empty box): Tab or → makes it the message.
+    const sug = getSession(mode).suggestion;
+    if (sug && !els.input.value && (e.key === "Tab" || e.key === "ArrowRight") && !e.shiftKey) {
+      e.preventDefault();
+      els.input.value = sug;
+      els.input.setSelectionRange(sug.length, sug.length);
+      showSuggestion(null);
+      return;
+    }
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(); }
   });
+  els.input.addEventListener("input", () => { if (els.input.value) showSuggestion(null); });
   // Global Enter: send even when focus left the composer (e.g. after picking the
   // translation language or image size in a <select>) — no need to click back in.
   // Real text fields (search boxes, model filter) keep their own Enter behaviour.
@@ -4558,6 +4619,12 @@ function wire() {
   els.input.addEventListener("input", onComposerInput);
   els.stop.addEventListener("click", () => abortController && abortController.abort());
   if (els.ctxGauge) els.ctxGauge.addEventListener("click", () => compactNow());
+  if (els.sendBtn) els.sendBtn.addEventListener("click", () => onSend());
+  if (els.thinkChip) els.thinkChip.addEventListener("click", (e) => { e.stopPropagation(); toggleThinkPop(); });
+  if (els.privBadge) els.privBadge.addEventListener("click", () => browser.runtime.openOptionsPage());
+  document.addEventListener("mousedown", (e) => {
+    if (els.thinkPop && !els.thinkPop.classList.contains("hidden") && !els.thinkPop.contains(e.target) && !els.thinkChip.contains(e.target)) closeThinkPop();
+  });
   // + New: on the Web tab it resets the embedded site (fresh session, like the provider's own
   // "new chat"); otherwise it starts a new Hivey conversation.
   els.newChat.addEventListener("click", () => {
@@ -4586,6 +4653,9 @@ function wire() {
   });
   els.modelConnect.addEventListener("click", () => browser.runtime.openOptionsPage());
   if (els.emptyOptions) els.emptyOptions.addEventListener("click", () => browser.runtime.openOptionsPage());
+  if (els.onbLocal) els.onbLocal.addEventListener("click", () => doLocalConnect());
+  if (els.onbGateway) els.onbGateway.addEventListener("click", () => { els.onbGatewayForm.classList.toggle("hidden"); if (!els.onbGatewayForm.classList.contains("hidden")) els.onbGwUrl.focus(); });
+  if (els.onbGatewayForm) els.onbGatewayForm.addEventListener("submit", doGatewayConnect);
   if (els.freeConnect) els.freeConnect.addEventListener("click", doFreeConnect);
 
   // 🌐 Web chats — embed the provider web UIs (Gemini/Claude/ChatGPT/Copilot/Mistral) so you
@@ -5681,8 +5751,11 @@ async function onWisebaseSend() {
     }
     sink.finalize();
     const answer = (turn && turn.text) || sink.getRaw();
-    sess.transcript.push({ role: "assistant", text: answer, turnId });
+    const wbCost = costOf(sel.providerId, sel.modelId, turn && turn.usage, settings);
+    sess.transcript.push({ role: "assistant", text: answer, turnId, ...(turn && turn.usage ? { usage: turn.usage } : {}), ...(wbCost ? { cost: wbCost } : {}) });
     const aEl = sink.getEl();
+    if (aEl) answerMeta(aEl, turn && turn.usage, wbCost);
+    suggestNextAfter(q, answer, sess, "wisebase", sel);
     if (aEl) { aEl._raw = answer; aEl._ctxTurn = turnId; attachAssistantActions(aEl, () => answer); }
     try { await saveSession(sess, "wisebase", sel); } catch (_) {}
     if (mode === "wisebase") updateCtxGauge();
@@ -5907,150 +5980,11 @@ async function runDeepSearch(question) {
   }
 }
 
-// ----- 🧠 Mindmap / Flowchart (Mermaid) --------------------------------------
-// Turn any answer (or pasted text / hand-written Mermaid) into a diagram, rendered IN-PAGE via
-// mermaid.render (not a sandboxed iframe) so we can export it as SVG or PNG. The mermaid lib is
-// already vendored; we load it into the page lazily on first use.
-let mermaidPagePromise = null;
-let mmOverlayEl = null;
-function mermaidThemeForCurrent() { return document.body.classList.contains("theme-light") ? "default" : "dark"; }
-function loadMermaidInPage() {
-  if (mermaidPagePromise) return mermaidPagePromise;
-  mermaidPagePromise = new Promise((resolve, reject) => {
-    if (window.mermaid) return resolve(window.mermaid);
-    const s = document.createElement("script");
-    s.src = browser.runtime.getURL("vendor/mermaid.min.js");
-    s.onload = () => {
-      try { window.mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: mermaidThemeForCurrent(), htmlLabels: false, flowchart: { htmlLabels: false } }); resolve(window.mermaid); }
-      catch (e) { reject(e); }
-    };
-    s.onerror = () => reject(new Error("mermaid load failed"));
-    document.head.appendChild(s);
-  });
-  return mermaidPagePromise;
-}
-function stripFences(code) {
-  let c = (code || "").trim();
-  const m = c.match(/```(?:mermaid)?\s*([\s\S]*?)```/i);
-  if (m) c = m[1].trim();
-  return c;
-}
+// Save a Blob as a file (Wisebase export).
 function downloadBlob(blob, name) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a"); a.href = url; a.download = name; document.body.appendChild(a); a.click();
   a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
-}
-
-async function openMindmapFrom(sourceText) {
-  const src = (sourceText || "").trim();
-  if (!src) { flashTopBanner(t("mind.empty")); return; }
-  openMindmapPanel();
-  setMindmapState("loading", t("mind.generating"));
-  try {
-    const sel = resolveHivey(currentSelection(), "chat", src);
-    if (currentKeyMissing(sel.providerId)) { setMindmapState("error", t("err.noKeyModel")); return; }
-    const code = stripFences(await runUtilityCompletion(sel, t("mind.system"), src.slice(0, 12000), null));
-    if (!code) { setMindmapState("error", t("mind.failed")); return; }
-    await renderMindmap(code);
-  } catch (e) {
-    setMindmapState("error", e instanceof Error ? e.message : String(e));
-  }
-}
-
-function openMindmapPanel() {
-  if (!mmOverlayEl) {
-    mmOverlayEl = document.createElement("div"); mmOverlayEl.className = "mm-overlay";
-    mmOverlayEl.addEventListener("click", (e) => { if (e.target === mmOverlayEl) closeMindmap(); });
-    mmOverlayEl.innerHTML =
-      '<div class="mm-card">' +
-      '<div class="mm-head"><span class="mm-title">🧠 <span class="mm-title-t"></span></span>' +
-      '<div class="mm-tools">' +
-      '<button type="button" class="mm-btn" data-act="regen"></button>' +
-      '<button type="button" class="mm-btn" data-act="code"></button>' +
-      '<button type="button" class="mm-btn" data-act="svg"></button>' +
-      '<button type="button" class="mm-btn" data-act="png"></button>' +
-      '<button type="button" class="mm-close" data-act="close">✕</button>' +
-      '</div></div>' +
-      '<div class="mm-body"><div class="mm-diagram" id="mmDiagram"></div>' +
-      '<div class="mm-codewrap" id="mmCodeWrap" hidden><textarea class="mm-code" id="mmCode" spellcheck="false"></textarea>' +
-      '<button type="button" class="mm-btn mm-render" data-act="render"></button></div></div>' +
-      '</div>';
-    document.body.appendChild(mmOverlayEl);
-    mmOverlayEl.querySelector(".mm-title-t").textContent = t("mind.title");
-    mmOverlayEl.querySelector('[data-act="regen"]').textContent = t("mind.regen");
-    mmOverlayEl.querySelector('[data-act="code"]').textContent = t("mind.code");
-    mmOverlayEl.querySelector('[data-act="svg"]').textContent = "SVG";
-    mmOverlayEl.querySelector('[data-act="png"]').textContent = "PNG";
-    mmOverlayEl.querySelector('[data-act="render"]').textContent = t("mind.render");
-    mmOverlayEl.querySelector('[data-act="close"]').title = t("wb.close");
-    mmOverlayEl.addEventListener("click", (e) => {
-      const act = e.target.closest("[data-act]"); if (!act) return;
-      const a = act.dataset.act;
-      if (a === "close") closeMindmap();
-      else if (a === "code") { const w = document.getElementById("mmCodeWrap"); w.hidden = !w.hidden; }
-      else if (a === "render") renderMindmap(document.getElementById("mmCode").value).catch(() => {});
-      else if (a === "svg") exportMindmap("svg");
-      else if (a === "png") exportMindmap("png");
-      else if (a === "regen") { const c = document.getElementById("mmCode").value; if (c.trim()) renderMindmap(c); }
-    });
-  }
-  mmOverlayEl.classList.remove("hidden");
-}
-function closeMindmap() { if (mmOverlayEl) mmOverlayEl.classList.add("hidden"); }
-function setMindmapState(kind, msg) {
-  const d = document.getElementById("mmDiagram"); if (!d) return;
-  setHTML(d, `<div class="mm-msg ${kind === "error" ? "mm-err" : ""}">${escapeHtmlSafe(msg)}</div>`);
-}
-function escapeHtmlSafe(s) { return String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
-
-async function renderMindmap(code) {
-  const clean = stripFences(code);
-  const codeEl = document.getElementById("mmCode"); if (codeEl) codeEl.value = clean;
-  setMindmapState("loading", t("mind.rendering"));
-  try {
-    const mermaid = await loadMermaidInPage();
-    try { mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: mermaidThemeForCurrent(), htmlLabels: false, flowchart: { htmlLabels: false } }); } catch (_) {}
-    const { svg } = await mermaid.render("mmSvg" + Date.now().toString(36), clean);
-    const d = document.getElementById("mmDiagram");
-    if (d) {
-      // Defense-in-depth: the Mermaid source is LLM output that a malicious page could steer via
-      // prompt injection. mermaid already runs with securityLevel:"strict" + htmlLabels:false, but we
-      // ALSO sanitize the rendered SVG (DOMPurify SVG profile) before it touches the privileged
-      // sidebar DOM — so even a Mermaid sanitizer bypass can't land script in an origin that can read
-      // the stored BYOK keys. This is the one model-output→DOM path that wasn't already sanitized.
-      const safe = window.DOMPurify ? window.DOMPurify.sanitize(svg, { USE_PROFILES: { svg: true, svgFilters: true } }) : svg;
-      setHTML(d, safe); d._svg = safe;
-    }
-  } catch (e) {
-    // Invalid diagram → show the error and reveal the code so the user can fix it.
-    setMindmapState("error", t("mind.invalid") + " " + (e && e.message ? e.message : ""));
-    const w = document.getElementById("mmCodeWrap"); if (w) w.hidden = false;
-  }
-}
-function exportMindmap(kind) {
-  const d = document.getElementById("mmDiagram");
-  const svg = d && d._svg;
-  if (!svg) { flashTopBanner(t("mind.nothing")); return; }
-  if (kind === "svg") { downloadBlob(new Blob([svg], { type: "image/svg+xml" }), "mindmap.svg"); return; }
-  // PNG: rasterize the SVG onto a 2× canvas.
-  const svgEl = d.querySelector("svg");
-  const w = (svgEl && svgEl.viewBox && svgEl.viewBox.baseVal && svgEl.viewBox.baseVal.width) || (svgEl && svgEl.getBoundingClientRect().width) || 1200;
-  const h = (svgEl && svgEl.viewBox && svgEl.viewBox.baseVal && svgEl.viewBox.baseVal.height) || (svgEl && svgEl.getBoundingClientRect().height) || 800;
-  const scale = 2;
-  const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
-  const img = new Image();
-  img.onload = () => {
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.round(w * scale); canvas.height = Math.round(h * scale);
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = document.body.classList.contains("theme-light") ? "#ffffff" : "#0b0b0f";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    URL.revokeObjectURL(url);
-    canvas.toBlob((blob) => { if (blob) downloadBlob(blob, "mindmap.png"); }, "image/png");
-  };
-  img.onerror = () => { URL.revokeObjectURL(url); flashTopBanner(t("mind.pngFail")); };
-  img.src = url;
 }
 
 // ----- 📚 Prompt library -----------------------------------------------------
@@ -6270,11 +6204,13 @@ function setupPromptLibrary() {
 }
 
 // ----- Message rendering ----------------------------------------------------
-// --- Auto-scroll manager -----------------------------------------------------
-// Keep the thread pinned to the bottom while the AI streams, BUT pause as soon as the
-// user scrolls up (so they can read), and show a "↓ jump to latest" button. The whole
-// auto-scroll behaviour can be disabled with the `autoScroll` setting.
-let stickBottom = true, scrollWired = false;
+// --- Smart scrolling -----------------------------------------------------------
+// At the bottom, the thread follows what the model writes; scrolled up, it stays exactly where the
+// reader is, however much is streamed in, and a "↓ jump to latest" button appears; back at the
+// bottom, it follows again. Only the USER's scrolling decides — wheel, touch, keys, the scrollbar —
+// because a scroll event alone cannot tell the reader's hand from the content growing under it,
+// which is what the old toggle ("Auto-scroll") made people switch off.
+let stickBottom = true, scrollWired = false, userScrollAt = 0;
 function isAtBottom() {
   const m = els.messages;
   return (m.scrollHeight - m.scrollTop - m.clientHeight) < 48;
@@ -6301,7 +6237,12 @@ function updateScrollBtn() {
 function wireScroll() {
   if (scrollWired || !els.messages) return;
   scrollWired = true;
-  els.messages.addEventListener("scroll", () => { stickBottom = isAtBottom(); updateScrollBtn(); });
+  const byUser = () => { userScrollAt = Date.now(); };
+  for (const ev of ["wheel", "touchmove", "pointerdown", "keydown"]) els.messages.addEventListener(ev, byUser, { passive: true });
+  els.messages.addEventListener("scroll", () => {
+    if (Date.now() - userScrollAt < 1200) stickBottom = isAtBottom();
+    updateScrollBtn();
+  });
   const btn = document.createElement("button");
   btn.id = "scrollBottomBtn"; btn.type = "button"; btn.className = "scroll-bottom-btn";
   btn.title = t("scroll.toBottom");
@@ -6312,12 +6253,12 @@ function wireScroll() {
   els.scrollBottomBtn = btn;
   window.addEventListener("resize", () => { if (btn.classList.contains("show")) positionScrollBtn(); });
 }
-// Scroll to the bottom when appropriate. force=true (user sent / clicked ↓) always scrolls
-// and re-pins; otherwise only if auto-scroll is on AND the user hasn't scrolled up.
+// Scroll to the bottom when appropriate. force=true (user sent / clicked ↓) always scrolls and
+// re-pins; otherwise only while the reader has not scrolled away from the bottom.
 function scrollMessages(force) {
   wireScroll();
   if (force) stickBottom = true;
-  if (force || (settings.autoScroll !== false && stickBottom)) {
+  if (force || stickBottom) {
     els.messages.scrollTop = els.messages.scrollHeight;
   }
   updateScrollBtn();
@@ -6526,13 +6467,19 @@ function applyTurnMarks(id) {
     let tag = b.querySelector(":scope > .ctx-tag");
     const label = e.muted ? "⏸ " + t("ctx.tag.muted") : e.pinned ? "📌 " + t("ctx.tag.pinned") : "";
     if (!label) { if (tag) tag.remove(); continue; }
-    if (!tag) { tag = document.createElement("div"); tag.className = "ctx-tag"; b.prepend(tag); }
+    if (!tag) {
+      tag = document.createElement("button");
+      tag.type = "button";
+      tag.className = "ctx-tag";
+      tag.addEventListener("click", () => { const cur = turnEntry(id) || {}; setTurnFlags(id, cur.muted ? { muted: false } : { pinned: false }); });
+      b.prepend(tag);
+    }
     tag.textContent = label;
     tag.title = e.muted ? t("ctx.tag.mutedTitle") : t("ctx.tag.pinnedTitle");
     const mute = b.querySelector(".mact-bar .mctxmute");
-    if (mute) mute.title = e.muted ? t("ctx.unmute") : t("ctx.mute");
+    if (mute) { mute.title = e.muted ? t("ctx.unmute") : t("ctx.mute"); const w = mute.querySelector(".mact-word"); if (w) w.textContent = e.muted ? t("ctx.btn.unmute") : t("ctx.btn.mute"); mute.classList.toggle("on", !!e.muted); }
     const pin = b.querySelector(".mact-bar .mctxpin");
-    if (pin) { pin.title = e.pinned ? t("ctx.unpin") : t("ctx.pin"); pin.classList.toggle("on", !!e.pinned); }
+    if (pin) { pin.title = e.pinned ? t("ctx.unpin") : t("ctx.pin"); const w = pin.querySelector(".mact-word"); if (w) w.textContent = e.pinned ? t("ctx.btn.unpin") : t("ctx.btn.pin"); pin.classList.toggle("on", !!e.pinned); }
   }
 }
 function setTurnFlags(id, patch) {
@@ -6548,11 +6495,21 @@ function setTurnFlags(id, patch) {
 function addContextActions(bar, el) {
   if (!el || !el._ctxTurn) return;
   const id = el._ctxTurn;
-  bar.appendChild(makeActBtn("mctxmute", STANDBY_GLYPH, t("ctx.mute"), () => {
+  // Labelled, not icon-only: « il n'y a sur aucun onglet la possibilité de mettre un message en
+  // standby » — the icons were there and nobody could tell what they were.
+  const labelled = (cls, glyph, title, word, fn) => {
+    const b = makeActBtn(cls + " mact-labelled", glyph, title, fn);
+    const w = document.createElement("span");
+    w.className = "mact-word";
+    w.textContent = word;
+    b.appendChild(w);
+    return b;
+  };
+  bar.appendChild(labelled("mctxmute", STANDBY_GLYPH, t("ctx.mute"), t("ctx.btn.mute"), () => {
     const e = turnEntry(id) || {};
     setTurnFlags(id, { muted: !e.muted });
   }));
-  bar.appendChild(makeActBtn("mctxpin", PIN_GLYPH, t("ctx.pin"), () => {
+  bar.appendChild(labelled("mctxpin", PIN_GLYPH, t("ctx.pin"), t("ctx.btn.pin"), () => {
     const e = turnEntry(id) || {};
     setTurnFlags(id, { pinned: !e.pinned });
   }));
@@ -6561,6 +6518,109 @@ function addContextActions(bar, el) {
 // ----- The context gauge ------------------------------------------------------
 // How full the selected model's window is with this conversation — what is actually sent (exchanges
 // in standby left out) — and a click to summarize it and free the context, at any time.
+// The model chip: its maker's mark before the name (hivey-vscode's picker), a generic chip otherwise.
+function updateModelChip() {
+  if (!els.modelIcon) return;
+  const sel = mode === "image" ? parseSel(mainValue || "") : currentSelection();
+  const slug = sel && sel.providerId ? vendorSlug(sel.providerId, sel.modelId) : undefined;
+  const svg = isHivey(sel && sel.modelId) ? null : vendorIcon(slug, 14);
+  els.modelIcon.replaceChildren(svg || document.createTextNode(isHivey(sel && sel.modelId) ? "🐝" : "◆"));
+  // As wide as its name, no wider — then the row shrinks it if it must (an <input> has no
+  // content-sized width of its own in every engine).
+  if (els.modelInput) els.modelInput.style.width = `${Math.min(28, Math.max(6, (els.modelInput.value || "").length + 1))}ch`;
+  updatePrivBadge();
+}
+// Where the selected model runs, said under the composer: 🏠 local, 🔒 your gateway, ☁️ cloud.
+function updatePrivBadge() {
+  const b = els.privBadge;
+  if (!b) return;
+  const sel = currentSelection();
+  if (!sel || !sel.providerId) { b.classList.add("hidden"); return; }
+  const cls = privacyClass(sel.providerId, settings);
+  const anon = cls === "cloud" && redactsFor(sel.providerId, settings);
+  b.classList.remove("hidden");
+  b.dataset.kind = cls;
+  b.textContent = t("priv.badge." + cls) + (anon ? " · " + t("priv.badge.anon") : "");
+  b.title = t("priv.badgeTitle." + cls);
+}
+function positionThinkPop() {
+  const r = els.thinkChip.getBoundingClientRect();
+  const p = els.thinkPop;
+  const left = Math.max(8, Math.min(r.left, window.innerWidth - p.offsetWidth - 8));
+  p.style.left = left + "px";
+  p.style.top = Math.max(8, r.top - p.offsetHeight - 6) + "px";
+}
+function toggleThinkPop() {
+  if (!els.thinkPop) return;
+  const opening = els.thinkPop.classList.contains("hidden");
+  if (!opening) return closeThinkPop();
+  refreshThinkSegs();
+  els.thinkPop.classList.remove("hidden");
+  els.thinkChip.setAttribute("aria-expanded", "true");
+  positionThinkPop();
+}
+function closeThinkPop() {
+  if (!els.thinkPop) return;
+  els.thinkPop.classList.add("hidden");
+  if (els.thinkChip) els.thinkChip.setAttribute("aria-expanded", "false");
+}
+// ----- The suggested next request (lib/next-step.js) ---------------------------
+/** Show a suggestion greyed in the empty composer, or put the tab's usual placeholder back. */
+function showSuggestion(text) {
+  if (!text) {
+    if (CHAT_MODES.includes(mode)) getSession(mode).suggestion = null;
+    els.input.placeholder = placeholderFor(mode);
+    els.input.classList.remove("has-suggestion");
+    return;
+  }
+  els.input.placeholder = `${text}   ⇥ ${t("suggest.tab")}`;
+  els.input.classList.add("has-suggestion");
+}
+/**
+ * Ask for the next request once a turn is over — a side task: thinking off, the same model (or the
+ * Hivey preset's cheap tier), pseudonymized for a cloud and never asking (a value that would need the
+ * sensitive-data window simply means no suggestion). Dropped if the conversation moved on meanwhile.
+ */
+async function suggestNextAfter(question, answer, sess, m, sel) {
+  if (settings.suggestNext === false || !answer || !String(answer).trim() || !sess) return;
+  const convAt = sess.convId, lenAt = sess.transcript.length;
+  try {
+    const hid = isHivey(sel.modelId) ? sel.modelId : null;
+    const use = hid ? ensureUsable(parseSel(hiveyTiers(hid).utility || hiveyTiers(hid).chat), hid) : sel;
+    const provider = makeProvider({ ...settings, provider: use.providerId, models: { ...settings.models, [use.providerId]: use.modelId } }, {});
+    const { system, history } = nextStepMessages(question, answer, detectUserLanguage(String(question || ""), getLang() === "fr" ? "fr" : "en"));
+    const r = await provider.runTurn({ system, history, tools: [], chore: true });
+    const next = parseNextStep(r && r.text);
+    if (!next || sess.convId !== convAt || sess.transcript.length !== lenAt) return;
+    sess.suggestion = next;
+    if (mode === m && !busy && !els.input.value) showSuggestion(next);
+  } catch (_) { /* no suggestion: nothing to say about it */ }
+}
+
+/** What the conversation has cost so far, from its answers: `{ usd, exact, any }`. */
+function conversationCost(sess) {
+  let usd = 0, exact = true, any = false;
+  for (const e of sess.transcript || []) {
+    if (!e || !e.cost || e.cost.free) continue;
+    any = true;
+    usd += e.cost.usd || 0;
+    if (!e.cost.exact) exact = false;
+  }
+  return { usd, exact, any };
+}
+/** The small line under an answer: tokens in → out, and what it cost. */
+function answerMeta(el, usage, cost) {
+  if (!el || !usage || !(usage.promptTokens || usage.completionTokens)) return;
+  let line = el.querySelector(":scope > .answer-meta");
+  if (!line) { line = document.createElement("div"); line.className = "answer-meta"; el.appendChild(line); }
+  const lang = getLang();
+  const parts = [t("cost.tokens", { in: formatTokens(usage.promptTokens || 0, lang), out: formatTokens(usage.completionTokens || 0, lang) })];
+  if (cost && cost.free) parts.push(t("cost.free"));
+  else if (cost) parts.push(formatUsd(cost.usd, { exact: cost.exact, lang }));
+  line.textContent = parts.join(" · ");
+  line.title = cost && !cost.free ? (cost.exact ? t("cost.exactTitle") : t("cost.estimateTitle")) : "";
+}
+
 let gaugeSeq = 0;
 async function updateCtxGauge() {
   const g = els.ctxGauge;
@@ -6568,7 +6628,7 @@ async function updateCtxGauge() {
   const seq = ++gaugeSeq;
   const sess = CHAT_MODES.includes(mode) && mode !== "image" ? getSession(mode) : null;
   const hist = (sess && sess.history) || [];
-  if (!hist.length) { g.classList.add("hidden"); return; }
+  if (!sess) { g.classList.add("hidden"); return; }
   const sel = currentSelection();
   let win = 0;
   try { win = sel && sel.providerId && !isHivey(sel.modelId) ? await contextWindowFor(settings, sel.providerId, sel.modelId) : 0; } catch (_) { win = 0; }
@@ -6581,6 +6641,10 @@ async function updateCtxGauge() {
   g.classList.toggle("warn", pct >= 60);
   g.classList.toggle("full", pct >= 75);
   g.querySelector(".cg-pct").textContent = pct + " %";
+  const lang = getLang();
+  g.querySelector(".cg-tokens").textContent = `${formatTokens(used, lang)} / ${formatTokens(budget, lang)}`;
+  const spent = conversationCost(sess);
+  g.querySelector(".cg-cost").textContent = spent.any ? formatUsd(spent.usd, { exact: spent.exact, lang }) : "";
   g.title = t("ctx.gauge", { pct, used: used.toLocaleString(), budget: budget.toLocaleString(), model: (sel && sel.modelId) || "?" }) + (win ? "" : " " + t("ctx.gaugeUnknown"));
 }
 async function compactNow() {
@@ -6608,7 +6672,7 @@ async function compactNow() {
 }
 
 // One consistent SVG icon set for the message hover actions (all stroke-based, same 24-viewBox
-// weight) so the copy / edit / resend / markdown / mindmap / delete row reads as ONE clean toolbar
+// weight) so the copy / edit / resend / markdown / delete row reads as ONE clean toolbar
 // instead of a mix of text glyphs (⧉ ✎ ↻ M) and SVGs.
 const DEL_GLYPH = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>';
 const COPY_GLYPH = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
@@ -6742,7 +6806,6 @@ function attachAssistantActions(el, getRaw) {
   bar.className = "mact-bar assistant";
   bar.appendChild(makeActBtn("mcopy", COPY_GLYPH, t("msg.copyText"), (b) => copyToClipboard(plainTextFromEl(el), b)));
   bar.appendChild(makeActBtn("mcopymd", COPYMD_GLYPH, t("msg.copyMd"), (b) => copyToClipboard((getRaw && getRaw()) || el._raw || "", b)));
-  bar.appendChild(makeActBtn("mmind", '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="19" cy="18" r="2"/><path d="M7 12h4"/><path d="M11 12 17 7"/><path d="M11 12l6 5"/></svg>', t("mind.make"), () => openMindmapFrom((getRaw && getRaw()) || el._raw || "")));
   addContextActions(bar, el);
   bar.appendChild(makeActBtn("mdel", DEL_GLYPH, t("msg.delete"), () => deleteMessageBubble(el, "assistant", (getRaw && getRaw()) || el._raw || "")));
   el.appendChild(bar);
@@ -6847,8 +6910,10 @@ function makeAgentActions() {
 function addThinkBlock(m) {
   const home = homeFor(m);
   const d = document.createElement("details");
-  d.className = "think";
-  d.open = true;
+  // Folded, as in hivey-vscode: the reasoning is there for whoever opens it, and does not push the
+  // answer out of view. The summary pulses while the model is still thinking (see makeSink).
+  d.className = "think live";
+  d.open = false;
   const s = document.createElement("summary");
   s.textContent = t("chip.thinking");
   const body = document.createElement("div");
@@ -7015,6 +7080,7 @@ function makeSink(badgeLabel, showThink = true, pendingEl = null, m = null) {
       renderThink();
     },
     finalize() {
+      if (think && think.parentElement) think.parentElement.classList.remove("live");
       dropPending();
       stopRaf();                  // stop the typewriter and show the COMPLETE answer at once
       // Safety net: if the model opened a <think> block but never closed it (so the answer
@@ -7383,13 +7449,15 @@ async function getSelection() {
 }
 function startBusy() {
   busy = true;
-  els.stop.classList.remove("hidden"); // Stop button appears while streaming (no Send button — Enter sends)
+  els.stop.classList.remove("hidden"); // Stop replaces Send while the model works
+  if (els.sendBtn) els.sendBtn.classList.add("hidden");
   const cb = document.querySelector(".composer-box");
   if (cb) cb.classList.add("is-busy"); // AI working → coloured frame (animation only when focused)
   abortController = new AbortController();
 }
 function endBusy() {
   els.stop.classList.add("hidden");
+  if (els.sendBtn) els.sendBtn.classList.remove("hidden");
   const cb = document.querySelector(".composer-box");
   if (cb) cb.classList.remove("is-busy");
   abortController = null;
@@ -8038,8 +8106,9 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
     // on ANY error — EXCEPT a data-policy gate, which is account-wide so trying other free
     // models would just repeat the same error (we surface the fix link for that one instead).
     let attempt = 0;
+    let turnResult = null;
     while (true) {
-      try { await runOnce(); break; }
+      try { turnResult = await runOnce(); break; }
       catch (runErr) {
         const kind = classifyOpenRouterError(turnSel.providerId, runErr && runErr.message);
         // NEVER replay an AGENT run: re-running the conversation re-executes its tools (it would
@@ -8068,9 +8137,14 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
     markTabDone(sessMode, boundConvId); // dot on the workspace icon if the user has switched away
     if (sink.getRaw()) {
       maybePlayDone(); // optional "answer ready" chime (Settings → Appearance toggle)
-      boundTranscript.push({ role: "assistant", text: sink.getRaw(), badge: badge || undefined, turnId });
+      // What this answer cost: OpenRouter's own figure, else priced from the catalogue (cost.js).
+      const usage = turnResult && turnResult.usage;
+      const cost = costOf(turnSel.providerId, turnSel.modelId, usage, settings);
+      boundTranscript.push({ role: "assistant", text: sink.getRaw(), badge: badge || undefined, turnId, ...(usage ? { usage } : {}), ...(cost ? { cost } : {}) });
       const ansIdx = sess.transcript.length - 1; // slot to REPLACE if it gets corrected
       const aEl = sink.getEl();
+      if (aEl) answerMeta(aEl, usage, cost);
+      if (!["translate", "improve"].includes(runMode)) suggestNextAfter(displayText || modelContent, sink.getRaw(), sess, sessMode, turnSel);
       if (aEl) { aEl._raw = sink.getRaw(); aEl._ctxTurn = turnId; aEl._modelSel = sel.providerId && sel.modelId ? `${sel.providerId}|${sel.modelId}` : ""; attachAssistantActions(aEl, sink.getRaw); }
       // Versioning: tie this answer to its user bubble (non-agent chat turns) so an in-place edit
       // keeps the previous answer switchable via ‹ k/n › arrows. Fresh sends create version 0;
@@ -8161,6 +8235,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
 // ----- Send dispatch (per mode) ---------------------------------------------
 async function onSend() {
   resetComposerHeight();
+  showSuggestion(null);
   if (mode === "translate") return runTranslateFromInput();
   if (mode === "improve") return runImproveFromInput();
   if (mode === "image") return runImageFromInput();

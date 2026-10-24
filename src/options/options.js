@@ -1011,6 +1011,7 @@ async function load() {
   $("judge0Key").value = settings.judge0Key != null ? settings.judge0Key : "";
   $("judge0Key").style.setProperty("-webkit-text-security", "disc"); // mask without type=password
   $("blockPayments").checked = settings.blockPayments;
+  $("suggestNext").checked = settings.suggestNext !== false;
   $("privacyLevel").value = settings.privacyLevel || "balanced";
   $("privacyTerms").value = (settings.privacyTerms || []).join("\n");
   $("privacyTrustOwn").checked = settings.privacyTrustOwn !== false;
@@ -1020,7 +1021,6 @@ async function load() {
   $("maxPageChars").value = settings.maxPageChars;
   $("cleanContext").checked = settings.cleanContext !== false;
   $("compressHistory").checked = settings.compressHistory !== false;
-  $("autoScroll").checked = settings.autoScroll !== false;
   $("smartRouting").checked = settings.smartRouting !== false;
   refreshModelLists();
 }
@@ -1117,6 +1117,7 @@ function collectSettings() {
     judge0Endpoint: $("judge0Endpoint").value.trim(),
     judge0Key: $("judge0Key").value.trim(),
     blockPayments: $("blockPayments").checked,
+    suggestNext: $("suggestNext").checked,
     privacyLevel: $("privacyLevel").value,
     privacyTerms: $("privacyTerms").value.split("\n").map((w) => w.trim()).filter(Boolean),
     privacyTrustOwn: $("privacyTrustOwn").checked,
@@ -1126,7 +1127,6 @@ function collectSettings() {
     maxPageChars: parseInt($("maxPageChars").value, 10) || 12000,
     cleanContext: $("cleanContext").checked,
     compressHistory: $("compressHistory").checked,
-    autoScroll: $("autoScroll").checked,
     smartRouting: $("smartRouting").checked,
     utilityModel: $("utilityModel").value,
   };

@@ -10,6 +10,36 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+### Une zone de saisie unique, comme dans Hivey Code — avec le contexte et le coût
+
+- **La même zone de saisie dans tous les onglets** : le texte, puis une rangée `+`, micro, **le
+  modèle avec l'icône de son fournisseur**, **le niveau de réflexion** (menu des niveaux propres au
+  modèle), les options et le bouton **Envoyer** (Stop pendant la réponse). Les réglages propres à un
+  onglet (langue, style, taille d'image, collection…) sont des puces en haut du cadre. La barre de
+  choix de modèle séparée disparaît.
+- **Sous le cadre** : où tourne le modèle (🏠 Local, 🔒 Votre passerelle, ☁️ Cloud · anonymisé) et
+  **le contexte rempli** — anneau, pourcentage, jetons utilisés sur la fenêtre du modèle — avec **le
+  coût de la conversation** pour les modèles cloud. Un clic résume la conversation.
+- **Le coût de chaque réponse**, sous la réponse : jetons envoyés → reçus, et le prix (exact quand
+  OpenRouter le donne, sinon estimé d'après les prix publics, marqué « ≈ »). Gratuit en local.
+- **Suggestion de la prochaine demande** : après une réponse, une suite proposée apparaît en grisé
+  dans le champ ; **Tab** (ou →) la reprend. Désactivable dans les réglages.
+- « **Veille** » et « **Épingler** » sont maintenant des boutons libellés sous chaque message (ils
+  n'étaient que de petites icônes difficiles à trouver) ; l'étiquette « Hors contexte » d'un échange
+  en veille le remet dans le contexte d'un clic.
+
+### Interface : plus simple, et le local dès le premier lancement
+
+- **Premier lancement** : « 🏠 Modèle local » trouve Ollama ou LM Studio sur votre machine et le
+  sélectionne ; « 🔒 Ma passerelle / mon serveur » demande l'URL (et la clé si besoin), vérifie le
+  serveur et choisit son premier modèle — à côté d'OpenRouter, plus derrière « autres fournisseurs ».
+- **Défilement intelligent** : en bas, la conversation suit la réponse ; remontez pour lire, elle
+  reste où vous êtes même pendant que le modèle écrit ; le bouton ↓ ou un retour en bas la fait suivre
+  de nouveau. L'option « Défilement auto » disparaît.
+- **La réflexion est repliée par défaut** : « Réflexion… » clignote pendant que le modèle réfléchit,
+  un clic l'ouvre.
+- L'action « Transformer en carte mentale / diagramme » est retirée.
+
 ### Documentation
 
 - **Guide d'utilisation** complet ([docs/GUIDE.md](docs/GUIDE.md)) : installer, choisir entre local,

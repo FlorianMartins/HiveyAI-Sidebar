@@ -245,12 +245,6 @@ body.rail-right #workspace { flex-direction: row-reverse; }
 body.rail-right .rail { border-right: 0; border-left: 1px solid var(--border); }
 body.rail-right .railtab.active::before { left: auto; right: -6px; border-radius: 3px 0 0 3px; }
 
-/* ----- Unified model bar ----- */
-.modelbar {
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  padding: 8px 10px 9px; background: var(--panel);
-}
-.modelbar #modelConnect { flex: 1 1 auto; }
 .vs { color: var(--accent); font-weight: 700; font-size: 12px; }
 .select-wrap {
   flex: 1 1 140px; min-width: 0; position: relative; border-radius: var(--radius-sm);
@@ -757,38 +751,14 @@ button[aria-expanded="true"], .combo-input:focus {
 /* First row: the "+" on the left (vertically centred) and the text right next to it. */
 .composer-main { display: flex; align-items: center; gap: 2px; }
 .composer textarea {
-  flex: 1 1 auto; min-width: 0; box-sizing: border-box; resize: none; min-height: 88px; max-height: 280px;
+  flex: 1 1 auto; min-width: 0; box-sizing: border-box; resize: none; min-height: 56px; max-height: 280px;
   padding: 10px 8px; background: transparent; border: 0; color: var(--text); display: block;
   font-size: 15px; line-height: 1.45;
-  /* default: vertically centred (agent / translate / improve / image / PDF) */
-  align-content: center;
+  align-content: start;
 }
-/* On the CHAT tab only, the text starts on the FIRST line (top). */
-body.mode-chat .composer textarea, body.mode-wisebase .composer textarea { align-content: start; }
 .composer textarea:focus { outline: none; }
 /* Discreet grey placeholder. */
 .composer textarea::placeholder { color: color-mix(in srgb, var(--muted) 72%, transparent); opacity: 1; }
-/* Centre the DESCRIPTIVE placeholder text (agent / translate / improve / image / PDF / security) —
-   only while the field is empty, so what the user TYPES stays left-aligned as normal. The typing tabs
-   (chat / wisebase / code) keep their placeholder left-aligned. */
-.composer textarea:placeholder-shown { text-align: center; }
-body.mode-chat .composer textarea:placeholder-shown,
-body.mode-wisebase .composer textarea:placeholder-shown,
-body.mode-code .composer textarea:placeholder-shown { text-align: left; }
-/* VERTICAL centring of the placeholder — robust across engines. `align-content: center` (above) is
-   unreliable on <textarea> in some builds, which left the placeholder stuck at the top. Instead, on
-   the descriptive tabs (everything except chat/wisebase/code) we keep the input ROW a fixed height
-   and let the textarea SHRINK to its content while empty — the row's `align-items: center` then
-   centres it vertically, exactly at the level of the + / mic buttons (which are centred the same
-   way). Works no matter how many lines the placeholder wraps to, and reverts the instant the user
-   types (the field grows again). */
-body:not(.mode-chat):not(.mode-wisebase):not(.mode-code) .composer-main { min-height: 88px; }
-/* `!important` beats the inline height autoGrow() leaves on the textarea (and any leftover height
-   from typing on another tab) — otherwise the empty field stays tall and the placeholder floats in
-   the middle of an oversized box instead of sitting at the buttons' level. */
-body:not(.mode-chat):not(.mode-wisebase):not(.mode-code) .composer textarea:placeholder-shown {
-  min-height: 0 !important; height: auto !important;
-}
 /* Second row: an optional left slot (the "+" on the Chat tab) and the chat toggles +
    stop on the right. */
 .composer-tools { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 2px 2px 0; min-height: 0; }
@@ -1253,7 +1223,6 @@ body:not(.mode-chat):not(.mode-wisebase):not(.mode-code) .composer textarea:plac
    area; the left rail stays visible so the user can switch workspace in one click. */
 body.mode-code #messages,
 body.mode-code #controls,
-body.mode-code .modelbar,
 body.mode-code .composer,
 body.mode-code #confirmBar { display: none !important; }
 
@@ -1476,28 +1445,6 @@ body.mode-code #confirmBar { display: none !important; }
 .deep-progress .deep-step { font-size: 12px; color: var(--muted); padding: 3px 0; line-height: 1.45; border-left: 2px solid color-mix(in srgb, var(--accent) 40%, transparent); padding-left: 8px; margin: 2px 0; }
 .deep-progress .deep-step:last-child { color: var(--text); }
 
-/* ----- 🧠 Mindmap / Flowchart (Mermaid) ------------------------------------- */
-.mm-overlay { position: fixed; inset: 0; z-index: 82; display: flex; padding: 10px; background: color-mix(in srgb, var(--bg) 72%, transparent); backdrop-filter: blur(4px); }
-.mm-overlay.hidden { display: none; }
-.mm-card { display: flex; flex-direction: column; margin: auto; width: 100%; max-width: 860px; max-height: 100%; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: 0 18px 50px rgba(0,0,0,.4); }
-.mm-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 12px; border-bottom: 1px solid var(--border); }
-.mm-title { font-weight: 600; font-size: 14px; }
-.mm-tools { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.mm-btn { border: 1px solid var(--border); background: var(--tool); color: var(--text); font: inherit; font-size: 12px; padding: 5px 10px; border-radius: 8px; cursor: pointer; transition: border-color .14s, color .14s; }
-.mm-btn:hover { border-color: var(--accent); color: var(--accent); }
-.mm-close { border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 15px; width: 28px; height: 28px; border-radius: 8px; }
-.mm-close:hover { color: var(--text); background: color-mix(in srgb, var(--text) 8%, transparent); }
-.mm-body { padding: 12px; overflow: auto; display: flex; flex-direction: column; gap: 10px; }
-.mm-diagram { overflow: auto; text-align: center; min-height: 120px; display: flex; align-items: center; justify-content: center; }
-.mm-diagram svg { max-width: 100%; height: auto; }
-.mm-msg { color: var(--muted); font-size: 13px; padding: 24px; }
-.mm-msg.mm-err { color: #f87171; }
-.mm-codewrap { display: flex; flex-direction: column; gap: 6px; }
-.mm-code { width: 100%; box-sizing: border-box; min-height: 130px; resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; line-height: 1.5; background: var(--tool); color: var(--text); border: 1px solid var(--border); border-radius: 9px; padding: 8px 10px; }
-.mm-code:focus { outline: none; border-color: var(--accent); }
-.mm-render { align-self: flex-start; }
-
-.msg { position: relative; }
 /* 🐝 Hivey background fact-check verdict shown under an answer. */
 .hivey-verify {
   margin-top: 6px; padding: 5px 9px; border-radius: 7px; font-size: 11.5px; line-height: 1.4;
@@ -1913,7 +1860,6 @@ mark.search-hit.current { background: #f6c945; color: #1a1408; }
 @media (prefers-reduced-motion: reduce) { .composer-box::before { animation: none; } }
 
 /* full-width glassy model bar + airier surfaces */
-.modelbar { position: relative; background: rgba(255,255,255,.014); backdrop-filter: blur(12px); padding: 10px 12px 11px; }
 .composer { background: rgba(255,255,255,.012); backdrop-filter: blur(12px); }
 .controls { background: rgba(255,255,255,.015); backdrop-filter: blur(12px); }
 
@@ -2037,7 +1983,6 @@ body.opts-open .opts-toggle { color: var(--accent); }
 
 /* ── #3 — Cleaner: remove fills + separator lines on the model / chat / option zones (all tabs) ── */
 .composer { background: transparent !important; border-top: 0 !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
-.modelbar { background: transparent !important; border: 0 !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 .composer-tools, .composer-main { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 .controls { background: transparent !important; border-top: 0 !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 /* Input / model-picker / tab-option selectors share HiveyCode's .composer-box surface: a soft violet
@@ -2290,3 +2235,82 @@ body.theme-light .icon:hover { color: #475569; }
 .ctx-gauge.warn .cg-ring { background: conic-gradient(#e0a100 var(--fill), color-mix(in srgb, var(--text) 15%, transparent) 0); }
 .ctx-gauge.full .cg-ring { background: conic-gradient(#e5484d var(--fill), color-mix(in srgb, var(--text) 15%, transparent) 0); }
 .img-ref-btn { display: block; margin: 4px 0 8px; font-size: 12px; }
+
+/* The folded reasoning pulses while the model is still thinking. */
+details.think.live > summary::after { content: "…"; animation: thinkPulse 1.2s ease-in-out infinite; }
+@keyframes thinkPulse { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { details.think.live > summary::after { animation: none; } }
+
+/* First run: local model and own gateway, next to OpenRouter. */
+.onb-form { display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 300px; margin: 8px auto 0; }
+.onb-form.hidden { display: none; }
+.onb-form input { font: inherit; font-size: 13px; padding: 8px 10px; border-radius: 9px; border: 1px solid var(--border); background: var(--panel-2, var(--panel)); color: var(--text); }
+.onb-form input:focus { outline: none; border-color: var(--accent); }
+.onb-status { font-size: 12px; margin-top: 6px; max-width: 300px; }
+.onb-status.hidden { display: none; }
+.onb-status.bad { color: #e5484d; }
+
+
+/* ═════ The composer — one frame, the same on every tab (as in hivey-vscode) ═══════════════════════
+   [tab chips: language · style · size · collection…]
+   text
+   [+] [mic] [◆ model ▾] [✦ level ▾] ……………… [options] [send / stop]
+   under the frame: where the model runs · context ring, % , tokens, cost                        */
+.composer-box { padding: 6px 8px 6px; }
+.composer-box .controls { padding: 2px 2px 0; background: none; border: 0; gap: 6px; flex-wrap: wrap; }
+.composer-box .ctl-group { gap: 6px; }
+.composer-box .ctl-group select { height: 28px; font-size: 12px; border-radius: 999px; padding-top: 0; padding-bottom: 0; }
+.composer-main { padding: 0 2px; }
+.composer-tools { gap: 4px; padding: 2px 0 0; }
+.tools-left { flex: 1 1 auto; min-width: 0; gap: 2px; }
+.tools-left .attach-btn, .tools-left .mic-btn { width: 30px; height: 30px; border-radius: 8px; }
+/* The model chip: its maker's mark, then the name, clipped rather than wrapped. */
+.combo.model-chip { position: relative; display: inline-flex; align-items: center; gap: 6px; min-width: 0; flex: 0 1 auto; max-width: 62%;
+  height: 30px; padding: 0 6px; border-radius: 8px; cursor: pointer; transition: background .15s; }
+.combo.model-chip:hover { background: color-mix(in srgb, var(--text) 8%, transparent); }
+.combo.model-chip.hidden { display: none; }
+.model-chip .mc-icon { display: inline-flex; flex: 0 0 auto; color: var(--text); font-size: 12px; }
+.model-chip .combo-input { flex: 0 1 auto; min-width: 0; height: auto; padding: 0; border: 0 !important;
+  background: transparent !important; box-shadow: none !important; animation: none !important;
+  font-size: 12.5px; font-weight: 600; color: var(--text); }
+.model-chip .combo-caret { position: static; transform: none; font-size: 10px; }
+/* The thinking chip, and its popover of the model's own levels. */
+.cchip { display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto; height: 30px; padding: 0 6px;
+  border: 0; border-radius: 8px; background: transparent; color: var(--muted); font: inherit; font-size: 12.5px;
+  font-weight: 600; cursor: pointer; transition: background .15s, color .15s; }
+.cchip:hover { background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text); }
+.cchip.hidden, .cchip.tab-off { display: none; }
+.cchip .tc-icon { color: var(--accent); }
+.cchip .tc-caret { font-size: 10px; }
+.think-pop { position: fixed; z-index: 90; min-width: 170px; padding: 8px; border-radius: 12px; border: 1px solid var(--border);
+  background: var(--panel); box-shadow: 0 12px 32px rgba(0,0,0,.35); }
+.think-pop.hidden { display: none; }
+.think-pop .tp-head { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); padding: 2px 6px 6px; }
+.think-pop .think-seg { display: flex; flex-direction: column; align-items: stretch; gap: 2px; margin: 0; padding: 0; background: none; }
+.think-pop .ts-btn { text-align: left; padding: 7px 10px; border-radius: 8px; font-size: 13px; }
+/* Send: the brand gradient; replaced by Stop while the model works. */
+.ctool.send-btn { border: 0; background: var(--grad); color: var(--on-accent); }
+.ctool.send-btn:hover { color: var(--on-accent); filter: brightness(1.08); }
+.ctool.send-btn.hidden, .ctool.stop.hidden { display: none; }
+/* Under the frame: where the model runs, and how full its window is / what it has cost. */
+.composer-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 6px; min-height: 18px; }
+.cf-priv, .composer-foot .ctx-gauge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 6px; border: 0; border-radius: 6px;
+  background: transparent; color: var(--muted); font: inherit; font-size: 11.5px; cursor: pointer; white-space: nowrap; }
+.cf-priv:hover, .composer-foot .ctx-gauge:hover { color: var(--text); background: color-mix(in srgb, var(--text) 7%, transparent); }
+.cf-priv.hidden { display: none; }
+.cf-priv[data-kind="local"], .cf-priv[data-kind="gateway"] { color: color-mix(in srgb, #3fb950 75%, var(--muted)); }
+.composer-foot .ctx-gauge .cg-tokens, .composer-foot .ctx-gauge .cg-cost { opacity: .85; }
+.composer-foot .ctx-gauge .cg-cost:not(:empty)::before, .composer-foot .ctx-gauge .cg-tokens:not(:empty)::before { content: "·"; margin-right: 6px; opacity: .6; }
+.composer-foot .ctx-gauge .cg-ring { width: 13px; height: 13px; }
+/* Under an answer: its tokens and its cost. */
+.answer-meta { margin-top: 6px; font-size: 11px; color: var(--muted); }
+/* Context actions that say what they do. */
+.mact-bar .mact.mact-labelled { width: auto; min-width: 0; padding: 0 8px; gap: 5px; display: inline-flex; align-items: center; border-radius: 999px; white-space: nowrap; }
+.mact-bar .mact.mact-labelled .mact-word { font-size: 11.5px; font-weight: 600; }
+.mact-bar .mact.mact-labelled.on { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+button.ctx-tag { border: 0; background: transparent; padding: 0; cursor: pointer; font: inherit; text-align: inherit; }
+button.ctx-tag:hover { color: var(--text); text-decoration: underline; }
+/* The suggested next request, greyed in the empty box. */
+.composer textarea.has-suggestion::placeholder { color: color-mix(in srgb, var(--accent) 45%, var(--muted)); font-style: italic; }
+/* The model list sits above the composer now. */
+.model-filter-holder { display: none; }
