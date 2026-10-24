@@ -505,20 +505,28 @@ async function main() {
  * accept a reasoning parameter, and OpenRouter's `reasoning` object (mandatory / supported efforts /
  * default) — read by src/lib/reasoning.js. Nothing here names a version; everything comes from the API.
  */
+// What the generated SOURCE file may contain from the network: model ids of the usual shape, whole
+// numbers, and the known effort words — anything else is dropped. JSON.stringify already makes every
+// value an inert literal; this keeps a malformed or hostile catalogue entry out of the file at all.
+const SAFE_ID = /^[A-Za-z0-9~][A-Za-z0-9._:\/~-]{0,127}$/;
+const EFFORT_WORDS = new Set(["none", "minimal", "low", "medium", "high", "xhigh", "max"]);
+
 function catalogBody(all) {
   const windows = {};
   const reasoning = [];
   const efforts = {};
-  for (const m of [...all].sort((a, b) => a.id.localeCompare(b.id))) {
+  for (const m of [...all].filter((x) => typeof x.id === "string" && SAFE_ID.test(x.id)).sort((a, b) => a.id.localeCompare(b.id))) {
     if (/:batch$/.test(m.id)) continue;
-    if (m.context_length) windows[m.id] = Number(m.context_length);
+    const ctx = Number(m.context_length);
+    if (Number.isInteger(ctx) && ctx > 0 && ctx < 1e9) windows[m.id] = ctx;
     if ((m.supported_parameters || []).includes("reasoning")) reasoning.push(m.id);
     const r = m.reasoning;
     if (r && typeof r === "object" && (r.mandatory || Array.isArray(r.supported_efforts))) {
+      const e = Array.isArray(r.supported_efforts) ? r.supported_efforts.filter((w) => EFFORT_WORDS.has(w)) : null;
       efforts[m.id] = {
         m: r.mandatory ? 1 : 0,
-        ...(Array.isArray(r.supported_efforts) ? { e: [...r.supported_efforts] } : {}),
-        ...(typeof r.default_effort === "string" ? { d: r.default_effort } : {}),
+        ...(e ? { e } : {}),
+        ...(EFFORT_WORDS.has(r.default_effort) ? { d: r.default_effort } : {}),
       };
     }
   }
