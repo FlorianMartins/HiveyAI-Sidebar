@@ -10,6 +10,34 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+### Chat, Sécurité et Wisebase : des réponses plus justes, sans brider les modèles
+
+- **Les vrais niveaux de réflexion de chaque modèle** : le menu ne propose plus « Off / On / Max »
+  pour tous, mais les niveaux que le modèle choisi possède réellement — Direct, Bref, Standard,
+  Approfondi, Extrême, Maximum — et chacun est envoyé comme le fournisseur le documente (Claude,
+  OpenAI, OpenRouter, Gemini, DeepSeek, Mistral, xAI, Groq, Perplexity, serveur personnel). Avant,
+  « Off » laissait réfléchir les modèles qui réfléchissent par défaut, et « On / Max » se contentaient
+  de demander au modèle d'écrire une balise `<think>` dans sa réponse.
+- **Sans choix de votre part** : un modèle cloud garde son comportement par défaut (rien de plus
+  facturé) ; sur votre serveur ou votre passerelle, c'est « Standard », plus rapide que le maximum
+  qu'appliquait le modèle (Qwen 3.8), avec un budget de réflexion par niveau.
+- **Plus aucune limite fixe de longueur** : les réponses ne sont plus coupées à 4 096 jetons (Claude)
+  ou à une valeur devinée d'après le nom du modèle (OpenRouter) ; c'est la limite réelle du modèle qui
+  s'applique, apprise de sa propre réponse quand l'API en exige une.
+- **Le contexte suit la vraie fenêtre du modèle** : la conversation n'est plus résumée dès 28 000
+  caractères quel que soit le modèle, mais à 75 % de la fenêtre réelle (catalogue, ou serveur
+  interrogé directement) ; si le serveur répond que la conversation ne tient plus, elle est résumée
+  et la question reposée, au lieu d'une erreur.
+- **Réponse coupée, connexion réinitialisée** : une réponse interrompue en cours de route est
+  complétée, une connexion coupée avant la réponse est relancée une fois.
+- **La réflexion n'est plus perdue d'une étape à l'autre** (serveur personnel, DeepSeek, OpenRouter) :
+  le modèle reprend son raisonnement au lieu de tout recommencer, et le cache du serveur tient d'une
+  question à l'autre.
+- **Moins cher avec Claude** : le cache de prompt d'Anthropic est utilisé sur les longues
+  conversations (lecture à un dixième du prix).
+- **Toujours dans votre langue** : la langue de votre question est nommée au modèle, dans vos propres
+  mots, même après la lecture d'une page dans une autre langue.
+
 ### Fiabilité et sécurité du projet
 
 - **Chaque modification est vérifiée automatiquement** avant d'être acceptée : les tests sur

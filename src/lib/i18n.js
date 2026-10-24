@@ -14,6 +14,14 @@ import { setHTML } from "./dom.js";
 let lang = "en";
 
 const EN = {
+  "think.lvl.none": "Direct",
+  "think.lvl.low": "Brief",
+  "think.lvl.medium": "Standard",
+  "think.lvl.high": "Deep",
+  "think.lvl.xhigh": "Extreme",
+  "think.lvl.max": "Maximum",
+  "think.native": "{name} — sent to the model as “{native}”",
+  "think.default": "the model's default",
   // ── Memory ──
   "mem.defaultName": "The assistant",
   "mem.status.searching": "{name} is checking memory…",
@@ -327,10 +335,7 @@ const EN = {
   "confirm.allow": "Allow",
   "confirm.deny": "Deny",
   "chip.thinking": "💭 Thinking",
-  "chip.thinkingTitle": "Show the model's reasoning",
-  "chip.thinkOff": "Thinking: off — click for High → Max reasoning",
-  "chip.thinkHigh": "Thinking: High — deep reasoning (click for Max)",
-  "chip.thinkMax": "Thinking: Max — maximum reasoning budget (click to turn off)",
+  "chip.thinkingTitle": "Thinking level — the selected model's own levels",
   "cmd.skills": "Expert skills",
   "auto.title": "Auto — use your best-rated model ({label}, {n} win(s))",
   "recipe.head": "Quick analysis",
@@ -668,7 +673,8 @@ const EN = {
   "drop.hint": "Drop files here to attach them",
 
   // ----- Efficiency / routing ------------------------------------------------
-  "ctx.compacted": "🗜 Older messages were summarised to save tokens.",
+  "ctx.compacted": "🗜 The conversation neared the model's context window: older messages were summarised — everything stays on screen.",
+  "ctx.overflow": "🗜 The conversation no longer fitted the model's context window: older messages were summarised, and the question asked again.",
 
   // ----- Compare / send ------------------------------------------------------
   "compare.with": "Compare with",
@@ -1020,6 +1026,14 @@ const EN = {
 };
 
 const FR = {
+  "think.lvl.none": "Direct",
+  "think.lvl.low": "Bref",
+  "think.lvl.medium": "Standard",
+  "think.lvl.high": "Approfondi",
+  "think.lvl.xhigh": "Extrême",
+  "think.lvl.max": "Maximum",
+  "think.native": "{name} — envoyé au modèle comme « {native} »",
+  "think.default": "niveau par défaut du modèle",
   // ── Memory ──
   "mem.defaultName": "L’assistant",
   "mem.status.searching": "{name} consulte la mémoire…",
@@ -1328,10 +1342,7 @@ const FR = {
   "confirm.allow": "Autoriser",
   "confirm.deny": "Refuser",
   "chip.thinking": "💭 Réflexion",
-  "chip.thinkingTitle": "Afficher le raisonnement du modèle",
-  "chip.thinkOff": "Réflexion : désactivée — cliquez pour High → Max",
-  "chip.thinkHigh": "Réflexion : High — raisonnement approfondi (cliquez pour Max)",
-  "chip.thinkMax": "Réflexion : Max — budget de raisonnement maximal (cliquez pour désactiver)",
+  "chip.thinkingTitle": "Niveau de réflexion — les niveaux propres au modèle choisi",
   "cmd.skills": "Compétences expertes",
   "auto.title": "Auto — utiliser votre modèle le mieux noté ({label}, {n} victoire(s))",
   "recipe.head": "Analyse rapide",
@@ -1663,7 +1674,8 @@ const FR = {
   "drop.hint": "Déposez des fichiers ici pour les joindre",
 
   // ----- Efficiency / routing ------------------------------------------------
-  "ctx.compacted": "🗜 Les anciens messages ont été résumés pour économiser des tokens.",
+  "ctx.compacted": "🗜 La conversation approchait de la fenêtre de contexte du modèle : les anciens messages ont été résumés — tout reste affiché.",
+  "ctx.overflow": "🗜 La conversation ne tenait plus dans la fenêtre de contexte du modèle : les anciens messages ont été résumés, et la question reposée.",
 
   "compare.with": "Comparer avec",
   "compare.title": "Comparer cette réponse avec un autre modèle",

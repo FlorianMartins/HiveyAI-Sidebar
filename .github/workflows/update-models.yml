@@ -43,7 +43,7 @@ jobs:
         run: |
           # hivey-models.js too: the script also re-curates the 🐝 Hivey per-role assignments,
           # and staging only models.js silently threw those bumps away.
-          FILES=(src/lib/models.js src/lib/hivey-models.js)
+          FILES=(src/lib/models.js src/lib/hivey-models.js src/lib/model-catalog.generated.js)
           if [[ -n "$(git status --porcelain "${FILES[@]}")" ]]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

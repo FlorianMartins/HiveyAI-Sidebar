@@ -24,6 +24,7 @@ import { dirname, join } from "node:path";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const MODELS_FILE = join(__dirname, "..", "src", "lib", "models.js");
 const HIVEY_FILE = join(__dirname, "..", "src", "lib", "hivey-models.js");
+const CATALOG_FILE = join(__dirname, "..", "src", "lib", "model-catalog.generated.js");
 const API = "https://openrouter.ai/api/v1/models";
 
 const CHECK_ONLY = process.argv.includes("--check");
@@ -483,12 +484,58 @@ async function main() {
   // 🐝 Re-curate the Hivey per-role model assignments against the fresh catalogue.
   await curateHivey(all);
 
+  // What each model is, from the catalogue rather than from names written in source: its context
+  // window (what compaction and tool outputs scale to), whether it reasons, and the efforts it takes.
+  const catalogOut = catalogBody(all);
+  const catalogBefore = (() => { try { return readFileSync(CATALOG_FILE, "utf8"); } catch { return ""; } })();
+  const catalogChanged = catalogOut !== catalogBefore;
+  if (CHECK_ONLY && catalogChanged) { console.error("model-catalog.generated.js is out of date (run without --check)."); process.exit(1); }
+  if (!CHECK_ONLY && catalogChanged) { writeFileSync(CATALOG_FILE, catalogOut); console.log("✓ model-catalog.generated.js updated."); }
+
   if (CHECK_ONLY) {
     if (changed) { console.error("models.js is out of date (run without --check)."); process.exit(1); }
     return;
   }
   if (changed) { writeFileSync(MODELS_FILE, out); console.log("✓ models.js updated."); }
   else console.log("✓ models.js already up to date.");
+}
+
+/**
+ * The generated catalogue, the same facts hivey-vscode generates: context windows, the models that
+ * accept a reasoning parameter, and OpenRouter's `reasoning` object (mandatory / supported efforts /
+ * default) — read by src/lib/reasoning.js. Nothing here names a version; everything comes from the API.
+ */
+function catalogBody(all) {
+  const windows = {};
+  const reasoning = [];
+  const efforts = {};
+  for (const m of [...all].sort((a, b) => a.id.localeCompare(b.id))) {
+    if (/:batch$/.test(m.id)) continue;
+    if (m.context_length) windows[m.id] = Number(m.context_length);
+    if ((m.supported_parameters || []).includes("reasoning")) reasoning.push(m.id);
+    const r = m.reasoning;
+    if (r && typeof r === "object" && (r.mandatory || Array.isArray(r.supported_efforts))) {
+      efforts[m.id] = {
+        m: r.mandatory ? 1 : 0,
+        ...(Array.isArray(r.supported_efforts) ? { e: [...r.supported_efforts] } : {}),
+        ...(typeof r.default_effort === "string" ? { d: r.default_effort } : {}),
+      };
+    }
+  }
+  return `// GENERATED FILE — do not edit by hand.
+// Written daily by \`npm run models\` (scripts/update-models.mjs) from OpenRouter's public /models catalogue.
+// ${Object.keys(windows).length} context windows, ${reasoning.length} reasoning models, ${Object.keys(efforts).length} reasoning profiles.
+// Profiles — m: thinking cannot be turned off; e: the efforts it accepts; d: its default.
+// https://openrouter.ai/docs/use-cases/reasoning-tokens
+
+export const CONTEXT_WINDOWS = ${JSON.stringify(windows)};
+
+export const REASONING_MODELS = ${JSON.stringify(reasoning)};
+
+export const REASONING_EFFORTS = {
+${Object.entries(efforts).map(([id, v]) => `  ${JSON.stringify(id)}: ${JSON.stringify(v)},`).join("\n")}
+};
+`;
 }
 
 main().catch((e) => { console.error("update-models failed:", e.message); process.exit(1); });

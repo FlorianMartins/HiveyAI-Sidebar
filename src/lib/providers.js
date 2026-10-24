@@ -1,6 +1,7 @@
 // API clients. Two families sharing one interface:
 //   runTurn({ system, history, tools, onText, onThink, signal })
-//     -> { message, toolCalls:[{id,name,input}], stopReason, text }
+//     -> { message, toolCalls:[{id,name,input}], stopReason, text, reasoning, usage, interrupted? }
+//   `stopReason` is "tool_use", "length" (cut by the output cap), or the provider's own word.
 //   formatToolResults(results) -> native message(s) to push into the history
 //
 // `history` and `message` stay in each provider's NATIVE wire format (Anthropic
@@ -11,6 +12,7 @@
 // DeepSeek/o-series reasoning_content) so the UI can show it separately.
 
 import { PROVIDERS, baseUrlFor, modelFor, keyFor } from "./models.js";
+import { anthropicThinking, wireReasoning, selfHostedThinkingBudget, isSelfHostedProvider } from "./reasoning.js";
 
 // Pull the real, resolvable source URLs out of web-plugin annotations (OpenRouter/OpenAI
 // `url_citation`). These are the ACTUAL search-result links — unlike URLs the model types into its
@@ -30,30 +32,31 @@ function extractUrlCitations(annotations) {
   return out;
 }
 
-const MAX_TOKENS = 4096;
-// Generous per-model OUTPUT cap for OpenRouter so big answers (full apps / artifacts /
-// long code) are NOT truncated. OpenRouter clamps this down to each model's real limit,
-// so a high value is safe. Without it, requests defaulted to a tiny completion and cut
-// off mid-code — the artifact then failed to run and the verifier flagged it forever.
-function orMaxTokens(model) {
-  const m = String(model || "").toLowerCase();
-  if (m.includes("claude") || m.includes("opus") || m.includes("sonnet")) return 32000;
-  if (m.includes("gemini") || m.includes("gpt-5") || m.includes("gpt-4")) return 16000;
-  if (m.includes("deepseek") || m.includes("qwen") || m.includes("llama") || m.includes("nemotron")) return 12000;
-  return 8000;
-}
-// Extended-thinking budgets per reasoning LEVEL. Thinking has three levels now:
-//   "off"  — no reasoning at all (fast, cheap)
-//   "high" — deep, Claude-style reasoning
-//   "max"  — maximum reasoning budget (pushes the model as far as it goes)
-// budget_tokens must stay below max_tokens (enforced via MAX_TOKENS + budget below).
-const THINKING_BUDGET = 10000; // "high"
-const THINK_BUDGETS = { high: 10000, max: 28000 };
+// ── No manual limits ──────────────────────────────────────────────────────────────────────────
+//
+// ⚠️ « il faut s'adapter aux limites des modèles, pas ajouter manuellement des limites » (the rule
+// hivey-vscode follows). Every request here used to carry a cap written in source: 4096 output tokens
+// on Claude (+ a fixed thinking budget), 8000–32000 on OpenRouter chosen by matching the model's
+// NAME, nothing elsewhere. A long answer, a whole artifact, a plan that thought first — cut, on models
+// that could write ten times more. Now nothing is sent where the API needs nothing (the model's own
+// limit applies), and where it demands a figure — Anthropic's `max_tokens` — a generous one is asked
+// and a model that cannot go that far says so ("max_tokens: 64000 > 32000 …"): the request goes again
+// at exactly its limit, which is remembered for the session.
+const learnedMaxOutput = new Map();
+const GENEROUS_MAX_OUTPUT = 64000;
 
-// Normalise any incoming thinking value (boolean back-compat OR level string) to a level.
-function thinkLevelNorm(v) {
-  if (v === "high" || v === "max" || v === "off") return v;
-  return v ? "high" : "off";
+/** The model's own output limit, from a refusal of a larger `max_tokens`; 0 when it is not one. */
+export function maxOutputFromRefusal(message) {
+  const m = /max_tokens:\s*(\d+)\s*>\s*(\d+)/.exec(String(message || ""));
+  return m ? Number(m[2]) : 0;
+}
+
+/** The user's level, or none: the legacy values are read as what they asked for. */
+function levelOf(v) {
+  if (v === "off" || v === false || v == null || v === "") return undefined; // nothing picked
+  if (v === true) return "high";
+  if (["none", "low", "medium", "high", "xhigh", "max"].includes(v)) return v;
+  return undefined;
 }
 
 // Open-weight model families (Llama, Qwen, DeepSeek, GLM, Mistral, Kimi, MiniMax, Nemotron,
@@ -97,13 +100,63 @@ async function ensureOk(response) {
   throw new Error(`HTTP ${response.status} — ${detail.slice(0, 500)}`);
 }
 
+/**
+ * The connection closed under a request or a response — not a refusal, not a bad request. Firefox
+ * says "NetworkError when attempting to fetch resource", Chromium "Failed to fetch", Node
+ * "terminated" or a socket code (from hivey-vscode, providers/openai.ts).
+ */
+export function isConnectionDrop(err) {
+  if (!err || err.name === "AbortError") return false;
+  const codes = ["ECONNRESET", "EPIPE", "ETIMEDOUT", "UND_ERR_SOCKET", "UND_ERR_CLOSED"];
+  if (codes.includes(String(err.code)) || codes.includes(String(err.cause && err.cause.code))) return true;
+  return /^terminated$|other side closed|socket hang up|NetworkError|Failed to fetch|network connection was lost|ERR_CONNECTION_RESET/i.test(String(err.message || ""));
+}
+
+/**
+ * How long to wait before repeating a 402, when OpenRouter says it is worth repeating: its in-flight
+ * spending budget (requests in flight reserve credit), not the balance — "A 402 Payment Required
+ * without the header is not a wait-and-retry case". Bounded at thirty seconds.
+ */
+function retryAfterMs(res) {
+  if (res.status !== 402) return undefined;
+  const header = res.headers.get("retry-after");
+  if (!header) return undefined;
+  const seconds = Number(header.trim());
+  if (!Number.isFinite(seconds) || seconds < 0 || seconds > 30) return undefined;
+  return Math.max(250, seconds * 1000);
+}
+
+const pause = (ms, signal) => new Promise((resolve) => {
+  const timer = setTimeout(resolve, ms);
+  if (signal) signal.addEventListener("abort", () => { clearTimeout(timer); resolve(); }, { once: true });
+});
+
 // Auto-retry transient rate limits (429) and upstream hiccups (503). Free models get rate-limited
 // upstream for a second or two ("retry_after_seconds":1) — a short retry usually clears it, so the
 // right-click quick actions (translate/summarize…) keep working without a paid key.
+//
+// ⚠️ « read ECONNRESET » — a connection reset before any answer came back ended the turn on an error,
+// though the server had not started on it. It is sent again, once: nothing was lost but the place in
+// the queue. A 402 with Retry-After waits as OpenRouter documents, twice at most.
 async function fetchWithRetry(url, opts, maxRetries = 3) {
   let attempt = 0;
+  let resets = 0;
+  let waits = 0;
   while (true) {
-    const res = await fetch(url, opts);
+    let res;
+    try {
+      res = await fetch(url, opts);
+    } catch (err) {
+      if (resets < 1 && isConnectionDrop(err) && !(opts.signal && opts.signal.aborted)) { resets++; continue; }
+      throw err;
+    }
+    const after = retryAfterMs(res);
+    if (after !== undefined && waits < 2) {
+      waits++;
+      try { await res.body?.cancel?.(); } catch (_) {}
+      await pause(after, opts.signal);
+      continue;
+    }
     if ((res.status !== 429 && res.status !== 503) || attempt >= maxRetries || (opts.signal && opts.signal.aborted)) return res;
     let waitMs = Math.min(4000, 700 * (attempt + 1));
     const ra = res.headers.get("retry-after");
@@ -114,26 +167,138 @@ async function fetchWithRetry(url, opts, maxRetries = 3) {
   }
 }
 
+/**
+ * What to drop when a server refuses a parameter, read from what it said (hivey-vscode,
+ * `adaptRequest`). "OpenAI-compatible" is a family, not a specification: OpenAI refuses `max_tokens`
+ * on its reasoning models, several gateways reject a field they have never heard of instead of
+ * ignoring it. Nothing is predicted: the request goes out as written, and a field the server names
+ * is removed or renamed and the request goes again — at most twice, and only ever by DROPPING
+ * something, so a retry can never ask for more than the user did. `undefined` when the complaint is
+ * not about a parameter (a missing model, a content filter): repeating those would only waste time.
+ */
+export function adaptRequest(body, error) {
+  const said = String(error || "").toLowerCase();
+  const next = { ...body };
+  let changed = false;
+  const affordable = /can only afford\s+(\d+)/i.exec(String(error || ""));
+  if (affordable) {
+    const n = Number(affordable[1]);
+    const asked = Number(next.max_tokens ?? next.max_completion_tokens ?? 0);
+    if (n >= 256 && (!asked || asked > n)) { next.max_tokens = n; delete next.max_completion_tokens; return next; }
+    return undefined;
+  }
+  // A model that cannot think, asked to: Ollama names no field ("does not support thinking").
+  if (/does not support thinking|thinking is not supported|reasoning is not supported/.test(said)) {
+    for (const field of ["reasoning_effort", "reasoning", "reasoning_budget_tokens", "reasoning_budget_message"]) {
+      if (field in next) { delete next[field]; changed = true; }
+    }
+    if (changed) return next;
+  }
+  // Some OpenRouter endpoints make reasoning mandatory ("Reasoning is mandatory for this endpoint and
+  // cannot be disabled"): the model's own default is the request it accepts.
+  if (/reasoning is mandatory|cannot be disabled/.test(said) && next.reasoning) {
+    delete next.reasoning;
+    return next;
+  }
+  // DeepSeek thinking with tools refuses a history whose earlier steps lost `reasoning_content`
+  // (a conversation from before this version): thinking off is the request it accepts.
+  if (said.includes("reasoning_content") && next.thinking && next.thinking.type !== "disabled") {
+    next.thinking = { type: "disabled" };
+    delete next.reasoning_effort;
+    return next;
+  }
+  if ("max_tokens" in next && said.includes("max_completion_tokens")) {
+    next.max_completion_tokens = next.max_tokens;
+    delete next.max_tokens;
+    changed = true;
+  }
+  for (const field of ["temperature", "reasoning_effort", "reasoning", "stream_options", "usage", "max_tokens", "reasoning_budget_tokens", "reasoning_budget_message", "thinking", "plugins", "provider"]) {
+    if (!(field in next) || !said.includes(field)) continue;
+    delete next[field];
+    changed = true;
+  }
+  if (!changed && next.reasoning && /reasoning/.test(said)) { delete next.reasoning; changed = true; }
+  return changed ? next : undefined;
+}
+
+/**
+ * One streamed piece of OpenRouter's `reasoning_details`, added to the ones before it.
+ *
+ * ⚠️ « Deepseek v4.1 via openrouter semble se perdre trop souvent (il s'éparpille) » — through
+ * OpenRouter the model was sent nothing of what it had thought at the step before, so a model that
+ * reasons before every action started each step over from the tool results alone. OpenRouter asks
+ * for `reasoning_details` back, unchanged, on the assistant message. Streamed, a detail arrives in
+ * pieces carrying the same `index`: text, summary or encrypted data concatenated in order, the rest
+ * taken as it last came.
+ */
+export function mergeReasoningDetail(into, piece) {
+  if (!piece || typeof piece !== "object") return;
+  const last = into[into.length - 1];
+  const same = last && piece.index !== undefined && last.index === piece.index && last.type === piece.type;
+  if (!same) { into.push({ ...piece }); return; }
+  for (const [k, v] of Object.entries(piece)) {
+    if (v === null || v === undefined) continue;
+    if ((k === "text" || k === "summary" || k === "data") && typeof v === "string") last[k] = String(last[k] ?? "") + v;
+    else last[k] = v;
+  }
+}
+
+/** Whether a tool call's arguments are a whole JSON value — a call cut mid-way is half a call. */
+function isCompleteJson(s) {
+  try { JSON.parse(s || "{}"); return true; } catch (_) { return false; }
+}
+
+/** Rough tokens of a value, at the usual ~4 characters a token. */
+const roughTokens = (v) => Math.ceil((typeof v === "string" ? v.length : JSON.stringify(v ?? "").length) / 4);
+
+/**
+ * Below this there is nothing worth caching, and a cache write costs 1.25× (hivey-vscode,
+ * `CACHE_WORTH_IT_TOKENS`). Anthropic will not cache under about a thousand tokens in any case.
+ */
+const CACHE_WORTH_IT_TOKENS = 2000;
+
 // ---------------------------------------------------------------------------
-// Anthropic (Claude) — native API, + extended thinking + server-side web search
+// Anthropic (Claude) — native API, + adaptive/extended thinking + server-side web search
 // ---------------------------------------------------------------------------
 function anthropicProvider({ apiKey, model, baseUrl, thinkLevel, webSearch }) {
   const url = baseUrl.replace(/\/$/, "") + "/messages";
   return {
     id: "anthropic",
 
-    async runTurn({ system, history, tools, onText, onThink, signal }) {
-      const lvl = thinkLevelNorm(thinkLevel);
-      const budget = lvl === "off" ? 0 : THINK_BUDGETS[lvl] || THINKING_BUDGET;
+    async runTurn({ system, history, tools, onText, onThink, signal, chore }) {
+      // Thinking per model family — see reasoning.js, where each rule cites Anthropic's docs. A side
+      // task (a summary, a title) is not a level anybody picked: the model's own default.
+      const think = anthropicThinking(model, chore ? undefined : thinkLevel);
+      // PROMPT CACHE. The system prompt and, on a long conversation or agent turn, everything sent
+      // so far are marked: the next request — the next step, the next question — reads them back at
+      // a tenth of the input price instead of paying full price for the whole transcript again,
+      // which made a long agent turn cost the SQUARE of its length. Marked on a copy: the stored
+      // history never carries a breakpoint (Anthropic accepts four).
+      const messages = history.slice();
+      const total = roughTokens(system) + roughTokens(history);
+      if (total >= CACHE_WORTH_IT_TOKENS && messages.length) {
+        const last = messages[messages.length - 1];
+        const blocks = typeof last.content === "string" ? [{ type: "text", text: last.content }] : (last.content || []).map((b) => ({ ...b }));
+        const i = blocks.length - 1;
+        if (i >= 0 && blocks[i].type !== "thinking" && blocks[i].type !== "redacted_thinking") {
+          blocks[i] = { ...blocks[i], cache_control: { type: "ephemeral" } };
+          messages[messages.length - 1] = { ...last, content: blocks };
+        }
+      }
       const body = {
         model,
-        max_tokens: budget ? MAX_TOKENS + budget : MAX_TOKENS,
-        system,
-        messages: history,
+        max_tokens: learnedMaxOutput.get(model) ?? GENEROUS_MAX_OUTPUT,
+        system: system ? [{ type: "text", text: system, ...(roughTokens(system) >= 1024 ? { cache_control: { type: "ephemeral" } } : {}) }] : undefined,
+        messages,
         stream: true,
       };
-      if (budget) {
-        body.thinking = { type: "enabled", budget_tokens: budget };
+      if (!body.system) delete body.system;
+      if (think.thinking) body.thinking = think.thinking;
+      if (think.effort) body.output_config = { effort: think.effort };
+      if (think.headroom) {
+        const ceiling = learnedMaxOutput.get(model);
+        const wanted = Math.max(body.max_tokens, think.headroom + 4096);
+        body.max_tokens = ceiling ? Math.min(wanted, ceiling) : wanted;
       }
       const toolList = [];
       if (tools && tools.length) {
@@ -145,74 +310,108 @@ function anthropicProvider({ apiKey, model, baseUrl, thinkLevel, webSearch }) {
       }
       if (toolList.length) body.tools = toolList;
 
-      const response = await fetch(url, {
+      const send = () => fetchWithRetry(url, {
         method: "POST",
         signal,
         headers: {
           "content-type": "application/json",
-          "x-api-key": apiKey,
+          "x-api-key": String(apiKey || "").trim(),
           "anthropic-version": "2023-06-01",
           "anthropic-dangerous-direct-browser-access": "true",
         },
         body: JSON.stringify(body),
       });
+      let response = await send();
+      if (!response.ok && response.status === 400) {
+        const said = await response.text().catch(() => "");
+        const limit = maxOutputFromRefusal(said);
+        if (!limit) throw new Error(`HTTP 400 — ${said.slice(0, 500)}`);
+        learnedMaxOutput.set(model, limit);
+        body.max_tokens = limit;
+        response = await send();
+      }
       await ensureOk(response);
 
       const blocks = [];
       let stopReason = null;
       let text = "";
+      let reasoning = "";
+      let finished = false;
+      const usage = { promptTokens: 0, completionTokens: 0, cachedTokens: 0 };
 
-      for await (const data of sseData(response)) {
-        if (data === "[DONE]") break;
-        let ev;
-        try {
-          ev = JSON.parse(data);
-        } catch (_) {
-          continue;
-        }
-        switch (ev.type) {
-          case "content_block_start":
-            blocks[ev.index] = { ...ev.content_block, _partial: "" };
-            break;
-          case "content_block_delta": {
-            const b = blocks[ev.index];
-            if (!b) break;
-            const d = ev.delta;
-            if (d.type === "text_delta") {
-              b.text = (b.text || "") + d.text;
-              text += d.text;
-              onText && onText(d.text);
-            } else if (d.type === "thinking_delta") {
-              b.thinking = (b.thinking || "") + d.thinking;
-              onThink && onThink(d.thinking);
-            } else if (d.type === "signature_delta") {
-              b.signature = (b.signature || "") + d.signature;
-            } else if (d.type === "input_json_delta") {
-              b._partial += d.partial_json;
-            }
-            break;
+      try {
+        for await (const data of sseData(response)) {
+          if (data === "[DONE]") { finished = true; break; }
+          let ev;
+          try {
+            ev = JSON.parse(data);
+          } catch (_) {
+            continue;
           }
-          case "content_block_stop": {
-            const b = blocks[ev.index];
-            if (b && b.type === "tool_use") {
-              try {
-                b.input = JSON.parse(b._partial || "{}");
-              } catch (_) {
-                b.input = {};
+          switch (ev.type) {
+            case "message_start": {
+              const u = ev.message && ev.message.usage;
+              if (u) {
+                usage.promptTokens = (u.input_tokens || 0) + (u.cache_read_input_tokens || 0) + (u.cache_creation_input_tokens || 0);
+                usage.cachedTokens = u.cache_read_input_tokens || 0;
               }
+              break;
             }
-            if (b) delete b._partial;
-            break;
+            case "content_block_start":
+              blocks[ev.index] = { ...ev.content_block, _partial: "" };
+              break;
+            case "content_block_delta": {
+              const b = blocks[ev.index];
+              if (!b) break;
+              const d = ev.delta;
+              if (d.type === "text_delta") {
+                b.text = (b.text || "") + d.text;
+                text += d.text;
+                onText && onText(d.text);
+              } else if (d.type === "thinking_delta") {
+                b.thinking = (b.thinking || "") + d.thinking;
+                reasoning += d.thinking;
+                onThink && onThink(d.thinking);
+              } else if (d.type === "signature_delta") {
+                b.signature = (b.signature || "") + d.signature;
+              } else if (d.type === "input_json_delta") {
+                b._partial += d.partial_json;
+              }
+              break;
+            }
+            case "content_block_stop": {
+              const b = blocks[ev.index];
+              if (b && b.type === "tool_use") {
+                try {
+                  b.input = JSON.parse(b._partial || "{}");
+                } catch (_) {
+                  b.input = null; // cut mid-call: dropped below
+                }
+              }
+              if (b) delete b._partial;
+              break;
+            }
+            case "message_delta":
+              if (ev.delta && ev.delta.stop_reason) stopReason = ev.delta.stop_reason;
+              if (ev.usage && ev.usage.output_tokens) usage.completionTokens = ev.usage.output_tokens;
+              break;
+            case "message_stop":
+              finished = true;
+              break;
+            case "error":
+              throw new Error((ev.error && ev.error.message) || "stream error");
           }
-          case "message_delta":
-            if (ev.delta && ev.delta.stop_reason) stopReason = ev.delta.stop_reason;
-            break;
         }
+      } catch (err) {
+        // A connection cut mid-answer does not END the stream, reading it throws: kept as an
+        // interrupted reply, which the turn asks the model to continue, instead of an error.
+        if ((signal && signal.aborted) || !isConnectionDrop(err)) throw err;
       }
 
       // Keep ALL blocks (including thinking with its signature, which the API
-      // requires on the next turn) so the conversation stays valid.
-      const content = blocks.filter(Boolean).map((b) => {
+      // requires on the next turn) so the conversation stays valid. A tool call cut mid-way is
+      // half a call and is dropped.
+      const content = blocks.filter(Boolean).filter((b) => !(b.type === "tool_use" && b.input === null)).map((b) => {
         if (b.type === "tool_use")
           return { type: "tool_use", id: b.id, name: b.name, input: b.input || {} };
         if (b.type === "text") return { type: "text", text: b.text || "" };
@@ -227,7 +426,15 @@ function anthropicProvider({ apiKey, model, baseUrl, thinkLevel, webSearch }) {
         .filter((b) => b.type === "tool_use")
         .map((b) => ({ id: b.id, name: b.name, input: b.input }));
 
-      return { message: { role: "assistant", content }, toolCalls, stopReason, text };
+      return {
+        message: { role: "assistant", content },
+        toolCalls,
+        stopReason: stopReason === "max_tokens" ? "length" : stopReason,
+        text,
+        reasoning,
+        usage,
+        ...(!finished && !(signal && signal.aborted) ? { interrupted: true } : {}),
+      };
     },
 
     formatToolResults(results) {
@@ -253,6 +460,8 @@ function anthropicProvider({ apiKey, model, baseUrl, thinkLevel, webSearch }) {
 // ---------------------------------------------------------------------------
 function openaiProvider({ apiKey, model, baseUrl, webSearch, providerId, thinkLevel }) {
   const url = baseUrl.replace(/\/$/, "") + "/chat/completions";
+  const selfHosted = isSelfHostedProvider(providerId);
+  const ollama = /:11434(\/|$)/.test(baseUrl) || /ollama/i.test(baseUrl) || providerId === "ollama";
   const headers = { "content-type": "application/json" };
   // Trim the key: a stray space/newline in a pasted or OAuth key makes OpenRouter reject it with a
   // cryptic 401 "User not found".
@@ -267,51 +476,49 @@ function openaiProvider({ apiKey, model, baseUrl, webSearch, providerId, thinkLe
     headers["X-Title"] = "Hivey AI";
   }
 
+  // The thinking behind an earlier step, back to the model that had it. Kept on the stored message
+  // under private keys and put on the wire only where the API takes it: Qwen's template renders it
+  // (and the server's prompt cache then holds from one step and one question to the next), DeepSeek
+  // REQUIRES it with tools and thinking on, OpenRouter asks for `reasoning_details` back unchanged.
+  const wire = (m) => {
+    if (!m || typeof m !== "object") return m;
+    const { _reasoning, _reasoningDetails, ...rest } = m;
+    if (m.role !== "assistant") return rest;
+    if (_reasoning && (selfHosted || providerId === "deepseek")) rest.reasoning_content = _reasoning;
+    else if (_reasoningDetails && _reasoningDetails.length && providerId === "openrouter") rest.reasoning_details = _reasoningDetails;
+    return rest;
+  };
+
   return {
     id: "openai",
 
-    async runTurn({ system, history, tools, onText, onThink, signal }) {
-      const messages = system ? [{ role: "system", content: system }, ...history] : [...history];
-      const lvl = thinkLevelNorm(thinkLevel);
+    async runTurn({ system, history, tools, onText, onThink, signal, chore }) {
+      const messages = (system ? [{ role: "system", content: system }, ...history] : [...history]).map(wire);
       const body = { model, messages, stream: true };
-      // Give answers room to be COMPLETE (full code/artifacts) — see orMaxTokens.
-      if (providerId === "openrouter") body.max_tokens = orMaxTokens(model);
       // Web search: OpenRouter exposes a universal "web" plugin that works with
       // ANY model (including the free ones), so a fast free model can search the
       // web. Perplexity's Sonar models are online by default (nothing to add).
       if (webSearch && providerId === "openrouter") {
         body.plugins = [{ id: "web", max_results: 5 }];
       }
-      // Reasoning / "thinking" for OpenAI-compatible providers. OpenRouter exposes a
-      // universal `reasoning` switch that turns on a model's chain-of-thought (when it
-      // supports one) and streams it back as `delta.reasoning` — which we surface in the
-      // 💭 block. DeepSeek's reasoner models stream `reasoning_content` on their own.
-      // We only send the param to OpenRouter; other strict APIs would reject an unknown
-      // field, and models that don't reason simply ignore the toggle.
-      //
-      // IMPORTANT for speed/cost: many default models (gpt-oss, Nemotron, Qwen-thinking…)
-      // REASON BY DEFAULT, which is slow and burns tokens. So when the Thinking toggle is
-      // OFF we explicitly DISABLE reasoning for a fast, cheap, near-instant answer — and
-      // only enable it when the user actually asks for it.
+      // Reasoning: what the level is for THIS provider and THIS model — the field, the word, and
+      // whether thinking can be off at all. One table, with the vendors' documentation: reasoning.js.
+      // Nothing picked on a cloud = nothing sent, the model's own default, as before.
+      const level = levelOf(thinkLevel) ?? (selfHosted ? "medium" : undefined);
+      const thinking = wireReasoning(providerId, model, level, { tools: Boolean(tools && tools.length), ...(chore ? { chore: true } : {}) });
+      Object.assign(body, thinking.fields);
+      // The level's thinking budget on the user's own server: llama.cpp closes the thought itself
+      // when it is spent, so "Bref" really is brief (measured on Qwen3.8 in hivey-vscode: as precise,
+      // 29 % faster). Not for a side task, whose thinking is off already; not for Ollama.
+      if (selfHosted && !ollama && !chore) Object.assign(body, selfHostedThinkingBudget(level));
       if (providerId === "openrouter") {
-        // Three reasoning levels: off = fully disabled (fast, cheap); high = deep Claude-style
-        // reasoning (effort "high"); max = the biggest reasoning budget we allow, pushing the
-        // model as far as it goes. For "max" we also raise the overall token cap so the long
-        // chain-of-thought doesn't eat into the final answer and truncate the code.
-        if (lvl === "max") {
-          body.reasoning = { max_tokens: THINK_BUDGETS.max };
-          body.max_tokens = Math.max(orMaxTokens(model), THINK_BUDGETS.max + 8000);
-        } else if (lvl === "high") {
-          body.reasoning = { effort: "high" };
-        }
-        // lvl === "off" → we DON'T send `reasoning:{enabled:false}`: some endpoints (R1,
-        // Qwen-thinking, Nemotron-reasoning, gpt-oss…) make reasoning MANDATORY and reject
-        // disabling it with "HTTP 400 — Reasoning is mandatory…". We simply omit the field;
-        // models that reason by default will reason (hidden, since the 💭 toggle is off).
         // Quality: pin open-weight models to high-precision hosts (drop int4/int8 hosts).
         const provPref = openWeightProviderPref(model);
         if (provPref) body.provider = provPref;
+        body.usage = { include: true };
       }
+      // The accounting. A server that does not know the field ignores it, or names it and it goes.
+      body.stream_options = { include_usage: true };
       if (tools && tools.length) {
         body.tools = tools.map((t) => ({
           type: "function",
@@ -319,74 +526,92 @@ function openaiProvider({ apiKey, model, baseUrl, webSearch, providerId, thinkLe
         }));
       }
 
-      let response = await fetchWithRetry(url, {
-        method: "POST",
-        signal,
-        headers,
-        body: JSON.stringify(body),
-      });
-      // Safety net: a few OpenRouter endpoints reject ANY reasoning override (mandatory or
-      // unsupported) with a 400 mentioning "reasoning". Retry once WITHOUT the reasoning field.
-      if (!response.ok && response.status === 400 && body.reasoning) {
-        let errText = "";
-        try { errText = await response.text(); } catch (_) {}
-        if (/reasoning/i.test(errText)) {
-          const retryBody = { ...body };
-          delete retryBody.reasoning;
-          response = await fetchWithRetry(url, { method: "POST", signal, headers, body: JSON.stringify(retryBody) });
-        } else {
-          throw new Error(`HTTP ${response.status} — ${errText.slice(0, 500)}`);
-        }
+      let attempt = body;
+      let response;
+      for (let tries = 0; ; tries++) {
+        response = await fetchWithRetry(url, { method: "POST", signal, headers, body: JSON.stringify(attempt) });
+        if (response.ok || (response.status !== 400 && response.status !== 402 && response.status !== 422) || tries >= 2) break;
+        const said = await response.text().catch(() => "");
+        const fixed = adaptRequest(attempt, said);
+        if (!fixed) throw new Error(`HTTP ${response.status} — ${said.slice(0, 500)}`);
+        attempt = fixed;
       }
       await ensureOk(response);
 
       let text = "";
+      let reasoning = "";
       let finishReason = null;
+      let finished = false;
       const toolAcc = {};
+      const details = [];
+      const usage = { promptTokens: 0, completionTokens: 0, cachedTokens: 0 };
       const annotations = []; // web-plugin citations (url_citation) — the REAL, resolvable source URLs
 
-      for await (const data of sseData(response)) {
-        if (data === "[DONE]") break;
-        let chunk;
-        try {
-          chunk = JSON.parse(data);
-        } catch (_) {
-          continue;
-        }
-        const choice = chunk.choices && chunk.choices[0];
-        if (!choice) continue;
-        const delta = choice.delta || {};
-        // Reasoning text (DeepSeek: reasoning_content ; OpenRouter: reasoning)
-        const reason = delta.reasoning_content || delta.reasoning;
-        if (reason) onThink && onThink(reason);
-        // OpenRouter web plugin returns url_citation annotations (real source URLs) on the delta
-        // and/or the final message — capture them so callers get resolvable links, not model-typed ones.
-        if (Array.isArray(delta.annotations)) annotations.push(...delta.annotations);
-        if (choice.message && Array.isArray(choice.message.annotations)) annotations.push(...choice.message.annotations);
-        if (delta.content) {
-          text += delta.content;
-          onText && onText(delta.content);
-        }
-        if (delta.tool_calls) {
-          for (const tc of delta.tool_calls) {
-            const i = tc.index ?? 0;
-            if (!toolAcc[i]) toolAcc[i] = { id: tc.id, name: "", args: "" };
-            if (tc.id) toolAcc[i].id = tc.id;
-            if (tc.function && tc.function.name) toolAcc[i].name = tc.function.name;
-            if (tc.function && tc.function.arguments) toolAcc[i].args += tc.function.arguments;
+      try {
+        for await (const data of sseData(response)) {
+          if (data === "[DONE]") { finished = true; break; }
+          let chunk;
+          try {
+            chunk = JSON.parse(data);
+          } catch (_) {
+            continue;
           }
+          if (chunk.error) throw new Error(chunk.error.message || String(chunk.error));
+          if (chunk.usage) {
+            usage.promptTokens = chunk.usage.prompt_tokens ?? usage.promptTokens;
+            usage.completionTokens = chunk.usage.completion_tokens ?? usage.completionTokens;
+            usage.cachedTokens = (chunk.usage.prompt_tokens_details && chunk.usage.prompt_tokens_details.cached_tokens) ?? usage.cachedTokens;
+            if (typeof chunk.usage.cost === "number") usage.costUsd = chunk.usage.cost;
+          }
+          const choice = chunk.choices && chunk.choices[0];
+          if (!choice) continue;
+          const delta = choice.delta || {};
+          if (Array.isArray(delta.reasoning_details)) for (const d of delta.reasoning_details) mergeReasoningDetail(details, d);
+          // Reasoning text (DeepSeek / llama.cpp: reasoning_content ; OpenRouter: reasoning)
+          const reason = delta.reasoning_content || delta.reasoning;
+          if (typeof reason === "string" && reason) {
+            reasoning += reason;
+            onThink && onThink(reason);
+          }
+          // OpenRouter web plugin returns url_citation annotations (real source URLs) on the delta
+          // and/or the final message — capture them so callers get resolvable links, not model-typed ones.
+          if (Array.isArray(delta.annotations)) annotations.push(...delta.annotations);
+          if (choice.message && Array.isArray(choice.message.annotations)) annotations.push(...choice.message.annotations);
+          if (delta.content) {
+            text += delta.content;
+            onText && onText(delta.content);
+          }
+          if (delta.tool_calls) {
+            for (const tc of delta.tool_calls) {
+              const i = tc.index ?? 0;
+              if (!toolAcc[i]) toolAcc[i] = { id: tc.id, name: "", args: "" };
+              if (tc.id) toolAcc[i].id = tc.id;
+              if (tc.function && tc.function.name) toolAcc[i].name = tc.function.name;
+              if (tc.function && tc.function.arguments) toolAcc[i].args += tc.function.arguments;
+            }
+          }
+          if (choice.finish_reason) { finishReason = choice.finish_reason; finished = true; }
         }
-        if (choice.finish_reason) finishReason = choice.finish_reason;
+      } catch (err) {
+        // « terminated » — a connection cut mid-answer: what arrived is kept as an interrupted
+        // reply, which the turn asks the model to continue, rather than shown as an error.
+        if ((signal && signal.aborted) || !isConnectionDrop(err)) throw err;
       }
 
-      const nativeToolCalls = Object.values(toolAcc).map((t) => ({
-        id: t.id,
-        type: "function",
-        function: { name: t.name, arguments: t.args || "{}" },
-      }));
+      // Cut by the output cap or by the connection: a call still being written is half a call.
+      const cut = finishReason === "length" || (!finished && !(signal && signal.aborted));
+      const nativeToolCalls = Object.values(toolAcc)
+        .filter((t) => t.name && (!cut || isCompleteJson(t.args)))
+        .map((t, i) => ({
+          id: t.id || `call_${i}`,
+          type: "function",
+          function: { name: t.name, arguments: t.args || "{}" },
+        }));
 
       const message = { role: "assistant", content: text || null };
       if (nativeToolCalls.length) message.tool_calls = nativeToolCalls;
+      if (reasoning) message._reasoning = reasoning;
+      if (details.length) message._reasoningDetails = details;
 
       const toolCalls = nativeToolCalls.map((t) => {
         let input = {};
@@ -399,9 +624,12 @@ function openaiProvider({ apiKey, model, baseUrl, webSearch, providerId, thinkLe
       return {
         message,
         toolCalls,
-        stopReason: finishReason === "tool_calls" ? "tool_use" : finishReason,
+        stopReason: finishReason === "tool_calls" || (nativeToolCalls.length && !cut) ? "tool_use" : finishReason,
         text,
+        reasoning,
+        usage,
         citations: extractUrlCitations(annotations),
+        ...(!finished && !(signal && signal.aborted) ? { interrupted: true } : {}),
       };
     },
 
@@ -432,16 +660,17 @@ export function makeProvider(settings, opts = {}) {
   const model = modelFor(id, settings);
   const baseUrl = baseUrlFor(id, settings);
 
-  // Reasoning level: prefer the explicit `thinkLevel`, fall back to the legacy boolean
-  // `thinking`. Normalised to "off" | "high" | "max".
-  const lvl = thinkLevelNorm(opts.thinkLevel != null ? opts.thinkLevel : opts.thinking);
+  // The level the user picked — "none" | "low" | "medium" | "high" | "xhigh" | "max" — or nothing
+  // (the legacy "off" included): on a cloud the model's own default, on the user's own server
+  // "Standard" (see `levelOf` and reasoning.js). The legacy boolean `thinking` still reads.
+  const lvl = opts.thinkLevel != null ? opts.thinkLevel : opts.thinking;
 
   if (meta.kind === "anthropic") {
     return anthropicProvider({
       apiKey,
       model,
       baseUrl,
-      thinkLevel: meta.supportsThinking ? lvl : "off",
+      thinkLevel: meta.supportsThinking ? levelOf(lvl) : undefined,
       webSearch: !!opts.webSearch && meta.supportsWebSearch,
     });
   }
