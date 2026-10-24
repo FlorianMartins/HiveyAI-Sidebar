@@ -11,3 +11,4 @@ web-ext-artifacts/
 
 # bench artefacts (contiennent des mesures, pas du code)
 bench-hivey.json
+bench-results/
