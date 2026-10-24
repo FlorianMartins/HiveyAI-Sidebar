@@ -79,6 +79,17 @@ Version de développement, toujours à jour :
 - La sauvegarde chiffrée et les raccourcis ont enfin leur place dans la liste « Aller à » et dans
   la recherche.
 
+### Onglet Web : Claude retrouve son propre menu
+
+- **Le menu de Claude est de retour** (le bouton en haut à gauche qui ouvre vos conversations
+  passées, vos projets, la recherche) — comme dans la barre latérale native de Firefox. Ce n'était
+  pas la largeur : claude.ai repère qu'il est affiché dans un cadre et retire alors tout son menu.
+  Dans l'onglet Web de Hivey, et là seulement, la page se croit désormais ouverte normalement.
+- **Déconnecté, la connexion fonctionne dans l'onglet Web** : plus de « Cette page ne peut pas
+  s'exécuter dans une vue intégrée », la page de connexion de Claude s'affiche.
+- Un autre site qui affiche claude.ai dans un cadre reste bloqué par Claude, comme avant. L'icône 🕘
+  (vos conversations Claude) reste là comme raccourci.
+
 ### La zone de saisie, plus nette — et le contexte à votre main
 
 - **Le `+` ouvre un menu** : joindre un fichier, ou apporter la page — capturer une zone, choisir

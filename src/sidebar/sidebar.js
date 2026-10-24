@@ -4769,8 +4769,9 @@ function wire() {
     if (els.webProvBtn) els.webProvBtn.setAttribute("aria-expanded", "false");
   }
   let webCurProv = "claude";
-  // The site's own list of past conversations (claude.ai/recents): in a panel this narrow
-  // claude.ai switches to its mobile layout, where its menu of past chats cannot be reached.
+  // The site's own list of past conversations (claude.ai/recents), one click away. Claude's own
+  // menu is back too (webchat-top.js: framed, claude.ai used to drop it); this stays as a shortcut
+  // and a fallback should the site change how it detects a frame.
   let webHistoryUrl = "";
   function setWebHistory(url) {
     webHistoryUrl = url || "";

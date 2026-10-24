@@ -13,9 +13,31 @@
   try {
     if (window.top === window.self) return; // only inside our embed
   } catch (_) {}
+  // claude.ai: let it show its own menu (see webchat-top.js, which runs next in the PAGE's world and
+  // answers its framing check like a top-level page). Only in OUR panel, which only this isolated
+  // world can tell: the mark is set before any of the site's scripts run and removed at once.
+  try {
+    if (/(^|\.)claude\.ai$/.test(location.hostname) && inHiveyPanel()) document.documentElement.setAttribute("data-hivey-top", "");
+  } catch (_) {}
+
   // Tell the sidebar this frame really holds the provider's page — a frame that loads without this
   // hello is the browser's "can't open this page" error, and the sidebar offers a tab instead.
   try { if (window.parent === window.top) window.parent.postMessage({ __hiveyWeb: "hello" }, "*"); } catch (_) {}
+
+  // True only when this page is the direct child of Hivey's own sidebar page — never when some other
+  // site frames it (the provider's "can't run embedded" guard protects against clickjacking there).
+  // Chromium names the parent's origin (location.ancestorOrigins); Firefox doesn't have that list, but
+  // lets a content script read its own extension page's address.
+  function inHiveyPanel() {
+    var api = typeof browser !== "undefined" ? browser : (typeof chrome !== "undefined" ? chrome : null);
+    var base = api && api.runtime && api.runtime.getURL ? api.runtime.getURL("") : "";
+    if (!base || window.parent !== window.top) return false;
+    try {
+      var ao = location.ancestorOrigins;
+      if (ao && ao.length) return ao.length === 1 && base.indexOf(ao[0] + "/") === 0;
+    } catch (_) {}
+    try { return String(window.parent.location.href).indexOf(base) === 0; } catch (_) { return false; }
+  }
 
   // ── Page-world worker (stringified & injected). Self-contained: no outer refs. ──
   function HIVEY_PW() {
