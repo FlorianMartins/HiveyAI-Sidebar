@@ -286,6 +286,19 @@
         <label class="switch"><input type="checkbox" id="blockPayments" /><span class="track"></span><span class="lbl" data-i18n-html="opt.sec.block"><b>Anti-purchase guardrail</b>: the agent can never pay/checkout</span></label>
         <label class="switch"><input type="checkbox" id="saveHistory" /><span class="track"></span><span class="lbl" data-i18n="opt.sec.save">Save conversation history (local only)</span></label>
         <button id="clearHistoryBtn" class="ghost" data-i18n="opt.sec.clearBtn">Clear all history</button>
+        <h3 data-i18n="opt.priv.h">Anonymisation before a cloud model</h3>
+        <p class="muted" data-i18n-html="opt.priv.p">Local models and your own gateway receive your data as it is. Before a request leaves for a cloud provider, sensitive values are replaced by markers such as ⟨EMAIL_1⟩, and put back in the answer.</p>
+        <label><span data-i18n="opt.priv.level">What is anonymised</span>
+          <select id="privacyLevel">
+            <option value="strict" data-i18n="opt.priv.strict">Strict — also IP addresses, internal hosts and user names in paths</option>
+            <option value="balanced" data-i18n="opt.priv.balanced">Balanced — credentials, personal and company data, your listed terms</option>
+            <option value="off" data-i18n="opt.priv.off">Credentials only</option>
+          </select>
+        </label>
+        <label><span data-i18n="opt.priv.terms">Always anonymise these words (clients, project code names…) — one per line</span>
+          <textarea id="privacyTerms" rows="3" spellcheck="false"></textarea>
+        </label>
+        <label class="switch"><input type="checkbox" id="privacyTrustOwn" /><span class="track"></span><span class="lbl" data-i18n-html="opt.priv.trust"><b>Trust my own servers</b>: nothing is anonymised for local models and my gateway</span></label>
       </section>
 
       <section id="sec-behavior">

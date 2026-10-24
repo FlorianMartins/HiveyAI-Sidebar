@@ -10,6 +10,30 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+### Confidentialité d'abord : local, passerelle ou cloud — et anonymisation avant le cloud
+
+- **Trois façons d'utiliser un modèle, clairement séparées** dans les réglages : 🏠 **Local** (rien
+  ne quitte votre machine), 🔒 **Passerelle / votre serveur** (vos données restent chez vous),
+  ☁️ **Cloud** (les données sensibles sont anonymisées avant l'envoi). Le local et la passerelle
+  sont présentés en premier.
+- **Anonymisation automatique avant tout modèle cloud**, dans tous les onglets et pour toutes les
+  requêtes (y compris les tâches annexes : titres, résumés…) : identifiants secrets, e-mails,
+  téléphones, IBAN, cartes, numéros d'entreprise et de TVA, noms de sociétés, montants que vous
+  écrivez, et vos propres termes (clients, noms de code) deviennent des marqueurs comme
+  `⟨EMAIL_1⟩` — le même marqueur pour la même valeur dans toute la conversation, pour que le modèle
+  continue de raisonner — puis sont **remis en clair** dans la réponse, la réflexion et les actions
+  de l'agent (un formulaire est rempli avec la vraie adresse, pas avec son marqueur).
+- **Sans perdre en qualité** : vos serveurs (local, passerelle) reçoivent vos données telles
+  quelles ; sur une page web publique, les prix restent lisibles (le modèle peut comparer et
+  additionner), seuls les identifiants et données personnelles sont masqués.
+- **Fenêtre des données sensibles** : avant d'envoyer au cloud un identifiant secret, ou une donnée
+  personnelle ou d'entreprise que vous n'avez pas tapée vous-même (une page, un fichier joint, un
+  résultat), la sidebar vous montre **où** elle se trouve (fichier et ligne, page…) et vous
+  choisissez : « Envoyer (marqueurs en place) », « Toujours envoyer (cette conversation) » ou
+  « Annuler ». Une valeur acceptée n'est plus redemandée dans la conversation.
+- **Réglages** (Sécurité et confidentialité) : niveau Strict / Équilibré (par défaut) / Identifiants
+  seulement, mots à toujours anonymiser, et « faire confiance à mes serveurs ».
+
 ### Agent : il va au bout des tâches longues, et ne tourne plus en rond
 
 - **Plus de limite de 24 étapes** : une tâche qui demande d'ouvrir et de lire douze pages va
