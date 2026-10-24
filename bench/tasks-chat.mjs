@@ -1,7 +1,7 @@
 // The Chat, Sécurité and Wisebase tasks. Each is decided by a fact — a number, a name, a language,
 // code that runs — never by a judge model's taste.
 
-import { languageOf, numbersIn, has, codeBlock, runFunction, pass } from "./checks.mjs";
+import { languageOf, numbersIn, codeBlock, runFunction, pass } from "./checks.mjs";
 
 const PRODUCT_PAGE = {
   title: "Aurora X2 — Robot aspirateur | Maison Nova",
@@ -179,7 +179,12 @@ export const CHAT_TASKS = [
     id: "security-pcap-synflood",
     tab: "security",
     turns: [`Analyse cette capture et dis-moi de quelle attaque il s'agit.\n\n${PCAP_SUMMARY}`],
-    check: ({ answer }) => pass(/syn[\s-]*flood|inondation syn/i.test(answer) && !/port scan|balayage de ports/i.test(answer.split(/\n/).slice(0, 4).join(" ")), "a TCP SYN flood, not a port scan"),
+    // Named in either word order ("SYN flood", « flood SYN », « inondation SYN »); a port scan may be
+    // discussed, as long as the verdict is not one.
+    check: ({ answer }) => {
+      const verdict = answer.split("\n").filter((l) => l.trim()).slice(0, 4).join(" ");
+      return pass(/syn[\s-]*flood|flood[\s-]*(tcp[\s-]*)?syn|inondation[\s-]*(tcp[\s-]*)?syn/i.test(answer) && !/^(?!.*(exclu|not|pas|non)).*(port scan|scan de ports|balayage de ports)/i.test(verdict), "a TCP SYN flood, not a port scan");
+    },
   },
   {
     id: "security-headers",
