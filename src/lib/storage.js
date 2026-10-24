@@ -67,13 +67,13 @@ const DEFAULTS = {
   selectedTabs: [], // tab ids the user ticked for multi-tab context
   localEnabled: {}, // explicit opt-in for local servers { ollama:true, lmstudio:true }
   maxPageChars: 12000, // truncation budget for a single page's text
-  targetLang: "French", // preferred target language for translations (canonical English name)
+  targetLang: "", // the last translation language (canonical English name); none until the user picks one
   responseLang: "Auto", // language the AI replies in. "Auto" = match the user's input language.
                         // (The UI language is separate — see uiLang.)
   orFreeOnly: false, // OpenRouter model picker: show ALL models with their price-tier colours
                      // (🎁🟢🟡🟠🔴) by default. Free-only is an opt-in toggle in Settings.
                      // Inaccessible models are auto-removed on error + a data-policy link is shown.
-  improvePreset: "improve", // default writing preset for the "improve" mode
+  improvePreset: "", // the last writing style used in Improve; none until the user picks one (« improve » is used)
   promptLibrary: [], // user's reusable saved prompts: [{ id, title, text, category, at }]. Inserted via
                      // the 📚 library button or the "/" command palette. Local-only (BYOK privacy model).
   promptFavorites: [], // ⭐ favorited prompt ids (built-in or user) — shown in the library's Favorites tab.

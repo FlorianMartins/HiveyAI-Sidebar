@@ -14,9 +14,9 @@ import { setHTML } from "./dom.js";
 let lang = "en";
 
 const EN = {
+  "improve.pick": "Choose a style…",
   "ctx.sizeAutoLabel": "Auto",
   "ctx.sizeAutoTitle": "Auto — the largest window of the model in use ({n})",
-  "translate.into": "Translate into: {lang}",
   "translate.pick": "Choose the language to translate into…",
   "plus.title": "Attach a file or bring in the page",
   "plus.file": "Attach a file",
@@ -1219,9 +1219,9 @@ const EN = {
 };
 
 const FR = {
+  "improve.pick": "Choisissez un style…",
   "ctx.sizeAutoLabel": "Auto",
   "ctx.sizeAutoTitle": "Auto — la plus grande fenêtre du modèle choisi ({n})",
-  "translate.into": "Traduire en : {lang}",
   "translate.pick": "Choisissez la langue de traduction…",
   "plus.title": "Joindre un fichier ou ajouter la page",
   "plus.file": "Joindre un fichier",
