@@ -387,6 +387,7 @@
       <!-- One rounded input box: the "+" sits to the LEFT of the text on the first row,
            the chat toggles + stop on a bottom row at the right. No send button — Enter sends. -->
       <div class="composer-box">
+        <svg class="cb-ring" aria-hidden="true"><rect class="cb-glow" pathLength="100"/><rect class="cb-arc" pathLength="100"/></svg>
         <div id="cmdPalette" class="cmd-palette hidden" role="listbox"></div>
         <div class="composer-main" id="composerMain">
           <textarea id="input" rows="1" data-i18n-ph="composer.ph" placeholder="Write a message…"></textarea>
@@ -402,7 +403,7 @@
         <input id="modelInput" class="combo-input" type="text" autocomplete="off" spellcheck="false" data-i18n-ph="model.searchPh" placeholder="Search a model…" />
         <span class="combo-caret">▾</span>
       </div>
-            <button type="button" id="thinkChip" class="cchip think-chip hidden" data-i18n-title="chip.thinkingTitle" title="Thinking level" aria-haspopup="true" aria-expanded="false"><span class="tc-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></span><span class="tc-label"></span><span class="tc-caret" aria-hidden="true">▾</span></button>
+            <button type="button" id="thinkChip" class="cchip think-chip hidden" data-i18n-title="chip.thinkingTitle" title="Thinking level" aria-haspopup="true" aria-expanded="false"><span class="tc-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.6L19.5 10.5l-5.6 1.9L12 18l-1.9-5.6L4.5 10.5l5.6-1.9z"/><path d="M19 3v4"/><path d="M21 5h-4"/></svg></span><span class="tc-label"></span><span class="tc-caret" aria-hidden="true">▾</span></button>
             <button id="modelConnect" class="btn-grad hidden"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2v6"/><path d="M15 2v6"/><path d="M7 8h10v3a5 5 0 0 1-10 0z"/><path d="M12 16v6"/></svg><span data-i18n="model.connect">Connect a provider</span></button>
           </div>
           <div class="tools-right">
@@ -420,7 +421,6 @@
               <select id="imageSize" class="ctl-select" data-i18n-title="image.sizeTitle" title="Sizes depend on the model. Native 4K/1440p doesn't exist on current image models — upscale the image afterwards."></select>
             </div>
             <button id="stop" class="ctool stop hidden" data-i18n-title="stop.title" title="Stop">■</button>
-            <button id="sendBtn" class="ctool send-btn" type="button" data-i18n-title="send.title" title="Send"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></button>
           </div>
         </div>
       </div>
@@ -445,8 +445,7 @@
         <div class="cp-used" id="ctxPopUsed"></div>
         <div class="cp-sizes" id="ctxPopSizesWrap">
           <div class="cp-sub" data-i18n="ctx.sizeHead">Context size</div>
-          <span class="think-seg" id="ctxPopSizes" role="group"></span>
-          <p class="cp-hint" id="ctxPopHint"></p>
+          <span class="ctx-seg" id="ctxPopSizes" role="group"></span>
         </div>
         <button type="button" class="cp-compact" id="ctxPopCompact" data-i18n="ctx.compactBtn">Summarize now</button>
       </div>

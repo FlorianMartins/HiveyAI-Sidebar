@@ -87,7 +87,7 @@ const DEFAULTS = {
   auraSize: 720, // background aura radius in px
   railSide: "left", // workspace tab rail position INSIDE the sidebar: "left" (default) | "right".
                     // (The sidebar's own browser-side position is not controllable by extensions.)
-  railHidden: true, // rail is a hover overlay, hidden (not pinned) by default; hover ☰ to peek, click to pin.
+  railHidden: false, // the tab rail is pinned open by default; ☰ hides it (hover ☰ to peek).
   railOrder: [], // user-defined order of the workspace tab icons (drag to reorder). [] = default order.
   railTabsHidden: [], // workspace modes whose rail icon is hidden (Settings → Appearance).
   metricScore: true, // model picker: show the accuracy (🎯 %) badge. Independent of price.
@@ -234,12 +234,12 @@ export async function getSettings() {
     s.webOffDefaultMigrated = true;
     try { await browser.storage.local.set({ webSearch: false, searchModel: s.searchModel, webOffDefaultMigrated: true }); } catch (_) {}
   }
-  // One-time: the rail became a HOVER OVERLAY hidden by default. Flip an old pinned-open
-  // (railHidden=false) to hidden ONCE; the user can still pin it open by clicking ☰.
-  if (s.railHidden === false && !s.railOverlayMigrated) {
-    s.railHidden = true;
-    s.railOverlayMigrated = true;
-    try { await browser.storage.local.set({ railHidden: true, railOverlayMigrated: true }); } catch (_) {}
+  // One-time: the tab rail is pinned open by default again (user, 2026-10-24). Open it ONCE for
+  // everyone who had it hidden; ☰ still hides it, and that choice is kept.
+  if (s.railHidden !== false && !s.railOpenMigrated) {
+    s.railHidden = false;
+    s.railOpenMigrated = true;
+    try { await browser.storage.local.set({ railHidden: false, railOpenMigrated: true }); } catch (_) {}
   }
   // One-time: page reading is now OFF by default (Chat). Flip a stored ON to off ONCE; the user
   // can still turn it back on via the Page chip (flag prevents re-flip).

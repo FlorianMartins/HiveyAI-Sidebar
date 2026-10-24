@@ -10,6 +10,25 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+### Zone de saisie : la lumière du cadre, fluide — et plus épurée
+
+- **L'animation du cadre** : un arc violet clair (plus blanc) qui fait le tour du cadre **à vitesse
+  constante** — l'ancien dégradé tournait autour du centre, filait dans les coins et ralentissait au
+  milieu des bords. La bordure est **la même couleur** au survol, au clic et pendant que l'IA travaille.
+- **Plus de petites flèches** après le modèle et le niveau de réflexion ; la puce de réflexion montre
+  **le niveau par défaut du modèle** (« Standard », « Approfondi »…) au lieu de « niveau par défaut du
+  modèle », avec l'icône ✦ d'avant. **Le bouton Envoyer est retiré** : Entrée envoie, ■ arrête.
+- **Traduire** : la liste dit « Traduire en : Espagnol » (ou « Choisissez la langue de traduction… »)
+  et retient la dernière langue utilisée.
+- **La barre des onglets est ouverte par défaut** (☰ la masque toujours, et ce choix est gardé). Le
+  Benchmark (et l'atelier de code) commencent après elle au lieu de passer dessous ; sur une sidebar
+  étroite, l'accueil aussi. Le nom « Hivey » reste blanc, épinglé ou non.
+- **Taille du contexte** : **Auto** (la plus grande fenêtre du modèle choisi) en tête, puis toutes les
+  tailles **jusqu'au maximum du modèle**, maximum compris. Pendant un résumé, un **message provisoire**
+  « 🗜 Résumé de la conversation… » s'affiche dans la conversation, puis dit ce qui a été fait.
+- **Correctif** : choisir une taille de contexte changeait aussi le niveau de réflexion (les deux
+  menus partageaient leurs boutons).
+
 ### La zone de saisie, plus nette — et le contexte à votre main
 
 - **Le `+` ouvre un menu** : joindre un fichier, ou apporter la page — capturer une zone, choisir
@@ -19,7 +38,6 @@ Version de développement, toujours à jour :
 - **Tient dans la sidebar de Firefox** (environ 250 px à l'ouverture) : plus de défilement de côté
   dans aucun onglet. Quand la place manque, le nom « Hivey » s'efface, puis le modèle et la réflexion
   se montrent par leur icône (leur nom reste au survol et dans les menus).
-- **Thème clair** : le nom « Hivey » en haut prend la couleur du texte (il était blanc sur fond clair).
 - **Des icônes cohérentes** : `+`, micro, icône du fournisseur, réflexion (une ampoule), options —
   toutes à la même taille et à la couleur de votre thème. **Envoyer** retrouve son rond en dégradé
   (il était invisible en thème clair).

@@ -204,7 +204,6 @@ const els = {
   ctxPopUsed: $("ctxPopUsed"),
   ctxPopSizesWrap: $("ctxPopSizesWrap"),
   ctxPopSizes: $("ctxPopSizes"),
-  ctxPopHint: $("ctxPopHint"),
   ctxPopCompact: $("ctxPopCompact"),
   attachFileItem: $("attachFileItem"),
   attachFileLabel: $("attachFileLabel"),
@@ -220,6 +219,23 @@ const els = {
   confirmAllow: $("confirmAllow"),
   confirmDeny: $("confirmDeny"),
 };
+// The frame's running light (an SVG stroke, see .cb-ring) is drawn at the frame's exact size: a
+// percentage width on an SVG <rect> does not resolve the same way in every engine.
+(() => {
+  const ring = document.querySelector(".composer-box .cb-ring");
+  if (!ring || typeof ResizeObserver === "undefined") return;
+  const fit = () => {
+    const w = ring.clientWidth, h = ring.clientHeight;
+    if (!w || !h) return;
+    for (const r of ring.querySelectorAll("rect")) {
+      r.setAttribute("x", "1"); r.setAttribute("y", "1");
+      r.setAttribute("width", String(w - 2)); r.setAttribute("height", String(h - 2));
+      r.setAttribute("rx", "18"); r.setAttribute("ry", "18");
+    }
+  };
+  new ResizeObserver(fit).observe(ring);
+  fit();
+})();
 // Whether the current tab offers page tools (the "N tabs in context" bar shows only there).
 let pageBarAllowed = false;
 
@@ -348,7 +364,8 @@ function refreshThinkSegs() {
   const lit = picked || (selfHosted && offered.some((c) => c.id === "medium") ? "medium" : (offered.find((c) => c.isDefault) || {}).id || "");
   if (els.thinkChip) {
     els.thinkChip.classList.toggle("hidden", !offered.length);
-    els.thinkChip.querySelector(".tc-label").textContent = lit ? t("think.lvl." + lit) : t("think.default");
+    const shown = lit || (offered[0] && offered[0].id) || "";
+    els.thinkChip.querySelector(".tc-label").textContent = shown ? t("think.lvl." + shown) : "";
     els.thinkChip.title = t("chip.thinkingTitle") + (lit ? " — " + t("think.lvl." + lit) : "");
   }
   document.querySelectorAll(".think-seg").forEach((seg) => {
@@ -537,6 +554,8 @@ async function init() {
   els.imageSize.value = settings.imageSize || "";
   decorateLangOptions();               // "French — Français", "Hindi — हिन्दी"… (endonyms) before theming
   // Themed dropdowns (same look/behaviour as "Choose an analysis") over the native selects.
+  // The language list says what it is: "Translate into: French", or asks for one.
+  els.translateLang._labelFor = (o) => (o.value ? t("translate.into", { lang: o.textContent.split(" — ")[0] }) : t("translate.pick"));
   themeNativeSelect(els.translateLang);
   setupImprovePicker();               // Improve = one button → a 2-list (Action | Tone) popup
   // Beside Send, the size is a short chip: "Size" until one is chosen, then its dimensions.
@@ -6855,12 +6874,15 @@ async function renderCtxPop() {
   if (!sizable) return;
   const key = ctxSizeKey(sel.providerId, sel.modelId);
   const chosen = Number((settings.ctxSizes || {})[key]) || 0;
-  const options = [{ value: 0, label: native ? t("ctx.sizeAuto", { n: formatTokens(native, lang) }) : t("ctx.sizeAutoUnknown") }];
+  // Auto = the largest window of the model in use; then every size up to that maximum.
+  const options = [{ value: 0, label: t("ctx.sizeAutoLabel"), title: native ? t("ctx.sizeAutoTitle", { n: formatTokens(native, lang) }) : "" }];
   for (const n of CTX_SIZES) if (!native || n < native) options.push({ value: n, label: formatTokens(n, lang) });
+  if (native) options.push({ value: native, label: formatTokens(native, lang) });
   els.ctxPopSizes.replaceChildren(...options.map((o) => {
     const b = document.createElement("button");
     b.type = "button"; b.className = "ts-btn" + (o.value === chosen || (!o.value && !options.some((x) => x.value && x.value === chosen)) ? " on" : "");
     b.textContent = o.label;
+    if (o.title) b.title = o.title;
     b.addEventListener("click", async () => {
       const sizes = { ...(settings.ctxSizes || {}) };
       if (o.value) sizes[key] = o.value; else delete sizes[key];
@@ -6871,8 +6893,8 @@ async function renderCtxPop() {
     });
     return b;
   }));
-  els.ctxPopHint.textContent = t(chosen ? "ctx.sizeHint" : "ctx.autoHint");
 }
+let compactNote = null; // the provisional "summarizing…" note of the running turn
 async function compactNow() {
   if (busy) return;
   const sess = getSession(mode);
@@ -6880,6 +6902,7 @@ async function compactNow() {
   if (!hist.length) return;
   const sel = currentSelection();
   const note = addMessage("tool", t("ctx.compacting"));
+  if (note) note.classList.add("compacting");
   startBusy();
   try {
     const provider = makeProvider(
@@ -6887,9 +6910,10 @@ async function compactNow() {
       { privacy: privacyOpts(sess, sess.convId, mode) }
     );
     const ok = await compactHistory(hist, { provider, signal: abortController && abortController.signal, all: true });
-    if (note) note.textContent = ok ? t("ctx.compactedNow") : t("ctx.nothingToCompact");
+    if (note) { note.classList.remove("compacting"); note.textContent = ok ? t("ctx.compactedNow") : t("ctx.nothingToCompact"); }
     await saveSession(sess, mode, sel);
   } catch (e) {
+    if (note) note.classList.remove("compacting");
     if (note) note.textContent = t("err.generic", { msg: e && e.message ? e.message : String(e) });
   } finally {
     endBusy();
@@ -8302,7 +8326,15 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
       replyLanguage: replyLanguageOf(displayText || modelContent, settings),
       steer: agentMode ? () => (steerQueue ? steerQueue.splice(0) : []) : null,
       onNotice: (what) => addMessage("tool", t("agent.notice." + what), sessMode),
-      onCompact: (why) => addMessage("tool", why === "overflow" ? t("ctx.overflow") : t("ctx.compacted"), sessMode),
+      // Like Claude: a provisional note while the conversation is being summarized, then what happened.
+      onCompact: (why, phase) => {
+        if (phase === "start") { compactNote = addMessage("tool", t("ctx.compacting"), sessMode); if (compactNote) compactNote.classList.add("compacting"); return; }
+        if (!compactNote) return;
+        compactNote.classList.remove("compacting");
+        if (phase === "done") compactNote.textContent = why === "overflow" ? t("ctx.overflow") : t("ctx.compacted");
+        else compactNote.remove();
+        compactNote = null;
+      },
       system, history: turnHistory, tools,
       onText: sink.onText, onThink: sink.onThink,
       onToolStart: (call) => {
