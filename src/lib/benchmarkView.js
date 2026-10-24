@@ -15,6 +15,7 @@
 
 import { BENCHMARK_WEB, BENCHMARK_SOURCES, BENCHMARK_UNCOVERED, BENCHMARK_FETCHED_AT } from "./benchmark-web.js";
 import { runLiveBench, totalProbes, FAMILIES, compareRows } from "./livebench.js";
+import { pickModel, verdictReason, rankEntries, costValue } from "./bench-report.js";
 
 const STORE_KEY = "benchmarkResults";
 const PICK_KEY = "benchmarkPicked";
@@ -77,11 +78,18 @@ export function freshnessOf(source, today = new Date()) {
 
 // ── The view ─────────────────────────────────────────────────────────────────────────────────
 //
-// Three blocks, read top to bottom: (1) the models to test — the current one is already there —
-// and one button; (2) the results, one card per model with a bar per family, best first, and the
-// report; (3) the public leaderboards, folded, for whoever wants them. The live test speaks to
-// any connected provider through the sidebar's own provider layer, so a local model or a gateway
-// is measured exactly like a cloud one, and a free one says so.
+// Read top to bottom, it answers the one question a newcomer has — « which model should I use? »:
+//
+//   the verdict   once anything is measured: the model to pick and why, in one sentence (as good,
+//                 N× cheaper, N× faster), with the full report one click away;
+//   the test      the models to compare, ONE button, and a line saying what will happen, how
+//                 long it takes and what it costs — before anything is spent;
+//   the ranking   one row per model: score, time and cost side by side, tagged « recommended »,
+//                 « fastest », « cheapest », and what it got wrong in plain words;
+//   the public    leaderboards, folded: a compact list, not a five-column table in 440 px.
+//
+// The live test speaks to any connected provider through the sidebar's own provider layer, so a
+// local model or a gateway is measured exactly like a cloud one, and a free one says so.
 
 /** Older measurements were keyed by an OpenRouter id alone. */
 export function normalizeMeasured(m) {
@@ -95,7 +103,6 @@ export function initBenchmarkView({ els, t, lang = () => "fr", callModel, load, 
   let measured = {};
   let picked = [];
   let sortKey = "aider";
-  let sortDir = "desc";
   let abort = null;
 
   const el = (tag, cls, text) => {
@@ -108,8 +115,19 @@ export function initBenchmarkView({ els, t, lang = () => "fr", callModel, load, 
   const tone = (s) => (s == null ? "none" : s >= 0.8 ? "good" : s >= 0.5 ? "mid" : "bad");
   const nf = (n, d) => new Intl.NumberFormat(lang(), { maximumFractionDigits: d, minimumFractionDigits: d }).format(n);
   const money = (e) => (e.free ? t("bench.free") : e.cost ? `${e.costExact ? "" : "≈ "}${nf(e.cost, e.cost < 0.01 ? 4 : 3)} $` : "");
+  const secs = (ms) => (ms < 60000 ? `${nf(ms / 1000, ms < 10000 ? 1 : 0)} s` : `${Math.floor(ms / 60000)} min ${String(Math.round((ms % 60000) / 1000)).padStart(2, "0")} s`);
+  const dateFmt = (iso, opts) => { try { return new Intl.DateTimeFormat(lang(), { timeZone: "UTC", ...opts }).format(new Date(iso + "T00:00:00Z")); } catch { return iso; } };
+  const monthOf = (iso) => dateFmt(iso, { month: "long", year: "numeric" });
+  const dayOf = (iso) => dateFmt(iso, { dateStyle: "long" });
+  const icon = (key, cls) => {
+    const d = describe(key);
+    if (!d.icon) return null;
+    const ic = el("span", cls);
+    ic.append(d.icon);
+    return ic;
+  };
 
-  // ── 1. The models to test ──────────────────────────────────────────────────────────────────
+  // ── The test: models to compare, one button, what it will take ────────────────────────────
   function renderPicked() {
     const host = els.bvPicked;
     if (!host) return;
@@ -117,81 +135,154 @@ export function initBenchmarkView({ els, t, lang = () => "fr", callModel, load, 
     for (const key of picked) {
       const d = describe(key);
       const chip = el("span", "bv-chip");
-      if (d.icon) { const ic = el("span", "bv-chip-ic"); ic.append(d.icon); chip.append(ic); }
+      const ic = icon(key, "bv-chip-ic");
+      if (ic) chip.append(ic);
       chip.append(el("span", "bv-chip-name", d.label));
       const x = el("button", "bv-chip-x", "×");
       x.type = "button";
       x.title = t("bench.unpick");
+      x.setAttribute("aria-label", `${t("bench.unpick")} — ${d.label}`);
       x.disabled = !!abort;
       x.addEventListener("click", () => { picked = picked.filter((k) => k !== key); save(PICK_KEY, picked); renderPicked(); });
       chip.append(x);
       host.append(chip);
     }
-    if (els.bvWhat) {
-      const fams = FAMILIES.map((f) => `${t(`bench.fam.${f}`)} (${probesCount(f)})`).join(" · ");
-      els.bvWhat.textContent = t("bench.what", { n: String(totalProbes()), families: fams });
+    if (els.bvWhat && !abort) {
+      els.bvWhat.textContent = picked.length
+        ? t("bench.what", { n: String(totalProbes()), m: String(picked.length), min: String(picked.length) })
+        : t("bench.pickFirst");
     }
     if (els.bvRun) els.bvRun.disabled = !picked.length;
   }
-  const probesCount = (f) => totalProbes([f]);
 
-  // ── 2. The results ─────────────────────────────────────────────────────────────────────────
-  function entries() {
-    return Object.entries(measured)
-      .map(([key, m]) => ({ key, ...m, label: describe(key).label, provider: describe(key).provider }))
-      .sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
+  function renderFamilies() {
+    const host = els.bvFamList;
+    if (!host) return;
+    host.replaceChildren();
+    for (const f of FAMILIES) {
+      host.append(el("dt", null, `${t(`bench.fam.${f}`)} · ${totalProbes([f])}`));
+      host.append(el("dd", null, t(`bench.famAbout.${f}`)));
+    }
+    host.append(el("p", "bv-famnote", t("bench.scoreNote")));
   }
+
+  // ── The verdict and the ranking ────────────────────────────────────────────────────────────
+  function entries() {
+    return rankEntries(Object.entries(measured).map(([key, m]) => ({ key, ...m, label: describe(key).label, provider: describe(key).provider })));
+  }
+
+  function renderVerdict(v) {
+    const host = els.bvVerdict;
+    if (!host) return;
+    host.replaceChildren();
+    host.classList.toggle("hidden", !v);
+    if (!v) return;
+    const top = el("div", "bv-v-top");
+    top.append(el("span", "bv-v-eyebrow", t(v.vs ? "bench.v.title" : "bench.v.titleOne")));
+    if (v.vs) {
+      const why = el("span", "bv-help", "?");
+      why.title = t("bench.v.rule");
+      why.tabIndex = 0;
+      why.setAttribute("role", "img");
+      why.setAttribute("aria-label", t("bench.v.rule"));
+      top.append(why);
+    }
+    host.append(top);
+    const name = el("div", "bv-v-name");
+    const ic = icon(v.pick.key, "bv-v-ic");
+    if (ic) name.append(ic);
+    name.append(el("span", null, v.pick.label));
+    host.append(name);
+    host.append(el("p", "bv-v-why", verdictReason(v, { t, lang: lang(), running: !!abort })));
+    const btn = el("button", "bv-report", t("bench.report"));
+    btn.type = "button";
+    btn.title = t("bench.reportTitle");
+    btn.addEventListener("click", () => openReport(report()));
+    host.append(btn);
+  }
+
   function renderResults() {
     const host = els.bvResults;
     if (!host) return;
     host.replaceChildren();
     const list = entries();
-    els.bvReport?.classList.toggle("hidden", !list.length);
-    if (!list.length) { host.append(el("p", "bv-empty", t("bench.noResults"))); return; }
+    const v = pickModel(list);
+    renderVerdict(v);
+    els.bvRankCard?.classList.toggle("hidden", !list.length);
+    if (!list.length) return;
+    // The tags only mean something when there is something to compare.
+    const many = list.filter((e) => e.score != null).length > 1;
+    const priced = list.filter((e) => costValue(e) != null);
+    const cheapest = many && priced.length > 1 ? priced.reduce((a, b) => (costValue(b) < costValue(a) ? b : a)) : null;
+    const timed = list.filter((e) => e.ms);
+    const fastest = many && timed.length > 1 ? timed.reduce((a, b) => (b.ms < a.ms ? b : a)) : null;
     list.forEach((e, i) => {
-      const card = el("div", "bv-res" + (i === 0 && list.length > 1 && e.score != null ? " best" : ""));
+      const isPick = many && v && v.pick === e;
+      const row = el("div", "bv-res" + (isPick ? " pick" : ""));
+      row.append(el("span", "bv-rank", String(i + 1)));
+      const main = el("div", "bv-res-main");
       const head = el("div", "bv-res-head");
-      const d = describe(e.key);
-      if (d.icon) { const ic = el("span", "bv-res-ic"); ic.append(d.icon); head.append(ic); }
-      const name = el("div", "bv-res-name");
-      name.append(el("span", "bv-res-label", e.label));
-      const meta = [d.provider, e.at, e.ms ? `${nf(e.ms / 1000, e.ms < 10000 ? 1 : 0)} s` : "", money(e)].filter(Boolean).join(" · ");
-      name.append(el("span", "bv-res-meta", meta));
-      head.append(name);
+      const ic = icon(e.key, "bv-res-ic");
+      if (ic) head.append(ic);
+      head.append(el("span", "bv-res-label", e.label));
+      const scoreTitle = t("bench.scoreTitle", { pass: String(e.pass ?? "—"), total: String(e.total ?? "—") });
       const score = el("span", `bv-res-score ${tone(e.score)}`, pctOf(e.score));
+      score.title = scoreTitle;
       head.append(score);
       const x = el("button", "bv-res-x", "×");
       x.type = "button";
       x.title = t("bench.forget");
+      x.setAttribute("aria-label", `${t("bench.forget")} — ${e.label}`);
       x.addEventListener("click", async () => { delete measured[e.key]; await save(STORE_KEY, measured); renderResults(); });
       head.append(x);
-      card.append(head);
-      if (i === 0 && list.length > 1 && e.score != null) card.append(el("span", "bv-best", t("bench.bestTag")));
+      main.append(head);
+
+      // Time and cost next to the score: the three things a choice is made on.
+      const stats = el("div", "bv-stats");
+      const stat = (text, title, cls = "") => { const s = el("span", ("bv-stat " + cls).trim(), text); s.title = title; stats.append(s); };
+      // The best time and the best price say so in the same pill, in words, not only in colour.
+      const lower = (x) => x.charAt(0).toLocaleLowerCase(lang()) + x.slice(1);
+      if (isPick) stat(t("bench.tag.pick"), t("bench.v.rule"), "tag pick");
+      if (e.ms) stat(`⏱ ${secs(e.ms)}${fastest === e ? ` · ${lower(t("bench.tag.fast"))}` : ""}`, t("bench.timeTitle"), fastest === e ? "tag" : "");
+      const m = money(e);
+      if (m) stat(`${m}${cheapest === e ? ` · ${lower(t("bench.tag.cheap"))}` : ""}`, t("bench.costTitle"), cheapest === e ? "tag" : "");
+      main.append(stats);
+
+      // What it got wrong, in words; the bars per kind of question behind a click.
+      const weak = FAMILIES.filter((f) => { const b = e.byFamily && e.byFamily[f]; return b && b.total && b.pass < b.total; });
+      const det = el("details", "bv-detail");
+      det.append(el("summary", weak.length ? "bv-weak" : "bv-ok",
+        weak.length ? t("bench.weak", { list: weak.map((f) => t(`bench.fam.${f}`)).join(", ") }) : t("bench.allRight")));
       const fams = el("div", "bv-fams");
       for (const f of FAMILIES) {
         const b = e.byFamily && e.byFamily[f];
         const s = b && b.total ? b.pass / b.total : null;
-        const row = el("div", "bv-fam");
-        row.title = t(`bench.famAbout.${f}`);
-        row.append(el("span", "bv-fam-name", t(`bench.fam.${f}`)));
+        const fr = el("div", "bv-fam");
+        fr.title = t(`bench.famAbout.${f}`);
+        fr.append(el("span", "bv-fam-name", t(`bench.fam.${f}`)));
         const bar = el("span", "bv-fam-bar");
         const fill = el("span", `bv-fam-fill ${tone(s)}`);
         fill.style.width = `${Math.round((s || 0) * 100)}%`;
         bar.append(fill);
-        row.append(bar);
-        row.append(el("span", "bv-fam-val", b && b.total ? `${b.pass}/${b.total}` : "—"));
-        fams.append(row);
+        fr.append(bar);
+        fr.append(el("span", "bv-fam-val", b && b.total ? `${b.pass}/${b.total}` : "—"));
+        fams.append(fr);
       }
-      card.append(fams);
-      if (e.errors) card.append(el("div", "bv-res-warn", t("bench.errorsNote", { n: String(e.errors) })));
-      host.append(card);
+      fams.append(el("span", "bv-res-prov", [e.provider, e.at].filter(Boolean).join(" · ")));
+      det.append(fams);
+      main.append(det);
+      if (e.errors) main.append(el("div", "bv-res-warn", t("bench.errorsNote", { n: String(e.errors) })));
+      row.append(main);
+      host.append(row);
     });
   }
 
+  /** `frac` null hides the bar: a full bar after the run says nothing a sentence does not. */
   function setProgress(text, frac) {
     if (!els.bvProgress) return;
     els.bvProgress.classList.toggle("hidden", text == null);
     if (els.bvProgressText) els.bvProgressText.textContent = text || "";
+    els.bvPbar?.classList.toggle("hidden", frac == null);
     if (els.bvProgressFill) els.bvProgressFill.style.width = `${Math.round((frac || 0) * 100)}%`;
   }
 
@@ -200,15 +291,18 @@ export function initBenchmarkView({ els, t, lang = () => "fr", callModel, load, 
     abort = { aborted: false };
     els.bvRun?.classList.add("hidden");
     els.bvStop?.classList.remove("hidden");
+    if (els.bvWhat) els.bvWhat.textContent = t("bench.runningHint");
     renderPicked();
     const targets = picked.slice();
     const per = totalProbes();
+    const started = Date.now();
     let spent = 0, done = 0;
     for (let i = 0; i < targets.length; i++) {
       if (abort.aborted) break;
       const key = targets[i];
       const label = describe(key).label;
-      setProgress(t("bench.progress", { model: label, done: "0", of: String(per), i: String(i + 1), n: String(targets.length) }), done / (per * targets.length));
+      const say = (d) => setProgress(t("bench.progress", { model: label, done: String(d), of: String(per), i: String(i + 1), n: String(targets.length) }), (done + d) / (per * targets.length));
+      say(0);
       let costExact = true, free = false;
       const res = await runLiveBench({
         model: key,
@@ -219,7 +313,7 @@ export function initBenchmarkView({ els, t, lang = () => "fr", callModel, load, 
           return r;
         },
         signal: abort,
-        onProgress: ({ done: d }) => setProgress(t("bench.progress", { model: label, done: String(d), of: String(per), i: String(i + 1), n: String(targets.length) }), (done + d) / (per * targets.length)),
+        onProgress: ({ done: d }) => say(d),
       });
       done += per;
       spent += res.cost || 0;
@@ -237,7 +331,7 @@ export function initBenchmarkView({ els, t, lang = () => "fr", callModel, load, 
     els.bvRun?.classList.remove("hidden");
     els.bvStop?.classList.add("hidden");
     renderPicked();
-    setProgress(stopped ? t("bench.stopped") : t("bench.done", { n: String(targets.length), cost: spent ? nf(spent, 4) : "0" }), 1);
+    setProgress(stopped ? t("bench.stopped") : t("bench.done", { n: String(targets.length), time: secs(Date.now() - started), cost: spent ? nf(spent, 4) : "0" }), null);
     // The report opens by itself: it is what the run was for.
     if (!stopped && Object.keys(measured).length) openReport(report());
   }
@@ -246,7 +340,7 @@ export function initBenchmarkView({ els, t, lang = () => "fr", callModel, load, 
     return { entries: entries(), lang: lang() };
   }
 
-  // ── 3. The public leaderboards ─────────────────────────────────────────────────────────────
+  // ── The public leaderboards ────────────────────────────────────────────────────────────────
   function renderSources() {
     const host = els.bvSources;
     if (!host) return;
@@ -254,15 +348,20 @@ export function initBenchmarkView({ els, t, lang = () => "fr", callModel, load, 
     for (const [key, s] of Object.entries(BENCHMARK_SOURCES)) {
       const { months, stale } = freshnessOf(s);
       const card = el("div", "bv-source" + (stale ? " bv-source-stale" : ""));
-      const a = el("a", "bv-src-name", s.label);
-      a.href = s.home; a.target = "_blank"; a.rel = "noopener noreferrer";
-      card.append(a);
       const about = t(`bench.src.${key}`);
       card.append(el("span", "bv-src-about", about.startsWith("bench.src.") ? s.about : about));
-      if (months != null) card.append(el("span", "bv-src-fresh", t("bench.covers", { date: s.newestModelCovered, months: String(months) })));
+      const line = el("span", "bv-src-fresh");
+      const a = el("a", "bv-src-name", s.label);
+      a.href = s.home; a.target = "_blank"; a.rel = "noopener noreferrer";
+      line.append(a);
+      if (months != null) line.append(document.createTextNode(` · ${t("bench.covers", { date: monthOf(s.newestModelCovered), months: String(months) })}`));
+      card.append(line);
       host.append(card);
     }
-    host.append(el("span", "bv-fetched", t("bench.fetched", { date: BENCHMARK_FETCHED_AT })));
+    const legend = el("div", "bv-source");
+    legend.append(el("span", "bv-src-about", t("bench.pubLegend")));
+    legend.append(el("span", "bv-fetched", t("bench.fetched", { date: dayOf(BENCHMARK_FETCHED_AT) })));
+    host.append(legend);
   }
 
   function renderTable() {
@@ -270,52 +369,39 @@ export function initBenchmarkView({ els, t, lang = () => "fr", callModel, load, 
     if (!body) return;
     const rows = sortRows(
       filterRows(buildRows({ catalogue, measured: {} }), { query: els.bvSearch?.value || "" }).filter((r) => r.covered),
-      sortKey, sortDir,
+      sortKey,
     );
     body.replaceChildren();
-    document.querySelectorAll(".bv-table th[data-sort]").forEach((th) => {
-      th.classList.toggle("sorted", th.dataset.sort === sortKey);
-      th.dataset.dir = th.dataset.sort === sortKey ? sortDir : "";
-    });
-    if (!rows.length) {
-      const tr = el("tr");
-      const td = el("td", "bv-empty", t("bench.none"));
-      td.colSpan = 5;
-      tr.append(td);
-      body.append(tr);
-      return;
-    }
+    if (!rows.length) { body.append(el("li", "bv-empty", t("bench.none"))); return; }
     for (const r of rows) {
-      const tr = el("tr");
-      tr.dataset.id = r.id;
-      const name = el("td", "bv-model");
-      name.append(el("span", "bv-id", r.name));
-      tr.append(name);
-      const aider = el("td", "num", r.aider == null ? "—" : `${nf(r.aider, 0)} %`);
-      if (r.aiderAs && r.aiderAs !== r.id) aider.title = t("bench.publishedAs", { as: r.aiderAs });
-      tr.append(aider);
-      const hal = el("td", "num", r.halluc == null ? "—" : `${nf(r.halluc, 1)} %`);
-      if (r.hallucAs && r.hallucAs !== r.id) hal.title = t("bench.publishedAs", { as: r.hallucAs });
-      tr.append(hal);
-      tr.append(el("td", "num", r.price == null ? "—" : nf(r.price, 2)));
-      tr.append(el("td", "num", r.ctx ? `${Math.round(r.ctx / 1000)} k` : "—"));
-      body.append(tr);
+      const li = el("li", "bv-pub");
+      li.dataset.id = r.id;
+      li.append(el("span", "bv-pub-name", r.name));
+      const vals = el("span", "bv-pub-vals");
+      const val = (key, label, text, title) => {
+        if (text == null) return;
+        const s = el("span", "bv-pv" + (sortKey === key ? " sorted" : ""));
+        s.append(el("span", "bv-pv-k", label));
+        s.append(el("b", null, text));
+        s.title = title;
+        vals.append(s);
+      };
+      val("aider", t("bench.pub.code"), r.aider == null ? null : `${nf(r.aider, 0)} %`,
+        t("bench.pub.codeTitle") + (r.aiderAs && r.aiderAs !== r.id ? ` — ${t("bench.publishedAs", { as: r.aiderAs })}` : ""));
+      val("halluc", t("bench.pub.halluc"), r.halluc == null ? null : `${nf(r.halluc, 1)} %`,
+        t("bench.pub.hallucTitle") + (r.hallucAs && r.hallucAs !== r.id ? ` — ${t("bench.publishedAs", { as: r.hallucAs })}` : ""));
+      val("price", t("bench.pub.price"), r.price == null ? null : `${nf(r.price, 2)} $`, t("bench.pub.priceTitle"));
+      val("ctx", t("bench.pub.ctx"), r.ctx ? `${Math.round(r.ctx / 1000)} k` : null, t("bench.pub.ctxTitle"));
+      li.append(vals);
+      body.append(li);
     }
   }
 
   function wire() {
     els.bvSearch?.addEventListener("input", renderTable);
+    els.bvSort?.addEventListener("change", () => { sortKey = els.bvSort.value; renderTable(); });
     els.bvRun?.addEventListener("click", runLive);
-    els.bvStop?.addEventListener("click", () => { if (abort) abort.aborted = true; setProgress(t("bench.stopping"), 0); });
-    els.bvReport?.addEventListener("click", () => openReport(report()));
-    document.querySelectorAll(".bv-table th[data-sort]").forEach((th) => {
-      th.addEventListener("click", () => {
-        const key = th.dataset.sort;
-        if (key === sortKey) sortDir = sortDir === "desc" ? "asc" : "desc";
-        else { sortKey = key; sortDir = "desc"; }
-        renderTable();
-      });
-    });
+    els.bvStop?.addEventListener("click", () => { if (abort) abort.aborted = true; setProgress(t("bench.stopping"), null); });
   }
 
   let started = false;
@@ -328,10 +414,11 @@ export function initBenchmarkView({ els, t, lang = () => "fr", callModel, load, 
         measured = normalizeMeasured(await load(STORE_KEY));
         picked = (await load(PICK_KEY)) || [];
         if (!picked.length && currentModel()) picked = [currentModel()];
+        renderFamilies();
         renderSources();
         renderTable();
         // The catalogue gives prices and context sizes. It is public, so this works before the
-        // user has entered any key, and the table simply shows fewer columns if it fails.
+        // user has entered any key, and the list simply shows fewer values if it fails.
         try { catalogue = await fetchCatalogue(); } catch { catalogue = []; }
         renderTable();
       }

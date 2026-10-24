@@ -41,6 +41,24 @@ Version de développement, toujours à jour :
   dessus tout ; sans collection, un bouton « Créer ma première collection » attend dans la page. Le
   panneau, quand vous l'ouvrez, couvre la conversation seulement — jamais la barre des onglets.
 
+### Benchmark : une réponse claire à « quel modèle choisir ? »
+
+- **Le conseil en tête** dès qu'un modèle est testé : « Notre conseil : DeepSeek V4.1 Flash — aussi
+  bon que Qwen3.8 27B (100 %), 3× moins cher, le plus rapide de tous ». La règle, expliquée par le
+  « ? » : le moins cher parmi les meilleurs scores (à une question près), puis le plus rapide. Le
+  rapport s'ouvre sur la même phrase.
+- **Un seul bouton, et ce qu'il va se passer avant de cliquer** : la durée estimée, le prix (quelques
+  centimes, gratuit en local) et le nombre de questions. Pendant le test, une ligne dit quel modèle
+  passe quelle question ; à la fin, la durée totale et le coût.
+- **Un classement lisible** : le score, le temps et le coût de chaque modèle côte à côte, avec
+  « Conseillé », « le plus rapide », « le moins cher », et les erreurs dites en clair (« Aucune
+  erreur », « Erreurs en : Logique et calcul ») — le détail par barres d'un clic.
+- **Des mots simples** : « Logique et calcul », « Respect des consignes », « Format structuré
+  (JSON) », « Utilise des outils », chacun expliqué sous « Que vérifie le test ? ».
+- **Les classements publics** tiennent dans la barre latérale : une liste compacte (Code, Invente,
+  Prix, Mémoire) avec un tri par menu, au lieu d'un tableau à cinq colonnes, et leur retard écrit en
+  clair (« jusqu'en décembre 2025, 11 mois de retard »).
+
 ### Une zone de saisie unique, comme dans Hivey Code — avec le contexte et le coût
 
 - **La même zone de saisie dans tous les onglets** : le texte, puis une rangée `+`, micro, **le
