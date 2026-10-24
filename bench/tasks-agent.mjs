@@ -2,7 +2,7 @@
 // world's state and the agent's log — what was submitted, visited, paid — as well as its answer.
 
 import { createBrowser } from "./browser.mjs";
-import { languageOf, numbersIn, has, pass } from "./checks.mjs";
+import { languageOf, numbersIn, pass } from "./checks.mjs";
 
 const link = (text, href) => ({ tag: "a", text, href });
 const button = (text, onClick, extra = {}) => ({ tag: "button", text, onClick, ...extra });

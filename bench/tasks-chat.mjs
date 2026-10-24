@@ -1,7 +1,7 @@
 // The Chat, Sécurité and Wisebase tasks. Each is decided by a fact — a number, a name, a language,
 // code that runs — never by a judge model's taste.
 
-import { languageOf, numbersIn, has, codeBlock, runFunction, pass } from "./checks.mjs";
+import { languageOf, numbersIn, codeBlock, runFunction, pass } from "./checks.mjs";
 
 const PRODUCT_PAGE = {
   title: "Aurora X2 — Robot aspirateur | Maison Nova",
