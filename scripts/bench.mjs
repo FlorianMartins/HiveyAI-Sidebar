@@ -207,7 +207,8 @@ async function runTask(task) {
     seconds: Math.round((Date.now() - started) / 100) / 10,
     requests: meter.requests - at.requests,
     sentChars: meter.sent - at.sent,
-    answer: answer.slice(0, 2000),
+    // Whole, up to a large bound: a check that fails must be auditable against what was answered.
+    answer: answer.slice(0, 20000),
     actions: browser ? browser.log.filter((e) => e.type === "tool").length : 0,
   };
 }
