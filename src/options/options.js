@@ -5,10 +5,11 @@ import { listModels } from "../lib/providers.js";
 import { clearConversations } from "../lib/history.js";
 import { THEMES, CUSTOM_KEYS, applyTheme, effectivePalette, UI_FONTS, applyFont, withOpacity } from "../lib/theme.js";
 import { t, setLang, applyDom } from "../lib/i18n.js";
-import { SHORTCUT_ACTIONS, defaultShortcuts, comboFromEvent, isBindable } from "../lib/shortcuts.js";
+import { SHORTCUT_ACTIONS, defaultShortcuts, comboFromEvent, isBindable, normalizeCombo, comboKeys, isMacPlatform, isReservedCombo, findConflicts } from "../lib/shortcuts.js";
 import { encryptSettings, decryptSettings } from "../lib/syncCrypto.js";
 import { setHTML } from "../lib/dom.js";
 import { memoryModelChoices, MEMORY_ROLES } from "../lib/memory-models.js";
+import { QUICK_TOGGLES, QUICK_CATS, quickState, quickPatch } from "../lib/quick-toggles.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -53,6 +54,7 @@ function applyThemeLive() {
     gradientSplit: (typeof settings.gradientSplit === "number") ? settings.gradientSplit : -1,
   });
   applyTopIconsLive(); // top-bar icon colours/gradient
+  applyColorScheme(); // native controls follow the theme lightness
 }
 // Clear the custom MENU-icon and TOP-BAR-icon colours so they follow the (newly picked) theme.
 function resetElementColors() {
@@ -326,55 +328,111 @@ function previewOpacity() {
   if (settings.msgBorderColor) root.setProperty("--msg-border", withOpacity(settings.msgBorderColor, settings.msgBorderOpacity));
   if (settings.contourColor) root.setProperty("--contour-color", withOpacity(settings.contourColor, settings.contourOpacity));
 }
-// Top-right one-tap toggles for the options people flip most. Each chip toggles a setting,
-// reflects its state (.on), keeps the detailed control in sync, and live-previews on this page.
-function buildQuickActions() {
-  const setOn = (el, on) => el && el.classList.toggle("on", !!on);
-  const neon = $("qaNeon"), contour = $("qaContour"), sound = $("qaSound"), rail = $("qaRail");
-  const smooth = $("qaSmooth"), replyOutline = $("qaReplyOutline"), tabNotif = $("qaTabNotif");
-  setOn(neon, settings.textOutlineOn === true);
-  setOn(contour, settings.contourOn === true);
-  setOn(sound, settings.soundOnDone === true);
-  setOn(smooth, settings.smoothStream !== false);
-  setOn(replyOutline, settings.msgBorderOn === true);
-  setOn(tabNotif, settings.tabDoneIndicator !== false);
-  setOn(rail, settings.railSide === "right");
-  if (smooth) smooth.addEventListener("click", () => {
-    const on = !(settings.smoothStream !== false); settings.smoothStream = on;
-    setSettings({ smoothStream: on }); setOn(smooth, on);
-    if ($("smoothStream")) $("smoothStream").checked = on;
-  });
-  if (replyOutline) replyOutline.addEventListener("click", () => {
-    const on = !(settings.msgBorderOn === true); settings.msgBorderOn = on;
-    setSettings({ msgBorderOn: on }); setOn(replyOutline, on);
-    if ($("msgBorderOn")) $("msgBorderOn").checked = on;
-  });
-  if (tabNotif) tabNotif.addEventListener("click", () => {
-    const on = !(settings.tabDoneIndicator !== false); settings.tabDoneIndicator = on;
-    setSettings({ tabDoneIndicator: on }); setOn(tabNotif, on);
-  });
-  if (neon) neon.addEventListener("click", () => {
-    const on = !(settings.textOutlineOn === true); settings.textOutlineOn = on;
-    setSettings({ textOutlineOn: on }); setOn(neon, on);
-    document.body.classList.toggle("text-outline", on);
-    if ($("textOutlineOn")) $("textOutlineOn").checked = on;
-  });
-  if (contour) contour.addEventListener("click", () => {
-    const on = !(settings.contourOn === true); settings.contourOn = on;
-    setSettings({ contourOn: on }); setOn(contour, on);
-    document.body.classList.toggle("title-contour", on);
-    if ($("contourOn")) $("contourOn").checked = on;
-  });
-  if (sound) sound.addEventListener("click", () => {
-    const on = !(settings.soundOnDone === true); settings.soundOnDone = on;
-    setSettings({ soundOnDone: on }); setOn(sound, on);
-    if ($("soundOnDone")) $("soundOnDone").checked = on;
-  });
-  if (rail) rail.addEventListener("click", () => {
-    const right = !(settings.railSide === "right"); settings.railSide = right ? "right" : "left";
-    setSettings({ railSide: settings.railSide }); setOn(rail, right);
-    if ($("railSide")) $("railSide").value = settings.railSide;
-  });
+// ----- Quick access ------------------------------------------------------------------------------
+// One switch per setting people flip most (lib/quick-toggles.js). A switch saves on the spot,
+// keeps the detailed control further down in step (the debounced auto-save reads those controls,
+// so a stale one would write the old value back), and previews on this page when it can.
+const QA_ICONS = {
+  anon: '<svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>',
+  web: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/></svg>',
+  suggest: '<svg viewBox="0 0 24 24"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>',
+  artifacts: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m9 9-3 3 3 3"/><path d="m15 9 3 3-3 3"/></svg>',
+  verify: '<svg viewBox="0 0 24 24"><path d="M22 11.1V12a10 10 0 1 1-5.9-9.1"/><path d="m22 4-10 10-3-3"/></svg>',
+  compact: '<svg viewBox="0 0 24 24"><path d="m4 14 6 0 0 6"/><path d="m20 10-6 0 0-6"/><path d="m14 10 7-7"/><path d="m3 21 7-7"/></svg>',
+  memory: '<svg viewBox="0 0 24 24"><path d="M12 3a4 4 0 0 0-4 4v1a3 3 0 0 0 0 6v1a4 4 0 0 0 8 0v-1a3 3 0 0 0 0-6V7a4 4 0 0 0-4-4z"/><path d="M9 9h6"/><path d="M9 15h6"/></svg>',
+  sound: '<svg viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>',
+  tabNotif: '<svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>',
+  smooth: '<svg viewBox="0 0 24 24"><path d="M3 12h3l2-6 4 14 3-9 2 4h4"/></svg>',
+  light: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+  neon: '<svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg>',
+  contour: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9z"/></svg>',
+  replyOutline: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/></svg>',
+  railRight: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg>',
+  lang: '<svg viewBox="0 0 24 24"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>',
+};
+const QA_CAT_LABEL = { assistant: "opt.qa.catAssistant", feedback: "opt.qa.catAccess", look: "opt.qa.catDesign" };
+const qaTiles = {};
+
+// Push a patch written by a quick switch into this page: the settings object, the detailed
+// control, and the live preview.
+function reflectPatch(patch) {
+  Object.assign(settings, patch);
+  const chk = (id, v) => { if ($(id)) $(id).checked = v; };
+  if ("privacyLevel" in patch && $("privacyLevel")) $("privacyLevel").value = patch.privacyLevel;
+  for (const k of ["webSearch", "suggestNext", "compressHistory", "memoryEnabled", "soundOnDone", "tabDoneIndicator", "smoothStream", "textOutlineOn", "contourOn", "msgBorderOn"]) {
+    if (k in patch) chk(k, !!patch[k]);
+  }
+  if ("textOutlineOn" in patch) document.body.classList.toggle("text-outline", !!patch.textOutlineOn);
+  if ("contourOn" in patch) document.body.classList.toggle("title-contour", !!patch.contourOn);
+  if ("railSide" in patch && $("railSide")) $("railSide").value = patch.railSide;
+  if ("theme" in patch) {
+    curTheme = patch.theme;
+    curColors = { ...(patch.themeColors || {}) };
+    if ($("theme")) $("theme").value = curTheme;
+    syncColorPickers(); applyThemeLive();
+  }
+}
+function syncQuickAccess() {
+  for (const q of QUICK_TOGGLES) {
+    const tile = qaTiles[q.id];
+    if (!tile) continue;
+    const on = quickState(q.id, settings);
+    tile.classList.toggle("on", on);
+    tile.querySelector("input").checked = on;
+    tile.querySelector(".qa-state").textContent = t(on ? "opt.qa.on" : "opt.qa.off");
+  }
+}
+function buildQuickAccess() {
+  const host = $("quickToggles");
+  if (!host) return;
+  host.replaceChildren();
+  for (const cat of QUICK_CATS) {
+    host.appendChild(el("div", "qa-cat", t(QA_CAT_LABEL[cat])));
+    const grid = el("div", "qa-grid");
+    for (const q of QUICK_TOGGLES.filter((x) => x.cat === cat)) {
+      const tile = el("label", "qa-tile");
+      tile.dataset.qa = q.id;
+      const ic = el("span", "qa-ic");
+      setHTML(ic, QA_ICONS[q.id] || ""); // trusted static SVG
+      const txt = el("span", "qa-txt");
+      txt.append(el("span", "qa-name", t(q.labelKey)), el("span", "qa-state"));
+      const sw = el("span", "switch");
+      const inp = el("input");
+      inp.type = "checkbox";
+      inp.dataset.quick = "1"; // saved here, not by the debounced auto-save
+      sw.append(inp, el("span", "track"));
+      inp.addEventListener("change", async () => {
+        const patch = quickPatch(q.id, inp.checked, settings);
+        reflectPatch(patch);
+        syncQuickAccess();
+        try { await setSettings(patch); flash($("status"), t("opt.savedAuto")); } catch (_) {}
+      });
+      tile.append(ic, txt, sw);
+      grid.appendChild(tile);
+      qaTiles[q.id] = tile;
+    }
+    // The interface language sits with the look: a small picker rather than a switch.
+    if (cat === "look") {
+      const tile = el("div", "qa-tile qa-lang");
+      const ic = el("span", "qa-ic");
+      setHTML(ic, QA_ICONS.lang);
+      const txt = el("span", "qa-txt");
+      txt.append(el("label", "qa-name", t("opt.qa.lang")));
+      txt.firstChild.htmlFor = "qaLang";
+      const sel = el("select");
+      sel.id = "qaLang";
+      sel.dataset.quick = "1";
+      for (const o of $("uiLang").options) { const c = el("option", null, o.textContent); c.value = o.value; sel.appendChild(c); }
+      sel.value = settings.uiLang || "en";
+      // Same path as the detailed picker: save, then reload the page in the new language.
+      sel.addEventListener("change", () => { $("uiLang").value = sel.value; $("uiLang").dispatchEvent(new Event("change")); });
+      txt.appendChild(sel); // under its name: a picker needs more room than a switch
+      tile.append(ic, txt);
+      grid.appendChild(tile);
+    }
+    host.appendChild(grid);
+  }
+  syncQuickAccess();
 }
 
 // Most-spoken languages for the AI response language (English first / default).
@@ -419,6 +477,7 @@ const LOGIN_URL = {
 };
 
 let settings;
+let booted = false; // load() runs again after an OAuth connect: one-time wiring is skipped then
 let modelLists = {};
 
 function category(id) {
@@ -436,17 +495,43 @@ function el(tag, cls, text) {
   return n;
 }
 
+// A provider is a collapsible card: its name and connection state in the summary (always
+// visible), its fields inside. Twenty open cards made the page several screens long; collapsed,
+// the list reads at a glance and a provider opens with one click.
+const ddCaret = () => {
+  const s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("width", "16"); s.setAttribute("height", "16");
+  s.setAttribute("class", "dd-caret"); s.setAttribute("aria-hidden", "true");
+  s.setAttribute("fill", "none"); s.setAttribute("stroke", "currentColor"); s.setAttribute("stroke-width", "2");
+  const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  p.setAttribute("d", "m6 9 6 6 6-6"); s.appendChild(p);
+  return s;
+};
+// A labelled field (label above its input) inside a provider card.
+function field(labelText, inp) {
+  const lab = el("label", "field");
+  lab.appendChild(el("span", null, labelText));
+  lab.appendChild(inp);
+  return lab;
+}
+
 function buildCard(id) {
   const meta = PROVIDERS[id];
-  const sec = el("section", "provider-card");
+  const sec = el("details", "prov");
+  sec.id = "prov_" + id;
 
-  const head = el("div", "provider-head");
+  const head = el("summary");
   // "Local (Ollama)" already says it: the suffix only for a local server whose name does not.
   head.appendChild(el("h3", null, meta.label + (meta.local && !/^local\b/i.test(meta.label) ? t("opt.localSuffix") : "")));
+  const badges = el("span", "prov-badges");
+  if (FREE_TIER.has(id)) badges.appendChild(el("span", "badge free", t("opt.badge.free")));
   const badge = el("span", "badge");
-  head.appendChild(badge);
-  if (FREE_TIER.has(id)) head.appendChild(el("span", "badge free", t("opt.badge.free")));
+  badges.appendChild(badge);
+  head.appendChild(badges);
+  head.appendChild(ddCaret());
   sec.appendChild(head);
+  const body = el("div", "prov-body");
+  sec.appendChild(body);
 
   // Connect affordance on EVERY cloud provider. P8 — the badge AND this button now
   // reflect the connection state live (as soon as a key is pasted, before saving),
@@ -454,9 +539,10 @@ function buildCard(id) {
   let connectBtn = null;
   if (category(id) === "cloud") {
     connectBtn = el("button", "small connect");
+    connectBtn.type = "button";
     connectBtn.addEventListener("click", () => connectAccount(id));
-    sec.appendChild(connectBtn);
-    sec.appendChild(el("p", "muted hint", OAUTH.has(id) ? t("opt.hint.oauth") : t("opt.hint.key")));
+    body.appendChild(connectBtn);
+    body.appendChild(el("p", "hint", OAUTH.has(id) ? t("opt.hint.oauth") : t("opt.hint.key")));
   }
 
   // Reflect connected/disconnected state on the badge + connect button.
@@ -477,7 +563,11 @@ function buildCard(id) {
 
   // Local server: explicit opt-in.
   if (meta.local) {
-    const lab = el("label", "switch");
+    const lab = el("label", "row row-switch");
+    const txt = el("span", "row-text");
+    txt.appendChild(el("span", "row-title", t("opt.local.enable")));
+    lab.appendChild(txt);
+    const sw = el("span", "switch");
     const inp = el("input");
     inp.type = "checkbox";
     inp.id = `local_${id}`;
@@ -497,17 +587,15 @@ function buildCard(id) {
         }
       }
     });
-    lab.appendChild(inp);
-    lab.appendChild(el("span", "track"));
-    lab.appendChild(el("span", "lbl", t("opt.local.enable")));
-    sec.appendChild(lab);
-    const hint = el("p", "hint", t("opt.local.hint"));
-    sec.appendChild(hint);
+    sw.appendChild(inp);
+    sw.appendChild(el("span", "track"));
+    lab.appendChild(sw);
+    body.appendChild(lab);
+    body.appendChild(el("p", "hint", t("opt.local.hint")));
   }
 
   // API key.
   if (meta.needsKey || id === "custom") {
-    const lab = el("label", null, meta.needsKey ? t("opt.key.label") : t("opt.key.labelOpt"));
     const inp = el("input");
     // Masked TEXT field instead of type=password: API keys are not login credentials, so
     // we don't want Firefox/Chrome to pop "save this password?" on the Settings page. CSS
@@ -526,44 +614,36 @@ function buildCard(id) {
     inp.value = (settings.keys && settings.keys[id]) || "";
     // Live feedback: a non-empty key counts as "Connecté(e)" immediately (P8).
     inp.addEventListener("input", () => applyConnState(!!inp.value.trim() || isConnected(id, settings)));
-    lab.appendChild(inp);
-    sec.appendChild(lab);
+    body.appendChild(field(meta.needsKey ? t("opt.key.label") : t("opt.key.labelOpt"), inp));
     if (meta.keysUrl) {
       const p = el("p", "muted");
-      const tag = FREE_TIER.has(id) ? t("opt.key.getFree") : t("opt.key.console");
-      p.textContent = tag;
+      p.textContent = FREE_TIER.has(id) ? t("opt.key.getFree") : t("opt.key.console");
       const a = document.createElement("a");
       a.href = meta.keysUrl; a.target = "_blank"; a.rel = "noreferrer";
       a.textContent = meta.keysUrl.replace(/^https?:\/\//, "");
       p.appendChild(a);
-      sec.appendChild(p);
+      body.appendChild(p);
     }
   }
 
   // Base URL (local / custom).
   if (meta.local || meta.custom) {
-    const lab = el("label", null, t("opt.url.label"));
     const inp = el("input");
     inp.type = "text";
     inp.id = `url_${id}`;
     inp.placeholder = meta.baseUrl || "https://your-server/v1";
     inp.value = (settings.baseUrls && settings.baseUrls[id]) || "";
-    lab.appendChild(inp);
-    sec.appendChild(lab);
+    body.appendChild(field(t("opt.url.label"), inp));
 
     // Manual model name(s) — so a local model can ALWAYS be imported even when the server
     // can't be auto-listed (CORS-blocked Ollama, a custom endpoint with no /models route…).
-    const mlab = el("label", null, t("opt.models.label"));
     const minp = el("input");
     minp.type = "text";
     minp.id = `models_${id}`;
     minp.placeholder = "llama3.1, qwen2.5-coder, mistral…";
     minp.value = ((settings.userModels && settings.userModels[id]) || []).join(", ");
-    mlab.appendChild(minp);
-    sec.appendChild(mlab);
-    const hint = el("p", "muted");
-    hint.textContent = t("opt.models.hint");
-    sec.appendChild(hint);
+    body.appendChild(field(t("opt.models.label"), minp));
+    body.appendChild(el("p", "muted", t("opt.models.hint")));
   }
 
   // No per-provider "default model" here: the model is chosen in the sidebar's own
@@ -574,7 +654,8 @@ function buildCard(id) {
 }
 
 // Filter the settings as you type: whole sections that match are kept; inside the (long)
-// AI providers section, individual provider cards are filtered too.
+// AI providers section, individual provider cards are filtered too — and opened, so the match
+// is visible.
 function applySettingsFilter(q) {
   q = (q || "").trim().toLowerCase();
   document.querySelectorAll("main > section").forEach((sec) => {
@@ -583,11 +664,13 @@ function applySettingsFilter(q) {
     const provDiv = sec.querySelector("#providers");
     if (provDiv) {
       let any = false;
-      provDiv.querySelectorAll(":scope > *").forEach((card) => {
+      provDiv.querySelectorAll(".prov").forEach((card) => {
         const hit = !q || titleHit || (card.textContent || "").toLowerCase().includes(q);
         card.style.display = hit ? "" : "none";
+        if (q && hit && !titleHit) card.open = true;
         if (hit) any = true;
       });
+      provDiv.querySelectorAll(".group-title").forEach((g) => { g.style.display = q && !titleHit ? "none" : ""; });
       sec.style.display = !q || titleHit || any ? "" : "none";
       return;
     }
@@ -603,6 +686,8 @@ function wireSettingsSearch() {
 
 function buildProviderFields() {
   const root = $("providers");
+  // Keep the cards the user opened open across a rebuild (a key pasted in the sidebar rebuilds them).
+  const open = new Set([...root.querySelectorAll("details.prov[open]")].map((d) => d.id));
   root.innerHTML = "";
   let lastCat = null;
   // Privacy first: your own machine, then your own server, then the clouds.
@@ -610,10 +695,12 @@ function buildProviderFields() {
   for (const id of [...PROVIDER_ORDER].sort((a, b) => rank[category(a)] - rank[category(b)])) {
     const cat = category(id);
     if (cat !== lastCat) {
-      root.appendChild(el("h2", "group-title", t("opt.group." + cat)));
+      root.appendChild(el("div", "group-title", t("opt.group." + cat)));
       lastCat = cat;
     }
-    root.appendChild(buildCard(id));
+    const card = buildCard(id);
+    if (open.has(card.id)) card.open = true;
+    root.appendChild(card);
   }
 }
 
@@ -755,40 +842,16 @@ const SECTION_ICONS = {
   "sec-security": '<svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
   "sec-behavior": '<svg viewBox="0 0 24 24"><line x1="4" x2="4" y1="21" y2="14"/><line x1="4" x2="4" y1="10" y2="3"/><line x1="12" x2="12" y1="21" y2="12"/><line x1="12" x2="12" y1="8" y2="3"/><line x1="20" x2="20" y1="21" y2="16"/><line x1="20" x2="20" y1="12" y2="3"/><line x1="2" x2="6" y1="14" y2="14"/><line x1="10" x2="14" y1="8" y2="8"/><line x1="18" x2="22" y1="16" y2="16"/></svg>',
   "sec-efficiency": '<svg viewBox="0 0 24 24"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>',
+  "sec-quickaccess": '<svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="6"/><circle cx="16" cy="12" r="3"/></svg>',
+  "sec-shortcuts": '<svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M6 13h.01M18 13h.01M8 15h8"/></svg>',
+  "sec-sync": '<svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
 };
 
-// Quick-navigation pins: one per settings section, with smooth scroll + a scroll-spy
-// that highlights the section currently in view. Built from <section id> + its <h2>.
-// Reorder the settings sections so the things people touch most / accessibility sit at the TOP
-// and the set-once / advanced stuff sinks to the BOTTOM. Done in JS (re-append in order, before
-// the footer note) so the markup stays simple and the quick-nav follows automatically.
-const SECTION_ORDER = [
-  "sec-quick",       // connect (onboarding) — hidden once a provider is connected
-  "sec-appearance",  // theme / font / colours / neon — accessibility, adjusted most
-  "sec-lang",        // language & writing
-  "sec-behavior",    // everyday behaviour
-  "sec-agent",       // per-feature configs…
-  "sec-memory",
-  "sec-web",
-  "sec-image",
-  "sec-efficiency",
-  "sec-security",
-  "sec-code",        // least-consulted → bottom
-  "sec-shortcuts",   // keyboard shortcuts
-  "sec-sync",        // encrypted backup / sync
-  "sec-providers",   // API keys → bottom
-];
-
 // Encrypted settings backup/sync (BYOK stays local — nothing is uploaded).
-function buildSyncSection() {
-  const main = document.querySelector("main");
-  if (!main || document.getElementById("sec-sync")) return;
-  const sec = el("section", null); sec.id = "sec-sync";
-  sec.appendChild(el("h3", null, t("opt.sync.title")));
-  sec.appendChild(el("p", "hint", t("opt.sync.hint")));
-  const row = el("div", "sync-row");
-
-  const exportBtn = el("button", "link-btn", t("opt.sync.export"));
+function wireSync() {
+  const exportBtn = $("syncExport"), importBtn = $("syncImport"), importInput = $("syncFile");
+  if (!exportBtn || exportBtn.dataset.wired) return;
+  exportBtn.dataset.wired = "1";
   exportBtn.addEventListener("click", async () => {
     const pass = window.prompt(t("opt.sync.passSet"));
     if (!pass) return;
@@ -800,10 +863,8 @@ function buildSyncSection() {
       const a = document.createElement("a");
       a.href = url; a.download = "hivey-settings.hivey"; a.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
-    } catch (e) { window.alert("Export failed: " + (e && e.message || e)); }
+    } catch (e) { window.alert(t("opt.sync.exportFail") + " " + (e && e.message || e)); }
   });
-
-  const importInput = el("input"); importInput.type = "file"; importInput.accept = ".hivey,application/json"; importInput.style.display = "none";
   importInput.addEventListener("change", async () => {
     const file = importInput.files && importInput.files[0];
     importInput.value = "";
@@ -819,76 +880,184 @@ function buildSyncSection() {
       location.reload();
     } catch (e) { window.alert(t("opt.sync.importFail") + " " + (e && e.message || e)); }
   });
-  const importBtn = el("button", "link-btn", t("opt.sync.import"));
   importBtn.addEventListener("click", () => importInput.click());
-
-  row.appendChild(exportBtn); row.appendChild(importBtn); row.appendChild(importInput);
-  sec.appendChild(row);
-  main.appendChild(sec);
 }
 
-// Build the "Keyboard shortcuts" section: one row per action; click a field then press a combo.
-function buildShortcutsSection() {
-  const main = document.querySelector("main");
-  if (!main || document.getElementById("sec-shortcuts")) return;
-  const map = { ...defaultShortcuts(), ...(settings.shortcuts || {}) };
-  const sec = el("section", null); sec.id = "sec-shortcuts";
-  const h3 = el("h3", null, t("opt.shortcuts.title")); sec.appendChild(h3);
-  const hint = el("p", "hint", t("opt.shortcuts.hint")); sec.appendChild(hint);
-  const save = () => { settings.shortcuts = map; setSettings({ shortcuts: map }); };
-  for (const a of SHORTCUT_ACTIONS) {
-    const row = el("div", "sc-row");
-    row.appendChild(el("span", "sc-label", t(a.labelKey)));
-    const inp = el("input", "sc-input");
-    inp.type = "text"; inp.readOnly = true; inp.value = map[a.id] || "";
-    inp.placeholder = t("opt.shortcuts.record");
-    inp.addEventListener("focus", () => { inp.value = t("opt.shortcuts.record"); });
-    inp.addEventListener("blur", () => { inp.value = map[a.id] || ""; });
-    inp.addEventListener("keydown", (e) => {
-      e.preventDefault();
-      if (e.key === "Backspace" || e.key === "Delete") { map[a.id] = ""; inp.value = ""; save(); inp.blur(); return; }
-      const combo = comboFromEvent(e);
-      if (!combo || !isBindable(combo)) return; // ignore modifier-only / non-modified keys
-      map[a.id] = combo; inp.value = combo; save(); inp.blur();
-    });
-    const clear = el("button", "sc-clear", "✕");
-    clear.title = "Disable"; clear.addEventListener("click", () => { map[a.id] = ""; inp.value = ""; save(); });
-    row.appendChild(inp); row.appendChild(clear);
-    sec.appendChild(row);
+// ----- Keyboard shortcuts --------------------------------------------------------------------------
+// One row per action: its name, the combo drawn as key caps, a button to disable it and one to
+// restore its default. Click the combo to record a new one: the next key press with Ctrl, Alt or ⌘
+// is taken; Esc cancels, Backspace/Delete disables. A combo already used by another action moves
+// here (and says so); a combo the browser keeps for itself is flagged, because it never reaches
+// the sidebar.
+const SC_ICON_CLEAR = '<svg viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+const SC_ICON_RESET = '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>';
+const IS_MAC = isMacPlatform();
+let scMap = null;          // the full map being edited (stored map merged over the defaults)
+let scNotes = {};          // actionId → a one-off note ("taken from …")
+let scRecording = null;    // { id, btn, onKey, onBlur } while a combo is being recorded
+
+function shortcutLabel(id) {
+  const a = SHORTCUT_ACTIONS.find((x) => x.id === id);
+  return a ? t(a.labelKey) : id;
+}
+function drawCombo(btn, combo) {
+  btn.replaceChildren();
+  const keys = comboKeys(combo, IS_MAC);
+  if (!keys.length) { btn.appendChild(el("span", "sc-none", t("opt.shortcuts.none"))); return; }
+  keys.forEach((k, i) => {
+    if (i) btn.appendChild(el("span", "sc-plus", "+"));
+    btn.appendChild(el("kbd", null, k));
+  });
+}
+function saveShortcuts() {
+  settings.shortcuts = { ...scMap };
+  setSettings({ shortcuts: settings.shortcuts }).then(() => flash($("status"), t("opt.savedAuto"))).catch(() => {});
+}
+function stopRecording(render = true) {
+  if (!scRecording) return;
+  const { btn, onKey, onBlur } = scRecording;
+  btn.removeEventListener("keydown", onKey, true);
+  btn.removeEventListener("blur", onBlur);
+  btn.classList.remove("recording");
+  btn.setAttribute("aria-pressed", "false");
+  scRecording = null;
+  if (render) renderShortcuts();
+}
+function assignShortcut(id, combo) {
+  const notes = {};
+  if (combo) {
+    // One combo, one action: take it from whichever action had it.
+    for (const a of SHORTCUT_ACTIONS) {
+      if (a.id !== id && normalizeCombo(scMap[a.id]) === combo) {
+        scMap[a.id] = "";
+        notes[id] = t("opt.shortcuts.moved", { action: shortcutLabel(a.id) });
+        notes[a.id] = t("opt.shortcuts.removed", { action: shortcutLabel(id) });
+      }
+    }
   }
-  const reset = el("button", "link-btn", t("opt.shortcuts.reset"));
-  reset.addEventListener("click", () => { Object.assign(map, defaultShortcuts()); save(); sec.remove(); buildShortcutsSection(); reorderSections(); });
-  sec.appendChild(reset);
-  main.appendChild(sec);
+  scMap[id] = combo;
+  scNotes = notes;
+  saveShortcuts();
 }
-function reorderSections() {
-  const main = document.querySelector("main");
-  if (!main) return;
-  const anchor = main.querySelector(".actions"); // keep sections above the "changes saved" footer
-  SECTION_ORDER.forEach((id) => { const sec = document.getElementById(id); if (sec) main.insertBefore(sec, anchor); });
-  // Quick connect is onboarding-only: once any provider is connected, hide it entirely.
+function startRecording(id, btn) {
+  stopRecording(false);
+  scNotes = {};
+  btn.classList.add("recording");
+  btn.setAttribute("aria-pressed", "true");
+  btn.replaceChildren(el("span", null, t("opt.shortcuts.recording")));
+  const onKey = (e) => {
+    // Tab with no modifier leaves the field (keyboard users must never be trapped here).
+    if (e.key === "Tab" && !e.ctrlKey && !e.altKey && !e.metaKey) { stopRecording(); return; }
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.key === "Escape") { stopRecording(); btn.focus(); return; }
+    if ((e.key === "Backspace" || e.key === "Delete") && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      assignShortcut(id, ""); stopRecording(); focusShortcut(id); return;
+    }
+    const combo = comboFromEvent(e);
+    if (!combo) {
+      // Modifiers alone: show what is held so far.
+      const held = [e.ctrlKey && "Ctrl", e.metaKey && "Meta", e.altKey && "Alt", e.shiftKey && "Shift"].filter(Boolean);
+      if (held.length) drawCombo(btn, held.join("+") + "+…");
+      return;
+    }
+    if (!isBindable(combo)) {
+      btn.replaceChildren(el("span", null, t("opt.shortcuts.needMod")));
+      return;
+    }
+    assignShortcut(id, combo);
+    stopRecording();
+    focusShortcut(id);
+  };
+  const onBlur = () => stopRecording();
+  btn.addEventListener("keydown", onKey, true);
+  btn.addEventListener("blur", onBlur);
+  scRecording = { id, btn, onKey, onBlur };
+}
+function focusShortcut(id) {
+  const b = document.querySelector(`.sc-key[data-action="${id}"]`);
+  if (b) b.focus();
+}
+function renderShortcuts() {
+  const host = $("shortcutsList");
+  if (!host) return;
+  if (!scMap) scMap = { ...defaultShortcuts(), ...(settings.shortcuts || {}) };
+  const conflicts = findConflicts(scMap);
+  host.replaceChildren();
+  for (const a of SHORTCUT_ACTIONS) {
+    const combo = normalizeCombo(scMap[a.id]);
+    const row = el("div", "sc-row");
+    const label = el("span", "sc-label", t(a.labelKey));
+    label.id = "scl_" + a.id;
+    const ctl = el("div", "sc-ctl");
+    const btn = el("button", "sc-key");
+    btn.type = "button";
+    btn.dataset.action = a.id;
+    btn.setAttribute("aria-labelledby", label.id);
+    btn.setAttribute("aria-pressed", "false");
+    btn.title = t("opt.shortcuts.edit");
+    drawCombo(btn, combo);
+    btn.addEventListener("click", () => {
+      if (scRecording && scRecording.id === a.id) { stopRecording(); return; }
+      startRecording(a.id, btn);
+    });
+    const clear = el("button", "sc-icon");
+    clear.type = "button";
+    clear.title = t("opt.shortcuts.clear");
+    clear.setAttribute("aria-label", t("opt.shortcuts.clear") + " — " + t(a.labelKey));
+    setHTML(clear, SC_ICON_CLEAR);
+    clear.hidden = !combo;
+    clear.addEventListener("click", () => { assignShortcut(a.id, ""); renderShortcuts(); });
+    const reset = el("button", "sc-icon");
+    reset.type = "button";
+    reset.title = t("opt.shortcuts.resetOne", { combo: comboKeys(a.def, IS_MAC).join(IS_MAC ? "" : "+") });
+    reset.setAttribute("aria-label", reset.title);
+    setHTML(reset, SC_ICON_RESET);
+    reset.hidden = combo === normalizeCombo(a.def);
+    reset.addEventListener("click", () => { assignShortcut(a.id, normalizeCombo(a.def)); renderShortcuts(); });
+    ctl.append(btn, clear, reset);
+    const note = el("div", "sc-note");
+    if (scNotes[a.id]) note.textContent = scNotes[a.id];
+    else if (conflicts[a.id]) { note.textContent = t("opt.shortcuts.dup", { action: shortcutLabel(conflicts[a.id]) }); note.classList.add("warn"); }
+    else if (combo && isReservedCombo(combo)) { note.textContent = t("opt.shortcuts.reserved"); note.classList.add("warn"); }
+    row.append(label, ctl, note);
+    host.appendChild(row);
+  }
+}
+function wireShortcuts() {
+  const reset = $("shortcutsReset");
+  if (reset && !reset.dataset.wired) {
+    reset.dataset.wired = "1";
+    reset.addEventListener("click", () => { stopRecording(false); scMap = defaultShortcuts(); scNotes = {}; saveShortcuts(); renderShortcuts(); });
+  }
+  renderShortcuts();
+}
+
+// Quick connect is onboarding-only: once any provider is connected, hide it entirely.
+function updateQuickConnectVisibility() {
   const quick = document.getElementById("sec-quick");
   if (quick) quick.style.display = anyConnected() ? "none" : "";
 }
 function anyConnected() {
   try { return (PROVIDER_ORDER || []).some((id) => isConnected(id, settings)); } catch (_) { return false; }
 }
+// Quick-navigation pins: one per settings section, with smooth scroll + a scroll-spy
+// that highlights the section currently in view. Built from <section id> + its <h2>.
+let spyBound = false;
 function buildQuickNav() {
   const nav = $("quicknav");
   if (!nav) return;
-  nav.innerHTML = "";
-  nav.appendChild(el("span", "qn-label", t("opt.nav.label")));
+  nav.replaceChildren();
   const links = [];
   document.querySelectorAll("main > section[id]").forEach((sec) => {
     if (sec.style.display === "none") return; // skip hidden sections (e.g. Quick connect once connected)
     const h = sec.querySelector("h2");
     if (!h) return;
-    const label = h.textContent.trim();
     const a = el("a", "qn-pin");
     const ic = el("span", "qn-ic");
     if (SECTION_ICONS[sec.id]) setHTML(ic, SECTION_ICONS[sec.id]); // trusted static SVG
     a.appendChild(ic);
-    a.appendChild(el("span", "qn-text", label));
+    a.appendChild(el("span", "qn-text", h.textContent.trim()));
     a.href = "#" + sec.id;
     a.addEventListener("click", (e) => {
       e.preventDefault();
@@ -899,11 +1068,22 @@ function buildQuickNav() {
     links.push({ a, sec });
   });
   const spy = () => {
+    const top = (parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 84) + 24;
     let active = links[0];
-    for (const l of links) if (l.sec.getBoundingClientRect().top <= 96) active = l;
+    for (const l of links) if (l.sec.style.display !== "none" && l.sec.getBoundingClientRect().top <= top) active = l;
+    // At the very bottom the last short sections can never reach the top: light the last one.
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) active = links[links.length - 1];
     links.forEach((l) => l.a.classList.toggle("active", l === active));
+    // Narrow layout: keep the active pin visible in the horizontal strip.
+    if (active && nav.scrollWidth > nav.clientWidth + 4 && active.a.dataset.shown !== "1") {
+      links.forEach((l) => { l.a.dataset.shown = ""; });
+      active.a.dataset.shown = "1";
+      const strip = nav.closest(".sidenav");
+      if (strip && strip.scrollWidth > strip.clientWidth) strip.scrollTo({ left: active.a.offsetLeft - 24, behavior: "smooth" });
+    }
   };
-  window.addEventListener("scroll", spy, { passive: true });
+  window.__hvSpy = spy;
+  if (!spyBound) { window.addEventListener("scroll", () => window.__hvSpy && window.__hvSpy(), { passive: true }); spyBound = true; }
   spy();
 }
 
@@ -923,23 +1103,47 @@ function addSectionIcons() {
   });
 }
 
+// The narrow layout's sticky jump strip sits right under the top bar, whose height changes when
+// its search field wraps.
+function trackTopbarHeight() {
+  const bar = document.querySelector(".topbar");
+  if (!bar) return;
+  const set = () => document.documentElement.style.setProperty("--topbar-h", bar.offsetHeight + "px");
+  set();
+  if (typeof ResizeObserver !== "undefined") new ResizeObserver(set).observe(bar);
+}
+
+// Native controls (select lists, scrollbars, the colour dialog) follow the theme's lightness.
+function applyColorScheme() {
+  const bg = toHexColor(effectivePalette(curTheme, curColors).bg);
+  const n = parseInt(bg.slice(1), 16);
+  const lum = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+  document.documentElement.style.colorScheme = lum > 0.5 ? "light" : "dark";
+}
+
 async function load() {
   settings = await getSettings();
   curTheme = settings.theme || "dark";
   curColors = { ...(settings.themeColors || {}) };
   applyThemeLive();                        // theme the options page too
   setLang(settings.uiLang || "en");       // English default; other languages via the uiLang setting
-  applyDom(document);                      // fill all data-i18n static markup
-  document.documentElement.lang = settings.uiLang || "en";
-  buildShortcutsSection();                 // configurable keyboard shortcuts (built before reorder)
-  buildSyncSection();                      // encrypted settings backup / sync
-  reorderSections();                       // most-used / accessibility at top, advanced at bottom
-  buildThemeControls();
-  buildOpacityModal();                     // element-colour opacity popup (Settings → Appearance)
-  buildQuickActions();                     // top-right one-tap toggles (neon / contour / sound / menu side)
-  buildQuickNav();                         // jump pins to each section (follows the new order)
+  const first = !booted;
+  booted = true;
+  if (first) {
+    applyDom(document);                    // fill all data-i18n static markup
+    document.documentElement.lang = settings.uiLang || "en";
+    buildThemeControls();                  // listeners + eyedroppers: once (load() runs again after an OAuth connect)
+    buildOpacityModal();                   // element-colour opacity popup (Settings → Appearance)
+    wireSync();                            // encrypted settings backup / sync
+    wireMemory();
+    trackTopbarHeight();
+  }
+  scMap = null; wireShortcuts();           // configurable keyboard shortcuts
+  buildQuickAccess();                      // Quick access switches
+  updateQuickConnectVisibility();          // Quick connect only until a provider is connected
+  buildQuickNav();                         // jump pins to each section
   addSectionIcons();                       // same line icons on each section title
-  wireMemory();
+  document.documentElement.classList.add("theme-ready"); // themed + translated: reveal (see options.css)
   modelLists = { ...(settings.modelLists || {}) };
   buildProviderFields();
   buildImageProvider();
@@ -958,18 +1162,18 @@ async function load() {
   $("railSide").value = settings.railSide === "right" ? "right" : "left";
   buildRailTabsList();
   // Reply-bubble outline customisation.
-  if ($("msgBorderOn")) $("msgBorderOn").checked = settings.msgBorderOn !== false;
+  if ($("msgBorderOn")) $("msgBorderOn").checked = settings.msgBorderOn === true;
   // Neon title outline is its own option (decoupled from icon boxes) — live-preview the h1 outline.
   if ($("textOutlineOn")) {
     $("textOutlineOn").checked = settings.textOutlineOn === true;
     document.body.classList.toggle("text-outline", settings.textOutlineOn === true);
-    $("textOutlineOn").addEventListener("change", () => document.body.classList.toggle("text-outline", $("textOutlineOn").checked));
+    if (first) $("textOutlineOn").addEventListener("change", () => document.body.classList.toggle("text-outline", $("textOutlineOn").checked));
   }
   // Crisp contour is its own option (own colour), combinable with neon — live-preview the h1.
   if ($("contourOn")) {
     $("contourOn").checked = settings.contourOn === true;
     document.body.classList.toggle("title-contour", settings.contourOn === true);
-    $("contourOn").addEventListener("change", () => document.body.classList.toggle("title-contour", $("contourOn").checked));
+    if (first) $("contourOn").addEventListener("change", () => document.body.classList.toggle("title-contour", $("contourOn").checked));
   }
   if ($("smoothStream")) $("smoothStream").checked = settings.smoothStream !== false;
   if ($("soundOnDone")) $("soundOnDone").checked = settings.soundOnDone === true;
@@ -1139,29 +1343,30 @@ async function saveColorsNow() {
   try { await setSettings({ theme: curTheme, themeColors: curColors }); } catch (_) {}
 }
 let autoSaveTimer = null;
-function scheduleAutoSave() {
+function scheduleAutoSave(e) {
+  // Quick access switches save themselves (one key, at once); the debounced pass is for the rest.
+  if (e && e.target && e.target.dataset && e.target.dataset.quick) return;
   clearTimeout(autoSaveTimer);
   autoSaveTimer = setTimeout(async () => {
-    try { await setSettings(collectSettings()); flash($("status"), t("opt.savedAuto")); } catch (_) {}
+    try {
+      const patch = collectSettings();
+      await setSettings(patch);
+      Object.assign(settings, patch);
+      syncQuickAccess(); // a detailed control changed: its quick switch follows
+      flash($("status"), t("opt.savedAuto"));
+    } catch (_) {}
   }, 500);
 }
 
-// Explicit Save button: persist + refresh the model pickers + confirm.
-async function save() {
-  await setSettings(collectSettings());
-  settings = await getSettings();
-  modelLists = { ...(settings.modelLists || {}) };
-  buildProviderFields();
-  buildSearchModelSelect();
-  buildAgentModelSelect();
-  buildUtilityModelSelect();
-  refreshModelLists();
-  flash($("status"), t("opt.saved"));
-}
-
+// The status line in the top bar: a confirmation for a moment, then back to its resting text.
+let flashTimers = new WeakMap();
 function flash(node, text) {
+  if (!node) return;
+  if (!node.dataset.rest) node.dataset.rest = node.id === "status" ? t("opt.autosaveNote") : "";
   node.textContent = text;
-  setTimeout(() => (node.textContent = ""), 2500);
+  node.classList.toggle("flash", !!text);
+  clearTimeout(flashTimers.get(node));
+  flashTimers.set(node, setTimeout(() => { node.textContent = node.dataset.rest; node.classList.remove("flash"); }, 2500));
 }
 
 // "Connect": OpenRouter via in-app OAuth; other providers open their own console
@@ -1188,6 +1393,8 @@ async function connectAccount(id) {
   const meta = PROVIDERS[id];
   const url = LOGIN_URL[id] || meta.keysUrl;
   if (url) window.open(url, "_blank", "noopener");
+  const card = $(`prov_${id}`);
+  if (card) card.open = true;
   const f = $(`key_${id}`);
   if (f) { f.focus(); f.scrollIntoView({ block: "center" }); }
   flash(status, t("opt.dyn.identify", { label: meta.label }));
@@ -1205,25 +1412,28 @@ document.addEventListener("change", scheduleAutoSave);
 document.addEventListener("input", (e) => {
   if (e.target && e.target.matches &&
       e.target.matches('input[type="color"],input[type="text"],input[type="password"],input[type="number"],textarea')) {
-    scheduleAutoSave();
+    scheduleAutoSave(e);
   }
 });
 $("quickConnect").addEventListener("click", async () => {
   flash($("quickStatus"), t("opt.dyn.connecting"));
   await connectAccount("openrouter");
   flash($("quickStatus"), isConnected("openrouter", settings) ? t("opt.quick.savedNote") : "");
-  if (isConnected("openrouter", settings)) { reorderSections(); buildQuickNav(); } // hide the now-pointless Quick connect
+  if (isConnected("openrouter", settings)) { updateQuickConnectVisibility(); buildQuickNav(); } // hide the now-pointless Quick connect
 });
 $("clearHistoryBtn").addEventListener("click", async () => {
   await clearConversations();
   flash($("status"), t("opt.cleared"));
 });
 
-// Reflect connections made elsewhere (e.g. the sidebar's quick-connect): when the
-// stored keys / providers change, rebuild the cards so the new API key shows up
-// here without a manual refresh.
+// Reflect changes made elsewhere: a connection made in the sidebar rebuilds the provider cards;
+// a switch flipped in the sidebar (anonymisation badge, Verify chip…) moves its quick switch here.
 browser.storage.onChanged.addListener((changes, area) => {
-  if (area !== "local") return;
+  if (area !== "local" || !settings) return;
+  const prefs = ["privacyLevel", "privacyLevelOn", "webSearch", "suggestNext", "artifacts", "verifyAnswers", "compressHistory", "memoryEnabled", "soundOnDone", "tabDoneIndicator", "smoothStream", "textOutlineOn", "contourOn", "msgBorderOn", "railSide"];
+  const patch = {};
+  for (const k of prefs) if (changes[k] && settings[k] !== changes[k].newValue) patch[k] = changes[k].newValue;
+  if (Object.keys(patch).length) { reflectPatch(patch); syncQuickAccess(); }
   if (!(changes.keys || changes.baseUrls || changes.localEnabled || changes.provider)) return;
   getSettings().then((s) => {
     settings = s;

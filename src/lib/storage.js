@@ -82,6 +82,7 @@ const DEFAULTS = {
   uiLang: "en", // sidebar interface language: "en" (default) | "fr". Changed from Settings.
   theme: "dark", // colour theme key (see src/lib/theme.js): dark (default) | hive | modern | neon | sunset | light
   themeColors: {}, // optional per-colour overrides applied ON TOP of the theme { accent, accent2, bg, panel, text }
+  themeDarkPrev: null, // Settings → Quick access "Light theme": the theme (+ its colours) to return to when it is switched off
   auraColor: "", // background aura colour ("" = follow the accent). Also synced to Hivey Code.
   auraOpacity: 0.12, // background aura intensity (0–0.3)
   auraSize: 720, // background aura radius in px

@@ -77,7 +77,11 @@ VS Code / Slack — scale mieux qu'une rangée d'onglets) donne accès à :
 - 📊 **Modèles classés par spécialité** : chaque espace trie sa liste de modèles selon
   un **index de qualité curé par catégorie** (les endpoints `/models` n'exposent aucun
   score) — le picker de l'onglet Image ne classe pas comme celui de l'onglet Code.
-- ⌨️ **Raccourcis clavier configurables** (nouveau chat, focus composer, historique…).
+- ⌨️ **Raccourcis clavier configurables** (nouveau chat, focus composer, historique…) : on
+  clique, on appuie sur la combinaison ; conflits et combinaisons réservées au navigateur signalés.
+- 🎛️ **Réglages clairs** : une colonne de cartes qui suit votre thème, de 360 px à l'écran large,
+  et un **Accès rapide** d'interrupteurs (anonymisation, recherche web, suggestion, artefacts,
+  vérification, compaction, mémoire, son, thème clair…) enregistrés aussitôt.
 - 🔐 **Sauvegarde/synchro chiffrée** : export d'un blob **AES-256-GCM** (PBKDF2, 100k
   itérations) de vos réglages et clés, à transporter vers un autre appareil.
   Rien ne transite par un serveur — la synchro, c'est vous qui déplacez le fichier.
@@ -166,7 +170,7 @@ VS Code / Slack — scale mieux qu'une rangée d'onglets) donne accès à :
 
 | Réglages de confidentialité | Fournisseurs : local d'abord |
 |---|---|
-| ![Niveau d'anonymisation, termes, confiance dans ses serveurs](docs/screenshots/settings-privacy.png) | ![Les fournisseurs rangés local, passerelle, cloud](docs/screenshots/settings-providers.png) |
+| ![Niveau d'anonymisation, termes, confiance dans ses serveurs](docs/screenshots/settings-privacy.png) | ![Les fournisseurs rangés local, passerelle, cloud, chacun replié avec son état](docs/screenshots/settings-providers.png) |
 
 Captures faites le 24 octobre 2026 dans Chromium avec l'extension réelle et un vrai modèle cloud
 (DeepSeek V4.1 Flash via OpenRouter). Artifacts : [aperçu HTML](docs/screenshots/artifact-html-preview.png),
@@ -244,7 +248,7 @@ src/
   background/            Event page : menus contextuels (résumer/traduire/…)
   sidebar/               UI principale (chat, streaming, thinking, actions rapides)
   content/               Lecture page + actions DOM + notif. de navigation SPA
-  options/               Réglages générés dynamiquement (clés BYOK par fournisseur)
+  options/               Réglages : accès rapide, cartes par section, clés BYOK par fournisseur
   lib/
     models.js            Catalogue des fournisseurs + modèles + presets d'écriture
     providers.js         Client Anthropic natif + client générique OpenAI ; images ; aucun plafond fixe,
@@ -275,7 +279,8 @@ src/
     skills.js            Skills experts + objectifs, exposés en slash-commands
     prompts.js           Prompt Library intégrée (8 catégories, bilingue)
     pcap.js              Parseur .pcap client → résumé défensif anonymisé
-    shortcuts.js         Raccourcis clavier configurables
+    shortcuts.js         Raccourcis clavier configurables (lecture des touches, conflits, réservés)
+    quick-toggles.js     Interrupteurs de l'accès rapide des réglages
     syncCrypto.js        Export/import chiffré AES-256-GCM des réglages (PBKDF2)
     exportConversation.js Export/impression d'une conversation
     theme.js             6 thèmes + surcouche de couleurs personnalisées
@@ -452,7 +457,7 @@ npm run vendor:check  # les bibliothèques tierces sont-elles les originaux amon
 npm run bench -- --url http://127.0.0.1:8080/v1 --model qwen-27b   # le banc chat + agent
 ```
 
-**397 tests** (node:test) couvrent le noyau de raisonnement et le tour d'agent de bout en bout, les
+**411 tests** (node:test) couvrent le noyau de raisonnement et le tour d'agent de bout en bout, les
 niveaux de réflexion de chaque fournisseur (le corps exact de chaque requête), l'anonymisation
 (détecteurs, faux positifs, restitution, fenêtre des données sensibles), la gestion du contexte, les
 freins de l'agent, le routage Hivey, et **la complétude des six langues**. Les tests des niveaux de

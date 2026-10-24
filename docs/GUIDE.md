@@ -28,6 +28,24 @@ vérifications de la CI :
 La sidebar s'ouvre par l'icône de la barre latérale (Firefox, `Ctrl+Shift+Y`) ou du panneau latéral
 (Chromium). Ce qui change à chaque version est dans le [journal des modifications](../CHANGELOG.md).
 
+**Les réglages** (⚙) s'ouvrent dans un onglet : une colonne de cartes, chaque réglage avec son nom à
+gauche et sa commande à droite (empilés sur une fenêtre étroite), une liste « Aller à » pour sauter
+d'une section à l'autre et une recherche en haut. La première carte, **Accès rapide**, réunit des
+interrupteurs pour ce qu'on bascule le plus : anonymisation, recherche web, suggestion de la
+prochaine demande, artefacts, vérification des réponses, compaction automatique, mémoire, son et
+notifications, thème clair, effets, côté du menu et langue de l'interface. Chaque interrupteur est
+enregistré aussitôt et la sidebar ouverte suit sans être rechargée. Tout se règle aussi en détail
+plus bas, et la page suit votre thème, clair ou sombre.
+
+**Raccourcis clavier** (Réglages → Raccourcis clavier) : cliquez sur un raccourci puis appuyez sur la
+nouvelle combinaison, avec Ctrl, Alt ou ⌘ ; **Échap** annule, **Retour arrière** le désactive, ↺
+rétablit sa valeur par défaut. Une combinaison déjà prise passe à la nouvelle action (la page dit
+laquelle l'a perdue), et une combinaison que le navigateur garde pour lui (`Ctrl+Shift+W`,
+`Ctrl+Shift+P`…) est signalée. Par défaut : `Ctrl+Shift+O` nouvelle conversation, `Ctrl+Shift+L`
+zone de saisie, `Ctrl+Shift+H` historique, `Ctrl+Shift+E` recherche web, `Ctrl+Shift+1/2/3/5`
+Chat, Traduire, Améliorer, Sécurité, `Ctrl+Shift+K` bibliothèque de prompts. Ils agissent quand la
+sidebar a le focus.
+
 ## 2. Choisir son modèle : local, passerelle ou cloud
 
 Ouvrez ⚙ **Réglages** → **Fournisseurs**. Ils sont rangés du plus privé au moins privé :
