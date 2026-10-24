@@ -62,14 +62,22 @@ function setHTML(el, html) { if (el) el.innerHTML = html == null ? "" : html; }
   }
 
   // --- Very sensitive (non-payment) actions: ALWAYS confirmed, even in "Allow" mode.
-  // Downloading, reserving/booking, deleting, transferring, signing up, installing… The
-  // agent must get the user's OK before doing these. Payments stay hard-blocked above.
+  // Downloading, the button that commits a booking, deleting, transferring, signing up,
+  // installing… The agent must get the user's OK before doing these. Payments stay hard-blocked
+  // above. Only the control's own visible label is read — never its id or name, nor the whole
+  // form around it: on a booking site "booking" is in every id and "Réservez votre séjour" heads
+  // the search form, and searching dates and prices must stay free. What is confirmed is the
+  // last step (« Réserver maintenant », « Confirmer la réservation », "Book now"…).
+  // <sensitive> pure, run as is by tests/sensitiveActions.test.js
   const SENSITIVE_WORDS = [
     "download", "télécharger", "telecharger",
-    "reserve", "reservation", "réserver", "reserver", "réservation",
-    "book now", "book ticket", "booking",
+    "réserver maintenant", "réservez maintenant", "reserver maintenant", "je réserve", "je reserve",
+    "confirmer la réservation", "confirmer ma réservation", "valider la réservation", "finaliser la réservation",
+    "confirmer la reservation", "valider la reservation", "finaliser la reservation",
+    "book now", "book ticket", "reserve now", "confirm booking", "complete booking", "complete your booking",
+    "confirm reservation", "complete reservation",
     "delete", "supprimer", "remove account", "delete account", "supprimer le compte",
-    "transfer", "transférer", "transferer", "virement", "wire ",
+    "transfer", "transférer", "transferer", "virement", "wire",
     "sign up", "signup", "register", "create account", "s'inscrire", "inscrire", "créer un compte", "creer un compte",
     "apply now", "postuler", "submit application",
     "install", "installer",
@@ -77,6 +85,20 @@ function setHTML(el, html) { if (el) el.innerHTML = html == null ? "" : html; }
     "unsubscribe", "se désabonner", "se desabonner",
     "publish", "publier", "post publicly",
   ];
+  // A button that says only this commits too (« Réserver » on a room, "Book" on a seat).
+  const COMMIT_LABEL = /^(r[ée]server|r[ée]servez|reserve|book|book it)$/;
+  const escapeRe = (w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const SENSITIVE_RE = new RegExp(`(^|[^\\p{L}\\p{N}])(${SENSITIVE_WORDS.map(escapeRe).join("|")})(?=$|[^\\p{L}\\p{N}])`, "u");
+  function sensitiveReason(label) {
+    const t = String(label || "").toLowerCase().replace(/\s+/g, " ").trim();
+    if (!t) return null;
+    if (COMMIT_LABEL.test(t)) return t;
+    const m = SENSITIVE_RE.exec(t);
+    return m ? m[2] : null;
+  }
+  // </sensitive>
+  const ownLabel = (el) => (el.innerText || "") + " " + (el.value || "") + " " +
+    ((el.getAttribute && ((el.getAttribute("aria-label") || "") + " " + (el.getAttribute("title") || ""))) || "");
   function looksLikeSensitiveControl(el) {
     // A real download link/button (download attribute or a file href).
     if (el.tagName === "A" &&
@@ -84,8 +106,16 @@ function setHTML(el, html) { if (el) el.innerHTML = html == null ? "" : html; }
          /\.(zip|exe|dmg|msi|pkg|apk|iso|deb|rpm|7z|rar|tar|gz|jar|bin|app|csv|xlsx?)(\?|#|$)/i.test((el.getAttribute && el.getAttribute("href")) || ""))) {
       return "download";
     }
-    const hay = textOf(el);
-    for (const w of SENSITIVE_WORDS) if (hay.includes(w)) return w.trim();
+    const own = sensitiveReason((el.innerText || el.value || "").trim());
+    return own || sensitiveReason(ownLabel(el));
+  }
+  // Submitting a form does what its submit button says.
+  function looksLikeSensitiveSubmit(form) {
+    if (!form || !form.querySelectorAll) return null;
+    for (const b of form.querySelectorAll('button:not([type="button"]):not([type="reset"]), input[type="submit"]')) {
+      const reason = looksLikeSensitiveControl(b);
+      if (reason) return reason;
+    }
     return null;
   }
 
@@ -324,7 +354,7 @@ function setHTML(el, html) { if (el) el.innerHTML = html == null ? "" : html; }
     }
     // If submitting a form that triggers a very sensitive action, confirm first.
     if (submit && !confirmed) {
-      const reason = (el.form && looksLikeSensitiveControl(el.form)) || looksLikeSensitiveControl(el);
+      const reason = looksLikeSensitiveSubmit(el.form);
       if (reason) return { confirm: true, action: reason, label: labelOf(el) };
     }
     el.focus();

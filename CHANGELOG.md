@@ -103,6 +103,22 @@ Version de développement, toujours à jour :
 - **Corrigez-le pendant qu'il travaille** : un message tapé pendant que l'agent agit lui est transmis
   à l'étape suivante, sans devoir l'arrêter (avant, il était perdu).
 - **Toujours dans votre langue**, rappelée après chaque lecture de page.
+- **Il cherche vraiment sur les sites de réservation** : sur un site d'hôtels, de trains ou de vols,
+  il remplit le formulaire de recherche (destination, dates, voyageurs), lit les résultats, applique
+  vos critères (budget, note, horaires, direct…), ouvre les meilleures offres pour lire le **total du
+  séjour**, compare deux sites et rend un tableau. Avant, la simple recherche lui était souvent
+  refusée : tout bouton ou formulaire où figuraient « réservation » ou « booking » — même dans un
+  identifiant invisible — demandait une confirmation. Seul le bouton qui **réserve** (« Réserver
+  maintenant », « Confirmer la réservation », « Book now »…) vous est désormais demandé.
+- **Recherche approfondie** : pour une question de fait, il part de la source officielle et en suit
+  les pages (infos pratiques, tarifs, FAQ) jusqu'à avoir répondu à **chaque partie** de la question,
+  fait le calcul demandé, et préfère la source officielle et récente à un vieil article.
+- **Réflexion et actions dans l'ordre où elles ont lieu** : la réflexion qui décide d'une action
+  s'affiche au-dessus de cette action, étape après étape (avant, un bloc « Actions » s'ouvrait en tête,
+  au-dessus de toute réflexion). Une action seule dit ce qu'elle a fait (« 📄 Lecture de la page ✓ »).
+- **La musique démarre avec le son** : une vidéo ou un morceau lancé par l'agent était toujours
+  coupé ; il démarre maintenant avec le son dès que le navigateur l'autorise, et ne passe en muet
+  qu'en dernier recours (l'agent vous le dit alors).
 
 ### Chat, Sécurité et Wisebase : des réponses plus justes, sans brider les modèles
 

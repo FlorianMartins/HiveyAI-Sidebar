@@ -6840,14 +6840,31 @@ function describeAgentAction(call) {
   }
 }
 function makeAgentActions() {
-  let wrap = null, list = null, label = null, currentRow = null, count = 0;
+  // One block per stretch of actions, in the order things happened: the reasoning that led to a
+  // step sits ABOVE the actions it decided (« le mode action passe devant le mode de réflexion »
+  // when a single block was opened before the model had thought anything). A block whose actions
+  // are followed by reasoning or text is folded, and the next action opens a new one below.
+  let wrap = null, list = null, label = null, currentRow = null, count = 0, lastDesc = "", failed = false;
+  const close = () => {
+    if (!wrap) return;
+    wrap.classList.add("done");
+    wrap.classList.remove("running");
+    const sp = wrap.querySelector(".agent-spin");
+    if (sp) sp.remove();
+    // A single action says what it was (« 📄 Lecture de la page ✓ »), several are counted.
+    if (label) label.textContent = count === 1 ? `${lastDesc} ${failed ? "✗" : "✓"}` : count ? t("agent.actionsDone", { n: count }) : t("agent.actionsNone");
+    wrap.open = false; // folded once finished; the user can expand to review
+  };
   const ensure = () => {
-    if (wrap) return;
+    if (wrap && els.messages.lastElementChild === wrap) return;
+    close();
+    count = 0;
+    failed = false;
     els.empty.classList.add("hidden");
     wrap = document.createElement("details");
     wrap.className = "agent-actions";
     // Expanded WHILE the agent works, so the user sees each step (navigate / read / click…) happen
-    // live instead of staring at a lone spinner and wondering what's going on. finish() folds it.
+    // live instead of staring at a lone spinner and wondering what's going on. close() folds it.
     wrap.open = true;
     const sum = document.createElement("summary");
     sum.className = "agent-actions-sum";
@@ -6869,11 +6886,11 @@ function makeAgentActions() {
     scrollMessages();
   };
   return {
-    open() { ensure(); }, // show the frame right away (before the first tool call)
     start(call) {
       ensure();
       // Live "button" text = a readable description of the current step (updates each step).
-      if (label) { label.textContent = describeAgentAction(call); wrap.classList.add("running"); }
+      lastDesc = describeAgentAction(call);
+      if (label) { label.textContent = lastDesc; wrap.classList.add("running"); }
       const row = document.createElement("div");
       row.className = "agent-act";
       const head = document.createElement("div");
@@ -6894,17 +6911,11 @@ function makeAgentActions() {
       res.className = "agent-act-res" + (out && (out.blocked || out.error) ? " err" : "");
       res.textContent = out && out.blocked ? `🛡 ${out.error}` : out && out.error ? `✗ ${out.error}` : "✓ ok";
       currentRow.appendChild(res);
+      currentRow = null;
+      if (out && (out.blocked || out.error)) failed = true;
       count++;
     },
-    finish() {
-      if (!wrap) return;
-      wrap.classList.add("done");
-      wrap.classList.remove("running");
-      const sp = wrap.querySelector(".agent-spin");
-      if (sp) sp.remove();
-      if (label) label.textContent = count ? t("agent.actionsDone", { n: count }) : t("agent.actionsNone");
-      wrap.open = false; // keep it folded once finished; the user can expand to review
-    },
+    finish() { close(); },
   };
 }
 function addThinkBlock(m) {
@@ -7093,6 +7104,12 @@ function makeSink(badgeLabel, showThink = true, pendingEl = null, m = null) {
         enhanceArtifacts(contentEl); // turn code blocks into runnable artifact cards
       }
       if (codingDetails) { codingDetails.remove(); codingDetails = null; } // live view no longer needed
+      // The agent finalizes before each action: what it thinks next goes in a NEW block, below
+      // that action, so reasoning and actions read in the order they happened.
+      if (think) {
+        think = null; nativeThink = ""; promptThink = "";
+        if (!raw) full = "";
+      }
     },
     getRaw: () => raw,
     // Replace the rendered content (e.g. to append a verified, deterministic Sources section).
@@ -8038,7 +8055,6 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   // a cleaner, more immersive run — the steps are hidden but consultable on click.
   const agentActs = agentMode ? makeAgentActions() : null;
   if (agentMode) {
-    if (agentActs) agentActs.open(); // show the "Working…" control frame immediately (don't wait for tool #1)
     await ensureAgentTab(); // 🔒 dedicate ONE background tab to THIS conversation (created/reused)
     agentGlowActiveTab();   // glow the page border while the agent works
   }
