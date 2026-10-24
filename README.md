@@ -1,6 +1,6 @@
 # Hivey AI — IA multi-fournisseurs pour Firefox & Chromium
 
-![version](https://img.shields.io/badge/version-2.196.0-8b5cf6) ![MV3](https://img.shields.io/badge/manifest-v3-blue) ![licence](https://img.shields.io/badge/licence-MIT-green)
+![version](https://img.shields.io/badge/version-2.201.0-8b5cf6) ![MV3](https://img.shields.io/badge/manifest-v3-blue) ![licence](https://img.shields.io/badge/licence-MIT-green) [![CI](https://github.com/FlorianMartins/HiveyAI-Sidebar/actions/workflows/ci.yml/badge.svg)](https://github.com/FlorianMartins/HiveyAI-Sidebar/actions/workflows/ci.yml)
 
 Une extension **open-source** qui ajoute une **sidebar IA** à la manière de
 [sider.ai](https://sider.ai), mais où **vous branchez votre propre IA** (BYOK) et
@@ -139,6 +139,15 @@ VS Code / Slack — scale mieux qu'une rangée d'onglets) donne accès à :
 > *Contribution bienvenue : une capture à jour.*
 
 ## Installation
+
+### Version de développement (toujours à jour)
+
+Reconstruite à chaque modification poussée, après les mêmes vérifications que la CI :
+
+- Firefox : [hivey-ai-sidebar-firefox.zip](https://github.com/FlorianMartins/HiveyAI-Sidebar/releases/download/dev/hivey-ai-sidebar-firefox.zip) — `about:debugging#/runtime/this-firefox` → **Charger un module complémentaire temporaire…** → choisir le `.zip`
+- Chrome / Edge / Brave : [hivey-ai-sidebar-chrome.zip](https://github.com/FlorianMartins/HiveyAI-Sidebar/releases/download/dev/hivey-ai-sidebar-chrome.zip) — décompresser, puis `chrome://extensions` → **Mode développeur** → **Charger l'extension non empaquetée**
+
+Ce qui change à chaque version : [CHANGELOG.md](CHANGELOG.md).
 
 ### Firefox (développement)
 

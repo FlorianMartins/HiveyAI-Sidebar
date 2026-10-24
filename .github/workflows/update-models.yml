@@ -1,8 +1,11 @@
 name: Update model catalogue
 
-# Keeps src/lib/models.js fresh automatically: adds newly released OpenRouter models
-# and drops ones a provider removed. Runs daily and on manual dispatch. Commits the
-# diff straight to the default branch when something changed.
+# Keeps src/lib/models.js fresh automatically: adds newly released OpenRouter models and drops ones
+# a provider removed. Runs daily and on manual dispatch.
+#
+# The refresh lands as a pull request, merged once main's required checks have passed on it — main
+# is protected, so a direct push is refused. CI and the security baseline are started on it by hand
+# (a PR opened with the job's token starts no workflow) — see scripts/land-catalogue.sh.
 
 on:
   schedule:
@@ -11,25 +14,32 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
+  actions: write
+  checks: read
+  # Recording the verified results on the commit, where the merge can see them.
+  statuses: write
 
 jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # This job commits and pushes the refreshed catalogue, so it keeps the
           # token; it uploads no artifact, so the credential cannot leak through one.
           persist-credentials: true # zizmor: ignore[artipacked]
 
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "20"
+          node-version: "24"
 
       - name: Refresh OpenRouter model catalogue
         run: node scripts/update-models.mjs
 
-      - name: Commit changes (if any)
+      - name: Land the changes (if any)
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           # hivey-models.js too: the script also re-curates the 🐝 Hivey per-role assignments,
           # and staging only models.js silently threw those bumps away.
@@ -39,7 +49,7 @@ jobs:
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add "${FILES[@]}"
             git commit -m "chore(models): daily auto-update from OpenRouter catalogue"
-            git push
+            bash scripts/land-catalogue.sh
           else
             echo "No model changes today."
           fi

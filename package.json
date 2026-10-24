@@ -6,7 +6,7 @@
   "description": "Hivey AI — multi-provider AI sidebar for Firefox & Chromium. This package.json exists for the DEV toolchain only (tests, model curation); the add-on itself ships no npm dependency and is not built from it.",
   "license": "MIT",
   "scripts": {
-    "test": "node --test tests/",
+    "test": "node scripts/run-tests.mjs",
     "models": "node scripts/update-models.mjs",
     "models:check": "node scripts/update-models.mjs --check",
     "build": "bash scripts/build.sh",
@@ -15,6 +15,11 @@
     "benchmarks:check": "node scripts/update-benchmarks.mjs --check",
     "bakeoff": "node scripts/bench-hivey.mjs",
     "auto-tier": "node scripts/auto-tier.mjs",
-    "memory:admission": "node scripts/bench-hivey.mjs --memory"
+    "memory:admission": "node scripts/bench-hivey.mjs --memory",
+    "check:numbers": "node scripts/check-numbers.mjs",
+    "lint:ext": "npx --yes web-ext@10.7.0 lint --source-dir .build --self-hosted"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }
