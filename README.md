@@ -33,7 +33,7 @@ VS Code / Slack — scale mieux qu'une rangée d'onglets) donne accès à :
 | 📄 **PDF** | Lecture d'un document et questions dessus |
 | 🛡 **Sécurité** | Assistant **cybersécurité défensive** — analyse de capture `.pcap` résumée localement |
 | 🧠 **Wisebase** | **Base de connaissance locale + RAG**, embeddings calculés dans le navigateur |
-| 📊 **Benchmark** | Classements **publiés** (avec leur fraîcheur réelle) + **test en direct** sur votre clé, pour les modèles qu'aucun classement n'a encore atteints |
+| 📊 **Benchmark** | **Testez vos modèles** (tout fournisseur connecté, local et passerelle compris) sur 20 questions notées automatiquement, avec un **rapport** qui s'ouvre tout seul ; classements **publiés** à côté, avec leur fraîcheur réelle |
 | `</>` **Code** | Atelier d'app IA complet (aperçu live, terminal, QR Expo Go) |
 
 ## Fonctionnalités
@@ -263,7 +263,8 @@ src/
     hivey-models.js      Moteur Hivey : paliers par capacité, auto-curation du catalogue
     benchmarks.js        Index de qualité curé par famille de modèle et par catégorie
     benchmark-web.js     GÉNÉRÉ : résultats publiés (Aider, Vectara) + fraîcheur de chaque source
-    benchmarkView.js     Espace Benchmark : tableau publié vs mesuré, test en direct
+    benchmarkView.js     Espace Benchmark : modèles à tester, résultats par famille, classements publiés
+    bench-report.js      Rapport de benchmark (HTML autonome, sans script) ouvert à la fin d'un test
     livebench.js         Épreuves notées par programme (raisonnement, consigne, JSON, outils)
     wisebase.js          Base de connaissance locale + RAG (collections, chunks, IndexedDB)
     embeddings.js        Embeddings calculés dans le navigateur (transformers.js / WASM)
@@ -447,7 +448,7 @@ npm run vendor:check  # les bibliothèques tierces sont-elles les originaux amon
 npm run bench -- --url http://127.0.0.1:8080/v1 --model qwen-27b   # le banc chat + agent
 ```
 
-**380 tests** (node:test) couvrent le noyau de raisonnement et le tour d'agent de bout en bout, les
+**385 tests** (node:test) couvrent le noyau de raisonnement et le tour d'agent de bout en bout, les
 niveaux de réflexion de chaque fournisseur (le corps exact de chaque requête), l'anonymisation
 (détecteurs, faux positifs, restitution, fenêtre des données sensibles), la gestion du contexte, les
 freins de l'agent, le routage Hivey, et **la complétude des six langues**. Les tests des niveaux de

@@ -40,6 +40,21 @@ Version de développement, toujours à jour :
   un clic l'ouvre.
 - L'action « Transformer en carte mentale / diagramme » est retirée.
 
+### L'onglet Benchmark, enfin lisible — avec un rapport à la fin
+
+- **Trois étapes, de haut en bas** : ① les modèles à tester (le modèle actuel est déjà là, « + Ajouter
+  un modèle » ouvre la liste habituelle), un bouton **Lancer le test** et une barre de progression ;
+  ② les résultats, une carte par modèle avec son score et une barre par famille (raisonnement,
+  consignes, JSON, outils), le meilleur en tête ; ③ les classements publics, repliés, expliqués en
+  clair (« Code : plus haut = mieux », « Invente : plus bas = mieux ») avec leur retard en mois.
+- **Tous vos modèles se testent** : local, passerelle ou cloud — plus seulement OpenRouter. Gratuit
+  sur votre machine ; le coût est affiché pour le cloud.
+- **Un rapport s'ouvre tout seul à la fin du test** : qui choisir en une phrase (et le moins cher
+  presque aussi bon), un graphique des scores, le détail par famille, le temps et le coût, et **chaque
+  question manquée** avec la raison. Enregistrable en HTML ou imprimable en PDF.
+- Le chat et la zone de saisie ne s'affichent plus sous le Benchmark, et un modèle qui réfléchit
+  avant de répondre n'est plus coupé (la limite de 4 000 jetons du test est retirée).
+
 ### Documentation
 
 - **Guide d'utilisation** complet ([docs/GUIDE.md](docs/GUIDE.md)) : installer, choisir entre local,

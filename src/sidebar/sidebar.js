@@ -49,11 +49,18 @@ const els = {
   benchmarkView: $("benchmarkView"),
   bvSources: $("bvSources"),
   bvSearch: $("bvSearch"),
-  bvOnlyGap: $("bvOnlyGap"),
   bvRun: $("bvRun"),
   bvStop: $("bvStop"),
   bvProgress: $("bvProgress"),
+  bvProgressFill: $("bvProgressFill"),
+  bvProgressText: $("bvProgressText"),
   bvBody: $("bvBody"),
+  bvPicked: $("bvPicked"),
+  bvWhat: $("bvWhat"),
+  bvResults: $("bvResults"),
+  bvReport: $("bvReport"),
+  bvModelInput: $("bvModelInput"),
+  bvModelMenu: $("bvModelMenu"),
   modelInput: $("modelInput"),
   modelMenu: $("modelMenu"),
   modelWrap: $("modelWrap"),
@@ -2615,11 +2622,13 @@ async function captureRegion() {
 // Built lazily on first open: nobody should pay a table render, a catalogue fetch and a storage
 // read for a workspace they never visit.
 let _benchView = null;
+let benchCombo = null;
 function benchmarkView() {
   if (_benchView) return _benchView;
   _benchView = initBenchmarkView({
     els,
     t,
+    lang: getLang,
     load: async (k) => { try { return (await browser.storage.local.get(k))[k]; } catch (_) { return null; } },
     save: async (k, v) => { try { await browser.storage.local.set({ [k]: v }); } catch (_) {} },
     // Public endpoint: the table shows prices and context sizes before any key is entered.
@@ -2628,26 +2637,59 @@ function benchmarkView() {
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       return ((await r.json()).data || []).filter((m) => m && m.id && !/^~/.test(m.id));
     },
-    // The live test is BYOK like everything else here, and it spends the user's money, so it
-    // refuses rather than falling back to some other provider they did not choose.
+    // The selected model, unless it is a 🐝 Hivey preset: a router has no score of its own.
+    currentModel: () => { const s = currentSelection(); return s && s.providerId && s.modelId && !isHivey(s.modelId) ? `${s.providerId}|${s.modelId}` : ""; },
+    describe: (key) => {
+      const { providerId, modelId } = parseSel(key);
+      const item = chatComboItems().find((x) => x.value === key);
+      return {
+        label: item ? item.label : modelId,
+        provider: PROVIDERS[providerId] ? PROVIDERS[providerId].label : providerId,
+        icon: vendorIcon(vendorSlug(providerId, modelId), 16),
+      };
+    },
+    // Through the sidebar's own provider layer: any connected provider, local and gateway
+    // included, with the same anonymization toward a cloud as every other request. No token cap:
+    // a model that reasons before answering is measured on its answer, not cut mid-thought.
     callModel: async ({ model, messages, tools }) => {
-      const key = keyFor("openrouter", settings);
-      if (!key) return { error: t("bench.noKey") };
+      const { providerId, modelId } = parseSel(model);
+      if (currentKeyMissing(providerId)) return { error: t("bench.noKey", { provider: PROVIDERS[providerId] ? PROVIDERS[providerId].label : providerId }) };
       try {
-        const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ model, messages, tools, max_tokens: 4000, temperature: 0, usage: { include: true } }),
+        const provider = makeProvider({ ...settings, provider: providerId, models: { ...settings.models, [providerId]: modelId } }, {});
+        const r = await provider.runTurn({
+          system: "",
+          history: messages,
+          tools: (tools || []).map((x) => ({ name: x.function.name, description: x.function.description, input_schema: x.function.parameters })),
         });
-        const j = await r.json().catch(() => ({}));
-        if (!r.ok) return { error: (j.error && j.error.message) || `HTTP ${r.status}` };
-        const m = (j.choices && j.choices[0] && j.choices[0].message) || {};
-        return { text: (m.content || "").trim(), toolCalls: m.tool_calls || [], cost: (j.usage && j.usage.cost) || 0 };
+        const c = costOf(providerId, modelId, r.usage, settings);
+        return {
+          text: splitThink(r.text || "").answer.trim(),
+          toolCalls: r.toolCalls || [],
+          cost: c ? c.usd : 0,
+          costExact: c ? !!(c.exact || c.free) : false,
+          free: !!(c && c.free),
+        };
       } catch (e) {
         return { error: e && e.message ? e.message : String(e) };
       }
     },
+    // The report: a page of its own, opened by itself at the end of a run (see lib/bench-report.js).
+    openReport: async (data) => {
+      try { await browser.storage.local.set({ benchmarkReport: { ...data, at: Date.now() } }); } catch (_) {}
+      browser.tabs.create({ url: browser.runtime.getURL("src/report/bench-report.html") });
+    },
   });
+  if (!benchCombo && els.bvModelInput && els.bvModelMenu) {
+    benchCombo = makeCombo({
+      input: els.bvModelInput, menu: els.bvModelMenu,
+      items: () => chatComboItems().filter((x) => !isHivey(parseSel(x.value).modelId)),
+      getValue: () => "",
+      onPick: (v) => _benchView.add(v),
+    });
+    document.addEventListener("mousedown", (e) => {
+      if (benchCombo.isOpen() && e.target !== els.bvModelInput && !els.bvModelMenu.contains(e.target)) benchCombo.close();
+    });
+  }
   return _benchView;
 }
 
