@@ -124,3 +124,14 @@ test("the model is told what the markers are — only when a request carries som
   const plain = await turn("openrouter", { history: [{ role: "user", content: "Quelle heure est-il à Tokyo ?" }], privacy: { conversation: "c9" } });
   assert.doesNotMatch(plain.body.messages[0].content, /PRIVACY MARKERS/);
 });
+
+test("a value the user typed does not open the window when it comes back in the model's answer", async () => {
+  forgetConversation("c10");
+  let asked = 0;
+  const ask = async () => { asked++; return "once"; };
+  const vault = new Vault();
+  await turn("openrouter", { history: [{ role: "user", content: "Réponds à paul.durand@acme-corp.fr" }], privacy: { conversation: "c10", ask, vault } });
+  const history = [{ role: "user", content: "Réponds à paul.durand@acme-corp.fr" }, { role: "assistant", content: "À : paul.durand@acme-corp.fr — c'est noté." }, { role: "user", content: "Autre chose." }];
+  await turn("openrouter", { history, privacy: { conversation: "c10", ask, vault } });
+  assert.equal(asked, 0);
+});
