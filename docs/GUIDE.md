@@ -58,14 +58,15 @@ tous les onglets :
 | `+` | un menu : **joindre un fichier**, ou apporter la page — **capturer une zone**, **choisir un élément**, **onglets ouverts…**, **surveiller cette page** (et, dans Sécurité, **les en-têtes de sécurité de la page**) |
 | 🎤 | dicter |
 | **puce du modèle** (icône du fournisseur) | changer de modèle |
-| **puce de réflexion** (ampoule, Standard…) | le niveau de réflexion, voir §4 |
-| **Envoyer** / **■** | envoyer ; arrêter pendant la réponse |
+| **puce de réflexion** (✦ et le niveau du modèle) | le niveau de réflexion, voir §4 |
+| **Entrée** / **■** | Entrée envoie ; ■ arrête pendant la réponse |
 | sous le cadre, à gauche | où tourne le modèle : 🏠 Local, 🔒 Votre passerelle, ☁️ Cloud · anonymisé — sur un modèle cloud, **un clic active ou désactive l'anonymisation** (voir §7) |
 | sous le cadre, à droite | le contexte rempli (anneau, %, jetons) et, pour un modèle cloud, le coût de la conversation ; **un clic** ouvre la taille du contexte et « Résumer maintenant » (voir §6) |
 
 Toutes les icônes de la rangée ont la même taille et la couleur de votre thème. Les réglages propres
-à un onglet (langue de traduction, style, collection Wisebase…) sont **au-dessus du cadre**, comme les
-analyses de l'onglet Sécurité ; dans Image, la **taille** est une puce à gauche d'Envoyer.
+à un onglet (« Traduire en : … », style, collection Wisebase…) sont **au-dessus du cadre**, comme les
+analyses de l'onglet Sécurité ; dans Image, la **taille** est une puce en bas à droite. La dernière
+langue de traduction est retenue.
 
 ## 3. Le Chat : questions, page en contexte, recherche web
 
@@ -148,13 +149,14 @@ Un clic sur l'étiquette « Hors contexte » remet aussi l'échange dans le cont
 La **jauge de contexte** (l'anneau sous la zone de saisie, avec le pourcentage) montre la part de la fenêtre du
 modèle qu'occupe ce qui est réellement envoyé. Elle devient orange puis rouge. **Un clic** ouvre :
 
-- **la taille du contexte** pour ce modèle : son maximum (par défaut), ou une taille plus petite —
-  8 k, 16 k, 32 k… Plus petit, c'est moins cher et plus rapide : la conversation est résumée plus tôt.
-  Une taille ne dépasse jamais la vraie fenêtre du modèle ; pour un serveur qui ne la donne pas, c'est
-  vous qui la fixez ;
+- **la taille du contexte** pour ce modèle : **Auto** (par défaut — la plus grande fenêtre du modèle
+  choisi), ou une taille de 8 k jusqu'au maximum du modèle. Plus petit, c'est moins cher et plus
+  rapide : la conversation est résumée plus tôt. Une taille ne dépasse jamais la vraie fenêtre du
+  modèle ; pour un serveur qui ne la donne pas, c'est vous qui la fixez ;
 - **Résumer maintenant**, qui libère le contexte (tout reste affiché).
 
-La conversation se résume aussi **d'elle-même à 75 %** de la taille choisie, dans le Chat, l'Agent
+La conversation se résume aussi **d'elle-même à 75 %** de la taille choisie — un message provisoire
+« 🗜 Résumé de la conversation… » s'affiche pendant ce temps, puis dit ce qui a été fait — dans le Chat, l'Agent
 et Wisebase (et l'agent résume sa propre tâche en cours de route s'il le faut) ; si un serveur répond
 qu'elle ne tient plus, elle est résumée puis la question est reposée.
 

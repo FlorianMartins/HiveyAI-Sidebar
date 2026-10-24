@@ -266,8 +266,9 @@ export async function runChatTurn({ provider, providerId, modelId, settings, sys
   const budget = contextBudget(win);
   let compacted = false;
   if (settings.compressHistory !== false && shouldAutoCompact(estimateTokens(history, system), budget, exchanges(history))) {
-    onCompact && onCompact("auto");
+    onCompact && onCompact("auto", "start");
     compacted = await compactHistory(history, { provider, signal, keepFrom: turnStart });
+    onCompact && onCompact("auto", compacted ? "done" : "failed");
   }
   let result;
   for (let tries = 0; ; tries++) {
@@ -278,10 +279,12 @@ export async function runChatTurn({ provider, providerId, modelId, settings, sys
       const over = contextOverflow(e && e.message);
       if (!over || tries > 0 || (signal && signal.aborted)) throw e;
       if (over.window) learnWindow(settings, providerId, modelId, over.window);
-      onCompact && onCompact("overflow");
+      onCompact && onCompact("overflow", "start");
       // A turn that throws writes nothing back, so the history is as it was: what came before the
       // question is summarized, and the question — kept out of the summary — is asked again.
-      if (!(await compactHistory(history, { provider, signal, keepFrom: turnStart }))) throw e;
+      const ok = await compactHistory(history, { provider, signal, keepFrom: turnStart });
+      onCompact && onCompact("overflow", ok ? "done" : "failed");
+      if (!ok) throw e;
       compacted = true;
     }
   }

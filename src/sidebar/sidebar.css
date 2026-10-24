@@ -105,11 +105,10 @@ body:not(.rail-collapsed) .menu-btn { color: var(--accent); }
 /* Brand wordmark next to the logo — modern, premium, white. Hover peeks the menu, click locks it. */
 .brand-word {
   font: 600 15px/1 "Inter", "SF Pro Display", "Segoe UI Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  letter-spacing: -0.015em; color: var(--text); cursor: pointer; user-select: none;
+  letter-spacing: -0.015em; color: #fff; cursor: pointer; user-select: none;
   margin-left: -3px; padding: 3px 2px; transition: opacity 0.15s;
 }
 .brand-word:hover { opacity: 0.82; }
-body.rail-pinned .brand-word { color: var(--accent); } /* tinted when locked open */
 /* Tabs rail hidden via the menu toggle. */
 body.rail-collapsed #rail { display: none; }
 /* Nudge the header icons right by half the width difference between the 34px accent
@@ -2499,21 +2498,6 @@ button.ctx-tag:hover { color: var(--text); text-decoration: underline; }
 /* The suggested next request: a faint italic hint, plainly not typed text. */
 .composer textarea.has-suggestion::placeholder { color: color-mix(in srgb, var(--muted) 55%, transparent); font-style: italic; }
 
-/* The frame's animation: a bright arc that stands out from the accent border in every theme. */
-:root { --hv-arc: color-mix(in srgb, var(--accent) 18%, #fff); --hv-arc-soft: color-mix(in srgb, var(--accent) 60%, #fff); }
-body.theme-light { --hv-arc: color-mix(in srgb, var(--accent) 70%, #000); --hv-arc-soft: var(--accent); }
-.composer-box::before {
-  inset: -2.5px; border-radius: 20.5px; padding: 2.5px;
-  background: conic-gradient(from var(--hvAngle),
-      transparent 0deg,
-      color-mix(in srgb, var(--hv-arc-soft) 55%, transparent) 30deg,
-      var(--hv-arc) 60deg,
-      color-mix(in srgb, var(--hv-arc-soft) 55%, transparent) 90deg,
-      transparent 125deg, transparent 360deg);
-  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--hv-arc) 80%, transparent));
-}
-.composer-box:focus-within, .composer-box.is-busy { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
-
 /* The tab's own settings sit above the frame, like the Security tab's analyses. */
 .controls.tab-options { padding: 2px 10px 8px; gap: 8px; flex-wrap: wrap; border: 0; background: transparent !important; }
 .controls.tab-options .ctl-group { flex: 1 1 auto; gap: 8px; flex-wrap: nowrap; min-width: 0; }
@@ -2535,9 +2519,9 @@ body.theme-light { --hv-arc: color-mix(in srgb, var(--accent) 70%, #000); --hv-a
 .wb-empty-cta { margin: 14px auto 0; display: block; }
 .wb-empty-cta[hidden], body:not(.mode-wisebase) .wb-empty-cta { display: none; }
 .ctx-pop { width: 264px; }
-.ctx-pop .think-seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
-.ctx-pop .think-seg .ts-btn { text-align: center; padding: 6px 4px; font-size: 12px; white-space: nowrap; }
-.ctx-pop .think-seg .ts-btn:first-child { grid-column: 1 / -1; text-align: left; padding: 7px 10px; }
+.ctx-pop .ctx-seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.ctx-pop .ctx-seg .ts-btn { text-align: center; padding: 6px 4px; font-size: 12px; white-space: nowrap; }
+.ctx-pop .ctx-seg .ts-btn:first-child { grid-column: 1 / -1; text-align: left; padding: 7px 10px; }
 /* Send wears the brand gradient (the transparent toolbar rule had left a white arrow on nothing,
    invisible on a light theme). */
 .composer-tools .ctool.send-btn { background: var(--grad) !important; color: var(--on-accent) !important; border-radius: 50%; }
@@ -2561,3 +2545,45 @@ body.theme-light .model-chip .combo-input { border: 0 !important; background: tr
 }
 .ctx-pop { width: min(264px, calc(100vw - 16px)); }
 .plus-menu { min-width: min(220px, calc(100vw - 16px)); }
+
+/* ── The frame's light, round 4 ──────────────────────────────────────────────────────────────
+   Focused, hovered or working: the same accent border. While focused or working, a light-violet
+   arc runs round it at a constant speed (an SVG stroke along the rounded frame — the old conic
+   gradient turned by angle, so it raced through the corners and crawled mid-edge). */
+.composer-box::before { display: none !important; }
+.composer-box:hover, .composer-box:focus-within, .composer-box.is-busy {
+  border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.cb-ring { position: absolute; inset: -1px; width: calc(100% + 2px); height: calc(100% + 2px); overflow: visible;
+  pointer-events: none; z-index: 1; opacity: 0; transition: opacity .35s ease; }
+.cb-ring rect { fill: none;
+  stroke-dasharray: 18 82; animation: cbRun 4.2s linear infinite paused; }
+.cb-ring .cb-arc { stroke: color-mix(in srgb, var(--accent) 45%, #fff); stroke-width: 2px; stroke-linecap: round; }
+.cb-ring .cb-glow { stroke: color-mix(in srgb, var(--accent) 60%, #fff); stroke-width: 6px; stroke-linecap: round; opacity: .28; }
+body.theme-light .cb-ring .cb-arc { stroke: var(--accent); }
+body.theme-light .cb-ring .cb-glow { stroke: var(--accent); opacity: .18; }
+.composer-box:focus-within .cb-ring, .composer-box.is-busy .cb-ring { opacity: 1; }
+.composer-box:focus-within .cb-ring rect, .composer-box.is-busy .cb-ring rect { animation-play-state: running; }
+.composer-box.is-busy .cb-ring rect { animation-duration: 2.8s; }
+@keyframes cbRun { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -100; } }
+@media (prefers-reduced-motion: reduce) { .cb-ring rect { animation: none; } }
+
+/* No carets after the model and the thinking level: the chips open their menus as they are. */
+.composer-tools .model-chip .combo-caret, .composer-tools .cchip .tc-caret { display: none !important; }
+/* The Benchmark and Code views start after the pinned (or peeking) tab rail, like the messages. */
+body.rail-pinned .benchview, body.rail-peek .benchview, body.rail-pinned .codeview, body.rail-peek .codeview {
+  padding-left: calc(var(--rail-w, 56px) + 12px); transition: padding-left .3s cubic-bezier(.16,1,.3,1);
+}
+body.rail-right.rail-pinned .benchview, body.rail-right.rail-peek .benchview,
+body.rail-right.rail-pinned .codeview, body.rail-right.rail-peek .codeview {
+  padding-left: 12px; padding-right: calc(var(--rail-w, 56px) + 12px);
+}
+/* The provisional "summarizing…" note: a soft pulse until the summary is in. */
+.msg.compacting { animation: hvCompactPulse 1.4s ease-in-out infinite; }
+@keyframes hvCompactPulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .msg.compacting { animation: none; } }
+/* On a narrow sidebar the pinned rail would cover the welcome screen: it starts after the rail. */
+@media (max-width: 420px) {
+  body.rail-pinned #messages { padding-left: calc(var(--rail-w, 56px) + 8px); }
+  body.rail-right.rail-pinned #messages { padding-left: 12px; padding-right: calc(var(--rail-w, 56px) + 8px); }
+}

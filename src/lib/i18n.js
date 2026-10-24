@@ -14,6 +14,10 @@ import { setHTML } from "./dom.js";
 let lang = "en";
 
 const EN = {
+  "ctx.sizeAutoLabel": "Auto",
+  "ctx.sizeAutoTitle": "Auto — the largest window of the model in use ({n})",
+  "translate.into": "Translate into: {lang}",
+  "translate.pick": "Choose the language to translate into…",
   "plus.title": "Attach a file or bring in the page",
   "plus.file": "Attach a file",
   "plus.pdf": "Add a PDF",
@@ -29,10 +33,6 @@ const EN = {
   "ctx.popHead": "Context",
   "ctx.popUsed": "{used} of {budget} tokens used ({pct} %)",
   "ctx.sizeHead": "Context size",
-  "ctx.sizeAuto": "Model's maximum ({n})",
-  "ctx.sizeAutoUnknown": "Automatic",
-  "ctx.autoHint": "The whole window of the model; the conversation is summarized by itself at 75 %.",
-  "ctx.sizeHint": "Smaller = cheaper and faster: the conversation is summarized sooner (at 75 % of this size).",
   "ctx.compactBtn": "Summarize now",
   "suggest.title": "Suggestion — press Tab to use it",
   "wb.firstCollection": "Create my first collection",
@@ -1200,6 +1200,10 @@ const EN = {
 };
 
 const FR = {
+  "ctx.sizeAutoLabel": "Auto",
+  "ctx.sizeAutoTitle": "Auto — la plus grande fenêtre du modèle choisi ({n})",
+  "translate.into": "Traduire en : {lang}",
+  "translate.pick": "Choisissez la langue de traduction…",
   "plus.title": "Joindre un fichier ou ajouter la page",
   "plus.file": "Joindre un fichier",
   "plus.pdf": "Ajouter un PDF",
@@ -1215,10 +1219,6 @@ const FR = {
   "ctx.popHead": "Contexte",
   "ctx.popUsed": "{used} sur {budget} jetons utilisés ({pct} %)",
   "ctx.sizeHead": "Taille du contexte",
-  "ctx.sizeAuto": "Maximum du modèle ({n})",
-  "ctx.sizeAutoUnknown": "Automatique",
-  "ctx.autoHint": "Toute la fenêtre du modèle ; la conversation est résumée toute seule à 75 %.",
-  "ctx.sizeHint": "Plus petit = moins cher et plus rapide : la conversation est résumée plus tôt (à 75 % de cette taille).",
   "ctx.compactBtn": "Résumer maintenant",
   "suggest.title": "Suggestion — Tab pour l'utiliser",
   "wb.firstCollection": "Créer ma première collection",

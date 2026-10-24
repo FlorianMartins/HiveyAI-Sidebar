@@ -145,9 +145,9 @@ test("with a smaller chosen size the conversation is summarized by itself sooner
   const small = build();
   const p2 = scripted(["- résumé", "ok"]);
   const events = [];
-  const r2 = await runChatTurn({ provider: p2, providerId: "custom", modelId: "m", settings: SETTINGS, system: "", history: small, window: 8192, turnStart: small.length - 1, onCompact: (why) => events.push(why) });
+  const r2 = await runChatTurn({ provider: p2, providerId: "custom", modelId: "m", settings: SETTINGS, system: "", history: small, window: 8192, turnStart: small.length - 1, onCompact: (why, phase) => events.push(`${why}:${phase}`) });
   assert.equal(r2.compacted, true);
-  assert.deepEqual(events, ["auto"]);
+  assert.deepEqual(events, ["auto:start", "auto:done"], "a provisional note while it summarizes, then the result");
   assert.match(p2.seen[1].history.at(-1).content, /last$/, "the question is asked after the summary");
 });
 

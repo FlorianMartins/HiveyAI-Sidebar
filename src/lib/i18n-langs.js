@@ -3,6 +3,10 @@
 // back to English. Placeholders {name}, HTML tags and emojis are kept verbatim.
 
 export const ES = {
+  "ctx.sizeAutoLabel": "Auto",
+  "ctx.sizeAutoTitle": "Auto — la mayor ventana del modelo elegido ({n})",
+  "translate.into": "Traducir al: {lang}",
+  "translate.pick": "Elija el idioma de destino…",
   "plus.title": "Adjuntar un archivo o traer la página",
   "plus.file": "Adjuntar un archivo",
   "plus.pdf": "Añadir un PDF",
@@ -18,10 +22,6 @@ export const ES = {
   "ctx.popHead": "Contexto",
   "ctx.popUsed": "{used} de {budget} tokens usados ({pct} %)",
   "ctx.sizeHead": "Tamaño del contexto",
-  "ctx.sizeAuto": "Máximo del modelo ({n})",
-  "ctx.sizeAutoUnknown": "Automático",
-  "ctx.autoHint": "Toda la ventana del modelo; la conversación se resume sola al 75 %.",
-  "ctx.sizeHint": "Más pequeño = más barato y rápido: la conversación se resume antes (al 75 % de este tamaño).",
   "ctx.compactBtn": "Resumir ahora",
   "suggest.title": "Sugerencia — Tab para usarla",
   "wb.firstCollection": "Crear mi primera colección",
@@ -993,6 +993,10 @@ export const ES = {
 };
 
 export const DE = {
+  "ctx.sizeAutoLabel": "Auto",
+  "ctx.sizeAutoTitle": "Auto — das größte Fenster des gewählten Modells ({n})",
+  "translate.into": "Übersetzen ins: {lang}",
+  "translate.pick": "Zielsprache wählen…",
   "plus.title": "Datei anhängen oder die Seite einbeziehen",
   "plus.file": "Datei anhängen",
   "plus.pdf": "PDF hinzufügen",
@@ -1008,10 +1012,6 @@ export const DE = {
   "ctx.popHead": "Kontext",
   "ctx.popUsed": "{used} von {budget} Tokens belegt ({pct} %)",
   "ctx.sizeHead": "Kontextgröße",
-  "ctx.sizeAuto": "Maximum des Modells ({n})",
-  "ctx.sizeAutoUnknown": "Automatisch",
-  "ctx.autoHint": "Das ganze Fenster des Modells; das Gespräch wird bei 75 % automatisch zusammengefasst.",
-  "ctx.sizeHint": "Kleiner = günstiger und schneller: das Gespräch wird früher zusammengefasst (bei 75 % dieser Größe).",
   "ctx.compactBtn": "Jetzt zusammenfassen",
   "suggest.title": "Vorschlag — Tab zum Übernehmen",
   "wb.firstCollection": "Meine erste Sammlung anlegen",
@@ -1983,6 +1983,10 @@ export const DE = {
 };
 
 export const IT = {
+  "ctx.sizeAutoLabel": "Auto",
+  "ctx.sizeAutoTitle": "Auto — la finestra più grande del modello scelto ({n})",
+  "translate.into": "Traduci in: {lang}",
+  "translate.pick": "Scegli la lingua di destinazione…",
   "plus.title": "Allega un file o aggiungi la pagina",
   "plus.file": "Allega un file",
   "plus.pdf": "Aggiungi un PDF",
@@ -1998,10 +2002,6 @@ export const IT = {
   "ctx.popHead": "Contesto",
   "ctx.popUsed": "{used} di {budget} token usati ({pct} %)",
   "ctx.sizeHead": "Dimensione del contesto",
-  "ctx.sizeAuto": "Massimo del modello ({n})",
-  "ctx.sizeAutoUnknown": "Automatico",
-  "ctx.autoHint": "Tutta la finestra del modello; la conversazione viene riassunta da sola al 75 %.",
-  "ctx.sizeHint": "Più piccolo = più economico e veloce: la conversazione viene riassunta prima (al 75 % di questa dimensione).",
   "ctx.compactBtn": "Riassumi ora",
   "suggest.title": "Suggerimento — Tab per usarlo",
   "wb.firstCollection": "Crea la mia prima raccolta",
@@ -2973,6 +2973,10 @@ export const IT = {
 };
 
 export const PT = {
+  "ctx.sizeAutoLabel": "Auto",
+  "ctx.sizeAutoTitle": "Auto — a maior janela do modelo escolhido ({n})",
+  "translate.into": "Traduzir para: {lang}",
+  "translate.pick": "Escolha o idioma de destino…",
   "plus.title": "Anexar um arquivo ou trazer a página",
   "plus.file": "Anexar um arquivo",
   "plus.pdf": "Adicionar um PDF",
@@ -2988,10 +2992,6 @@ export const PT = {
   "ctx.popHead": "Contexto",
   "ctx.popUsed": "{used} de {budget} tokens usados ({pct} %)",
   "ctx.sizeHead": "Tamanho do contexto",
-  "ctx.sizeAuto": "Máximo do modelo ({n})",
-  "ctx.sizeAutoUnknown": "Automático",
-  "ctx.autoHint": "Toda a janela do modelo; a conversa é resumida sozinha a 75 %.",
-  "ctx.sizeHint": "Menor = mais barato e rápido: a conversa é resumida mais cedo (a 75 % deste tamanho).",
   "ctx.compactBtn": "Resumir agora",
   "suggest.title": "Sugestão — Tab para a usar",
   "wb.firstCollection": "Criar a minha primeira coleção",
