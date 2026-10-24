@@ -1,0 +1,130 @@
+name: CI
+
+# The gate every change crosses — the same shape as hivey-vscode's. Ordered cheapest-first so a
+# typo fails in seconds, and split into named steps so a red run says WHAT broke without anyone
+# opening the log.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # The unit tests on every Node the dev toolchain claims to support (`engines`: 20 or later).
+  # `node --test tests/` failed under Node 24 before a single test ran: the files are enumerated
+  # by scripts/run-tests.mjs now, and this matrix is what proves it works everywhere.
+  unit:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ["20", "22", "24"]
+        os: [ubuntu-latest]
+        # One Windows run: npm runs scripts through cmd.exe there, which does not expand a glob.
+        include:
+          - node: "24"
+            os: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ matrix.node }}
+      - run: npm test
+
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Provenance: the OIDC token ties the signature to THIS workflow and THIS commit.
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+
+      - name: Tests
+        run: npm test
+
+      # A number written in prose has no reason to follow the thing it describes: the README badge
+      # said 2.196.0 while the manifests were at 2.201.0.
+      - name: Documentation — the numbers it claims
+        run: npm run check:numbers
+
+      # The minified files in vendor/ are the unmodified upstream releases: checked by SHA-256.
+      - name: Vendored libraries are the upstream ones
+        run: bash scripts/fetch-vendor.sh --check
+
+      - name: Model catalogue is in sync
+        run: npm run models:check
+        continue-on-error: true # a provider outage must not turn the build red
+
+      - name: Package the add-on (Firefox + Chromium)
+        run: bash scripts/build.sh
+
+      # Mozilla's own linter, on exactly what ships: a manifest key Firefox refuses, a file it
+      # will not load, an unsafe pattern its review flags. Errors fail the build; warnings are shown.
+      - name: Mozilla add-on lint
+        run: npm run lint:ext
+
+      - name: Digest
+        run: |
+          sha256sum ai-sidebar-*.zip | tee SHA256SUMS
+          {
+            echo "### The build you can check"
+            echo
+            echo "| file | sha256 |"
+            echo "| --- | --- |"
+            while read -r sum file; do echo "| \`$file\` | \`$sum\` |"; done < SHA256SUMS
+            echo
+            echo "commit \`${GITHUB_SHA}\` — verify with \`gh attestation verify <file> --repo ${GITHUB_REPOSITORY}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Sigstore, through GitHub's own action: a signed statement that these exact files were built
+      # by this workflow from this commit — no key anybody has to keep.
+      - name: Sign the build
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: ai-sidebar-*.zip
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: hivey-ai-sidebar
+          path: |
+            ai-sidebar-*.zip
+            SHA256SUMS
+          retention-days: 30
+
+  # One check for branch protection to require, the same name as in the other repositories: the
+  # matrix can grow or shrink without touching the settings.
+  ci:
+    name: CI complete
+    runs-on: ubuntu-latest
+    needs: [unit, build]
+    if: always()
+    steps:
+      - name: Fail when any job failed
+        run: |
+          results='${{ join(needs.*.result, ' ') }}'
+          echo "job results: $results"
+          for result in $results; do
+            if [ "$result" != "success" ] && [ "$result" != "skipped" ]; then
+              echo "::error::a required job did not succeed"
+              exit 1
+            fi
+          done
+          echo "✅ every job succeeded"

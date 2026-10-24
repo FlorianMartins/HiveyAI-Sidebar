@@ -1,0 +1,101 @@
+name: Dev build
+
+# Two links that always serve the latest pushed commit, the same channel as hivey-vscode's:
+#
+#   https://github.com/FlorianMartins/HiveyAI-Sidebar/releases/download/dev/hivey-ai-sidebar-firefox.zip
+#   https://github.com/FlorianMartins/HiveyAI-Sidebar/releases/download/dev/hivey-ai-sidebar-chrome.zip
+#
+# The `dev` pre-release is re-pointed and its assets replaced on every push, so the URLs never
+# change. A testing channel, not a release: CI gates the code, and no store is ever touched.
+
+on:
+  push:
+    branches-ignore:
+      - "dependabot/**"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+# The latest push wins; an older build finishing last must not overwrite a newer one.
+concurrency:
+  group: dev-build
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create/update the `dev` release and move its tag
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+
+      # A version of its own for every build, numbers only (browsers accept nothing else in a
+      # manifest): the previous dev build's number plus one patch, never below manifest.json. Each
+      # install is an upgrade; a real release bumps the manifests above the last dev number.
+      - name: Dev version
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          base="$(node -p "require('./manifest.json').version")"
+          previous="$(gh release view dev --repo "$REPO" --json name --jq .name 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)"
+          version="$(node -e '
+            const n = (v) => v.split(".").map(Number);
+            const cmp = (a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2];
+            const b = n(process.argv[1]);
+            let next = [b[0], b[1], b[2] + 1];
+            if (process.argv[2]) { const p = n(process.argv[2]); const after = [p[0], p[1], p[2] + 1]; if (cmp(after, next) > 0) next = after; }
+            console.log(next.join("."));
+          ' "$base" "$previous")"
+          for f in manifest.json manifest.chrome.json package.json; do
+            node -e 'const fs=require("fs");const f=process.argv[1];const j=JSON.parse(fs.readFileSync(f,"utf8"));j.version=process.argv[2];fs.writeFileSync(f,JSON.stringify(j,null,2)+"\n");' "$f" "$version"
+          done
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Dev build version: $version (previous: ${previous:-none}, manifest: $base)"
+
+      - name: Build
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          bash scripts/build.sh
+          mv "ai-sidebar-${VERSION}-firefox.zip" hivey-ai-sidebar-firefox.zip
+          mv "ai-sidebar-chrome-${VERSION}.zip" hivey-ai-sidebar-chrome.zip
+
+      - name: Publish to the dev release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          BRANCH: ${{ github.ref_name }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          short="${SHA:0:7}"
+          subject="$(git log -1 --format=%s "$SHA")"
+          notes="Version ${VERSION} — latest pushed commit: ${short} on ${BRANCH} — ${subject}
+
+          Firefox: about:debugging#/runtime/this-firefox → Load Temporary Add-on… → pick hivey-ai-sidebar-firefox.zip.
+          Chrome / Edge / Brave: unzip hivey-ai-sidebar-chrome.zip, then chrome://extensions → Developer mode → Load unpacked.
+
+          Built $(date -u +%Y-%m-%dT%H:%MZ). Not a release: a testing channel replaced on every push."
+
+          # Move (or create) the tag through the API: no git credentials are kept in this job.
+          if gh api "repos/${REPO}/git/refs/tags/dev" >/dev/null 2>&1; then
+            gh api -X PATCH "repos/${REPO}/git/refs/tags/dev" -f sha="$SHA" -F force=true >/dev/null
+          else
+            gh api -X POST "repos/${REPO}/git/refs" -f ref="refs/tags/dev" -f sha="$SHA" >/dev/null
+          fi
+          if gh release view dev --repo "$REPO" >/dev/null 2>&1; then
+            gh release edit dev --repo "$REPO" --prerelease --title "Dev build ${VERSION} (${short})" --notes "$notes"
+          else
+            gh release create dev --repo "$REPO" --prerelease --verify-tag --title "Dev build ${VERSION} (${short})" --notes "$notes"
+          fi
+          gh release upload dev hivey-ai-sidebar-firefox.zip hivey-ai-sidebar-chrome.zip --repo "$REPO" --clobber
