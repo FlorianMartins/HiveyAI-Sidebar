@@ -70,17 +70,10 @@
          contains the searched term, most matches first. Click one to open it. -->
     <ul id="searchResults" class="search-results hidden"></ul>
 
-    <!-- Page chip + multi-tab picker — inside the work area so they never overlap the menu rail. -->
+    <!-- "N tabs in context" — the page tools themselves live in the composer's "+" menu. -->
     <div id="pageBar" class="pagebar hidden" data-i18n-title="pagebar.title" title="Page seen by the AI">
-      <!-- 🛡 Security-tab only: analyze the current page's security headers (kept on the LEFT, apart from
-           the selection tools on the right). -->
-      <button id="secHeadersBtn" class="icon sec-headers-btn hidden" type="button" data-i18n-title="secHeaders.tip" title="Analyze this page's security headers (CSP, HSTS, cookies…)"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></button>
       <button id="pageToggle" class="eye eye-btn" type="button" aria-pressed="true" data-i18n-title="pagebar.toggle" title="Toggle page mode (selection tools)"><svg class="eye-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.9 4.24A9.1 9.1 0 0 1 12 4c6.4 0 10 7 10 7a13.2 13.2 0 0 1-1.67 2.42"/><path d="M6.6 6.6A13 13 0 0 0 2 12s3.6 7 10 7a9 9 0 0 0 5.4-1.6"/><path d="m2 2 20 20"/></svg></button>
       <span id="pageTitle" class="page-title"></span>
-      <button id="captureRegion" class="icon" data-i18n-title="region.title" title="Capture an area of the page (screenshot) as context"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 3" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="2"/></svg></button>
-      <button id="pickEl" class="icon" data-i18n-title="pick.title" title="Pick an element on the page to ask about it"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/></svg></button>
-      <button id="tabsBtn" class="icon" data-i18n-title="tabs.btnTitle" title="Choose which tabs to give the AI"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8.5" y="8.5" width="12" height="12" rx="2"/><path d="M15.5 8.5V5a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3.5"/></svg></button>
-      <button id="watchBtn" class="icon watch-btn" data-i18n-title="watch.title" title="Notify me when this page changes"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
     </div>
     <div id="tabsPanel" class="panel hidden">
       <div class="panel-head">
@@ -245,46 +238,9 @@
     <!-- 🛡 Defensive-security recipes (Security tab only): one-tap analysis actions, sits ABOVE the
          model picker for a clean, prominent layout. -->
     <div id="secRecipes" class="sec-recipes hidden"></div>
-
-    <!-- Floating list of models for the searchable combobox. -->
-    <div id="modelMenu" class="combo-menu hidden"></div>
-    <div id="bvModelMenu" class="combo-menu hidden"></div>
-    <!-- Model filter popover: price tiers + providers (with OpenRouter sub-vendors).
-         The type-to-filter lives in the combobox itself, not here. -->
-    <div id="modelFilterPanel" class="filter-panel hidden">
-      <div class="filter-sec">
-        <div class="filter-sec-head" data-i18n="filter.price">Price</div>
-        <div class="filter-tiers">
-          <label class="ftier-row"><input type="checkbox" class="ftier-cb" value="free" checked /> <span>🎁 <span data-i18n="filter.tierFree">Free</span></span></label>
-          <label class="ftier-row"><input type="checkbox" class="ftier-cb" value="green" checked /> <span>🟢 <span data-i18n="filter.tierGreen">Low cost</span></span></label>
-          <label class="ftier-row"><input type="checkbox" class="ftier-cb" value="yellow" checked /> <span>🟡 <span data-i18n="filter.tierYellow">Affordable</span></span></label>
-          <label class="ftier-row"><input type="checkbox" class="ftier-cb" value="orange" checked /> <span>🟠 <span data-i18n="filter.tierOrange">Moderate</span></span></label>
-          <label class="ftier-row"><input type="checkbox" class="ftier-cb" value="red" checked /> <span>🔴 <span data-i18n="filter.tierRed">Expensive</span></span></label>
-        </div>
-      </div>
-      <div class="filter-sec">
-        <div class="filter-sec-head" data-i18n="filter.providers">Providers</div>
-        <div id="filterProviders" class="filter-providers"></div>
-      </div>
-      <div class="filter-foot">
-        <button id="filterReset" class="link-btn" data-i18n="filter.reset">Reset</button>
-        <button id="filterClose" class="cmp-btn" data-i18n="filter.done">Done</button>
-      </div>
-    </div>
-
-    <footer class="composer">
-      <!-- Drag & drop target overlay (shown while dragging files over the sidebar). -->
-      <div id="dropOverlay" class="drop-overlay hidden"><span>📎 <span data-i18n="drop.hint">Drop files here to attach them</span></span></div>
-      <!-- Attachment preview strip (files / images fed to the AI as context). -->
-      <div id="attachStrip" class="attach-strip hidden"></div>
-      <div id="cmdChips" class="cmd-chips hidden"></div>
-      <!-- One rounded input box: the "+" sits to the LEFT of the text on the first row,
-           the chat toggles + stop on a bottom row at the right. No send button — Enter sends. -->
-      <div class="composer-box">
-        <div id="cmdPalette" class="cmd-palette hidden" role="listbox"></div>
-            <!-- The tab's own settings (language, style, size, collection…), as chips at the top of
-                 the composer — the same frame on every tab. -->
-        <div class="controls" id="controls">
+    <!-- The tab's own settings (language, style, collection…), above the frame like the Security
+         tab's analyses. -->
+    <div class="controls tab-options" id="controls">
           <!-- The label now lives INSIDE the dropdown as a disabled placeholder (its resting display),
                with a hover description on the <select> itself — no separate label text. -->
           <div class="ctl-group hidden" id="translateControls">
@@ -372,9 +328,6 @@
             </div>
           </div>
 
-          <div class="ctl-group hidden" id="imageControls">
-            <select id="imageSize" class="ctl-select" data-i18n-title="image.sizeTitle" title="Sizes depend on the model. Native 4K/1440p doesn't exist on current image models — upscale the image afterwards."></select>
-          </div>
 
           <div class="ctl-group hidden" id="pdfControls">
             <input type="file" id="pdfFile" accept="application/pdf,.pdf" multiple hidden />
@@ -394,6 +347,43 @@
                reading + capture tools (screenshot / element), like the Chat tab's Page bar. -->
           <button id="selPageToggle" class="ctoggle ctl-page-btn hidden" type="button" data-i18n-title="pagebar.selToggle" title="Show page tools (read page, screenshot, element)"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h6"/></svg></button>
         </div>
+
+    <!-- Floating list of models for the searchable combobox. -->
+    <div id="modelMenu" class="combo-menu hidden"></div>
+    <div id="bvModelMenu" class="combo-menu hidden"></div>
+    <!-- Model filter popover: price tiers + providers (with OpenRouter sub-vendors).
+         The type-to-filter lives in the combobox itself, not here. -->
+    <div id="modelFilterPanel" class="filter-panel hidden">
+      <div class="filter-sec">
+        <div class="filter-sec-head" data-i18n="filter.price">Price</div>
+        <div class="filter-tiers">
+          <label class="ftier-row"><input type="checkbox" class="ftier-cb" value="free" checked /> <span>🎁 <span data-i18n="filter.tierFree">Free</span></span></label>
+          <label class="ftier-row"><input type="checkbox" class="ftier-cb" value="green" checked /> <span>🟢 <span data-i18n="filter.tierGreen">Low cost</span></span></label>
+          <label class="ftier-row"><input type="checkbox" class="ftier-cb" value="yellow" checked /> <span>🟡 <span data-i18n="filter.tierYellow">Affordable</span></span></label>
+          <label class="ftier-row"><input type="checkbox" class="ftier-cb" value="orange" checked /> <span>🟠 <span data-i18n="filter.tierOrange">Moderate</span></span></label>
+          <label class="ftier-row"><input type="checkbox" class="ftier-cb" value="red" checked /> <span>🔴 <span data-i18n="filter.tierRed">Expensive</span></span></label>
+        </div>
+      </div>
+      <div class="filter-sec">
+        <div class="filter-sec-head" data-i18n="filter.providers">Providers</div>
+        <div id="filterProviders" class="filter-providers"></div>
+      </div>
+      <div class="filter-foot">
+        <button id="filterReset" class="link-btn" data-i18n="filter.reset">Reset</button>
+        <button id="filterClose" class="cmp-btn" data-i18n="filter.done">Done</button>
+      </div>
+    </div>
+
+    <footer class="composer">
+      <!-- Drag & drop target overlay (shown while dragging files over the sidebar). -->
+      <div id="dropOverlay" class="drop-overlay hidden"><span>📎 <span data-i18n="drop.hint">Drop files here to attach them</span></span></div>
+      <!-- Attachment preview strip (files / images fed to the AI as context). -->
+      <div id="attachStrip" class="attach-strip hidden"></div>
+      <div id="cmdChips" class="cmd-chips hidden"></div>
+      <!-- One rounded input box: the "+" sits to the LEFT of the text on the first row,
+           the chat toggles + stop on a bottom row at the right. No send button — Enter sends. -->
+      <div class="composer-box">
+        <div id="cmdPalette" class="cmd-palette hidden" role="listbox"></div>
         <div class="composer-main" id="composerMain">
           <textarea id="input" rows="1" data-i18n-ph="composer.ph" placeholder="Write a message…"></textarea>
         </div>
@@ -401,14 +391,14 @@
           <!-- The same row on every tab: attach, dictate, the model (with its maker's mark), the
                thinking level — then the options, and send / stop (as in hivey-vscode). -->
           <div class="tools-left" id="toolsLeft">
-            <button id="attachBtn" class="attach-btn" data-i18n-title="attach.title" title="Attach files or images"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+            <button id="attachBtn" class="attach-btn" aria-haspopup="true" aria-expanded="false" data-i18n-title="plus.title" title="Attach a file or bring in the page"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
             <button type="button" id="dictateBtn" class="mic-btn" aria-pressed="false" data-i18n-title="chip.dictateTitle" title="Dictation — speak your message (local speech-to-text)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/><path d="M8 21h8"/></svg></button>
             <div class="combo model-chip" id="modelWrap" data-i18n-title="model.chipTitle" title="Model">
               <span class="mc-icon" id="modelIcon" aria-hidden="true"></span>
         <input id="modelInput" class="combo-input" type="text" autocomplete="off" spellcheck="false" data-i18n-ph="model.searchPh" placeholder="Search a model…" />
         <span class="combo-caret">▾</span>
       </div>
-            <button type="button" id="thinkChip" class="cchip think-chip hidden" data-i18n-title="chip.thinkingTitle" title="Thinking level" aria-haspopup="true" aria-expanded="false"><span class="tc-icon" aria-hidden="true">✦</span><span class="tc-label"></span><span class="tc-caret" aria-hidden="true">▾</span></button>
+            <button type="button" id="thinkChip" class="cchip think-chip hidden" data-i18n-title="chip.thinkingTitle" title="Thinking level" aria-haspopup="true" aria-expanded="false"><span class="tc-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></span><span class="tc-label"></span><span class="tc-caret" aria-hidden="true">▾</span></button>
             <button id="modelConnect" class="btn-grad hidden"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2v6"/><path d="M15 2v6"/><path d="M7 8h10v3a5 5 0 0 1-10 0z"/><path d="M12 16v6"/></svg><span data-i18n="model.connect">Connect a provider</span></button>
           </div>
           <div class="tools-right">
@@ -422,6 +412,9 @@
               <label class="ctoggle" data-i18n-title="chip.artifactTitle" title="Artifacts — build runnable apps, games & diagrams"><input type="checkbox" id="artifactMode" /><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 12l8-4.5"/><path d="M12 12v9"/><path d="M12 12L4 7.5"/></svg><span class="ct-name" data-i18n="ct.artifacts">Artifacts</span></label>
               <label class="ctoggle" data-i18n-title="chip.pageTitle" title="Page — the AI sees the current page"><input type="checkbox" id="pageCtx" /><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h6"/></svg><span class="ct-name" data-i18n="ct.page">Page</span></label>
             </div>
+            <div class="img-size hidden" id="imageControls">
+              <select id="imageSize" class="ctl-select" data-i18n-title="image.sizeTitle" title="Sizes depend on the model. Native 4K/1440p doesn't exist on current image models — upscale the image afterwards."></select>
+            </div>
             <button id="stop" class="ctool stop hidden" data-i18n-title="stop.title" title="Stop">■</button>
             <button id="sendBtn" class="ctool send-btn" type="button" data-i18n-title="send.title" title="Send"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></button>
           </div>
@@ -431,6 +424,27 @@
       <div class="composer-foot">
         <button type="button" id="privBadge" class="cf-priv"></button>
         <button type="button" id="ctxGauge" class="ctx-gauge hidden" data-i18n-title="ctx.gaugeTitle" title="Context"><span class="cg-ring" aria-hidden="true"></span><span class="cg-pct">0 %</span><span class="cg-tokens"></span><span class="cg-cost"></span></button>
+      </div>
+      <!-- The "+" menu: attach a file, or bring the page in (area, element, tabs, watch). -->
+      <div id="plusMenu" class="think-pop plus-menu hidden" role="menu">
+        <button type="button" role="menuitem" id="attachFileItem" class="pm-item"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg><span class="pm-label" id="attachFileLabel" data-i18n="plus.file">Attach a file</span></button>
+        <div class="pm-sep" id="plusPageSep"></div>
+        <button type="button" role="menuitem" id="captureRegion" class="pm-item" data-i18n-title="region.title" title="Capture an area of the page (screenshot) as context"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 3" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="2"/></svg><span class="pm-label" data-i18n="plus.region">Capture an area</span></button>
+        <button type="button" role="menuitem" id="pickEl" class="pm-item" data-i18n-title="pick.title" title="Pick an element on the page to ask about it"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/></svg><span class="pm-label" data-i18n="plus.pick">Pick an element</span></button>
+        <button type="button" role="menuitem" id="tabsBtn" class="pm-item" data-i18n-title="tabs.btnTitle" title="Choose which tabs to give the AI"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8.5" y="8.5" width="12" height="12" rx="2"/><path d="M15.5 8.5V5a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3.5"/></svg><span class="pm-label" data-i18n="plus.tabs">Open tabs…</span></button>
+        <button type="button" role="menuitem" id="watchBtn" class="pm-item watch-btn" data-i18n-title="watch.title" title="Notify me when this page changes"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="pm-label" data-i18n="plus.watch">Watch this page</span></button>
+        <button role="menuitem" id="secHeadersBtn" class="pm-item sec-headers-btn hidden" type="button" data-i18n-title="secHeaders.tip" title="Analyze this page's security headers (CSP, HSTS, cookies…)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg><span class="pm-label" data-i18n="plus.headers">Security headers</span></button>
+      </div>
+      <!-- The context: how full it is, the size the model works with, summarize now (see openCtxPop). -->
+      <div id="ctxPop" class="think-pop ctx-pop hidden" role="dialog" aria-labelledby="ctxPopHead">
+        <div class="tp-head" id="ctxPopHead" data-i18n="ctx.popHead">Context</div>
+        <div class="cp-used" id="ctxPopUsed"></div>
+        <div class="cp-sizes" id="ctxPopSizesWrap">
+          <div class="cp-sub" data-i18n="ctx.sizeHead">Context size</div>
+          <span class="think-seg" id="ctxPopSizes" role="group"></span>
+          <p class="cp-hint" id="ctxPopHint"></p>
+        </div>
+        <button type="button" class="cp-compact" id="ctxPopCompact" data-i18n="ctx.compactBtn">Summarize now</button>
       </div>
       <!-- The thinking levels of the selected model (see refreshThinkSegs). -->
       <div id="thinkPop" class="think-pop hidden" role="menu"><div class="tp-head" data-i18n="ct.thinking">Thinking</div><span class="think-seg" role="group" aria-label="Thinking level"></span><button type="button" id="thinking" class="think-state" data-level="" hidden aria-hidden="true"><span class="lvl"></span></button></div>

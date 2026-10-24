@@ -55,15 +55,17 @@ tous les onglets :
 
 | Élément | Rôle |
 |---|---|
-| `+`, 🎤 | joindre un fichier, dicter |
+| `+` | un menu : **joindre un fichier**, ou apporter la page — **capturer une zone**, **choisir un élément**, **onglets ouverts…**, **surveiller cette page** (et, dans Sécurité, **les en-têtes de sécurité de la page**) |
+| 🎤 | dicter |
 | **puce du modèle** (icône du fournisseur) | changer de modèle |
-| **puce de réflexion** (✦ Standard…) | le niveau de réflexion, voir §4 |
+| **puce de réflexion** (ampoule, Standard…) | le niveau de réflexion, voir §4 |
 | **Envoyer** / **■** | envoyer ; arrêter pendant la réponse |
-| sous le cadre, à gauche | où tourne le modèle : 🏠 Local, 🔒 Votre passerelle, ☁️ Cloud · anonymisé |
-| sous le cadre, à droite | le contexte rempli (anneau, %, jetons) et, pour un modèle cloud, le coût de la conversation |
+| sous le cadre, à gauche | où tourne le modèle : 🏠 Local, 🔒 Votre passerelle, ☁️ Cloud · anonymisé — sur un modèle cloud, **un clic active ou désactive l'anonymisation** (voir §7) |
+| sous le cadre, à droite | le contexte rempli (anneau, %, jetons) et, pour un modèle cloud, le coût de la conversation ; **un clic** ouvre la taille du contexte et « Résumer maintenant » (voir §6) |
 
-Les réglages propres à un onglet (langue, style, taille d'image, collection Wisebase…) sont des
-puces en haut du cadre.
+Toutes les icônes de la rangée ont la même taille et la couleur de votre thème. Les réglages propres
+à un onglet (langue de traduction, style, collection Wisebase…) sont **au-dessus du cadre**, comme les
+analyses de l'onglet Sécurité ; dans Image, la **taille** est une puce à gauche d'Envoyer.
 
 ## 3. Le Chat : questions, page en contexte, recherche web
 
@@ -79,9 +81,9 @@ puces en haut du cadre.
 - **Le coût** : sous chaque réponse d'un modèle cloud, les jetons envoyés → reçus et le prix (exact
   quand OpenRouter le donne, sinon estimé d'après les prix publics et marqué « ≈ »). Gratuit en local
   et sur votre passerelle.
-- **Suggestion de la prochaine demande** : après une réponse, une suite proposée apparaît en grisé
-  dans le champ ; **Tab** (ou →) la reprend, il suffit sinon de taper autre chose. Désactivable dans
-  les réglages.
+- **Suggestion de la prochaine demande** : après une réponse, une suite proposée apparaît en italique
+  pâle dans le champ vide ; **Tab** (ou →) la reprend, il suffit sinon de taper autre chose.
+  Désactivable dans les réglages.
 
 ## 4. Les niveaux de réflexion
 
@@ -144,10 +146,17 @@ ou un long journal déjà analysé « tirent » les réponses suivantes. Sous ch
 Un clic sur l'étiquette « Hors contexte » remet aussi l'échange dans le contexte.
 
 La **jauge de contexte** (l'anneau sous la zone de saisie, avec le pourcentage) montre la part de la fenêtre du
-modèle qu'occupe ce qui est réellement envoyé. Elle devient orange puis rouge ; **un clic résume la
-conversation** et libère le contexte (tout reste affiché). La conversation se résume aussi d'elle-même
-à 75 % de la fenêtre, et si un serveur répond qu'elle ne tient plus, elle est résumée puis la
-question est reposée.
+modèle qu'occupe ce qui est réellement envoyé. Elle devient orange puis rouge. **Un clic** ouvre :
+
+- **la taille du contexte** pour ce modèle : son maximum (par défaut), ou une taille plus petite —
+  8 k, 16 k, 32 k… Plus petit, c'est moins cher et plus rapide : la conversation est résumée plus tôt.
+  Une taille ne dépasse jamais la vraie fenêtre du modèle ; pour un serveur qui ne la donne pas, c'est
+  vous qui la fixez ;
+- **Résumer maintenant**, qui libère le contexte (tout reste affiché).
+
+La conversation se résume aussi **d'elle-même à 75 %** de la taille choisie, dans le Chat, l'Agent
+et Wisebase (et l'agent résume sa propre tâche en cours de route s'il le faut) ; si un serveur répond
+qu'elle ne tient plus, elle est résumée puis la question est reposée.
 
 Ces boutons existent dans **Chat, Agent, Sécurité, Traduire, Améliorer, PDF et Wisebase**. Dans
 l'onglet **Image**, « ↺ Utiliser comme référence » met une image générée dans le contexte de la
@@ -172,6 +181,9 @@ génération suivante.
   - **Toujours envoyer (cette conversation)** ;
   - **Annuler** — rien n'est envoyé.
 
+- **Le badge « ☁️ Cloud · anonymisé »** sous la zone de saisie : un clic **désactive l'anonymisation**
+  (il passe en orange, « non anonymisé ») ; un second clic la **réactive** au niveau choisi dans les
+  réglages. Même désactivée, les **clés et mots de passe restent masqués**. Elle est active par défaut.
 - **Réglages** (Sécurité et confidentialité) : niveau **Strict** (ajoute adresses IP, machines
   internes, noms d'utilisateur dans les chemins), **Équilibré** (par défaut) ou **Identifiants
   seulement** ; une liste de **mots à toujours anonymiser** (noms de clients, noms de code) ; et
