@@ -64,6 +64,9 @@ Version de développement, toujours à jour :
   passerelle et cloud, niveaux de réflexion, agent, contexte, confidentialité, chaque onglet.
 - **Nouveautés dans les réglages** : un lien ouvre ce journal, inclus dans l'extension.
 - README, modèle de menaces et politique de confidentialité à jour ; guide de contribution.
+- **Captures d'écran refaites** avec la nouvelle zone de saisie, plus l'agent, l'onglet Benchmark et
+  son rapport.
+- **Le menu de réflexion est opaque** : la conversation ne se lit plus à travers.
 - **Chat** : un message tapé pendant qu'une réponse s'écrit n'est plus perdu — il reste dans le
   champ, avec un avis.
 
