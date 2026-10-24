@@ -2360,10 +2360,20 @@ body.mode-benchmark #confirmBar { display: none !important; }
 .privacy-bar .confirm-actions { flex-wrap: wrap; justify-content: flex-end; }
 
 /* Context control (lib/context-control.js): an exchange in standby stays on screen, faded. */
-.msg.ctx-muted { animation: none; opacity: .5; } /* the fade-in animation's fill would hold opacity at 1 */
-.msg.ctx-muted:hover { opacity: .85; }
+/* An exchange in standby reads as switched off: the question loses its colour (grey, dashed), the
+   answer turns grey and faint — the « ⏸ On standby » tag above the question says why, and a click
+   on it puts the exchange back. */
+.msg.ctx-muted { animation: none; opacity: .55; filter: grayscale(1); transition: opacity .2s; } /* the fade-in's fill would hold opacity at 1 */
+.msg.ctx-muted:hover { opacity: .8; }
+.msg.user.ctx-muted > .umsg-text { background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--muted);
+  border: 1px dashed color-mix(in srgb, var(--text) 28%, transparent); }
+.msg.assistant.ctx-muted, .msg.assistant.ctx-muted * { color: var(--muted) !important; }
+.msg.ctx-muted .answer-meta { opacity: .7; }
+.think.ctx-muted { opacity: .5; filter: grayscale(1); }
 .msg.ctx-pinned { box-shadow: inset 3px 0 0 var(--accent); }
 .ctx-tag { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+.msg.ctx-muted > .ctx-tag { filter: none; display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px;
+  border: 1px dashed color-mix(in srgb, var(--text) 30%, transparent); background: color-mix(in srgb, var(--text) 6%, transparent); }
 .mact-bar .mctxpin.on { color: var(--accent); }
 /* The context gauge: a ring that fills with the conversation, then turns amber and red. */
 .ctx-gauge { --fill: 0%; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: var(--muted); }
