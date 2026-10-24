@@ -13,6 +13,7 @@
 
 import { PROVIDERS, baseUrlFor, modelFor, keyFor } from "./models.js";
 import { anthropicThinking, wireReasoning, selfHostedThinkingBudget, isSelfHostedProvider } from "./reasoning.js";
+import { privateProvider, redactsFor } from "./privacy.js";
 
 // Pull the real, resolvable source URLs out of web-plugin annotations (OpenRouter/OpenAI
 // `url_citation`). These are the ACTUAL search-result links — unlike URLs the model types into its
@@ -665,23 +666,26 @@ export function makeProvider(settings, opts = {}) {
   // "Standard" (see `levelOf` and reasoning.js). The legacy boolean `thinking` still reads.
   const lvl = opts.thinkLevel != null ? opts.thinkLevel : opts.thinking;
 
-  if (meta.kind === "anthropic") {
-    return anthropicProvider({
+  const provider = meta.kind === "anthropic"
+    ? anthropicProvider({
       apiKey,
       model,
       baseUrl,
       thinkLevel: meta.supportsThinking ? levelOf(lvl) : undefined,
       webSearch: !!opts.webSearch && meta.supportsWebSearch,
+    })
+    : openaiProvider({
+      apiKey,
+      model,
+      baseUrl,
+      providerId: id,
+      webSearch: !!opts.webSearch && !!meta.supportsWebSearch,
+      thinkLevel: lvl,
     });
-  }
-  return openaiProvider({
-    apiKey,
-    model,
-    baseUrl,
-    providerId: id,
-    webSearch: !!opts.webSearch && !!meta.supportsWebSearch,
-    thinkLevel: lvl,
-  });
+  // Privacy first: every request to a cloud is pseudonymized here, whichever tab or side task made
+  // it — see privacy.js. The user's own machine and gateway are sent as they are.
+  const level = redactsFor(id, settings);
+  return level ? privateProvider(provider, { level, customTerms: settings.privacyTerms || [], ...(opts.privacy || {}) }) : provider;
 }
 
 // OpenRouter: rich model list with vendor, display name and per-token pricing.

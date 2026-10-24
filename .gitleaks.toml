@@ -4,5 +4,5 @@
 useDefault = true
 
 [allowlist]
-description = "Vendored minified third-party code (transformers.js)"
-paths = ['''^vendor/''']
+description = "Vendored minified third-party code (transformers.js), and the fake credentials used as fixtures by the redaction tests"
+paths = ['''^vendor/''', '''^tests/(redaction|businessData|redactionFalsePositives|privacy)\.test\.js$''']

@@ -604,7 +604,9 @@ function buildProviderFields() {
   const root = $("providers");
   root.innerHTML = "";
   let lastCat = null;
-  for (const id of PROVIDER_ORDER) {
+  // Privacy first: your own machine, then your own server, then the clouds.
+  const rank = { local: 0, custom: 1, cloud: 2 };
+  for (const id of [...PROVIDER_ORDER].sort((a, b) => rank[category(a)] - rank[category(b)])) {
     const cat = category(id);
     if (cat !== lastCat) {
       root.appendChild(el("h2", "group-title", t("opt.group." + cat)));
@@ -1008,6 +1010,9 @@ async function load() {
   $("judge0Key").value = settings.judge0Key != null ? settings.judge0Key : "";
   $("judge0Key").style.setProperty("-webkit-text-security", "disc"); // mask without type=password
   $("blockPayments").checked = settings.blockPayments;
+  $("privacyLevel").value = settings.privacyLevel || "balanced";
+  $("privacyTerms").value = (settings.privacyTerms || []).join("\n");
+  $("privacyTrustOwn").checked = settings.privacyTrustOwn !== false;
   $("saveHistory").checked = settings.saveHistory;
   $("includePageContext").checked = settings.includePageContext;
   $("autoReadPage").checked = settings.autoReadPage;
@@ -1111,6 +1116,9 @@ function collectSettings() {
     judge0Endpoint: $("judge0Endpoint").value.trim(),
     judge0Key: $("judge0Key").value.trim(),
     blockPayments: $("blockPayments").checked,
+    privacyLevel: $("privacyLevel").value,
+    privacyTerms: $("privacyTerms").value.split("\n").map((w) => w.trim()).filter(Boolean),
+    privacyTrustOwn: $("privacyTrustOwn").checked,
     saveHistory: $("saveHistory").checked,
     includePageContext: $("includePageContext").checked,
     autoReadPage: $("autoReadPage").checked,

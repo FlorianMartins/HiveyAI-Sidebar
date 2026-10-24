@@ -149,6 +149,13 @@ const DEFAULTS = {
                          // streams; off = the view stays put so you can read/scroll freely.
   verifyAnswers: false,  // OFF by default: Hivey double-checks & auto-fixes each answer only
                          // when the user turns the Verify chip on (it costs extra tokens).
+  // Privacy (lib/privacy.js): what a CLOUD request pseudonymizes — "strict" (+ IP addresses,
+  // internal hosts, user names in paths), "balanced" (credentials, personal and company data,
+  // listed terms), "off" (credentials only: never sent in clear). Local models and the user's own
+  // gateway are trusted unless privacyTrustOwn is turned off.
+  privacyLevel: "balanced",
+  privacyTerms: [],
+  privacyTrustOwn: true,
   compressHistory: true, // when a conversation grows long, summarise its OLD turns with
                          // a cheap model so later turns send far fewer tokens. The UI
                          // still shows the full transcript — only the model payload shrinks.

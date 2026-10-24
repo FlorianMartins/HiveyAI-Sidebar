@@ -205,6 +205,17 @@
       </div>
     </div>
 
+    <!-- Privacy: before a CLOUD request that carries sensitive data (lib/privacy.js). -->
+    <div id="privacyBar" class="confirm privacy-bar hidden" role="alertdialog" aria-labelledby="privacyText">
+      <span id="privacyText"></span>
+      <ul id="privacyList" class="priv-list"></ul>
+      <div class="confirm-actions">
+        <button id="privacySend" class="ok" data-i18n="priv.send">Send (markers in place)</button>
+        <button id="privacyAlways" class="ghost" data-i18n="priv.always">Always send (this conversation)</button>
+        <button id="privacyCancel" class="no" data-i18n="priv.cancel">Cancel</button>
+      </div>
+    </div>
+
     <!-- Adaptive control row (per-mode controls: translate / improve / image / PDF).
          The chat toggles (Thinking / Web / Page) now live inside the composer below. -->
     <div class="controls" id="controls">

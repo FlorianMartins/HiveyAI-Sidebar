@@ -13,6 +13,7 @@ import { makeProvider, listModels, listOpenRouterRich, generateImage, transcribe
 import { buildSystemPrompt, activeTools, runConversation } from "../lib/agent.js";
 import { reasoningMenu, isSelfHostedProvider } from "../lib/reasoning.js";
 import { runChatTurn, replyLanguageOf } from "../lib/conversation.js";
+import { Vault, privacyClass } from "../lib/privacy.js";
 import { SKILLS, GOAL_SYSTEM, ENHANCE_SYSTEM, skillById } from "../lib/skills.js";
 import { executeTool, setAgentTab, clearAgentTab, getAgentTab } from "../lib/tools.js";
 import { initBenchmarkView } from "../lib/benchmarkView.js";
@@ -168,6 +169,12 @@ const els = {
   wbAddPageBtn: $("wbAddPageBtn"),
   imageSize: $("imageSize"),
   confirmBar: $("confirmBar"),
+  privacyBar: $("privacyBar"),
+  privacyText: $("privacyText"),
+  privacyList: $("privacyList"),
+  privacySend: $("privacySend"),
+  privacyAlways: $("privacyAlways"),
+  privacyCancel: $("privacyCancel"),
   confirmText: $("confirmText"),
   confirmAllow: $("confirmAllow"),
   confirmDeny: $("confirmDeny"),
@@ -5626,7 +5633,7 @@ async function onWisebaseSend() {
     const sink = makeSink("📚 " + t("wb.title"), true, pending, "wisebase");
     const provider = makeProvider(
       { ...settings, provider: sel.providerId, models: { ...settings.models, [sel.providerId]: sel.modelId } },
-      { thinkLevel: getThink(els.thinking), webSearch: false }
+      { thinkLevel: getThink(els.thinking), webSearch: false, privacy: privacyOpts(sess, sess.convId, "wisebase") }
     );
     const system = buildSystemPrompt({ agentMode: false, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: "chat", blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked, replyLanguage: replyLanguageOf(q, settings) });
     // Through lib/conversation.js like the Chat: a cut stream is continued, an oversized set of
@@ -5830,7 +5837,7 @@ async function runDeepSearch(question) {
     const sink = makeSink("🔎 " + t("deep.badge"), true, pending, "chat");
     const provider = makeProvider(
       { ...settings, provider: synthSel.providerId, models: { ...settings.models, [synthSel.providerId]: synthSel.modelId } },
-      { thinkLevel: getThink(els.thinking), webSearch: false }
+      { thinkLevel: getThink(els.thinking), webSearch: false, privacy: privacyOpts(getSession("chat"), getSession("chat").convId, "chat") }
     );
     const system = buildSystemPrompt({ agentMode: false, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: "chat", blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked });
     const turn = await provider.runTurn({ system: system + "\n\n" + sysReport, history: [{ role: "user", content: synthContent }], tools: [], onText: sink.onText, onThink: sink.onThink, signal });
@@ -6986,6 +6993,49 @@ function confirmAction(name, input) {
     els.confirmDeny.addEventListener("click", onDeny);
   });
 }
+// ----- Privacy: the sensitive-data window ------------------------------------
+// Asked before a CLOUD request carries a credential, or personal / company data the user did not
+// type (a page, a file, a tool result) — each already replaced by a marker. Once per value and per
+// conversation; « Toujours envoyer » covers the rest of the conversation (lib/privacy.js).
+let privacyAsking = Promise.resolve();
+function askPrivacy(lines, count) {
+  // One question at a time: two parallel requests (a sub-task and the turn) never stack two dialogs.
+  const asked = privacyAsking.then(() => new Promise((resolve) => {
+    els.privacyText.textContent = t("priv.title", { n: count });
+    els.privacyList.replaceChildren(...lines.map((l) => { const li = document.createElement("li"); li.textContent = l; return li; }));
+    els.privacyBar.classList.remove("hidden");
+    const done = (v) => {
+      els.privacyBar.classList.add("hidden");
+      els.privacySend.removeEventListener("click", once);
+      els.privacyAlways.removeEventListener("click", always);
+      els.privacyCancel.removeEventListener("click", no);
+      resolve(v);
+    };
+    const once = () => done("once");
+    const always = () => done("always");
+    const no = () => done("no");
+    els.privacySend.addEventListener("click", once);
+    els.privacyAlways.addEventListener("click", always);
+    els.privacyCancel.addEventListener("click", no);
+  }));
+  privacyAsking = asked.catch(() => {});
+  return asked;
+}
+/** The privacy options of a conversation's requests: its own vault (markers stable across turns), the window, a notice. */
+function privacyOpts(sess, convId, m) {
+  if (sess && !sess.vault) sess.vault = new Vault();
+  return {
+    vault: sess ? sess.vault : new Vault(),
+    conversation: convId || "",
+    ask: askPrivacy,
+    t,
+    onRedacted: (found) => {
+      const n = new Set(found.map((f) => f.value)).size;
+      if (n) addMessage("tool", t("priv.redacted", { n }), m || mode);
+    },
+  };
+}
+
 // ----- Efficiency: context cleaning + cheap-model routing + compaction -------
 // Trim boilerplate so the user pays only for meaningful tokens (and gets a faster
 // first token from a smaller prompt). Lossless-ish: we collapse whitespace, drop
@@ -7036,9 +7086,10 @@ async function runUtilityCompletion(sel, system, userText, signal) {
     { ...settings, provider: sel.providerId, models: { ...settings.models, [sel.providerId]: sel.modelId } },
     { thinking: false, webSearch: false }
   );
+  // A side task (a title, a summary, a classification): thinking off on the user's own server.
   const turn = await provider.runTurn({
     system, history: [{ role: "user", content: userText }], tools: [],
-    onText: null, onThink: null, signal,
+    onText: null, onThink: null, signal, chore: true,
   });
   return (turn && turn.text || "").trim();
 }
@@ -7534,7 +7585,7 @@ async function compareRun(list, btn) {
       try {
         const provider = makeProvider(
           { ...settings, provider: second.providerId, models: { ...settings.models, [second.providerId]: second.modelId } },
-          { thinkLevel: getThink(els.thinking), webSearch: els.webSearch.checked || lastForceWeb }
+          { thinkLevel: getThink(els.thinking), webSearch: els.webSearch.checked || lastForceWeb, privacy: privacyOpts(getSession(mode), getSession(mode).convId, mode) }
         );
         const system = buildSystemPrompt({ agentMode: false, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: lastRunMode, blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked, thinkLevel: getThink(els.thinking) });
         cmpPending = addPendingIndicator();
@@ -7744,7 +7795,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   const effThink = hid ? hiveyThink(tierKey, getThink(els.thinking)) : getThink(els.thinking);
   let provider = makeProvider(
     { ...settings, provider: turnSel.providerId, models: { ...settings.models, [turnSel.providerId]: turnSel.modelId } },
-    { thinkLevel: effThink, webSearch: webPlugin }
+    { thinkLevel: effThink, webSearch: webPlugin, privacy: privacyOpts(sess, boundConvId, sessMode) }
   );
   const system = buildSystemPrompt({ agentMode, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: runMode, blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked, thinkLevel: effThink, skill: activeSkill ? activeSkill.system : "", goal: goalMode ? GOAL_SYSTEM : "", interactive: agentMode && !!settings.agentInteractive, region: userRegion(), replyLanguage: replyLanguageOf(displayText || modelContent, settings) });
   const tools = activeTools({ agentMode });
@@ -7842,7 +7893,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
           try { console.debug("[Hivey] rotated model →", turnSel.modelId); } catch (_) {}
           provider = makeProvider(
             { ...settings, provider: turnSel.providerId, models: { ...settings.models, [turnSel.providerId]: turnSel.modelId } },
-            { thinkLevel: effThink, webSearch: webPlugin }
+            { thinkLevel: effThink, webSearch: webPlugin, privacy: privacyOpts(sess, boundConvId, sessMode) }
           );
           continue;
         }
