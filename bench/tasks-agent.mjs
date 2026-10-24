@@ -306,7 +306,12 @@ export const AGENT_TASKS = [
     tab: "agent",
     world: loopWorld,
     turns: ["Trouve-moi sur ce site une lampe de bureau en laiton à moins de 50 €."],
-    check: ({ answer }) => pass(/(aucun|pas (de|trouv)|n'(ai|a) pas|introuvable|ne propose|n'existe)/i.test(answer) && !/laiton[^.\n]*\d+\s*€/i.test(answer), "says there is none, invents none"),
+    // Invented = a line offering a brass lamp at a price without saying there is none.
+    check: ({ answer }) => pass(
+      /(aucun|pas (de|trouv)|n'(ai|a) pas|introuvable|ne propose|n'existe)/i.test(answer) &&
+        !answer.split("\n").some((l) => /laiton/i.test(l) && /\d+\s*€/.test(l) && !/(aucun|pas|non|ne |n')/i.test(l)),
+      "says there is none, invents none",
+    ),
   },
   {
     id: "agent-table-extract",
