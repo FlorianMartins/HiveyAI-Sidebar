@@ -162,7 +162,7 @@ VS Code / Slack — scale mieux qu'une rangée d'onglets) donne accès à :
 
 | L'agent dans le navigateur | L'onglet Benchmark | Le rapport, ouvert à la fin du test |
 |---|---|---|
-| ![L'agent sur Wikipédia : sa réflexion, puis la réponse sourcée](docs/screenshots/sidebar-agent.png) | ![Trois modèles testés, une carte par modèle avec une barre par famille](docs/screenshots/sidebar-benchmark.png) | ![Le rapport : meilleur modèle, scores, détail par famille, temps et coût](docs/screenshots/bench-report.png) |
+| ![L'agent sur Wikipédia : sa réflexion, puis la réponse sourcée](docs/screenshots/sidebar-agent.png) | ![Trois modèles testés : le conseil en tête, puis le classement avec score, temps et coût](docs/screenshots/sidebar-benchmark.png) | ![Le rapport : le conseil, les scores, le détail par type de question, le temps et le coût](docs/screenshots/bench-report.png) |
 
 | Réglages de confidentialité | Fournisseurs : local d'abord |
 |---|---|
@@ -452,7 +452,7 @@ npm run vendor:check  # les bibliothèques tierces sont-elles les originaux amon
 npm run bench -- --url http://127.0.0.1:8080/v1 --model qwen-27b   # le banc chat + agent
 ```
 
-**387 tests** (node:test) couvrent le noyau de raisonnement et le tour d'agent de bout en bout, les
+**394 tests** (node:test) couvrent le noyau de raisonnement et le tour d'agent de bout en bout, les
 niveaux de réflexion de chaque fournisseur (le corps exact de chaque requête), l'anonymisation
 (détecteurs, faux positifs, restitution, fenêtre des données sensibles), la gestion du contexte, les
 freins de l'agent, le routage Hivey, et **la complétude des six langues**. Les tests des niveaux de

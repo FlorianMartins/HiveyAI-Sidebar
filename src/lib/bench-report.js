@@ -26,9 +26,74 @@ export function scoreTone(score) {
   return score >= 0.8 ? "good" : score >= 0.5 ? "mid" : "bad";
 }
 
-/** The entries in the order the report shows them: best score first, unmeasured last. */
+// What a run cost, for comparing: a free run is 0, and a provider that gave no price is unknown
+// (null) — never 0, which would make an unpriced model look like the cheapest one.
+export function costValue(e) {
+  return e.free ? 0 : e.cost > 0 ? e.cost : null;
+}
+const byCost = (a, b) => {
+  const x = costValue(a), y = costValue(b);
+  return x == null && y == null ? 0 : x == null ? 1 : y == null ? -1 : x - y;
+};
+const byTime = (a, b) => (a.ms || Number.MAX_VALUE) - (b.ms || Number.MAX_VALUE);
+const EPS = 1e-9;
+
+/** The entries in the order both the workspace and the report show them: best score first, then
+ *  the cheaper, then the faster; unmeasured last. */
 export function rankEntries(entries) {
-  return entries.slice().sort((a, b) => (b.score ?? -1) - (a.score ?? -1) || (a.ms || 0) - (b.ms || 0));
+  return entries.slice().sort((a, b) => (b.score ?? -1) - (a.score ?? -1) || byCost(a, b) || byTime(a, b));
+}
+
+/** One question out of the twenty: a gap smaller than this is noise on a test this short. */
+export const VERDICT_MARGIN = 0.05;
+
+/**
+ * « Which one should I use? » — the cheapest model whose score is within one question of the
+ * best, and the faster one when they cost the same. `vs` is the model it is compared with in the
+ * sentence: the top scorer when the pick is not it, otherwise the runner-up.
+ */
+export function pickModel(entries) {
+  const rows = rankEntries(entries.filter((e) => e && e.score != null));
+  if (!rows.length) return null;
+  const top = rows[0];
+  const pick = rows.filter((r) => r.score >= top.score - VERDICT_MARGIN - EPS).sort((a, b) => byCost(a, b) || byTime(a, b) || b.score - a.score)[0];
+  const vs = pick === top ? rows.find((r) => r !== pick) || null : top;
+  return { pick, vs, rows };
+}
+
+/** The reason, in one plain sentence: score against `vs`, then price, then speed. */
+export function verdictReason({ pick, vs, rows = [] }, { t, lang = "fr", running = false }) {
+  const pct = (v) => `${Math.round(v * 100)} %`;
+  // « 11× », « 3.7× », « 4× » — one decimal below ten, none above, never a trailing « .0 ».
+  const times = (r) => new Intl.NumberFormat(lang, { maximumFractionDigits: r >= 10 ? 0 : 1 }).format(r);
+  if (!vs) return t(running ? "bench.v.wait" : "bench.v.only", { a: pct(pick.score), pass: String(pick.pass ?? ""), total: String(pick.total ?? "") });
+  const parts = [];
+  const a = pct(pick.score), b = pct(vs.score);
+  if (pick.score > vs.score + EPS) parts.push(t("bench.v.better", { a, b, vs: vs.label }));
+  else if (pick.score >= vs.score - EPS) parts.push(t("bench.v.same", { a, vs: vs.label }));
+  else parts.push(t("bench.v.almost", { a, b, vs: vs.label }));
+  let cheaper = false, faster = false;
+  const cp = costValue(pick), cv = costValue(vs);
+  if (cp === 0 && cv > 0) { parts.push(t("bench.v.free")); cheaper = true; }
+  else if (cp > 0 && cv > 0) {
+    const r = cv / cp;
+    if (r >= 1.5) { parts.push(t("bench.v.cheaper", { x: times(r) })); cheaper = true; }
+    else if (r <= 1 / 1.5) parts.push(t("bench.v.pricier", { x: times(1 / r) }));
+  }
+  if (pick.ms && vs.ms) {
+    const r = vs.ms / pick.ms;
+    if (r >= 1.5) { parts.push(t("bench.v.faster", { x: times(r) })); faster = true; }
+    else if (r <= 1 / 1.5) parts.push(t("bench.v.slower", { x: times(1 / r) }));
+  }
+  // With three models or more, comparing with one of them can hide that the pick also beats all
+  // the others on price or speed: say so in two words.
+  const others = rows.filter((r) => r !== pick);
+  if (others.length >= 2) {
+    if (!cheaper && cp != null && others.every((r) => costValue(r) == null || costValue(r) > cp)) parts.push(t("bench.v.cheapest"));
+    if (!faster && pick.ms && others.every((r) => !r.ms || r.ms > pick.ms)) parts.push(t("bench.v.fastest"));
+  }
+  const s = parts.join(", ");
+  return s.charAt(0).toLocaleUpperCase(lang) + s.slice(1) + ".";
 }
 
 /**
@@ -46,16 +111,11 @@ export function buildBenchReport(entries, { t, lang = "fr", generatedAt = new Da
   const fam = (f) => t(`bench.fam.${f}`);
   const date = new Intl.DateTimeFormat(lang, { dateStyle: "long", timeStyle: "short" }).format(generatedAt);
 
-  // ── The headline: who to pick, in one sentence. ────────────────────────────────────────────
-  let headline = t("bench.r.empty");
-  if (rows.length) {
-    const best = rows[0];
-    headline = t("bench.r.best", { model: best.label, score: pct(best.score) });
-    if (rows.length > 1) {
-      const cheapest = rows.filter((r) => r.score >= best.score - 0.1).sort((a, b) => (a.free ? 0 : a.cost || 0) - (b.free ? 0 : b.cost || 0))[0];
-      if (cheapest && cheapest !== best) headline += " " + t("bench.r.cheaper", { model: cheapest.label, score: pct(cheapest.score) });
-    }
-  }
+  // ── The headline: who to pick, in one sentence — the same verdict as the workspace. ─────────
+  const v = pickModel(rows);
+  const headline = v
+    ? `<b>${esc(t(v.vs ? "bench.v.head" : "bench.v.headOne", { model: v.pick.label }))}</b><br>${esc(verdictReason(v, { t, lang }))}`
+    : esc(t("bench.r.empty"));
 
   // ── The bar chart: one bar per model, inline SVG. ──────────────────────────────────────────
   const barH = 30, labelW = 210, chartW = 640, plotW = chartW - labelW - 60;
@@ -78,7 +138,7 @@ ${rows.map((r, i) => {
     return `<td class="num cell ${scoreTone(s)}">${b.pass}/${b.total}</td>`;
   };
   const table = rows.length ? `<table>
-<thead><tr><th>${esc(t("bench.colModel"))}</th><th class="num">${esc(t("bench.r.score"))}</th>${FAMILIES.map((f) => `<th class="num">${esc(fam(f))}</th>`).join("")}<th class="num">${esc(t("bench.r.time"))}</th><th class="num">${esc(t("bench.r.cost"))}</th></tr></thead>
+<thead><tr><th>${esc(t("bench.colModel"))}</th><th class="num">${esc(t("bench.r.score"))}</th>${FAMILIES.map((f) => `<th class="num fam">${esc(fam(f))}</th>`).join("")}<th class="num">${esc(t("bench.r.time"))}</th><th class="num">${esc(t("bench.r.cost"))}</th></tr></thead>
 <tbody>${rows.map((r, i) => `<tr><td><span class="rank">${i + 1}</span> ${esc(r.label)}<div class="prov">${esc(r.provider || "")}${r.errors ? ` · <span class="warn">${esc(t("bench.r.errors", { n: String(r.errors) }))}</span>` : ""}</div></td><td class="num strong ${scoreTone(r.score)}">${pct(r.score)}</td>${FAMILIES.map((f) => famCell(r, f)).join("")}<td class="num">${secs(r.ms)}</td><td class="num">${esc(money(r))}</td></tr>`).join("\n")}</tbody>
 </table>` : "";
 
@@ -114,6 +174,8 @@ h2 { font-size: 17px; margin: 32px 0 10px; }
 table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 th, td { padding: 8px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
 th { color: var(--muted); font-weight: 600; font-size: 12px; white-space: nowrap; }
+th.fam { white-space: normal; min-width: 64px; }
+td:first-child { min-width: 150px; }
 tr:last-child td { border-bottom: 0; }
 .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .strong { font-weight: 700; }
@@ -139,7 +201,7 @@ footer { margin-top: 32px; color: var(--muted); font-size: 12.5px; }
 <body><main>
 <h1>${esc(t("bench.r.title"))}</h1>
 <div class="meta">${esc(t("bench.r.meta", { date, n: String(rows.length) }))}</div>
-<p class="headline">${esc(headline)}</p>
+<p class="headline">${headline}</p>
 ${rows.length ? `<h2>${esc(t("bench.r.chart"))}</h2><div class="card">${chart}</div>
 <h2>${esc(t("bench.r.details"))}</h2><div class="card">${table}</div>
 <h2>${esc(t("bench.r.missedTitle"))}</h2>${misses}` : ""}
