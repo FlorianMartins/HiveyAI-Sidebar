@@ -501,9 +501,9 @@ function setHTML(el, html) { if (el) el.innerHTML = html == null ? "" : html; }
       clearInterval(timer); host.remove();
     });
     // The user found the player's own 🔊 (or pressed M) — the button has done its job.
-    v.addEventListener("volumechange", function onVol() {
-      if (!v.muted && v.volume > 0 && !v.paused) { v.removeEventListener("volumechange", onVol); clearInterval(timer); host.remove(); }
-    });
+    const done = () => { if (!v.muted && v.volume > 0 && !v.paused) { v.removeEventListener("volumechange", done); v.removeEventListener("playing", done); clearInterval(timer); host.remove(); } };
+    v.addEventListener("volumechange", done);
+    v.addEventListener("playing", done);
     (document.body || document.documentElement).appendChild(host);
   }
 
@@ -519,10 +519,22 @@ function setHTML(el, html) { if (el) el.innerHTML = html == null ? "" : html; }
         return false;
       }
     };
+    // ⚠️ « l'utilisateur doit couper le son et le remettre » — a video left playing muted needs two
+    // clicks on the player (unmute, and the browser pauses it; play again). Where the browser only
+    // allows silence, the video is left PAUSED and NOT muted instead: one click on play — the
+    // player's own or the button put on the video — and it plays with sound.
+    const holdForOneClick = () => {
+      try { v.pause(); } catch (_) {}
+      const yt = document.querySelector(".ytp-mute-button");
+      if (yt && v.muted) { try { yt.click(); } catch (_) {} } // keeps YouTube's own mute state in step
+      try { v.muted = false; if (!v.volume) v.volume = 1; } catch (_) {}
+      offerSoundButton(v, soundLabel);
+      return { ok: true, playing: false, paused: true, muted: false, soundButton: true,
+        hint: "The browser allows sound only after a click on the page, so the video is paused (not muted) — one click on play (or on the ▶ button shown on the video) starts it with sound. Tell the user that in one short sentence." };
+    };
     const alreadyPlaying = () => {
-      if (v.muted) offerSoundButton(v, soundLabel);
-      return { ok: true, playing: true, muted: !!v.muted, soundButton: !!v.muted || undefined,
-        hint: v.muted ? "Already playing (muted). A 🔊 button is shown on the video — the user clicks it once for sound." : undefined };
+      if (v.muted) return holdForOneClick();
+      return { ok: true, playing: true, muted: false };
     };
     // Autoplay already running → leave it alone (never toggle a playing video).
     if (!v.paused) {
@@ -550,17 +562,9 @@ function setHTML(el, html) { if (el) el.innerHTML = html == null ? "" : html; }
       for (let i = 0; i < 12 && !v.paused; i++) await new Promise((r) => setTimeout(r, 250));
       audible = !v.paused && !v.muted;
     }
-    if (!audible) {
-      try { v.muted = true; } catch (_) {}
-      if (v.paused) await tryPlay();
-      offerSoundButton(v, soundLabel);
-    } else removeSoundButton();
-    return {
-      ok: true, playing: !v.paused, muted: !!v.muted, soundButton: !audible || undefined,
-      hint: v.paused
-        ? "The browser blocked autoplay. A 🔊 button is shown on the video — the user clicks it once to play with sound (or allows autoplay for youtube.com once: Firefox 🔒 → Autoplay → Allow Audio and Video)."
-        : (v.muted ? "Playing (muted) — the browser blocks sound until the page is clicked. A 🔊 button is shown on the video — the user clicks it once for sound." : undefined),
-    };
+    if (!audible) return holdForOneClick();
+    removeSoundButton();
+    return { ok: true, playing: !v.paused, muted: false };
   }
 
   // --- Media control (play a video, toggle YouTube autoplay) ----------------

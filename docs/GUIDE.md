@@ -140,8 +140,8 @@ ou un long journal déjà analysé « tirent » les réponses suivantes. Sous ch
 
 | Bouton | Effet |
 |---|---|
-| ⏸ **Veille** | l'échange (votre question + la réponse) reste affiché, grisé, marqué « Hors contexte », mais **n'est plus envoyé**. Un nouveau clic le remet. |
-| 📌 **Épingler** | l'échange est gardé **mot pour mot** quand la conversation est résumée |
+| ⏸ **Veille** (icône, décrite au survol) | l'échange (votre question + la réponse) reste affiché, grisé, marqué « Hors contexte », mais **n'est plus envoyé**. Un nouveau clic le remet. |
+| 📌 **Épingler** (icône) | l'échange est gardé **mot pour mot** quand la conversation est résumée |
 | 🗑 **Supprimer** | l'échange disparaît de l'écran et du contexte |
 
 Un clic sur l'étiquette « Hors contexte » remet aussi l'échange dans le contexte.
