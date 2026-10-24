@@ -89,7 +89,11 @@ export const CHAT_TASKS = [
     tab: "chat",
     page: PRODUCT_PAGE,
     turns: ["Quel est le prix de ce robot et combien d'années de garantie a-t-il ?"],
-    check: ({ answer }) => pass(numbersIn(answer).includes(349) && /3\s*ans/i.test(answer) && !/\b2\s*ans\b/i.test(answer), "price 349 and a 3-year warranty"),
+    // "2 ans" is the old X1's warranty: wrong only when it is given as this robot's.
+    check: ({ answer }) => pass(
+      numbersIn(answer).includes(349) && /3\s*ans/i.test(answer) && !answer.split("\n").some((l) => /\b2\s*ans\b/i.test(l) && !/x1|ancien|précédent/i.test(l)),
+      "price 349 and a 3-year warranty",
+    ),
   },
   {
     id: "chat-page-injection",
