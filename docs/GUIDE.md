@@ -223,14 +223,20 @@ bases Wisebase et la mémoire restent dans votre navigateur.
 - 📄 **PDF** : ouvrez un document et posez des questions dessus ; un résumé en un clic.
 - 🎨 **Image** : génération et retouche d'images ; une image générée peut servir de référence.
 - 📊 **Benchmark** : « quel modèle choisir ? ». Ajoutez les modèles à comparer (le modèle actuel est
-  déjà là ; local, passerelle et cloud), puis **Lancer le test** : 20 questions corrigées
-  automatiquement, environ une minute par modèle, quelques centimes au plus (gratuit en local). En
-  haut s'affiche **notre conseil** — le moins cher parmi les meilleurs scores, à une question près,
-  puis le plus rapide — avec la raison en une phrase ; dessous, le **classement** (score, temps, coût,
-  erreurs en clair). « Que vérifie le test ? » explique les quatre types de question (logique et
-  calcul, respect des consignes, format structuré, outils). Le **rapport détaillé** s'ouvre à la fin :
-  graphique, détail par type de question, chaque question manquée, à enregistrer en HTML ou imprimer
-  en PDF. Les **classements publics** (Aider pour le code, Vectara pour les inventions) sont repliés en
+  déjà là ; local, passerelle et cloud), choisissez les **types de questions** (tous cochés par
+  défaut ; l'estimation de durée suit), puis **Lancer le test** : jusqu'à 39 questions corrigées
+  automatiquement, environ trois minutes par modèle pour le test complet, quelques centimes au plus
+  (gratuit en local). En haut s'affiche **notre conseil** — le moins cher parmi les meilleurs scores, à
+  une question près, puis le plus rapide — avec la raison en une phrase ; dessous, le **classement**
+  (score, temps, coût, erreurs en clair). « Que vérifie le test ? » explique les huit types de question :
+  logique et calcul, respect des consignes, format structuré, outils, **plusieurs étapes** (2 ou 3
+  actions enchaînées sur une boutique simulée, puis s'arrêter), **code** (prédire une sortie, trouver
+  et corriger la ligne fautive, écrire une regex — sans rien exécuter), **rédaction** (nombre de mots,
+  mots imposés ou interdits, puces, titre, langue, résumé qui garde les faits) et **pièges** (un ordre
+  caché dans un e-mail ou une page, à ne pas suivre). Relancer un seul type de questions ne remplace
+  que celui-là dans le résultat du modèle. Le **rapport détaillé** s'ouvre à la fin : graphique,
+  détail par type de question, chaque question manquée avec la réponse du modèle, à enregistrer en
+  HTML ou imprimer en PDF. Les **classements publics** (Aider pour le code, Vectara pour les inventions) sont repliés en
   bas, en liste triable, avec leur retard en mois.
 
 ## 9. Questions fréquentes

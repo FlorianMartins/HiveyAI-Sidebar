@@ -5,6 +5,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { buildBenchReport, rankEntries, scoreTone, probePrompt, pickModel, verdictReason, costValue } from "../src/lib/bench-report.js";
 import { normalizeMeasured } from "../src/lib/benchmarkView.js";
+import { FAMILIES, probesFor } from "../src/lib/livebench.js";
 import { t, setLang } from "../src/lib/i18n.js";
 
 const entry = (label, score, extra = {}) => ({
@@ -43,6 +44,16 @@ test("among models within one question of the best, the cheapest is the pick", (
   assert.equal(v.pick.label, "small", "one question behind, ten times cheaper");
   assert.equal(v.vs.label, "big", "compared with the top scorer");
   assert.equal(verdictReason(v, { t, lang: "en" }), "Nearly as good as big (95 % vs 100 %), 10× cheaper.");
+});
+
+test("« within one question » means one question of the test that was run, whatever its size", () => {
+  const on = (total) => (label, pass, cost) => ({ ...entry(label, pass / total, { cost }), pass, total, answered: total });
+  const full = on(39);
+  // Two questions behind on 39 is 5 % — once a margin, now a real gap.
+  assert.equal(pickModel([full("big", 39, 0.02), full("small", 37, 0.002)]).pick.label, "big");
+  assert.equal(pickModel([full("big", 39, 0.02), full("small", 38, 0.002)]).pick.label, "small");
+  const five = on(5);
+  assert.equal(pickModel([five("big", 5, 0.02), five("small", 4, 0.002)]).pick.label, "small", "one question of five");
 });
 
 test("a clearly better score wins even when it costs more, and the sentence says so", () => {
@@ -99,4 +110,27 @@ test("with no measurement the report says so", () => {
 
 test("older results, keyed by an OpenRouter id alone, are kept under the provider's key", () => {
   assert.deepEqual(Object.keys(normalizeMeasured({ "openai/gpt-5": { score: 1 }, "custom|qwen-27b": { score: 0.5 } })), ["openrouter|openai/gpt-5", "custom|qwen-27b"]);
+});
+
+test("the new families get a column, a legend, and their missed questions with the model's answer", () => {
+  setLang("fr");
+  try {
+    const e = entry("Modèle", 0.8, {
+      byFamily: { ...entry("x", 1).byFamily, agent: { pass: 4, total: 5 }, code: { pass: 5, total: 5 }, writing: { pass: 3, total: 5 }, safety: { pass: 4, total: 4 } },
+      failures: [{ family: "agent", probe: "chain-sum", why: "wrong answer", got: "search_customers(query=Claire) → « <b>180 €</b> »" }, { family: "agent", probe: "act-then-stop", why: "never stopped" }],
+    });
+    const html = buildBenchReport([e], { t, lang: "fr" });
+    for (const f of ["Agit en plusieurs étapes", "Lit et corrige du code", "Rédige selon des consignes", "Résiste aux pièges"]) assert.ok(html.includes(f), f);
+    assert.ok(html.includes(probePrompt("agent", "chain-sum").slice(0, 40).replace(/'/g, "&#39;")));
+    assert.ok(html.includes("Sa réponse : search_customers(query=Claire)"), "what the model did is shown");
+    assert.ok(html.includes("&lt;b&gt;180 €&lt;/b&gt;"), "and escaped");
+    assert.ok(html.includes("a continué d&#39;appeler des outils"));
+    assert.match(html, /<td class="num cell mid">3\/5<\/td>/, "the writing column");
+  } finally {
+    setLang("en");
+  }
+});
+
+test("every probe of every family can be quoted in the report", () => {
+  for (const f of FAMILIES) for (const p of probesFor(f)) assert.equal(probePrompt(f, p.id), p.prompt);
 });

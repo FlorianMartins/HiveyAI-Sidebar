@@ -33,7 +33,7 @@ VS Code / Slack — scale mieux qu'une rangée d'onglets) donne accès à :
 | 📄 **PDF** | Lecture d'un document et questions dessus |
 | 🛡 **Sécurité** | Assistant **cybersécurité défensive** — analyse de capture `.pcap` résumée localement |
 | 🧠 **Wisebase** | **Base de connaissance locale + RAG**, embeddings calculés dans le navigateur |
-| 📊 **Benchmark** | **Testez vos modèles** (tout fournisseur connecté, local et passerelle compris) sur 20 questions notées automatiquement, avec un **rapport** qui s'ouvre tout seul ; classements **publiés** à côté, avec leur fraîcheur réelle |
+| 📊 **Benchmark** | **Testez vos modèles** (tout fournisseur connecté, local et passerelle compris) sur jusqu'à 39 questions notées automatiquement (logique, consignes, JSON, outils, plusieurs étapes, code, rédaction, pièges — au choix), avec un **rapport** qui s'ouvre tout seul ; classements **publiés** à côté, avec leur fraîcheur réelle |
 | `</>` **Code** | Atelier d'app IA complet (aperçu live, terminal, QR Expo Go) |
 
 ## Fonctionnalités
@@ -457,7 +457,7 @@ npm run vendor:check  # les bibliothèques tierces sont-elles les originaux amon
 npm run bench -- --url http://127.0.0.1:8080/v1 --model qwen-27b   # le banc chat + agent
 ```
 
-**420 tests** (node:test) couvrent le noyau de raisonnement et le tour d'agent de bout en bout, les
+**453 tests** (node:test) couvrent le noyau de raisonnement et le tour d'agent de bout en bout, les
 niveaux de réflexion de chaque fournisseur (le corps exact de chaque requête), l'anonymisation
 (détecteurs, faux positifs, restitution, fenêtre des données sensibles), la gestion du contexte, les
 freins de l'agent, le routage Hivey, et **la complétude des six langues**. Les tests des niveaux de

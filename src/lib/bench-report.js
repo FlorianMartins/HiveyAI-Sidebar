@@ -9,14 +9,13 @@
 //
 // Model names and error messages come from third parties: every one of them goes through esc().
 
-import { PROBES, TOOL_PROBES, FAMILIES } from "./livebench.js";
+import { probesFor, FAMILIES } from "./livebench.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 /** The question a probe asked, for the « questions missed » list. */
 export function probePrompt(family, id) {
-  const list = family === "tools" ? TOOL_PROBES : PROBES[family] || [];
-  const p = list.find((x) => x.id === id);
+  const p = probesFor(family).find((x) => x.id === id);
   return p ? p.prompt : id;
 }
 
@@ -44,8 +43,15 @@ export function rankEntries(entries) {
   return entries.slice().sort((a, b) => (b.score ?? -1) - (a.score ?? -1) || byCost(a, b) || byTime(a, b));
 }
 
-/** One question out of the twenty: a gap smaller than this is noise on a test this short. */
+/** One question out of the twenty of the original test: the margin when a test's size is unknown. */
 export const VERDICT_MARGIN = 0.05;
+
+/** One question of THIS test — 1/39 on the full set, 1/5 when only « Code » was run: a gap
+ *  smaller than that is noise on a test this short. */
+export function verdictMargin(rows) {
+  const n = Math.max(0, ...rows.map((r) => r.answered || r.total || 0));
+  return n > 0 ? 1 / n : VERDICT_MARGIN;
+}
 
 /**
  * « Which one should I use? » — the cheapest model whose score is within one question of the
@@ -56,7 +62,8 @@ export function pickModel(entries) {
   const rows = rankEntries(entries.filter((e) => e && e.score != null));
   if (!rows.length) return null;
   const top = rows[0];
-  const pick = rows.filter((r) => r.score >= top.score - VERDICT_MARGIN - EPS).sort((a, b) => byCost(a, b) || byTime(a, b) || b.score - a.score)[0];
+  const margin = verdictMargin(rows);
+  const pick = rows.filter((r) => r.score >= top.score - margin - EPS).sort((a, b) => byCost(a, b) || byTime(a, b) || b.score - a.score)[0];
   const vs = pick === top ? rows.find((r) => r !== pick) || null : top;
   return { pick, vs, rows };
 }
@@ -109,6 +116,8 @@ export function buildBenchReport(entries, { t, lang = "fr", generatedAt = new Da
   const money = (e) => (e.free ? t("bench.free") : e.cost ? `${e.costExact ? "" : "≈ "}${nf(e.cost, e.cost < 0.01 ? 4 : 3)} $` : "—");
   const secs = (ms) => (ms ? `${nf(ms / 1000, ms < 10000 ? 1 : 0)} s` : "—");
   const fam = (f) => t(`bench.fam.${f}`);
+  const clip = (s, n) => (s.length > n ? s.slice(0, n - 1) + "…" : s);
+  const whyOf = (x) => (x.why === "wrong answer" ? t("bench.r.wrong") : x.why === "never stopped" ? t("bench.r.loop") : t("bench.r.apiError", { msg: x.why }));
   const date = new Intl.DateTimeFormat(lang, { dateStyle: "long", timeStyle: "short" }).format(generatedAt);
 
   // ── The headline: who to pick, in one sentence — the same verdict as the workspace. ─────────
@@ -146,7 +155,7 @@ ${rows.map((r, i) => {
   const misses = rows.map((r) => {
     const f = (r.failures || []);
     const body = f.length
-      ? `<ul>${f.map((x) => `<li><span class="tag">${esc(fam(x.family))}</span> ${esc(probePrompt(x.family, x.probe))}<div class="why">${esc(x.why === "wrong answer" ? t("bench.r.wrong") : t("bench.r.apiError", { msg: x.why }))}</div></li>`).join("")}</ul>`
+      ? `<ul>${f.map((x) => `<li><span class="tag">${esc(fam(x.family))}</span> <span class="q">${esc(clip(probePrompt(x.family, x.probe), 420))}</span><div class="why">${esc(whyOf(x))}</div>${x.got ? `<div class="got">${esc(t("bench.r.got", { answer: x.got }))}</div>` : ""}</li>`).join("")}</ul>`
       : `<p class="ok">${esc(t("bench.r.allRight"))}</p>`;
     return `<details><summary>${esc(r.label)} — ${esc(t("bench.r.missed", { n: String(f.length) }))}</summary>${body}</details>`;
   }).join("\n");
@@ -172,10 +181,10 @@ h2 { font-size: 17px; margin: 32px 0 10px; }
 .chart .val { fill: var(--fg); font-size: 13px; font-weight: 600; }
 .bar.good { fill: var(--good); } .bar.mid { fill: var(--mid); } .bar.bad { fill: var(--bad); }
 table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-th, td { padding: 8px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+th, td { padding: 8px 5px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
 th { color: var(--muted); font-weight: 600; font-size: 12px; white-space: nowrap; }
-th.fam { white-space: normal; min-width: 64px; }
-td:first-child { min-width: 150px; }
+th.fam { white-space: normal; min-width: 0; font-size: 11px; line-height: 1.3; hyphens: auto; }
+td:first-child { min-width: 130px; }
 tr:last-child td { border-bottom: 0; }
 .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .strong { font-weight: 700; }
@@ -192,6 +201,8 @@ ul { margin: 10px 0 2px; padding-left: 18px; }
 li { margin: 6px 0; }
 .tag { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 99px; background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); margin-right: 4px; }
 .why { color: var(--muted); font-size: 12.5px; }
+.q { white-space: pre-wrap; }
+.got { color: var(--muted); font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 2px; }
 .ok { color: var(--good); margin: 8px 0 0; }
 .legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
 .legend div { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 13px; }

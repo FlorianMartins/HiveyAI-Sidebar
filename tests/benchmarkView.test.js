@@ -7,7 +7,8 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildRows, sortRows, filterRows, freshnessOf } from "../src/lib/benchmarkView.js";
+import { buildRows, sortRows, filterRows, freshnessOf, chosenFamilies, estimateMinutes, familiesOf } from "../src/lib/benchmarkView.js";
+import { FAMILIES } from "../src/lib/livebench.js";
 import { BENCHMARK_WEB, BENCHMARK_UNCOVERED } from "../src/lib/benchmark-web.js";
 
 const cat = (id, over = {}) => ({
@@ -141,4 +142,24 @@ test("a source that covers nothing recent is flagged stale", () => {
 test("a source with no coverage date says so instead of guessing", () => {
   assert.deepEqual(freshnessOf({}), { months: null, stale: false });
   assert.deepEqual(freshnessOf(null), { months: null, stale: false });
+});
+
+// ── Choosing the kinds of questions ────────────────────────────────────────────────────────
+
+test("all families are run by default, a saved choice is kept in order, and never none", () => {
+  assert.deepEqual(chosenFamilies(undefined), FAMILIES);
+  assert.deepEqual(chosenFamilies([]), FAMILIES, "an empty choice would run an empty test");
+  assert.deepEqual(chosenFamilies(["code", "reason", "gone-family"]), ["reason", "code"]);
+});
+
+test("the time shown before a run follows the families and the number of models", () => {
+  assert.ok(estimateMinutes(FAMILIES, 1) >= 2, "39 questions, five of them several turns long");
+  assert.equal(estimateMinutes(["json"], 1), 1, "never « 0 min »");
+  assert.ok(estimateMinutes(FAMILIES, 3) > estimateMinutes(FAMILIES, 1));
+  assert.ok(estimateMinutes(["agent"], 4) > estimateMinutes(["json"], 4));
+});
+
+test("a measurement says which families it covers", () => {
+  assert.deepEqual(familiesOf({ byFamily: { code: { pass: 1, total: 5 }, reason: { pass: 0, total: 6 }, json: { pass: 0, total: 0 } } }), ["reason", "code"]);
+  assert.deepEqual(familiesOf(undefined), []);
 });
