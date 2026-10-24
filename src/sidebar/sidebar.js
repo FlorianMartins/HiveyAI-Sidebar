@@ -7762,8 +7762,12 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   try {
     // Through lib/conversation.js: compacted by the model's real window when it nears it, summarized
     // and asked again when the server says it no longer fits, continued when the stream was cut.
+    if (agentMode) steerQueue = [];
     const runOnce = () => runChatTurn({
       provider, providerId: turnSel.providerId, modelId: turnSel.modelId, settings, turnStart,
+      replyLanguage: replyLanguageOf(displayText || modelContent, settings),
+      steer: agentMode ? () => (steerQueue ? steerQueue.splice(0) : []) : null,
+      onNotice: (what) => addMessage("tool", t("agent.notice." + what), sessMode),
       onCompact: (why) => addMessage("tool", why === "overflow" ? t("ctx.overflow") : t("ctx.compacted"), sessMode),
       system, history: turnHistory, tools,
       onText: sink.onText, onThink: sink.onThink,
@@ -7929,7 +7933,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   } finally {
     removePending(pending);
     if (agentActs) agentActs.finish(); // collapse the Actions block + show the final count
-    if (agentMode) { clearAgentGlow(); clearAgentTab(); } // stop glow + unpin the agent's tab
+    if (agentMode) { clearAgentGlow(); clearAgentTab(); steerQueue = null; } // stop glow + unpin the agent's tab
     endBusy();
     await saveSession(boundSess(), sessMode, sel);
     // Keep an open history panel in sync (e.g. the new conversation gets its title).
@@ -7948,8 +7952,21 @@ async function onSend() {
   if (mode === "code") return; // Code workspace has no composer — use the launcher button.
   return onChatSend(); // chat + agent
 }
+// What the user types while the agent works: handed to the running turn at its next step
+// (agent.js `steer`), instead of being dropped because a turn is busy.
+let steerQueue = null;
+
 async function onChatSend() {
   let text = els.input.value.trim();
+  // The agent is working: this is a correction of its course, not a new question — like Claude Code.
+  if (busy && steerQueue && text) {
+    els.input.value = "";
+    steerQueue.push(text);
+    addMessage("user", text, mode);
+    getSession(mode).transcript.push({ role: "user", text });
+    addMessage("tool", t("agent.steered"), mode);
+    return;
+  }
   const { imgs, textBlock, meta } = takeAttachments();
   if (!text && !meta.length) return;
   els.input.value = "";

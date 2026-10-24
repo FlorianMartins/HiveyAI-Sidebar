@@ -3,6 +3,11 @@
 // back to English. Placeholders {name}, HTML tags and emojis are kept verbatim.
 
 export const ES = {
+  "agent.steered": "↪ Enviado al agente: lo tendrá en cuenta en su próximo paso.",
+  "agent.notice.shrunk": "🗜 El turno se acercaba a la ventana de contexto del modelo: se acortaron los resultados más antiguos.",
+  "agent.notice.compacted": "🗜 La ventana de contexto del modelo estaba llena: se resumió el trabajo y el agente continúa.",
+  "agent.notice.repeat": "↻ El agente repetía la misma lectura sin que nada cambiara: se le pidió usar lo que ya tiene.",
+  "agent.notice.looped": "↻ El razonamiento del modelo daba vueltas: se detuvo y se le pidió decidir.",
   "think.lvl.none": "Directo",
   "think.lvl.low": "Breve",
   "think.lvl.medium": "Estándar",
@@ -819,6 +824,11 @@ export const ES = {
 };
 
 export const DE = {
+  "agent.steered": "↪ An den Agenten gesendet – er berücksichtigt es beim nächsten Schritt.",
+  "agent.notice.shrunk": "🗜 Der Durchlauf näherte sich dem Kontextfenster des Modells: die ältesten Ergebnisse wurden gekürzt.",
+  "agent.notice.compacted": "🗜 Das Kontextfenster des Modells war voll: die bisherige Arbeit wurde zusammengefasst, der Agent macht weiter.",
+  "agent.notice.repeat": "↻ Der Agent wiederholte denselben Lesevorgang ohne Änderung: er wurde gebeten, das Vorhandene zu nutzen.",
+  "agent.notice.looped": "↻ Das Denken des Modells drehte sich im Kreis: es wurde gestoppt und zur Entscheidung aufgefordert.",
   "think.lvl.none": "Direkt",
   "think.lvl.low": "Kurz",
   "think.lvl.medium": "Standard",
@@ -1635,6 +1645,11 @@ export const DE = {
 };
 
 export const IT = {
+  "agent.steered": "↪ Inviato all'agente: ne terrà conto al prossimo passo.",
+  "agent.notice.shrunk": "🗜 Il turno si avvicinava alla finestra di contesto del modello: i risultati più vecchi sono stati accorciati.",
+  "agent.notice.compacted": "🗜 La finestra di contesto del modello era piena: il lavoro è stato riassunto e l'agente continua.",
+  "agent.notice.repeat": "↻ L'agente ripeteva la stessa lettura senza cambiamenti: gli è stato chiesto di usare ciò che ha già.",
+  "agent.notice.looped": "↻ Il ragionamento del modello girava in tondo: è stato fermato e gli è stato chiesto di decidere.",
   "think.lvl.none": "Diretto",
   "think.lvl.low": "Breve",
   "think.lvl.medium": "Standard",
@@ -2451,6 +2466,11 @@ export const IT = {
 };
 
 export const PT = {
+  "agent.steered": "↪ Enviado ao agente — ele vai considerá-lo no próximo passo.",
+  "agent.notice.shrunk": "🗜 O turno aproximava-se da janela de contexto do modelo: os resultados mais antigos foram encurtados.",
+  "agent.notice.compacted": "🗜 A janela de contexto do modelo estava cheia: o trabalho foi resumido e o agente continua.",
+  "agent.notice.repeat": "↻ O agente repetia a mesma leitura sem nada mudar: foi-lhe pedido que usasse o que já tem.",
+  "agent.notice.looped": "↻ O raciocínio do modelo andava em círculos: foi interrompido e foi-lhe pedido que decidisse.",
   "think.lvl.none": "Direto",
   "think.lvl.low": "Breve",
   "think.lvl.medium": "Padrão",

@@ -10,6 +10,22 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+### Agent : il va au bout des tâches longues, et ne tourne plus en rond
+
+- **Plus de limite de 24 étapes** : une tâche qui demande d'ouvrir et de lire douze pages va
+  jusqu'au bout. Ce qui arrête l'agent, c'est la fin de la tâche, votre bouton Stop, ou une vraie
+  boucle.
+- **Les boucles sont repérées** : la même lecture refaite sans que la page ait changé n'est pas
+  relancée (l'agent est invité à utiliser ce qu'il a déjà) ; s'il insiste, il s'arrête et vous écrit
+  où il en est. Une réflexion qui se répète mot pour mot est interrompue et l'agent doit décider.
+- **Il lit les pages en entier** : un résultat d'outil n'est plus coupé à 8 000 caractères, mais
+  dimensionné à la fenêtre de contexte du modèle choisi.
+- **Plus d'erreur « contexte plein » en pleine tâche** : les plus anciens résultats sont raccourcis,
+  puis, si besoin, le travail déjà fait est résumé et l'agent continue.
+- **Corrigez-le pendant qu'il travaille** : un message tapé pendant que l'agent agit lui est transmis
+  à l'étape suivante, sans devoir l'arrêter (avant, il était perdu).
+- **Toujours dans votre langue**, rappelée après chaque lecture de page.
+
 ### Chat, Sécurité et Wisebase : des réponses plus justes, sans brider les modèles
 
 - **Les vrais niveaux de réflexion de chaque modèle** : le menu ne propose plus « Off / On / Max »

@@ -2,8 +2,9 @@
 // calling tools (or the step budget is exhausted).
 
 import { executeTool, TOOLS } from "./tools.js";
-import { createHarness, runTurn } from "./harness.js";
+import { createHarness, runTurn, inject } from "./harness.js";
 import { LANG_NAMES, REPLY_IN_OWN_WORDS } from "./user-language.js";
+import { mountAgentGuards, toolResultChars, CONCLUDE_REPEATING } from "./agent-guards.js";
 
 // Build the system prompt. `mode` tailors the assistant for the active workspace
 // tab (chat / translate / improve / image), `agentMode` unlocks the browser
@@ -241,6 +242,25 @@ export function buildSystemPrompt({ agentMode, targetLang, responseLang, mode, b
   return p;
 }
 
+/** A tool result cut to `max` characters says so, and how to see more. */
+function cutResult(text, max) {
+  if (text.length <= max) return text;
+  return `${text.slice(0, max)}\n[… ${text.length - max} more characters were cut to fit the model's context window — read the page again, or a narrower part of it, for the rest.]`;
+}
+
+/**
+ * What the person typed while the turn was running, as the model reads it at its next step
+ * (hivey-vscode `steerMessage`). Framed rather than bare: after a tool result, a plain sentence reads
+ * as part of what the tool printed, or as a fresh question that restarts the task.
+ */
+export function steerMessage(texts) {
+  return (
+    "The user sent this while you were working. Take it into account from now on — it overrides the " +
+    "earlier request where they conflict; keep what you have already done unless it says otherwise:\n\n" +
+    texts.join("\n\n")
+  );
+}
+
 // Tools to expose for the current mode.
 const MEMORY_TOOLS = new Set(["recall", "get_memory"]);
 
@@ -277,7 +297,20 @@ export async function runConversation({
   guard,
   signal,
   verify,
-  maxSteps = 24,
+  // No step cap: « aucune limite manuelle ». A turn ends when the task is done, when the user presses
+  // Stop, or when the guards (agent-guards.js) see it going round in circles. A caller may still
+  // pass a number — the verifier and the bench's sub-tasks do.
+  maxSteps = Infinity,
+  // The selected model's context window in tokens (0 when unknown): tool results take a share of it
+  // and the turn fits itself to it — see agent-guards.js.
+  contextWindow = 0,
+  // The user's language (user-language.js code), restated after each step's tool results.
+  replyLanguage = "",
+  // What the user typed while the turn was running, handed over and forgotten by the caller: read
+  // before each request, so a correction is taken into account at the next step without Stop.
+  steer = null,
+  // A short notice for the transcript when the turn does its housekeeping (shortened, summarized…).
+  onNotice = null,
   // The tool executor is a seam, not a hard-wired import: the browser supplies the real one,
   // and a test supplies a scripted one. Without this the reasoning loop could only be exercised
   // inside a browser, which is precisely why it went untested for so long.
@@ -287,6 +320,7 @@ export async function runConversation({
   preStep = null,
 }) {
   const ctx = createHarness();
+  const resultChars = toolResultChars(contextWindow);
 
   // The system prompt is model-visible, so it belongs in the log like everything else.
   ctx.append("system/prompt", { text: system });
@@ -299,6 +333,11 @@ export async function runConversation({
     // Project the log back into the provider's native history. Tool results are emitted as ONE
     // batch per step because that is what both wire formats expect for parallel calls.
     project(e, i, all) {
+      // A live summary replaces everything before it (see agent-guards.js `compactLive`): the log
+      // keeps every event, the model reads the summary instead of what it summarizes.
+      const compaction = all.filter((x) => x.type === "context/compacted").at(-1);
+      if (compaction && e.seq <= compaction.upTo) return null;
+      if (e.type === "context/compacted") return e === compaction ? { role: "user", content: e.text } : null;
       if (e.type === "user/message") return e.native || { role: "user", content: e.text };
       if (e.type === "assistant/message") return e.raw;
       if (e.type === "tool/result") {
@@ -310,7 +349,9 @@ export async function runConversation({
           name: r.name,
           // A screenshot travels as `_image` (a data: URL). It must stay OUT of the text dump —
           // inlining it once cost a 400 for exceeding the context — and go to the vision path.
-          content: JSON.stringify(r.result && r.result._image ? { ...r.result, _image: "[screenshot attached]" } : r.result).slice(0, 8000),
+          // A share of the model's window, never less than the old 8 000 characters: a fixed cap
+          // hid the end of every long page from a model that could have read it whole.
+          content: cutResult(JSON.stringify(r.result && r.result._image ? { ...r.result, _image: "[screenshot attached]" } : r.result), resultChars),
           image: (r.result && r.result._image) || null,
           isError: !!r.isError,
         }))));
@@ -319,7 +360,8 @@ export async function runConversation({
     },
     async runTurn(req) {
       const sys = (ctx.events().filter((e) => e.type === "system/prompt").pop() || {}).text || "";
-      return provider.runTurn({ system: sys, history: req.messages, tools: req.tools, onText, onThink, signal: req.signal });
+      const think = req.onThinkWatch ? (d) => { req.onThinkWatch(d); onThink && onThink(d); } : onThink;
+      return provider.runTurn({ system: sys, history: req.messages, tools: req.tools, onText, onThink: think, signal: req.signal });
     },
   });
 
@@ -375,7 +417,48 @@ export async function runConversation({
     }, 200);
   }
 
-  const result = await runTurn(ctx, { maxSteps, signal });
+  // Typed while the turn runs: at the next step, framed as a correction (hivey-vscode `steerMessage`).
+  if (steer) {
+    const take = () => { const t = steer() || []; return t.length ? steerMessage(t) : ""; };
+    ctx.on("agent/pre-step", async (v, next) => {
+      const said = take();
+      if (!said) return next(v);
+      inject(ctx, said);
+      return next({ ...v, messages: ctx.deriveMessages(ctx.get("llm").project) });
+    }, 40);
+    // A correction typed during the final words reopens the turn instead of being lost.
+    ctx.on("agent/turn-stopping", async (closing) => {
+      if (closing.continue) return;
+      const said = take();
+      if (said) { closing.continue = true; closing.reason = said; }
+    }, 300);
+  }
+
+  // The brakes and the housekeeping of an agent turn — agent-guards.js.
+  const guards = tools && tools.length
+    ? mountAgentGuards(ctx, {
+      provider, system, contextWindow, signal,
+      replyLanguageName: replyLanguage && LANG_NAMES[replyLanguage] ? LANG_NAMES[replyLanguage] : "",
+      ownWords: (replyLanguage && REPLY_IN_OWN_WORDS[replyLanguage]) || "",
+      report: (what) => onNotice && onNotice(what),
+    })
+    : null;
+
+  let result = await runTurn(ctx, { maxSteps, signal });
+
+  // Stopped for going round in circles: the model still says where things stand, once and without
+  // tools — « Arrêté : le modèle répétait le même appel » alone left the user with nothing to go on.
+  if (guards && guards.state.stoppedRepeating && !(signal && signal.aborted)) {
+    inject(ctx, CONCLUDE_REPEATING);
+    try {
+      const sys = (ctx.events().filter((e) => e.type === "system/prompt").pop() || {}).text || "";
+      const turn = await provider.runTurn({ system: sys, history: ctx.deriveMessages(ctx.get("llm").project), tools: [], onText, onThink, signal });
+      ctx.append("assistant/message", { text: turn.text || "", raw: turn.message, calls: 0, ...(turn.usage ? { usage: turn.usage } : {}) });
+      result = { ...result, text: turn.text || result.text, reason: "repeating" };
+    } catch (e) {
+      if (signal && signal.aborted) throw e;
+    }
+  }
 
   // Callers keep a reference to the array they passed in and persist it afterwards, so the
   // conversation is written back into that same array rather than returned as a new one.

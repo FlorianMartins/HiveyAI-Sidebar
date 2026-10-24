@@ -14,6 +14,11 @@ import { setHTML } from "./dom.js";
 let lang = "en";
 
 const EN = {
+  "agent.steered": "↪ Sent to the agent — it takes it into account at its next step.",
+  "agent.notice.shrunk": "🗜 The turn neared the model's context window: the oldest results were shortened.",
+  "agent.notice.compacted": "🗜 The model's context window was full: the work so far was summarized, and the agent carries on.",
+  "agent.notice.repeat": "↻ The agent repeated the same read with nothing changed: it was told to use what it already has.",
+  "agent.notice.looped": "↻ The model's thinking was going round in circles: it was stopped and asked to decide.",
   "think.lvl.none": "Direct",
   "think.lvl.low": "Brief",
   "think.lvl.medium": "Standard",
@@ -1026,6 +1031,11 @@ const EN = {
 };
 
 const FR = {
+  "agent.steered": "↪ Transmis à l'agent — il en tient compte à sa prochaine étape.",
+  "agent.notice.shrunk": "🗜 Le tour approchait de la fenêtre de contexte du modèle : les plus anciens résultats ont été raccourcis.",
+  "agent.notice.compacted": "🗜 La fenêtre de contexte du modèle était pleine : le travail a été résumé, et l'agent continue.",
+  "agent.notice.repeat": "↻ L'agent refaisait la même lecture sans que rien n'ait changé : il lui a été demandé d'utiliser ce qu'il a déjà.",
+  "agent.notice.looped": "↻ La réflexion du modèle tournait en rond : elle a été arrêtée et il lui a été demandé de décider.",
   "think.lvl.none": "Direct",
   "think.lvl.low": "Bref",
   "think.lvl.medium": "Standard",

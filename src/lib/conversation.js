@@ -227,7 +227,7 @@ const MAX_CONTINUATIONS = 2;
  *
  * Returns `{ text, compacted, window, usage }` plus what runConversation returned.
  */
-export async function runChatTurn({ provider, providerId, modelId, settings, system, history, tools = [], signal, onText, onThink, onCompact, window, turnStart = history.length - 1, ...rest }) {
+export async function runChatTurn({ provider, providerId, modelId, settings, system, history, tools = [], signal, onText, onThink, onCompact, window, turnStart = history.length - 1, replyLanguage = "", ...rest }) {
   const win = window ?? (await contextWindowFor(settings, providerId, modelId));
   const budget = contextBudget(win);
   let compacted = false;
@@ -238,7 +238,7 @@ export async function runChatTurn({ provider, providerId, modelId, settings, sys
   let result;
   for (let tries = 0; ; tries++) {
     try {
-      result = await runConversation({ provider, system, history, tools, signal, onText, onThink, ...rest });
+      result = await runConversation({ provider, system, history, tools, signal, onText, onThink, contextWindow: win, replyLanguage, ...rest });
       break;
     } catch (e) {
       const over = contextOverflow(e && e.message);
@@ -256,7 +256,7 @@ export async function runChatTurn({ provider, providerId, modelId, settings, sys
   let text = result.text || "";
   for (let n = 0; result.interrupted && !(signal && signal.aborted) && n < MAX_CONTINUATIONS; n++) {
     history.push({ role: "user", content: CONTINUE_AFTER_INTERRUPT });
-    result = await runConversation({ provider, system, history, tools, signal, onText, onThink, ...rest });
+    result = await runConversation({ provider, system, history, tools, signal, onText, onThink, contextWindow: win, replyLanguage, ...rest });
     text += result.text || "";
   }
   return { ...result, text, compacted, window: win };
@@ -296,12 +296,13 @@ export async function benchTurns({ task, settings, browser, page, signal, thinkL
     pageSent = pageSent || untrusted.length > 0;
     const before = untrusted.length ? buildTurn({ userText: "", untrusted }).messages.slice(0, -1) : [];
     history.push(...before, { role: "user", content });
+    const replyLanguage = replyLanguageOf(text, settings);
     const system = buildSystemPrompt({
       agentMode: agent, responseLang: settings.responseLang, mode: task.tab === "security" ? "security" : "chat",
-      blockPayments: true, artifacts: true, thinkLevel, replyLanguage: replyLanguageOf(text, settings),
+      blockPayments: true, artifacts: true, thinkLevel, replyLanguage,
     });
     const r = await runChatTurn({
-      provider, providerId, modelId, settings, system, history, signal,
+      provider, providerId, modelId, settings, system, history, signal, replyLanguage,
       tools: agent ? activeTools({ agentMode: true }) : [],
       ...(agent ? { confirmActions: false, confirmFn: null, guard: { blockPayments: true }, execute: (name, input) => browser.execute(name, input) } : {}),
     });
