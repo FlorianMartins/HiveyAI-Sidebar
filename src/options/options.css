@@ -72,7 +72,7 @@ section:hover { border-color: color-mix(in srgb, var(--accent) 28%, var(--border
 .modal-head .icon:hover { color: var(--text); }
 #providers section { background: var(--panel-2); border-color: color-mix(in srgb, #000 16%, var(--panel-2)); }
 label { display: block; margin: 12px 0; font-size: 14px; }
-input[type=password], input[type=number], input[type=text], select {
+input[type=password], input[type=number], input[type=text], select, textarea {
   width: 100%; margin-top: 5px; padding: 9px 11px; font: inherit;
   background: var(--panel-2); color: var(--on-surface);
   border: 1px solid color-mix(in srgb, #000 14%, var(--panel-2)); border-radius: 9px;
@@ -268,3 +268,4 @@ main > section[id], section[id] { scroll-margin-top: 20px; }
 .mem-op-refused { color: #f59e0b; }
 .mem-op-deleted, .mem-op-evicted { color: #ef4444; }
 .mem-what { word-break: break-word; }
+#privacyTerms { min-height: 72px; resize: vertical; font: inherit; }
