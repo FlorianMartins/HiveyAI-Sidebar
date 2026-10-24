@@ -3713,10 +3713,10 @@ async function loadConversation(id) {
   els.historyPanel.classList.add("hidden");
 }
 function clearMessages() {
-  // Also drop the agent "Actions" block + any action overlay — they're appended straight to
+  // Also drop the agent "Actions" block, its sound note + any action overlay — they're appended straight to
   // els.messages (not as .msg/.think), so without this they'd leak into the next conversation
   // (a stale actions bar at the bottom of a brand-new chat). 🐝
-  els.messages.querySelectorAll(".msg, .think, .agent-actions, .action-bubble-overlay").forEach((n) => n.remove());
+  els.messages.querySelectorAll(".msg, .think, .agent-actions, .agent-sound-note, .action-bubble-overlay").forEach((n) => n.remove());
 }
 // Reset the view to a brand-new empty conversation (no saving).
 function startFreshChat() {

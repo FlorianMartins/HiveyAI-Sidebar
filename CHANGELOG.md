@@ -19,6 +19,8 @@ Version de développement, toujours à jour :
   dans Firefox : avant le clic, en pause et non muette ; 4 s après, elle joue avec le son.
 - **Sous les messages**, « Veille » et « Épingler » ne sont plus que des icônes, comme les autres ;
   leur description s'affiche au survol, et l'icône prend la couleur du thème quand elle est active.
+- **L'avis « 🔇 … le son »** de l'agent disparaît avec sa conversation (nouvelle conversation,
+  conversation supprimée ou historique vidé) au lieu de rester affiché.
 
 ### Zone de saisie : la lumière du cadre, fluide — et plus épurée
 
