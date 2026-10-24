@@ -259,6 +259,8 @@ const ATT_TXT_BUDGET = 16000; // chars of EACH attached text file folded into th
 // The price/provider filter persists in settings.
 let mainValue = "";
 let mainCombo = null;
+// The Web tab's provider page listing past conversations ("" when the site has none we know).
+let webHistoryUrl = "";
 let filterPersistTimer = null;
 
 // Per-workspace isolation: Chat, Agent, Translate, Improve and Image each keep
@@ -4514,6 +4516,9 @@ function wire() {
   els.searchClose.addEventListener("click", closeSearch);
 
   els.historyBtn.addEventListener("click", async () => {
+    // On the Web tab the button opens the SITE's own conversation list: in a panel this narrow
+    // claude.ai switches to its mobile layout, where its menu of past chats cannot be reached.
+    if (!els.webPanel.classList.contains("hidden")) { if (webHistoryUrl) els.webFrame.src = webHistoryUrl; return; }
     const show = els.historyPanel.classList.contains("hidden");
     if (show) { historyQuery = ""; if (els.historySearch) els.historySearch.value = ""; await renderHistoryList(); }
     els.historyPanel.classList.toggle("hidden");
@@ -4711,6 +4716,11 @@ function wire() {
     if (els.webProvBtn) els.webProvBtn.setAttribute("aria-expanded", "false");
   }
   let webCurProv = "claude";
+  function setWebHistory(url) {
+    webHistoryUrl = url || "";
+    document.body.classList.toggle("web-has-history", !!webHistoryUrl);
+    els.historyBtn.title = webHistoryUrl ? t("web.history") : t("history.title");
+  }
   function selectWebChat(opt) {
     if (!opt) return;
     // Some sites can't be embedded (Cloudflare bot-protection, e.g. Perplexity) → open in a tab.
@@ -4723,6 +4733,7 @@ function wire() {
     for (const o of webOpts()) o.classList.toggle("active", o === opt);
     webCurUrl = opt.dataset.url;
     webCurProv = opt.dataset.prov;
+    setWebHistory(opt.dataset.history);
     els.webFrame.src = opt.dataset.url;
     if (els.webProvLabel) els.webProvLabel.textContent = opt.textContent.trim();
     if (els.webProvDot) {
@@ -4739,6 +4750,7 @@ function wire() {
       selectWebChat(webOpts().find((o) => o.dataset.prov === prov) || webOpts()[0]);
     }
     els.webPanel.classList.remove("hidden");
+    setWebHistory(webHistoryUrl);
     if (els.webOverlay) els.webOverlay.classList.remove("hidden");
     document.body.classList.add("web-active"); // reveals the web-only header controls
     els.rail.querySelectorAll(".railtab").forEach((b) => b.classList.toggle("active", b.dataset.mode === "web"));
@@ -4746,6 +4758,7 @@ function wire() {
   }
   function closeWebPanel() {
     els.webPanel.classList.add("hidden"); closeWebMenu();
+    els.historyBtn.title = t("history.title");
     document.body.classList.remove("web-active");
     els.rail.querySelectorAll(".railtab").forEach((b) => b.classList.toggle("active", b.dataset.mode === mode));
     updatePageBar();

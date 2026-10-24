@@ -82,7 +82,7 @@ button { cursor: pointer; }
 }
 .topbar .row { margin-left: auto; } /* push the action icons to the right edge */
 /* On the Web tab, Search & History are irrelevant — hide them. */
-body.web-active #searchBtn, body.web-active #historyBtn { display: none; }
+body.web-active #searchBtn, body.web-active:not(.web-has-history) #historyBtn { display: none; }
 /* Top-left menu toggle (hamburger) — shows/hides the workspace rail, like the menu
    button on claude.ai / gemini. Accent when the menu is open, neutral when collapsed. */
 .menu-btn {
