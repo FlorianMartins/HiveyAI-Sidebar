@@ -1447,7 +1447,16 @@ browser.storage.onChanged.addListener((changes, area) => {
   });
 });
 
-load();
+load().then(goToHash);
+// Opened on a section (the sidebar's « Other providers » → #sec-providers): go there once the page
+// is built, and again when only the address's section changes (an options tab that was already open).
+function goToHash() {
+  const id = (location.hash || "").slice(1);
+  if (!/^sec-[a-z-]+$/.test(id)) return;
+  const sec = document.getElementById(id);
+  if (sec) setTimeout(() => sec.scrollIntoView({ block: "start" }), 50);
+}
+window.addEventListener("hashchange", goToHash);
 // Line icons instead of emoji, as in the sidebar.
 try { startIconizer(document.body); } catch (_) {}
 

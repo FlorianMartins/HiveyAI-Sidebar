@@ -122,16 +122,9 @@
           </p>
           <div class="empty-actions">
             <!-- no-iconize: this one keeps its 🎁 (lib/icons.js) -->
-          <button id="freeConnect" class="btn-grad no-iconize" data-i18n="onboard.free">🎁 Connect (OpenRouter — free)</button>
-            <button id="onbLocal" class="btn-ghost" data-i18n="onboard.local">🏠 Local model (Ollama / LM Studio)</button>
-            <button id="onbGateway" class="btn-ghost" data-i18n="onboard.gateway">🔒 My gateway / my server</button>
-            <button id="emptyOptions" class="btn-ghost" data-i18n="onboard.others">⚙ Other providers / API key</button>
+            <button id="freeConnect" class="btn-grad no-iconize" data-i18n="onboard.free">🎁 Connect (OpenRouter — free)</button>
+            <button id="emptyOptions" class="btn-ghost" data-i18n="onboard.others">🔑 Other providers / API key</button>
           </div>
-          <form id="onbGatewayForm" class="onb-form hidden" autocomplete="off">
-            <input id="onbGwUrl" type="url" required data-i18n-ph="onboard.gwUrl" placeholder="https://ai.example.com/v1" />
-            <input id="onbGwKey" type="password" data-i18n-ph="onboard.gwKey" placeholder="Key (if your server asks for one)" />
-            <button type="submit" class="btn-grad" data-i18n="onboard.gwConnect">Connect</button>
-          </form>
           <p id="onbStatus" class="muted onb-status hidden" role="status"></p>
           <p class="muted" style="font-size:11.5px" data-i18n-html="onboard.lead2">
             Or: Claude, OpenAI, Gemini, Mistral, Groq, DeepSeek… (API key, often
