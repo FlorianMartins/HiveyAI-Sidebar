@@ -1811,9 +1811,6 @@ mark.search-hit.current { background: #f6c945; color: #1a1408; }
 
 /* ── 2026 premium polish — glass + animated neon (matches Hivey Code) ───────── */
 .composer-box { position: relative; background: color-mix(in srgb, var(--accent) 7%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
-/* Angle animated by the frame's fallback (.cb-ring, engines without offset-path: border-box). */
-@property --hvAngle { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
-@keyframes hvSpin { to { --hvAngle: 360deg; } }
 
 /* full-width glassy model bar + airier surfaces */
 .composer { background: rgba(255,255,255,.012); backdrop-filter: blur(12px); }
@@ -2493,32 +2490,39 @@ body.theme-light .model-chip .combo-input { border: 0 !important; background: tr
 /* ── The frame, as in Hivey Code (hivey-vscode media/style.css, « composer-ring / comet ») ─────────
    Hover and focus: the border takes the accent — nothing moves. Only while the model answers or
    acts: a 1.5 px line in the theme's two accents, dimmed and still, and ONE light that runs round it
-   along the frame's own edge (offset-path: border-box) at a constant speed — no dashes, no glow
+   along the frame's own edge at a constant speed — no dashes, no glow
    outside, nothing over the text. */
 .composer-box:hover, .composer-box:focus-within {
   border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 12%, transparent);
 }
 .composer-box.is-busy { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 12%, transparent); } /* the colour of the focused frame */
-.cb-ring { display: none; position: absolute; inset: -1px; border-radius: 18px; pointer-events: none; z-index: 1; overflow: hidden;
+.cb-ring { display: none; position: absolute; inset: -1px; border-radius: 18px; pointer-events: none;
   padding: 1.5px;
   background: conic-gradient(from 200deg,
     color-mix(in srgb, var(--accent) 35%, transparent), color-mix(in srgb, var(--accent-2) 35%, transparent),
     color-mix(in srgb, var(--accent) 35%, transparent));
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite: exclude; }
-.composer-box.is-busy .cb-ring { display: block; }
-.cb-comet { position: absolute; top: 0; left: 0; width: 220px; height: 220px;
-  offset-path: border-box; offset-rotate: 0deg;
+/* The light, kept off any mask: Firefox repaints whatever sits under a mask or a clip-path on the
+   main thread, so a light inside one stalls while a long answer renders. Here only the rounded
+   outer edge clips it (overflow: hidden, which the compositor does itself) and .cb-cover — the
+   surface behind the box, copied by sidebar.js — hides it inside the line. The box's rows are
+   positioned so they paint above both. */
+.composer-main, .composer-tools { position: relative; }
+.cb-run { display: none; position: absolute; inset: -1px; border-radius: 18px; overflow: hidden; pointer-events: none; }
+.composer-box.is-busy .cb-ring, .composer-box.is-busy .cb-run { display: block; }
+.cb-comet { position: absolute; top: 0; left: 0; width: 220px; height: 220px; will-change: transform;
+  transform: translate(-92px, -110px); /* centred on the run's start, (18px, 0) */
   background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 45%, white), var(--accent) 30%,
-    color-mix(in srgb, var(--accent) 45%, transparent) 65%, transparent);
-  animation: cbComet 3.5s linear infinite; }
-@keyframes cbComet { from { offset-distance: 0%; } to { offset-distance: 100%; } }
-/* No offset-path on the border box (older engines): the line's colours turn slowly instead. */
-@supports not (offset-path: border-box) {
-  .cb-comet { display: none; }
-  .cb-ring { background: conic-gradient(from var(--hvAngle), var(--accent), var(--accent-2), var(--accent)); animation: hvSpin 6s linear infinite; }
-}
-@media (prefers-reduced-motion: reduce) { .cb-comet { animation: none; display: none; } }
+    color-mix(in srgb, var(--accent) 45%, transparent) 65%, transparent); }
+.cb-cover { position: absolute; inset: 1.5px; border-radius: 16.5px; }
+/* No copiable surface (an image behind the box): the line's own mask clips the light instead. */
+.cb-run.masked { padding: 1.5px;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite: exclude; }
+.cb-run.masked .cb-cover { display: none; }
+/* The run itself is a transform animation built in sidebar.js (frameLight). */
+@media (prefers-reduced-motion: reduce) { .cb-run { display: none !important; } }
 
 /* No carets after the model and the thinking level: the chips open their menus as they are. */
 .composer-tools .model-chip .combo-caret, .composer-tools .cchip .tc-caret { display: none !important; }
