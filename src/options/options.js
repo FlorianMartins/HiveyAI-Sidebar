@@ -1,4 +1,5 @@
 import { getSettings, setSettings } from "../lib/storage.js";
+import { startIconizer } from "../lib/icons.js";
 import { PROVIDERS, PROVIDER_ORDER, IMAGE_SIZES, WRITING_PRESETS, isConnected } from "../lib/models.js";
 import { connectOpenRouter } from "../lib/auth.js";
 import { listModels } from "../lib/providers.js";
@@ -1447,6 +1448,8 @@ browser.storage.onChanged.addListener((changes, area) => {
 });
 
 load();
+// Line icons instead of emoji, as in the sidebar.
+try { startIconizer(document.body); } catch (_) {}
 
 
 function wireMemory() {

@@ -3,6 +3,17 @@
 // back to English. Placeholders {name}, HTML tags and emojis are kept verbatim.
 
 export const ES = {
+  "privOff.title": "¿Desactivar la anonimización?",
+  "privOff.now": "Ahora: antes de que una solicitud salga hacia {provider}, los correos, teléfonos, IBAN, nombres de empresas, claves y contraseñas se sustituyen por marcadores como ⟨EMAIL_1⟩ y se restauran en la respuesta. {provider} nunca los ve.",
+  "privOff.then": "Desactivada, tus mensajes, páginas y archivos llegan a {provider} tal cual. Elige cómo:",
+  "privOff.keys": "Desactivar, manteniendo ocultas claves y contraseñas",
+  "privOff.keysDesc": "Todo lo demás se envía tal cual. Antes de que salga una clave o contraseña, una ventana muestra dónde está: Enviar (oculta), Enviar siempre o Cancelar.",
+  "privOff.none": "Enviar todo tal cual — sin ocultar nada",
+  "privOff.noneDesc": "No se sustituye nada ni se pregunta nada: incluidas claves y contraseñas, todo va al proveedor. Solo para datos que puedas compartir con él.",
+  "privOff.keep": "Mantener la anonimización",
+  "priv.badge.anonNone": "sin ocultar",
+  "priv.badgeTitle.cloudNone": "No se oculta nada: tus mensajes, claves y contraseñas incluidas, salen tal cual. Clic para reactivar la anonimización.",
+  "opt.priv.none": "Nada — todo se envía tal cual (claves incluidas)",
   "mcp.searchPh": "Buscar un servicio (Gmail, Jira, Stripe…)",
   "mcp.catg.google": "Google",
   "mcp.catg.comm": "Mensajes y reuniones",
@@ -1094,6 +1105,17 @@ export const ES = {
 };
 
 export const DE = {
+  "privOff.title": "Anonymisierung ausschalten?",
+  "privOff.now": "Jetzt: Bevor eine Anfrage an {provider} geht, werden E-Mail-Adressen, Telefonnummern, IBANs, Firmennamen, Schlüssel und Passwörter durch Markierungen wie ⟨EMAIL_1⟩ ersetzt und in der Antwort wiederhergestellt. {provider} sieht sie nie.",
+  "privOff.then": "Ausgeschaltet erreichen Ihre Nachrichten, Seiten und Dateien {provider} unverändert. Wählen Sie, wie:",
+  "privOff.keys": "Ausschalten, Schlüssel und Passwörter bleiben maskiert",
+  "privOff.keysDesc": "Alles andere wird unverändert gesendet. Bevor ein Schlüssel oder Passwort hinausgeht, zeigt ein Fenster, wo es steht: Senden (maskiert), Immer senden oder Abbrechen.",
+  "privOff.none": "Alles unverändert senden — keine Maskierung",
+  "privOff.noneDesc": "Nichts wird ersetzt, nichts wird gefragt: einschließlich Schlüsseln und Passwörtern geht alles an den Anbieter. Nur für Daten, die Sie ihm anvertrauen dürfen.",
+  "privOff.keep": "Anonymisierung behalten",
+  "priv.badge.anonNone": "keine Maskierung",
+  "priv.badgeTitle.cloudNone": "Nichts wird maskiert: Ihre Nachrichten, einschließlich Schlüsseln und Passwörtern, gehen unverändert hinaus. Klicken, um die Anonymisierung wieder einzuschalten.",
+  "opt.priv.none": "Nichts — alles wird unverändert gesendet (Schlüssel inbegriffen)",
   "mcp.searchPh": "Dienst suchen (Gmail, Jira, Stripe…)",
   "mcp.catg.google": "Google",
   "mcp.catg.comm": "Nachrichten und Meetings",
@@ -2185,6 +2207,17 @@ export const DE = {
 };
 
 export const IT = {
+  "privOff.title": "Disattivare l'anonimizzazione?",
+  "privOff.now": "Ora: prima che una richiesta parta verso {provider}, indirizzi e-mail, telefoni, IBAN, nomi di aziende, chiavi e password sono sostituiti da marcatori come ⟨EMAIL_1⟩ e ripristinati nella risposta. {provider} non li vede mai.",
+  "privOff.then": "Disattivata, i tuoi messaggi, pagine e file arrivano a {provider} così come sono. Scegli come:",
+  "privOff.keys": "Disattiva, mantenendo nascoste chiavi e password",
+  "privOff.keysDesc": "Tutto il resto parte così com'è. Prima che parta una chiave o una password, una finestra mostra dove si trova: Invia (nascosta), Invia sempre o Annulla.",
+  "privOff.none": "Invia tutto così com'è — nessun mascheramento",
+  "privOff.noneDesc": "Niente viene sostituito né chiesto: chiavi e password comprese, tutto va al fornitore. Solo per dati che puoi condividere con lui.",
+  "privOff.keep": "Mantieni l'anonimizzazione",
+  "priv.badge.anonNone": "nessun mascheramento",
+  "priv.badgeTitle.cloudNone": "Niente è mascherato: i tuoi messaggi, chiavi e password comprese, partono così come sono. Clic per riattivare l'anonimizzazione.",
+  "opt.priv.none": "Niente — tutto parte così com'è (chiavi comprese)",
   "mcp.searchPh": "Cerca un servizio (Gmail, Jira, Stripe…)",
   "mcp.catg.google": "Google",
   "mcp.catg.comm": "Messaggi e riunioni",
@@ -3276,6 +3309,17 @@ export const IT = {
 };
 
 export const PT = {
+  "privOff.title": "Desativar a anonimização?",
+  "privOff.now": "Agora: antes de um pedido sair para {provider}, endereços de e-mail, telefones, IBAN, nomes de empresas, chaves e palavras-passe são substituídos por marcadores como ⟨EMAIL_1⟩ e repostos na resposta. {provider} nunca os vê.",
+  "privOff.then": "Desativada, as suas mensagens, páginas e ficheiros chegam a {provider} tal como estão. Escolha como:",
+  "privOff.keys": "Desativar, mantendo chaves e palavras-passe ocultas",
+  "privOff.keysDesc": "Tudo o resto é enviado tal como está. Antes de sair uma chave ou palavra-passe, uma janela mostra onde está: Enviar (oculta), Enviar sempre ou Cancelar.",
+  "privOff.none": "Enviar tudo tal como está — sem ocultação",
+  "privOff.noneDesc": "Nada é substituído nem perguntado: chaves e palavras-passe incluídas, tudo vai para o fornecedor. Só para dados que pode partilhar com ele.",
+  "privOff.keep": "Manter a anonimização",
+  "priv.badge.anonNone": "sem ocultação",
+  "priv.badgeTitle.cloudNone": "Nada é ocultado: as suas mensagens, chaves e palavras-passe incluídas, saem tal como estão. Clique para reativar a anonimização.",
+  "opt.priv.none": "Nada — tudo é enviado tal como está (chaves incluídas)",
   "mcp.searchPh": "Pesquisar um serviço (Gmail, Jira, Stripe…)",
   "mcp.catg.google": "Google",
   "mcp.catg.comm": "Mensagens e reuniões",

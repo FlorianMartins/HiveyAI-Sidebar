@@ -42,6 +42,7 @@ import {
 } from "../lib/history.js";
 import { setHTML } from "../lib/dom.js";
 import { initMcp } from "../lib/mcp-ui.js";
+import { startIconizer, stripEmoji } from "../lib/icons.js";
 
 const $ = (id) => document.getElementById(id);
 // Are we running as a standalone full-screen TAB (vs the docked sidebar)? The
@@ -530,6 +531,8 @@ async function updateActionIcon() {
 }
 
 async function init() {
+  // Line icons instead of emoji across the interface (never in what the model or the user wrote).
+  try { startIconizer(document.body); } catch (_) {}
   configureMarkdown();
   settings = await getSettings();
   setJudge0Config({ endpoint: settings.judge0Endpoint, key: settings.judge0Key });
@@ -1869,7 +1872,7 @@ function makeCombo({ input, menu, items, getValue, onPick, header, onSync }) {
     const id = v.includes("|") ? v.split("|")[1] : v;
     return (HIVEY_VARIANTS[id] && HIVEY_VARIANTS[id].label) || id;
   }
-  function syncLabel() { input.value = curLabel(); if (onSync) onSync(); } // the trigger always shows the CURRENT model
+  function syncLabel() { input.value = stripEmoji(curLabel()); if (onSync) onSync(); } // the trigger always shows the CURRENT model
   let searchEl = null, listEl = null;
   // Rebuild ONLY the rows (keeps the in-menu search input + its focus intact).
   function buildList() {
@@ -3839,7 +3842,7 @@ function renderTranscriptItem(item) {
       el.appendChild(b);
     }
     const body = document.createElement("div");
-    setHTML(body, renderMarkdown(item.text || ""));
+    setHTML(aiBody(body), renderMarkdown(item.text || ""));
     el.appendChild(body);
     enhanceArtifacts(body);
     el._raw = item.text || "";
@@ -4379,7 +4382,7 @@ async function openActionBubble(action, providedText) {
       });
       card._raw = raw;
       body.className = "ab-body";
-      setHTML(body, renderMarkdown(raw));
+      setHTML(aiBody(body), renderMarkdown(raw));
       enhanceArtifacts(body);
     } catch (e) {
       body.className = "ab-body";
@@ -5625,7 +5628,7 @@ async function analyzePageHeaders() {
     ];
     const md = lines.join("\n");
     const div = addMessage("assistant", "");
-    try { setHTML(div, renderMarkdown(md)); div._raw = md; } catch (_) { div.textContent = md; }
+    try { setHTML(aiBody(div), renderMarkdown(md)); div._raw = md; } catch (_) { div.textContent = md; }
     attachAssistantActions(div, () => md);
     transcript.push({ role: "assistant", text: md });
     scrollMessages(false);
@@ -6940,13 +6943,15 @@ function updatePrivBadge() {
   const sel = currentSelection();
   if (!sel || !sel.providerId) { b.classList.add("hidden"); return; }
   const cls = privacyClass(sel.providerId, settings);
-  const anon = cls === "cloud" && (settings.privacyLevel || "balanced") !== "off";
+  const level = settings.privacyLevel || "balanced";
+  const anon = cls === "cloud" && level !== "off" && level !== "none";
   b.classList.remove("hidden");
   b.dataset.kind = cls;
   b.classList.toggle("anon-off", cls === "cloud" && !anon);
   if (cls !== "cloud") { b.textContent = t("priv.badge." + cls); b.title = t("priv.badgeTitle." + cls); return; }
-  b.textContent = t("priv.badge.cloud") + " · " + t(anon ? "priv.badge.anon" : "priv.badge.anonOff");
-  b.title = t(anon ? "priv.badgeTitle.cloudOn" : "priv.badgeTitle.cloudOff");
+  const state = anon ? "anon" : level === "none" ? "anonNone" : "anonOff";
+  b.textContent = t("priv.badge.cloud") + " · " + t("priv.badge." + state);
+  b.title = t(anon ? "priv.badgeTitle.cloudOn" : level === "none" ? "priv.badgeTitle.cloudNone" : "priv.badgeTitle.cloudOff");
 }
 // On a cloud model the badge switches anonymisation off and on (the level chosen in the settings
 // comes back; credentials stay masked either way). Local and gateway: the settings.
@@ -6954,12 +6959,52 @@ async function onPrivBadge() {
   const sel = currentSelection();
   if (!sel || !sel.providerId || privacyClass(sel.providerId, settings) !== "cloud") return browser.runtime.openOptionsPage();
   const level = settings.privacyLevel || "balanced";
-  const patch = level === "off"
-    ? { privacyLevel: settings.privacyLevelOn && settings.privacyLevelOn !== "off" ? settings.privacyLevelOn : "balanced" }
-    : { privacyLevel: "off", privacyLevelOn: level };
-  Object.assign(settings, patch);
-  await setSettings(patch);
-  updatePrivBadge();
+  const apply = async (patch) => { Object.assign(settings, patch); await setSettings(patch); updatePrivBadge(); };
+  // Off (keys masked) or none at all → one click turns anonymisation back on, at the chosen level.
+  if (level === "off" || level === "none") {
+    return apply({ privacyLevel: settings.privacyLevelOn && !["off", "none"].includes(settings.privacyLevelOn) ? settings.privacyLevelOn : "balanced" });
+  }
+  // Turning it off says first what changes, and offers the two ways to do it.
+  const choice = await askPrivacyOff(PROVIDERS[sel.providerId] ? PROVIDERS[sel.providerId].label : sel.providerId);
+  if (choice === "off" || choice === "none") await apply({ privacyLevel: choice, privacyLevelOn: level });
+}
+/** The window shown before anonymisation is turned off: what it protects, and the two ways out —
+ *  keys and passwords still masked (asked before they leave), or nothing masked at all. */
+function askPrivacyOff(provider) {
+  return new Promise((resolve) => {
+    const ov = document.createElement("div");
+    ov.className = "priv-dlg-ov";
+    const box = document.createElement("div");
+    box.className = "priv-dlg";
+    box.setAttribute("role", "dialog");
+    box.setAttribute("aria-modal", "true");
+    const h = document.createElement("h3"); h.textContent = t("privOff.title");
+    const p1 = document.createElement("p"); p1.textContent = t("privOff.now", { provider });
+    const p2 = document.createElement("p"); p2.textContent = t("privOff.then", { provider });
+    const opts = document.createElement("div"); opts.className = "priv-dlg-opts";
+    const opt = (value, title, desc, cls) => {
+      const b = document.createElement("button"); b.type = "button"; b.className = "priv-dlg-opt" + (cls ? " " + cls : "");
+      const tt = document.createElement("b"); tt.textContent = title;
+      const dd = document.createElement("span"); dd.textContent = desc;
+      b.append(tt, dd);
+      b.addEventListener("click", () => close(value));
+      return b;
+    };
+    opts.append(
+      opt("off", t("privOff.keys"), t("privOff.keysDesc")),
+      opt("none", t("privOff.none"), t("privOff.noneDesc"), "danger"),
+    );
+    const cancel = document.createElement("button"); cancel.type = "button"; cancel.className = "priv-dlg-cancel"; cancel.textContent = t("privOff.keep");
+    cancel.addEventListener("click", () => close(null));
+    box.append(h, p1, p2, opts, cancel);
+    ov.append(box);
+    const onKey = (e) => { if (e.key === "Escape") close(null); };
+    function close(v) { document.removeEventListener("keydown", onKey, true); ov.remove(); resolve(v); }
+    ov.addEventListener("mousedown", (e) => { if (e.target === ov) close(null); });
+    document.addEventListener("keydown", onKey, true);
+    document.body.append(ov);
+    cancel.focus();
+  });
 }
 function positionThinkPop() {
   const r = els.thinkChip.getBoundingClientRect();
@@ -7500,6 +7545,8 @@ function makeAgentActions() {
     finish() { close(); },
   };
 }
+/** Marks a container of the model's text, which the emoji → icon swap leaves alone. */
+function aiBody(el) { if (el && el.classList) el.classList.add("ai-body"); return el; }
 function addThinkBlock(m) {
   const home = homeFor(m);
   const d = document.createElement("details");
@@ -7613,6 +7660,7 @@ function makeSink(badgeLabel, showThink = true, pendingEl = null, m = null) {
     // the answer (attachAssistantActions), exactly like the user messages.
     el.appendChild(head);
     contentEl = document.createElement("div");
+    contentEl.className = "ai-body"; // the model's own words: no emoji → icon swap (lib/icons.js)
     el.appendChild(contentEl);
   };
   // When the answer starts emitting code, route the LIVE stream into a COLLAPSED
@@ -8833,7 +8881,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
               head.textContent = "🔁 " + t("hivey.corrected");
               wrap.appendChild(head);
               const body = document.createElement("div");
-              setHTML(body, renderMarkdown(fixed));
+              setHTML(aiBody(body), renderMarkdown(fixed));
               enhanceArtifacts(body);
               wrap.appendChild(body);
               wrap._raw = fixed; attachAssistantActions(wrap, () => fixed);
@@ -9448,7 +9496,7 @@ function pdfExtractTextAction() {
   addMessage("user", t("pdf.textLabel"));
   const el = addMessage("assistant", "");
   const all = pdfs.map((p) => `### ${p.name}\n\n${p.text}`).join("\n\n");
-  setHTML(el, renderMarkdown("```text\n" + all.slice(0, 100000) + "\n```"));
+  setHTML(aiBody(el), renderMarkdown("```text\n" + all.slice(0, 100000) + "\n```"));
   enhanceArtifacts(el);
 }
 async function pdfExtractImages() {
