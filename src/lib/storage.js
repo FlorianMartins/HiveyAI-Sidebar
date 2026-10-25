@@ -24,7 +24,7 @@ const DEFAULTS = {
   // ----- UI / behaviour ------------------------------------------------------
   mode: "chat", // active workspace tab: chat | agent | translate | improve | image | terminal | code
   thinkLevel: "off", // reasoning depth: "off" (no thinking — fast/cheap) | "high" | "max"
-  webSearch: false, // web search OFF by default (opt-in per tab)
+  webSearch: true, // web search ON by default in the Chat (user, 2026-10-25); per tab, turned off in Options
   deepSearch: false, // 🔎 DeepSearch: multi-step cited web research (opt-in per Chat tab)
   deepSearchDepth: "standard", // fast | standard | deep — scales sub-queries + sources read
   wisebaseEnabled: true, // 📚 Wisebase tab (local KB + RAG). Tab shown by default; can be hidden.
@@ -234,6 +234,13 @@ export async function getSettings() {
     if (!s.searchModel) s.searchModel = "openrouter|hivey/free";
     s.webOffDefaultMigrated = true;
     try { await browser.storage.local.set({ webSearch: false, searchModel: s.searchModel, webOffDefaultMigrated: true }); } catch (_) {}
+  }
+  // One-time: web search is ON by default in the Chat again (user, 2026-10-25) — once for everyone;
+  // turning it off in Options is kept afterwards.
+  if (!s.webOnDefaultMigrated) {
+    s.webSearch = true;
+    s.webOnDefaultMigrated = true;
+    try { await browser.storage.local.set({ webSearch: true, webOnDefaultMigrated: true }); } catch (_) {}
   }
   // One-time: the tab rail is pinned open by default again (user, 2026-10-24). Open it ONCE for
   // everyone who had it hidden; ☰ still hides it, and that choice is kept.
