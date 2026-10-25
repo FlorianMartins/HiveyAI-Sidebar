@@ -12,3 +12,8 @@ for (const file of ["manifest.json", "manifest.chrome.json"]) {
     assert.ok(m.name && m.name.length <= 75, `name is ${m.name.length} characters`);
   });
 }
+
+test("Firefox: the add-on id is Hivey's own (the old one is held by a deleted AMO listing)", () => {
+  const m = JSON.parse(readFileSync(new URL("../manifest.json", import.meta.url), "utf8"));
+  assert.equal(m.browser_specific_settings.gecko.id, "hivey-ai-sidebar@hivey.be");
+});

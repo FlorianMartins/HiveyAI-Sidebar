@@ -10,6 +10,10 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Firefox — nouvel identifiant d'extension** (`hivey-ai-sidebar@hivey.be`) : l'ancien était encore
+  réservé par une fiche supprimée sur addons.mozilla.org (« un identifiant identique a été trouvé »).
+  Une installation Firefox existante sera vue comme une autre extension : votre clé et vos réglages
+  sont à ressaisir une fois.
 - **Publication Firefox** : la description de l'extension tient dans les 250 caractères demandés par
   addons.mozilla.org (elle en faisait 436 et bloquait la soumission). Le code de l'extension ne
   déclenche plus aucun avertissement du vérificateur de Mozilla (le HTML est construit par un
