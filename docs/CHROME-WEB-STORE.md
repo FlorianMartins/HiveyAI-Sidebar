@@ -1,4 +1,49 @@
-# Chrome Web Store — « Pratiques en matière de confidentialité »
+# Chrome Web Store — tout ce que demande la publication
+
+Le bouton **« Envoyer pour examen »** reste grisé tant qu'un champ obligatoire manque dans **un des
+onglets** — et tant que le brouillon n'est pas **enregistré**. En haut de la page, le lien
+**« Pourquoi ne puis-je pas envoyer ? »** liste ce qui manque encore.
+
+## Liste de contrôle
+
+**Compte** (paramètres du compte développeur, pas la fiche) :
+- adresse e-mail de contact **renseignée et vérifiée** (lien reçu par e-mail) ;
+- statut **commerçant / non-commerçant** déclaré (obligation européenne) — ici, non-commerçant si
+  l'extension est gratuite et sans activité commerciale.
+
+**Fiche du Chrome Web Store** :
+- description détaillée (texte ci-dessous), catégorie (**Productivité** → « Outils »), langue
+  (**Français**) ;
+- icône 128×128 : `icons/icon-128.png` ;
+- au moins une capture d'écran **1280×800** : `docs/store/screenshot-1-1280x800.png` à
+  `screenshot-5-1280x800.png` ;
+- petite vignette promotionnelle **440×280** : `docs/store/promo-small-440x280.png` ;
+- grande vignette 1400×560 (facultative) : `docs/store/promo-marquee-1400x560.png`.
+
+**Pratiques en matière de confidentialité** : toutes les sections ci-dessous, puis **Enregistrer le
+brouillon**.
+
+**Distribution** : visibilité (Public ou Non répertorié), régions (toutes), et « gratuit ».
+
+## Description détaillée (fiche, en français)
+
+```
+Hivey AI met l'IA de votre choix dans le panneau latéral de Chrome, à côté de chaque page.
+
+• Vos fournisseurs, vos clés : Claude, OpenAI, Gemini, Mistral, Groq, DeepSeek, OpenRouter (avec des modèles gratuits), un modèle local (Ollama, LM Studio) ou votre propre serveur.
+• La page en contexte : posez une question sur la page, une sélection, plusieurs onglets ou un PDF.
+• Traduire, résumer, expliquer, améliorer un texte — d'un clic droit.
+• Un agent qui agit dans le navigateur à votre demande (ouvrir, cliquer, remplir) ; chaque action sensible attend votre accord, et un refus l'arrête.
+• Services MCP : connectez Notion, Jira, Linear, Gmail via Zapier… et parlez-leur en langage naturel.
+• Wisebase : votre base de connaissance indexée dans le navigateur, avec des réponses qui citent leurs sources.
+• Images, artifacts interactifs, diagrammes, comparaison de modèles, banc d'essai.
+
+Confidentialité d'abord : aucun serveur, aucune télémétrie. Vos clés et votre historique restent dans votre navigateur ; vos messages ne partent que vers le service d'IA que vous choisissez, et les données sensibles sont anonymisées avant le cloud.
+
+Open source : https://github.com/FlorianMartins/HiveyAI-Sidebar
+```
+
+# Pratiques en matière de confidentialité
 
 Réponses à copier dans l'onglet **Pratiques en matière de confidentialité** de la fiche (Chrome Web
 Store, tableau de bord développeur). Les textes à coller sont en anglais, la langue des réviseurs ;
