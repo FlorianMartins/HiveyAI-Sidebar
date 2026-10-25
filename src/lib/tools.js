@@ -281,9 +281,9 @@ const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 // never hang the agent. Used after navigations so the next tool sees a loaded page.
 function waitForTabLoad(tabId, timeout = 12000) {
   return new Promise((resolve) => {
-    let done = false;
+    let done = false, timer = 0;
     const finish = () => {
-      if (done) return; done = true;
+      if (done) return; done = true; clearTimeout(timer);
       try { browser.tabs.onUpdated.removeListener(listener); } catch (_) {}
       resolve();
     };
@@ -291,7 +291,7 @@ function waitForTabLoad(tabId, timeout = 12000) {
     try { browser.tabs.onUpdated.addListener(listener); } catch (_) {}
     // Already loaded? resolve immediately.
     browser.tabs.get(tabId).then((t) => { if (t && t.status === "complete") finish(); }).catch(() => {});
-    setTimeout(finish, timeout);
+    timer = setTimeout(finish, timeout);
   });
 }
 
@@ -300,6 +300,7 @@ function waitForTabLoad(tabId, timeout = 12000) {
 //   • the content script returns the first result's watchUrl → real navigation to it,
 //   • wait for load, then drive playback (with one retry if the player isn't ready yet).
 // Doing this in the tool (not by chaining model turns) is why playback is now reliable.
+let lastPlay = null; // { query, url } of the video the last play-with-query opened
 async function playMedia(query) {
   const tab = await getActiveTab();
   // The starting tab is often UN-scriptable (a fresh "new tab", the extension page, or any
@@ -317,7 +318,14 @@ async function playMedia(query) {
     for (let i = 0; i < 6 && !(r && ok(r)); i++) { await delay(650); r = await tryPlay(); }
     return r;
   };
-  let res = await tryPlay();
+  // A NEW song: the tab may still hold the previous one, paused — playing whatever is there would
+  // restart the old song and skip the search (« il remet play sur l'ancienne musique »). The tab's
+  // media is used as is only when it already IS this query: its results page, or the video this
+  // same query opened (a second play after the browser held it for a click).
+  const here = tab && tab.url ? tab.url : "";
+  const sameQuery = !query || (lastPlay && lastPlay.query === query && lastPlay.url && here.startsWith(lastPlay.url)) ||
+    (() => { try { const u = new URL(here); return /(^|\.)youtube\.com$/.test(u.hostname) && u.pathname === "/results" && u.searchParams.get("search_query") === query; } catch (_) { return false; } })();
+  let res = sameQuery ? await tryPlay() : null;
 
   // Nothing playable here (no player, or page unreachable) and we know WHAT to play → go to
   // YouTube results IN THIS TAB (works even from a protected page: we only change its URL).
@@ -335,10 +343,12 @@ async function playMedia(query) {
   // On a results/home page the content script hands back the first video's URL → open it for
   // real (with autoplay=1) and drive playback once the player has mounted.
   if (res && res.watchUrl) {
+    const opened = res.watchUrl;
     const watch = res.watchUrl + (res.watchUrl.includes("?") ? "&" : "?") + "autoplay=1";
     await browser.tabs.update(tab.id, { url: watch });
     await waitForTabLoad(tab.id);
     res = await poll((r) => r.ok || r.playing);
+    if (query) lastPlay = { query, url: opened.split("&")[0] };
   }
   if (!res) throw new Error(query
     ? "Couldn't start playback (the player was blocked or didn't load)."
