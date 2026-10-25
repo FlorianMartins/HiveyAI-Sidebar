@@ -53,6 +53,9 @@
     <li><strong>Wisebase</strong> collections (your documents, their text chunks and their embedding
       vectors), if you create any.</li>
     <li><strong>Pages you ask to watch</strong> (their address and a fingerprint of their text).</li>
+    <li><strong>Services you connect in the MCP tab</strong> (their address) and their sign-in tokens
+      (OAuth access and refresh tokens, or the personal token you paste), kept apart from the
+      settings so that an export never carries them.</li>
   </ul>
 
   <h2>2 bis. Anonymisation before a cloud provider</h2>
@@ -62,13 +65,14 @@
     suggested next request, the yes/no « does this need the web? » question) — the extension replaces
     sensitive values — credentials, e-mail addresses, phone numbers, IBANs, card numbers, company and
     VAT numbers, company names, amounts you write, and any terms you list — with markers such as
-    <code>⟨EMAIL_1⟩</code>, and puts the real values back in the answer on your device. When a request
-    would carry a credential, or personal or company data you did not type yourself, the extension
-    shows you where it is and asks before sending. The level (strict, balanced, credentials only) is set
-    in the extension's settings, and anonymisation can be switched off from the « ☁️ Cloud ·
-    anonymised » badge (credentials and passwords stay masked even then). The mapping between markers
-    and values lives in memory on your device only and is never sent or logged. Images (screenshots)
-    are not anonymised.</p>
+    <code>⟨EMAIL_1⟩</code>, and puts the real values back in the answer on your device. You choose the
+    mode in the settings or from the « Cloud » badge under the message box:
+    <strong>Anonymised</strong> (strict or balanced — the values above leave as markers, nothing to
+    approve), <strong>Keys masked</strong> (only credentials and passwords are hidden; before one leaves,
+    the extension shows you where it is and you choose to mask it, always mask, never mask for this
+    conversation, or cancel), or <strong>Not anonymised</strong> (nothing is hidden). The mapping
+    between markers and values lives in memory on your device only and is never sent or logged.
+    Images (screenshots) are not anonymised.</p>
 
   <h2>3. Page, tab and element content</h2>
   <p>When <em>you</em> ask for it — by adding the current page or a tab with <code>@</code>, turning on
@@ -77,6 +81,9 @@
     text (and, for a captured area or a picked element, a screenshot of it) from the page so the AI can
     act on it. This content is included in the request to your chosen AI provider for that
     conversation. It is not stored by us and not sent anywhere else.</p>
+  <p>In <strong>Agent</strong> mode, the request also carries your browser's language and time zone
+    (for example « fr-FR / Europe/Paris »), so the AI can suggest services available in your region.
+    No precise location, GPS data or IP address is read by the extension.</p>
   <p><strong>Watching a page</strong> (« Watch this page », only when you ask): the extension fetches
     that page every 15 minutes from your browser, without your cookies, and compares a fingerprint of
     its text locally to notify you of a change. Nothing is sent to an AI provider for this.</p>
@@ -94,20 +101,33 @@
     <li><strong>Wisebase</strong> downloads its embedding model (<code>Xenova/all-MiniLM-L6-v2</code>,
       about 23 MB) once from the Hugging Face CDN; your documents are embedded in the browser and never
       uploaded.</li>
-    <li>A <strong>React artifact</strong> loads React and Babel from <code>unpkg.com</code>, inside its
-      isolated frame only.</li>
+    <li><strong>Services you connect in the MCP tab</strong> (Gmail through Zapier, Notion, Jira,
+      Linear…): when you ask something in that tab, the AI calls their tools, so your request and the
+      data they return (an e-mail, a page, a ticket) travel between that service, your browser and your
+      AI provider. Reading runs by itself; anything that sends, creates, changes or deletes is shown to
+      you and runs only if you allow it. You sign in on the service's own page (OAuth); each service
+      processes your data under its own privacy policy.</li>
+    <li><strong>Artifacts</strong> (small apps the AI writes) are displayed by a static page,
+      <code>hivey.be/artifact-runner.html</code>, inside an isolated frame. The artifact's code is handed
+      to that page in the address fragment (after <code>#</code>), which browsers never send to the
+      server: only the static page itself is downloaded. A React artifact also loads React and Babel
+      from <code>unpkg.com</code>, inside that frame only.</li>
     <li>The <strong>Web tab</strong> shows the chat site you pick (Claude, ChatGPT, Gemini…) with your
       own session on that site; the extension does not read those conversations.</li>
-    <li>The <strong>Code tab</strong> opens the Hivey Code workshop (<code>app.hivey.be</code> by
-      default, configurable) in a separate tab; no key, setting or conversation is shared with it.</li>
+    <li>The <strong>Hivey Code</strong> icon of the tab bar opens the Hivey Code workshop
+      (<code>app.hivey.be</code> by default, configurable) in a separate tab. Only your OpenRouter key
+      (so you do not have to enter it again) and your theme's colours are handed over, in the address
+      fragment, which is never sent to the server; no other setting and no conversation is shared with
+      it.</li>
     <li>A <strong>watched page</strong> is fetched as described in section 3.</li>
   </ul>
 
   <h2>5. What we do NOT do</h2>
   <ul>
     <li>No analytics, no telemetry, no tracking pixels, no advertising IDs.</li>
-    <li>No operator servers. The extension's own code all ships inside the extension; the only code
-      loaded from outside is React/Babel for a React artifact, inside its isolated frame.</li>
+    <li>No operator server receives your data. The extension's own code all ships inside the extension;
+      the only things loaded from outside are the static artifact page and, for a React artifact,
+      React/Babel — inside the artifact's isolated frame, never in the extension.</li>
     <li>No collection, sale, rental or sharing of your data with anyone.</li>
     <li>No background reading of your browsing (a page you asked to watch excepted).</li>
   </ul>
@@ -117,7 +137,8 @@
     <li><code>storage</code> — save your keys, settings and history locally.</li>
     <li><code>tabs</code>, <code>activeTab</code>, <code>scripting</code>, host access (<code>&lt;all_urls&gt;</code>) —
       read the page/tab/element <em>you</em> point at, and let the optional Agent mode act on the page you ask it to.</li>
-    <li><code>identity</code> — optional one-click OpenRouter sign-in (OAuth).</li>
+    <li><code>identity</code> — sign-in windows (OAuth): the optional OpenRouter sign-in, and the
+      services you connect in the MCP tab.</li>
     <li><code>contextMenus</code> — right-click actions (translate, summarize, improve, reply…).</li>
     <li><code>clipboardWrite</code> — copy AI output when you ask.</li>
     <li><code>declarativeNetRequest</code> — let the Web tab show chat sites that refuse to be framed,
