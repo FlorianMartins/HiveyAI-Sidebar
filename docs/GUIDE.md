@@ -320,7 +320,10 @@ et bases Wisebase restent dans votre navigateur. Détails :
   collections, 📄+ ajoute la page courante). Les textes sont vectorisés **dans le navigateur** ; les
   réponses citent les passages `[1]`, `[2]`… et disent clairement quand la base ne contient pas la
   réponse. Les questions de suivi voient les précédentes.
-- `</>` **Code** : ouvre l'atelier Hivey Code dans un nouvel onglet (aperçu, terminal, Expo Go).
+- 🔌 **MCP** : vos services connectés (Gmail via Zapier, Notion, Jira, Linear…). Le bouton
+  **Services** de la zone de saisie ouvre le catalogue et le champ « autre serveur MCP » ; la lecture
+  se fait seule, tout envoi ou modification vous est demandé d'abord.
+- L'icône Hivey ↗ en bas de la barre ouvre l'atelier **Hivey Code** dans un nouvel onglet.
 
 <br clear="right" />
 

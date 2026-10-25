@@ -12,7 +12,7 @@
 /** Every workspace the rail can show. A space absent from this list is unknown to the policy. */
 export const SPACES = [
   "chat", "web", "agent", "translate", "improve",
-  "image", "pdf", "security", "wisebase", "benchmark", "code",
+  "image", "pdf", "security", "wisebase", "benchmark", "mcp",
 ];
 
 /**
@@ -24,7 +24,7 @@ export const SPACES = [
 export const SPACE_MEMORY = {
   chat: "read-write",
   improve: "read-write",   // writes restricted to kind:'preference' — see canWrite()
-  code: "read",
+  mcp: "read-user",       // reads emails, pages, tickets written by others: only what the user said counts
   wisebase: "read",
   security: "read",        // never writes: a .pcap summary describes an infrastructure
   pdf: "read",

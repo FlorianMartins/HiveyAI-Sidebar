@@ -1232,7 +1232,7 @@ async function load() {
 // Workspace icons to show/hide in the sidebar's tabs rail (Appearance section).
 const RAIL_TABS = [
   ["chat", "Chat"], ["web", "Web"], ["agent", "Agent"], ["translate", "Traduire"],
-  ["improve", "Améliorer"], ["image", "Image"], ["pdf", "PDF"], ["code", "Code"],
+  ["improve", "Améliorer"], ["image", "Image"], ["pdf", "PDF"], ["mcp", "MCP"],
 ];
 function railTabLabel(mode, fallback) {
   const k = "rail." + mode;

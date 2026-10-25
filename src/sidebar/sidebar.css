@@ -1200,42 +1200,6 @@ button[aria-expanded="true"], .combo-input:focus {
    area; the left rail stays visible so the user can switch workspace in one click. */
 body.mode-code #messages,
 body.mode-code #controls,
-body.mode-code .composer,
-body.mode-code #confirmBar { display: none !important; }
-
-/* ----- Code workspace (AI app builder launcher) ----- */
-.codeview { flex: 1; min-height: 0; overflow-y: auto; display: flex; }
-.code-launch {
-  margin: auto; max-width: 290px; padding: 22px 18px; text-align: center;
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-}
-/* Match the Chat empty-state design (same logo size & title type) across tabs. */
-.code-launch .cl-logo img, .code-launch .cl-logo svg { width: 92px; height: 92px; display: block; }
-/* Per-tab line icon (matches the other tabs' empty state) instead of the brand block logo. */
-.code-launch .cl-logo svg.tab-ic { width: 74px; height: 74px; color: var(--accent); stroke: url(#emptyg); }
-.code-launch .cl-feats li { display: flex; align-items: center; gap: 9px; }
-.code-launch .clf-ic { flex: 0 0 18px; display: inline-flex; color: var(--accent); }
-.code-launch .clf-ic svg { width: 18px; height: 18px; }
-.code-launch .btn-grad svg { flex: 0 0 auto; }
-.code-launch .cl-title {
-  /* Same size as the image tab's greeting (#emptyGreeting) so the Hivey Code title reads as a peer.
-     Pull the title up tight under the icon (the flex container already adds an 8px gap). */
-  margin: -4px 0 0; font-size: 27px; line-height: 1.2; font-weight: 700;
-  background: var(--grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-}
-/* Neon outline for .cl-title / .cl-logo is defined once alongside .empty-title (consolidated). */
-.code-launch .cl-sub { margin: 0; font-size: 12.5px; line-height: 1.5; }
-.code-launch .btn-grad { width: 100%; }
-.code-launch .btn-grad:disabled { opacity: 0.5; cursor: default; box-shadow: none; }
-.code-launch .cl-url { margin: -4px 0 0; font-size: 11px; word-break: break-all; }
-.code-launch .cl-feats {
-  list-style: none; margin: 4px 0 0; padding: 12px; width: 100%; text-align: left;
-  display: flex; flex-direction: column; gap: 7px; font-size: 12px;
-  background: var(--grad-soft); border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent); border-radius: 12px;
-}
-.code-launch .cl-sec { margin: 0; font-size: 11px; line-height: 1.45; }
-
-
 /* ----- Per-message compare bar (on the latest answer) ----- */
 .msg-actions {
   display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
@@ -2663,3 +2627,43 @@ body.rail-pinned.rail-right .top-banner { right: calc(var(--rail-w, 56px) + 8px)
   background: var(--panel-2); color: var(--text); border: 1px solid var(--border); box-shadow: 0 6px 18px rgba(0,0,0,.35);
   font-size: 12px; font-weight: 600; line-height: 1.35; pointer-events: none; white-space: normal; }
 .sel-tip.hidden { display: none; }
+
+/* ── MCP tab: the services panel (lib/mcp-ui.js), opened above the composer like the size menu ── */
+.mcp-panel { position: fixed; z-index: 1000; width: min(380px, calc(100vw - 16px)); max-height: min(560px, calc(100vh - 120px));
+  display: flex; flex-direction: column; border-radius: 12px; border: 1px solid var(--border);
+  background-color: var(--bg); background-image: linear-gradient(var(--panel), var(--panel));
+  box-shadow: 0 12px 32px rgba(0,0,0,.45); }
+.mcp-panel.hidden { display: none; }
+.mcp-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px 6px; }
+.mcp-title { font-weight: 700; font-size: 13.5px; }
+.mcp-body { overflow-y: auto; padding: 0 12px 12px; display: flex; flex-direction: column; gap: 6px; }
+.mcp-sec { margin-top: 8px; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.mcp-empty, .mcp-note { font-size: 12px; color: var(--muted); margin: 0; line-height: 1.45; }
+.mcp-note { margin-top: 8px; }
+.mcp-row { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 9px; border: 1px solid var(--border-soft, var(--border)); }
+.mcp-txt { flex: 1; min-width: 0; }
+.mcp-name { font-size: 13px; font-weight: 600; }
+.mcp-sub { font-size: 11.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+.mcp-dot { flex: 0 0 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.mcp-dot.ok { background: #22c55e; }
+.mcp-dot.loading { background: var(--accent); animation: hvPulse 1.2s ease-in-out infinite; }
+.mcp-dot.auth { background: #f59e0b; }
+.mcp-dot.error { background: #ef4444; }
+.mcp-act { flex: 0 0 auto; height: 28px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--accent); background: transparent;
+  color: var(--accent); font-size: 12px; font-weight: 600; cursor: pointer; }
+.mcp-act:hover { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.mcp-x { flex: 0 0 auto; width: 26px; height: 26px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); cursor: pointer; }
+.mcp-x:hover { color: var(--text); background: color-mix(in srgb, var(--text) 8%, transparent); }
+.mcp-sw { flex: 0 0 auto; accent-color: var(--accent); width: 16px; height: 16px; cursor: pointer; }
+.mcp-token, .mcp-custom { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.mcp-custom { margin-top: 2px; }
+.mcp-token input, .mcp-custom input { flex: 1 1 160px; min-width: 0; height: 30px; padding: 0 9px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 12.5px; }
+.mcp-token input:focus, .mcp-custom input:focus { outline: none; border-color: var(--accent); }
+.mcp-err { font-size: 12px; color: #f87171; }
+.mcp-empty-btn { margin-top: 12px; padding: 8px 16px; font-size: 13px; }
+/* The Hivey Code link at the foot of the rail: an icon with a small ↗ — it opens a tab, it is not one. */
+.railtab.rail-ext { opacity: .75; }
+.railtab.rail-ext:hover { opacity: 1; }
+.rail-ext-arrow { position: absolute; right: 7px; top: 6px; font-size: 10px; line-height: 1; color: var(--accent); }
+.mcp-custom input { flex-basis: 100%; }
