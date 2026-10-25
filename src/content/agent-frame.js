@@ -38,15 +38,20 @@
       (document.head || document.documentElement).appendChild(st);
     }
 
-    // Full-viewport element CLIPPED to a ~52px border frame (centre empty) so YouTube's
-    // IntersectionObserver doesn't think the player is obscured and refuse to autoplay.
+    // Same drawing as content.js (glowCss): a brighter glow fading in and out over a dimmer one —
+    // an opacity animation the compositor runs by itself — in a full-viewport element CLIPPED to a
+    // ~52px border frame (centre empty) so YouTube's IntersectionObserver doesn't think the player
+    // is obscured and refuse to autoplay.
     st.textContent =
-      `@keyframes aiAgentGlow{0%,100%{box-shadow:inset 0 0 16px 3px ${rgba(accent, 0.55)},inset 0 0 4px 1px ${rgba(accent2, 0.85)}}50%{box-shadow:inset 0 0 36px 9px ${rgba(accent, 0.85)},inset 0 0 9px 2px ${rgba(accent2, 1)}}}` +
-      `#${ID}{position:fixed;inset:0;z-index:2147483646;pointer-events:none;border-radius:2px;animation:aiAgentGlow 1.8s ease-in-out infinite;` +
-      "clip-path:polygon(0 0,0 100%,52px 100%,52px 52px,calc(100% - 52px) 52px,calc(100% - 52px) calc(100% - 52px),52px calc(100% - 52px),52px 100%,100% 100%,100% 0)}";
+      `@keyframes aiAgentGlow{0%,100%{opacity:0}50%{opacity:1}}` +
+      `#${ID}{position:fixed;inset:0;z-index:2147483646;pointer-events:none;` +
+      "clip-path:polygon(0 0,0 100%,52px 100%,52px 52px,calc(100% - 52px) 52px,calc(100% - 52px) calc(100% - 52px),52px calc(100% - 52px),52px 100%,100% 100%,100% 0)}" +
+      `#${ID}>ai-glow-layer{all:initial;display:block;position:absolute;inset:0;border-radius:2px;pointer-events:none;box-shadow:inset 0 0 16px 3px ${rgba(accent, 0.55)},inset 0 0 4px 1px ${rgba(accent2, 0.85)}}` +
+      `#${ID}>ai-glow-layer+ai-glow-layer{box-shadow:inset 0 0 36px 9px ${rgba(accent, 0.85)},inset 0 0 9px 2px ${rgba(accent2, 1)};opacity:0;will-change:opacity;animation:aiAgentGlow 1.8s ease-in-out infinite}`;
 
     const el = document.createElement("div");
     el.id = ID;
+    el.append(document.createElement("ai-glow-layer"), document.createElement("ai-glow-layer"));
     document.documentElement.appendChild(el);
   }
 

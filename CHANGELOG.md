@@ -10,6 +10,9 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Le cadre lumineux de la page pilotée par l'agent pulse sans saccade** (même rendu) : la pulsation
+  ne redessine plus toute la page à chaque image. Page gelée 2,2 s, elle continue de pulser, dans
+  Firefox comme dans Chromium (avant : figée).
 - **Agent : « lance une autre musique » lance bien la nouvelle**, au lieu de relancer celle restée en
   pause dans l'onglet. La vidéo déjà ouverte n'est reprise que si c'est celle de la même demande.
 - **La lumière autour de la zone de saisie reste fluide pendant les longues réponses** (même
