@@ -2598,3 +2598,10 @@ body.rail-pinned.rail-right .plib-panel { right: calc(var(--rail-w, 56px) + 8px)
   color: var(--soft-text, var(--text)); font: inherit; font-size: 12px; cursor: pointer; }
 .img-ref-btn:hover { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
 .img-size.no-sizes { display: none !important; }
+/* The confirmation banner (« Connected to OpenRouter »…): the whole width of the work area beside
+   the pinned rail, its text wrapping rather than cut with « … ». */
+.top-banner { left: 14px; right: 14px; max-width: none; white-space: normal; text-overflow: clip;
+  transform: translateY(-8px); }
+.top-banner.show { transform: translateY(0); }
+body.rail-pinned:not(.rail-right) .top-banner { left: calc(var(--rail-w, 56px) + 8px); }
+body.rail-pinned.rail-right .top-banner { right: calc(var(--rail-w, 56px) + 8px); }
