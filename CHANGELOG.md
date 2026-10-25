@@ -10,6 +10,10 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Chrome / Brave / Edge** : plus d'avertissement « Optional permission '<all_urls>' is redundant » à
+  l'installation — la permission était déclarée deux fois dans le manifeste Chromium (Firefox garde
+  la sienne : il permet de la refuser puis de la redemander).
+
 - **Image** : une icône de format précède « Taille », à la couleur du thème.
 
 ### La suggestion reste avec sa conversation
