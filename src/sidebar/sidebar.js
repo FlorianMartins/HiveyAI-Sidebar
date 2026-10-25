@@ -6991,13 +6991,16 @@ function askPrivacyOff(provider) {
       b.addEventListener("click", () => close(value));
       return b;
     };
+    // Staying anonymised comes FIRST and is the highlighted choice: « Turn off, keep keys masked »
+    // read as « keep it masked » and switched the mode off (« il bascule quand même »).
+    const stay = opt(null, t("privOff.keep"), t("privOff.keepDesc"), "keep");
     opts.append(
+      stay,
       opt("off", t("privOff.keys"), t("privOff.keysDesc")),
       opt("none", t("privOff.none"), t("privOff.noneDesc"), "danger"),
     );
-    const cancel = document.createElement("button"); cancel.type = "button"; cancel.className = "priv-dlg-cancel"; cancel.textContent = t("privOff.keep");
-    cancel.addEventListener("click", () => close(null));
-    box.append(h, p1, p2, opts, cancel);
+    const cancel = stay;
+    box.append(h, p1, p2, opts);
     ov.append(box);
     const onKey = (e) => { if (e.key === "Escape") close(null); };
     function close(v) { document.removeEventListener("keydown", onKey, true); ov.remove(); resolve(v); }
