@@ -45,9 +45,6 @@
     "https://api.deepseek.com/*",
     "<all_urls>"
   ],
-  "optional_host_permissions": [
-    "<all_urls>"
-  ],
   "background": {
     "service_worker": "src/background/background.js",
     "type": "module"
