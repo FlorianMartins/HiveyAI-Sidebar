@@ -10,6 +10,8 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Image, sous Chrome/Brave/Edge** : « Utiliser comme référence » était écrit en blanc sur un bouton blanc (le bouton n'avait pas de style propre et Chromium lui donnait son fond par défaut). Il a maintenant un contour fin et un texte lisible, comme les autres boutons.
+
 - **Correctif** : depuis la version précédente, la barre des onglets ouverte décalait toute la zone
   vers la droite, et la zone de saisie ne prenait plus toute la largeur. Elle reprend toute la
   largeur ; la barre des onglets s'arrête **au-dessus** de la zone de saisie (sur un petit écran,

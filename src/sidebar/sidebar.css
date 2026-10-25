@@ -2592,3 +2592,8 @@ body.rail-pinned.rail-right .plib-panel { right: calc(var(--rail-w, 56px) + 8px)
   box-shadow: 0 12px 32px rgba(0,0,0,.4);
 }
 .menu-btn:focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent); outline-offset: 2px; }
+/* « Use as reference » under a generated image: it had no style of its own, so Chromium drew its
+   native white button under the theme's white text. */
+.img-ref-btn { padding: 5px 12px; border: 1px solid var(--border); border-radius: 8px; background: transparent;
+  color: var(--soft-text, var(--text)); font: inherit; font-size: 12px; cursor: pointer; }
+.img-ref-btn:hover { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
