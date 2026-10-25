@@ -115,6 +115,9 @@
       } catch (_) { return false; }
     }
     window.addEventListener("message", function (e) {
+      // Only what our own bridge relays: it posts from this same window and origin (the sidebar's
+      // messages reach the bridge, never this listener directly).
+      if (e.source !== window || e.origin !== location.origin) return;
       var d = e.data; if (!d || !d.__hiveyPW) return;
       if (d.imageDataUrl) { var f = dataUrlToFile(d.imageDataUrl, "screenshot.png"); if (f) attachFile(f, true); }
       else if (d.textFile) { try { attachFile(new File([d.textFile.content], d.textFile.name || "context.txt", { type: "text/plain" }), false); } catch (_) {} }
