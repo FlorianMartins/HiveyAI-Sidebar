@@ -10,6 +10,7 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- Le bouton « 🎁 Connecter (OpenRouter — gratuit) » retrouve son emoji.
 - **Le badge « Cloud · clés masquées »** sous la zone de saisie s'affiche en vert.
 - **Agent : la réflexion se lit pendant qu'elle se fait.** Dans l'onglet Agent, le bloc
   « Réflexion » s'ouvre pendant que l'IA réfléchit et se replie dès qu'elle agit ou répond (et se
