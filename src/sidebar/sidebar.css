@@ -2664,3 +2664,4 @@ body:not(.theme-light) #emptyOnboard b, body:not(.theme-light) #emptyOnboard str
 .topbar .row .icon svg, .topbar .row .web-ov-toggle svg { width: 20px !important; height: 20px !important; }
 .topbar .row #webHistorySlot { display: contents; }
 body:not(.web-active) .topbar .row #webHistorySlot > * { display: none; }
+.img-size .themed-sel-btn .sz-ic { flex: 0 0 auto; color: var(--accent); }

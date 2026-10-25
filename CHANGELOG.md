@@ -10,6 +10,8 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Image** : une icône de format précède « Taille », à la couleur du thème.
+
 ### La suggestion reste avec sa conversation
 
 - Une **nouvelle conversation** n'affiche plus la suggestion de la précédente ; **rouvrir une

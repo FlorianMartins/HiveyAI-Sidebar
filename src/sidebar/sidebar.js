@@ -563,6 +563,9 @@ async function init() {
   els.imageSize._menuWidth = 360;
   els.imageSize._menuClass = "img-size-menu";
   themeNativeSelect(els.imageSize);
+  // An aspect-ratio mark before « Size », in the theme's colour like the row's other icons.
+  { const b = els.imageSize.nextElementSibling;
+    if (b && b.classList.contains("themed-sel-btn")) b.insertAdjacentHTML("afterbegin", '<svg class="sz-ic" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8V5a2 2 0 0 1 2-2h3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M21 16v3a2 2 0 0 1-2 2h-3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><rect x="7" y="8" width="10" height="8" rx="1.5"/></svg>'); }
   themeNativeSelect(els.wbScope);
   syncToggleVisibility();
   updateImageNote();
