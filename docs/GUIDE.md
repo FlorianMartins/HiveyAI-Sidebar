@@ -91,8 +91,8 @@ langue de traduction est retenue.
 - **La page que vous regardez** est lue et donnée au modèle (une seule fois par conversation, pour
   ne pas la payer à chaque question). Le contenu d'une page est traité comme une **donnée**, jamais
   comme une instruction : une page qui écrit « ignore tes consignes » n'est pas obéie.
-- **Recherche web** (bouton 🌐 des options) : un modèle capable de chercher sur le web répond avec
-  ses sources. **DeepSearch** mène une recherche en plusieurs étapes, avec un rapport cité.
+- **Recherche web** (activée par défaut, 🌐 dans les options) : la recherche ne part **que si la
+  question en a besoin** (actualité, prix, horaires, un lien…), et le modèle répond avec ses sources. **DeepSearch** mène une recherche en plusieurs étapes, avec un rapport cité.
 - **Pièces jointes** : glissez des fichiers, des images ou un PDF ; une case permet de laisser une
   pièce jointe hors du contexte sans la retirer.
 - **La langue** : le modèle répond dans la langue de votre question, quelle qu'elle soit, même
