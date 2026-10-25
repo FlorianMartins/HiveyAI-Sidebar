@@ -57,7 +57,7 @@ test("Chromium opens the panel with Ctrl+Shift+Y, like Firefox", () => {
 });
 
 test("the slim Firefox scrollbar rules stay out of Chromium (they override ::-webkit-scrollbar there)", () => {
-  const css = readFileSync(new URL("../src/sidebar/sidebar.css", import.meta.url), "utf8");
+  const css = readFileSync(new URL("../src/sidebar/sidebar.css", import.meta.url), "utf8").replace(/\r\n/g, "\n"); // Windows checkouts
   const block = css.indexOf("@supports (-moz-orient: inline)");
   assert.ok(block >= 0);
   const outside = css.slice(0, block) + css.slice(css.indexOf("}\n}", block) + 3);
