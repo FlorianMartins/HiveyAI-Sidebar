@@ -10,6 +10,10 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Trois modes de protection, nommés pareil partout** (badge, fenêtre, réglages) : **Anonymisé**
+  (toutes les données sensibles en marqueurs), **Clés masquées** (seuls clés et mots de passe cachés,
+  demandé avant envoi) et **Non anonymisé** (rien n'est caché). Dans la fenêtre, « Rester anonymisé »
+  est le troisième choix.
 - **Fenêtre « Passer en non anonymisé »** : les choix ne prêtent plus à confusion. « Rester
   anonymisé » vient en premier, mis en avant ; les deux autres disent clairement qu'ils passent en non
   anonymisé (« seuls les clés et mots de passe restent cachés » / « rien n'est caché »). L'ancien

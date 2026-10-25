@@ -268,13 +268,14 @@ génération suivante.
   e-mails, téléphones et identifiants sont masqués. Ce que **vous** écrivez, joignez ou analysez est
   entièrement couvert.
 - **La fenêtre des données sensibles** : en mode anonymisé, tout part en marqueurs, sans question —
-  une seule note « 🔒 N valeurs anonymisées » par valeur et par conversation. **Anonymisation
-  désactivée**, avant d'envoyer au cloud un identifiant secret (clé, mot de passe), la sidebar montre
+  une seule note « 🔒 N valeurs anonymisées » par valeur et par conversation. En mode **« Clés
+  masquées »**, avant d'envoyer au cloud un identifiant secret (clé, mot de passe), la sidebar montre
   **où** il se trouve (`config.env:12`, la page, un résultat de l'agent) et vous choisissez :
   **Masquer**, **Toujours masquer** ou **Ne jamais masquer (cette conversation)**, ou **Annuler** — rien
   n'est envoyé.
 - **Le badge « Cloud · anonymisé »** sous la zone de saisie : un clic ouvre une fenêtre qui explique
-  ce qui change et propose de garder clés et mots de passe masqués, ou de **tout envoyer sans masquage** ;
+  ce qui change et propose trois modes : **Clés masquées** (seuls clés et mots de passe cachés),
+  **Non anonymisé** (rien n'est caché) ou **Rester anonymisé** ;
   sinon, un clic **désactive
   l'anonymisation** (il passe en orange, « non anonymisé ») ; un second clic la **réactive** au
   niveau choisi dans les réglages. Même désactivée, les **clés et mots de passe restent masqués**.

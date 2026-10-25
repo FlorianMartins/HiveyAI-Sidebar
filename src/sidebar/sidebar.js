@@ -6991,13 +6991,13 @@ function askPrivacyOff(provider) {
       b.addEventListener("click", () => close(value));
       return b;
     };
-    // Staying anonymised comes FIRST and is the highlighted choice: « Turn off, keep keys masked »
-    // read as « keep it masked » and switched the mode off (« il bascule quand même »).
+    // Three modes, named the same everywhere (badge, settings): « Clés masquées » (only keys and
+    // passwords hidden), « Non anonymisé » (nothing hidden), and staying « Anonymisé », last.
     const stay = opt(null, t("privOff.keep"), t("privOff.keepDesc"), "keep");
     opts.append(
-      stay,
       opt("off", t("privOff.keys"), t("privOff.keysDesc")),
       opt("none", t("privOff.none"), t("privOff.noneDesc"), "danger"),
+      stay,
     );
     const cancel = stay;
     box.append(h, p1, p2, opts);
