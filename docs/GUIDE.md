@@ -271,7 +271,7 @@ génération suivante.
   une seule note « 🔒 N valeurs anonymisées » par valeur et par conversation. **Anonymisation
   désactivée**, avant d'envoyer au cloud un identifiant secret (clé, mot de passe), la sidebar montre
   **où** il se trouve (`config.env:12`, la page, un résultat de l'agent) et vous choisissez :
-  **Envoyer (marqueurs en place)**, **Toujours envoyer (cette conversation)** ou **Annuler** — rien
+  **Masquer**, **Toujours masquer** ou **Ne jamais masquer (cette conversation)**, ou **Annuler** — rien
   n'est envoyé.
 - **Le badge « Cloud · anonymisé »** sous la zone de saisie : un clic ouvre une fenêtre qui explique
   ce qui change et propose de garder clés et mots de passe masqués, ou de **tout envoyer sans masquage** ;
@@ -390,7 +390,7 @@ tenir dans la fenêtre du modèle. Épinglez (📌) les échanges qui doivent re
 propose que les niveaux qui changent réellement la requête.
 
 **La fenêtre des données sensibles apparaît souvent.** Elle n'apparaît qu'avec l'anonymisation
-désactivée : réactivez-la (badge « Cloud » sous la zone de saisie), choisissez « Toujours envoyer
+désactivée : réactivez-la (badge « Cloud » sous la zone de saisie), choisissez « Toujours masquer » ou « Ne jamais masquer
 (cette conversation) », ou passez par un modèle local ou votre passerelle.
 
 **Un message tapé pendant une réponse.** Dans le Chat, il reste dans le champ jusqu'à la fin de la

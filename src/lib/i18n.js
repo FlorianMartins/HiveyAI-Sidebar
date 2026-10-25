@@ -14,12 +14,13 @@ import { setHTML } from "./dom.js";
 let lang = "en";
 
 const EN = {
+  "priv.never": "Never mask (this conversation)",
   "agent.refusedStop": "⛔ Action refused: the agent stopped and did nothing else.",
   "privOff.title": "Turn off anonymisation?",
   "privOff.now": "Now: before a request leaves for {provider}, e-mail addresses, phone numbers, IBANs, names of companies, keys and passwords are replaced by markers such as ⟨EMAIL_1⟩, then put back in the answer. {provider} never sees them.",
   "privOff.then": "Turned off, your messages, pages and files reach {provider} as written. Choose how:",
   "privOff.keys": "Turn off, keep keys and passwords masked",
-  "privOff.keysDesc": "Everything else is sent as written. Before a key or a password leaves, a window shows where it is: Send (masked), Always send, or Cancel.",
+  "privOff.keysDesc": "Everything else is sent as written. Before a key or a password leaves, a window shows where it is: Mask, Always mask, Never mask (this conversation) or Cancel.",
   "privOff.none": "Send everything as written — no masking",
   "privOff.noneDesc": "Nothing is replaced and nothing is asked: keys and passwords included, everything goes to the provider. Only for data you are allowed to share with it.",
   "privOff.keep": "Keep anonymisation",
@@ -174,8 +175,8 @@ const EN = {
   "ctx.compactedNow": "🗜 The conversation was summarised: the context is free again, everything stays on screen.",
   "ctx.nothingToCompact": "Nothing to summarise yet.",
   "priv.title": "🔒 What you are about to send to a cloud model contains {n} sensitive item(s). Each was replaced by a marker; here is where they are, if you want to correct them.",
-  "priv.send": "Send (markers in place)",
-  "priv.always": "Always send (this conversation)",
+  "priv.send": "Mask",
+  "priv.always": "Always mask (this conversation)",
   "priv.cancel": "Cancel",
   "priv.redacted": "🔒 {n} sensitive value(s) were anonymised before leaving for the cloud model (put back in the answer).",
   "priv.notSent": "Not sent: this request carries sensitive data and nobody could be asked to confirm it.",
@@ -1192,12 +1193,13 @@ const EN = {
 };
 
 const FR = {
+  "priv.never": "Ne jamais masquer (cette conversation)",
   "agent.refusedStop": "⛔ Action refusée : l'agent s'est arrêté et n'a rien fait d'autre.",
   "privOff.title": "Désactiver l'anonymisation ?",
   "privOff.now": "Actuellement : avant qu'une requête parte chez {provider}, adresses e-mail, téléphones, IBAN, noms de sociétés, clés et mots de passe sont remplacés par des marqueurs comme ⟨EMAIL_1⟩, puis remis en clair dans la réponse. {provider} ne les voit jamais.",
   "privOff.then": "Désactivée, vos messages, pages et fichiers arrivent chez {provider} tels quels. Choisissez comment :",
   "privOff.keys": "Désactiver, en gardant clés et mots de passe masqués",
-  "privOff.keysDesc": "Tout le reste part tel quel. Avant qu'une clé ou un mot de passe parte, une fenêtre montre où il se trouve : Envoyer (masqué), Toujours envoyer ou Annuler.",
+  "privOff.keysDesc": "Tout le reste part tel quel. Avant qu'une clé ou un mot de passe parte, une fenêtre montre où il se trouve : Masquer, Toujours masquer, Ne jamais masquer (cette conversation) ou Annuler.",
   "privOff.none": "Tout envoyer tel quel — aucun masquage",
   "privOff.noneDesc": "Rien n'est remplacé et rien n'est demandé : clés et mots de passe compris, tout part chez le fournisseur. Seulement pour des données que vous pouvez lui confier.",
   "privOff.keep": "Garder l'anonymisation",
@@ -1352,8 +1354,8 @@ const FR = {
   "ctx.compactedNow": "🗜 La conversation a été résumée : le contexte est de nouveau libre, tout reste affiché.",
   "ctx.nothingToCompact": "Rien à résumer pour l'instant.",
   "priv.title": "🔒 Ce que vous allez envoyer à un modèle cloud contient {n} donnée(s) sensible(s). Chacune a été remplacée par un marqueur ; voici où elles se trouvent, si vous voulez les corriger.",
-  "priv.send": "Envoyer (marqueurs en place)",
-  "priv.always": "Toujours envoyer (cette conversation)",
+  "priv.send": "Masquer",
+  "priv.always": "Toujours masquer (cette conversation)",
   "priv.cancel": "Annuler",
   "priv.redacted": "🔒 {n} valeur(s) sensible(s) anonymisée(s) avant l'envoi au modèle cloud (remises en clair dans la réponse).",
   "priv.notSent": "Non envoyé : cette requête contient des données sensibles et personne n'a pu confirmer l'envoi.",

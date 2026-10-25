@@ -145,12 +145,15 @@ export const MARKER_RULE =
 /** Per conversation: the values already accepted, and whether "Always send" was chosen. */
 const accepted = new Map();
 const always = new Set();
-export function forgetConversation(id) { accepted.delete(id); always.delete(id); }
+// « Ne jamais masquer (cette conversation) »: from then on its requests leave as written.
+const never = new Set();
+export function forgetConversation(id) { accepted.delete(id); always.delete(id); never.delete(id); }
 
 /**
  * Wrap a provider so that its requests are pseudonymized and its answers restored.
  *
- * `ask(lines, count)` → "once" | "always" | "no" is the sidebar's dialog, used with anonymisation off
+ * `ask(lines, count)` → "once" (mask) | "always" (mask, never ask again) | "never" (send as written for
+ * the rest of the conversation) | "no" (cancel) is the sidebar's dialog, used with anonymisation off
  * (level "secrets") — anonymised, a value is replaced and nobody is asked; without one (a side task
  * nobody is watching), a request that would have to ask is not sent — "nobody could be asked" must
  * not mean "send it anyway". `onRedacted(findings)` reports what was replaced, counts only.
@@ -160,6 +163,7 @@ export function privateProvider(inner, { level, customTerms = [], vault = new Va
     ...inner,
     vault,
     async runTurn(req) {
+      if (conversation && never.has(conversation)) return inner.runTurn(req);
       const { messages, findings } = redactRequest(req.history || [], vault, level, customTerms);
       const sysR = redactRequest([{ role: "user", content: req.system || "" }], vault, level, customTerms);
       const toAsk = findingsToAsk([...findings, ...sysR.findings]);
@@ -180,6 +184,8 @@ export function privateProvider(inner, { level, customTerms = [], vault = new Va
         if (fresh.length > 12) lines.push(t("priv.more", { n: fresh.length - 12 }));
         const answer = await ask(lines, fresh.length);
         if (answer === "no") throw Object.assign(new Error(t("priv.cancelled")), { name: "AbortError" });
+        // « Never mask »: this request and the rest of the conversation go as written.
+        if (answer === "never") { if (conversation) never.add(conversation); return inner.runTurn(req); }
         if (answer === "always" && conversation) always.add(conversation);
         for (const f of fresh) seen.add(f.value);
         if (conversation) accepted.set(conversation, seen);

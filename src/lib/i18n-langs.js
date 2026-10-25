@@ -3,12 +3,13 @@
 // back to English. Placeholders {name}, HTML tags and emojis are kept verbatim.
 
 export const ES = {
+  "priv.never": "No ocultar nunca (esta conversación)",
   "agent.refusedStop": "⛔ Acción rechazada: el agente se detuvo y no hizo nada más.",
   "privOff.title": "¿Desactivar la anonimización?",
   "privOff.now": "Ahora: antes de que una solicitud salga hacia {provider}, los correos, teléfonos, IBAN, nombres de empresas, claves y contraseñas se sustituyen por marcadores como ⟨EMAIL_1⟩ y se restauran en la respuesta. {provider} nunca los ve.",
   "privOff.then": "Desactivada, tus mensajes, páginas y archivos llegan a {provider} tal cual. Elige cómo:",
   "privOff.keys": "Desactivar, manteniendo ocultas claves y contraseñas",
-  "privOff.keysDesc": "Todo lo demás se envía tal cual. Antes de que salga una clave o contraseña, una ventana muestra dónde está: Enviar (oculta), Enviar siempre o Cancelar.",
+  "privOff.keysDesc": "Todo lo demás se envía tal cual. Antes de que salga una clave o contraseña, una ventana muestra dónde está: Ocultar, Ocultar siempre, No ocultar nunca (esta conversación) o Cancelar.",
   "privOff.none": "Enviar todo tal cual — sin ocultar nada",
   "privOff.noneDesc": "No se sustituye nada ni se pregunta nada: incluidas claves y contraseñas, todo va al proveedor. Solo para datos que puedas compartir con él.",
   "privOff.keep": "Mantener la anonimización",
@@ -163,8 +164,8 @@ export const ES = {
   "ctx.compactedNow": "🗜 La conversación se ha resumido: el contexto vuelve a estar libre, todo sigue visible.",
   "ctx.nothingToCompact": "Todavía no hay nada que resumir.",
   "priv.title": "🔒 Lo que va a enviar a un modelo en la nube contiene {n} dato(s) sensible(s). Cada uno se ha sustituido por un marcador; aquí está dónde se encuentran, por si quiere corregirlos.",
-  "priv.send": "Enviar (con marcadores)",
-  "priv.always": "Enviar siempre (esta conversación)",
+  "priv.send": "Ocultar",
+  "priv.always": "Ocultar siempre (esta conversación)",
   "priv.cancel": "Cancelar",
   "priv.redacted": "🔒 {n} valor(es) sensible(s) anonimizado(s) antes de enviarse al modelo en la nube (restituidos en la respuesta).",
   "priv.notSent": "No enviado: esta solicitud contiene datos sensibles y nadie pudo confirmar el envío.",
@@ -1106,12 +1107,13 @@ export const ES = {
 };
 
 export const DE = {
+  "priv.never": "Nie maskieren (dieses Gespräch)",
   "agent.refusedStop": "⛔ Aktion abgelehnt: der Agent hat angehalten und nichts weiter getan.",
   "privOff.title": "Anonymisierung ausschalten?",
   "privOff.now": "Jetzt: Bevor eine Anfrage an {provider} geht, werden E-Mail-Adressen, Telefonnummern, IBANs, Firmennamen, Schlüssel und Passwörter durch Markierungen wie ⟨EMAIL_1⟩ ersetzt und in der Antwort wiederhergestellt. {provider} sieht sie nie.",
   "privOff.then": "Ausgeschaltet erreichen Ihre Nachrichten, Seiten und Dateien {provider} unverändert. Wählen Sie, wie:",
   "privOff.keys": "Ausschalten, Schlüssel und Passwörter bleiben maskiert",
-  "privOff.keysDesc": "Alles andere wird unverändert gesendet. Bevor ein Schlüssel oder Passwort hinausgeht, zeigt ein Fenster, wo es steht: Senden (maskiert), Immer senden oder Abbrechen.",
+  "privOff.keysDesc": "Alles andere wird unverändert gesendet. Bevor ein Schlüssel oder Passwort hinausgeht, zeigt ein Fenster, wo es steht: Maskieren, Immer maskieren, Nie maskieren (dieses Gespräch) oder Abbrechen.",
   "privOff.none": "Alles unverändert senden — keine Maskierung",
   "privOff.noneDesc": "Nichts wird ersetzt, nichts wird gefragt: einschließlich Schlüsseln und Passwörtern geht alles an den Anbieter. Nur für Daten, die Sie ihm anvertrauen dürfen.",
   "privOff.keep": "Anonymisierung behalten",
@@ -1266,8 +1268,8 @@ export const DE = {
   "ctx.compactedNow": "🗜 Das Gespräch wurde zusammengefasst: der Kontext ist wieder frei, alles bleibt sichtbar.",
   "ctx.nothingToCompact": "Noch nichts zusammenzufassen.",
   "priv.title": "🔒 Was Sie an ein Cloud-Modell senden, enthält {n} sensible(s) Element(e). Jedes wurde durch eine Markierung ersetzt; hier steht, wo sie sind, falls Sie sie korrigieren möchten.",
-  "priv.send": "Senden (mit Markierungen)",
-  "priv.always": "Immer senden (diese Unterhaltung)",
+  "priv.send": "Maskieren",
+  "priv.always": "Immer maskieren (dieses Gespräch)",
   "priv.cancel": "Abbrechen",
   "priv.redacted": "🔒 {n} sensible(r) Wert(e) vor dem Senden an das Cloud-Modell anonymisiert (in der Antwort wiederhergestellt).",
   "priv.notSent": "Nicht gesendet: diese Anfrage enthält sensible Daten, und niemand konnte das Senden bestätigen.",
@@ -2209,12 +2211,13 @@ export const DE = {
 };
 
 export const IT = {
+  "priv.never": "Non mascherare mai (questa conversazione)",
   "agent.refusedStop": "⛔ Azione rifiutata: l'agente si è fermato e non ha fatto altro.",
   "privOff.title": "Disattivare l'anonimizzazione?",
   "privOff.now": "Ora: prima che una richiesta parta verso {provider}, indirizzi e-mail, telefoni, IBAN, nomi di aziende, chiavi e password sono sostituiti da marcatori come ⟨EMAIL_1⟩ e ripristinati nella risposta. {provider} non li vede mai.",
   "privOff.then": "Disattivata, i tuoi messaggi, pagine e file arrivano a {provider} così come sono. Scegli come:",
   "privOff.keys": "Disattiva, mantenendo nascoste chiavi e password",
-  "privOff.keysDesc": "Tutto il resto parte così com'è. Prima che parta una chiave o una password, una finestra mostra dove si trova: Invia (nascosta), Invia sempre o Annulla.",
+  "privOff.keysDesc": "Tutto il resto parte così com'è. Prima che parta una chiave o una password, una finestra mostra dove si trova: Maschera, Maschera sempre, Non mascherare mai (questa conversazione) o Annulla.",
   "privOff.none": "Invia tutto così com'è — nessun mascheramento",
   "privOff.noneDesc": "Niente viene sostituito né chiesto: chiavi e password comprese, tutto va al fornitore. Solo per dati che puoi condividere con lui.",
   "privOff.keep": "Mantieni l'anonimizzazione",
@@ -2369,8 +2372,8 @@ export const IT = {
   "ctx.compactedNow": "🗜 La conversazione è stata riassunta: il contesto è di nuovo libero, tutto resta visibile.",
   "ctx.nothingToCompact": "Ancora niente da riassumere.",
   "priv.title": "🔒 Ciò che sta per inviare a un modello cloud contiene {n} dato/i sensibile/i. Ognuno è stato sostituito da un marcatore; ecco dove si trovano, se vuole correggerli.",
-  "priv.send": "Invia (con marcatori)",
-  "priv.always": "Invia sempre (questa conversazione)",
+  "priv.send": "Maschera",
+  "priv.always": "Maschera sempre (questa conversazione)",
   "priv.cancel": "Annulla",
   "priv.redacted": "🔒 {n} valore/i sensibile/i anonimizzato/i prima dell'invio al modello cloud (ripristinati nella risposta).",
   "priv.notSent": "Non inviato: questa richiesta contiene dati sensibili e nessuno ha potuto confermare l'invio.",
@@ -3312,12 +3315,13 @@ export const IT = {
 };
 
 export const PT = {
+  "priv.never": "Nunca ocultar (esta conversa)",
   "agent.refusedStop": "⛔ Ação recusada: o agente parou e não fez mais nada.",
   "privOff.title": "Desativar a anonimização?",
   "privOff.now": "Agora: antes de um pedido sair para {provider}, endereços de e-mail, telefones, IBAN, nomes de empresas, chaves e palavras-passe são substituídos por marcadores como ⟨EMAIL_1⟩ e repostos na resposta. {provider} nunca os vê.",
   "privOff.then": "Desativada, as suas mensagens, páginas e ficheiros chegam a {provider} tal como estão. Escolha como:",
   "privOff.keys": "Desativar, mantendo chaves e palavras-passe ocultas",
-  "privOff.keysDesc": "Tudo o resto é enviado tal como está. Antes de sair uma chave ou palavra-passe, uma janela mostra onde está: Enviar (oculta), Enviar sempre ou Cancelar.",
+  "privOff.keysDesc": "Tudo o resto é enviado tal como está. Antes de sair uma chave ou palavra-passe, uma janela mostra onde está: Ocultar, Ocultar sempre, Nunca ocultar (esta conversa) ou Cancelar.",
   "privOff.none": "Enviar tudo tal como está — sem ocultação",
   "privOff.noneDesc": "Nada é substituído nem perguntado: chaves e palavras-passe incluídas, tudo vai para o fornecedor. Só para dados que pode partilhar com ele.",
   "privOff.keep": "Manter a anonimização",
@@ -3472,8 +3476,8 @@ export const PT = {
   "ctx.compactedNow": "🗜 A conversa foi resumida: o contexto está livre de novo, tudo continua visível.",
   "ctx.nothingToCompact": "Ainda não há nada para resumir.",
   "priv.title": "🔒 O que vai enviar a um modelo na nuvem contém {n} dado(s) sensível(eis). Cada um foi substituído por um marcador; eis onde estão, caso queira corrigi-los.",
-  "priv.send": "Enviar (com marcadores)",
-  "priv.always": "Enviar sempre (esta conversa)",
+  "priv.send": "Ocultar",
+  "priv.always": "Ocultar sempre (esta conversa)",
   "priv.cancel": "Cancelar",
   "priv.redacted": "🔒 {n} valor(es) sensível(eis) anonimizado(s) antes do envio ao modelo na nuvem (repostos na resposta).",
   "priv.notSent": "Não enviado: este pedido contém dados sensíveis e ninguém pôde confirmar o envio.",

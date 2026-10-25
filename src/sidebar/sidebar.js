@@ -216,6 +216,7 @@ const els = {
   privacyList: $("privacyList"),
   privacySend: $("privacySend"),
   privacyAlways: $("privacyAlways"),
+  privacyNever: $("privacyNever"),
   privacyCancel: $("privacyCancel"),
   confirmText: $("confirmText"),
   confirmAllow: $("confirmAllow"),
@@ -7870,7 +7871,8 @@ function confirmAction(name, input) {
 // ----- Privacy: the sensitive-data window ------------------------------------
 // Asked before a CLOUD request carries a credential, or personal / company data the user did not
 // type (a page, a file, a tool result) — each already replaced by a marker. Once per value and per
-// conversation; « Toujours envoyer » covers the rest of the conversation (lib/privacy.js).
+// conversation: « Masquer » this time, « Toujours masquer » or « Ne jamais masquer » for the rest of
+// the conversation, « Annuler » sends nothing (lib/privacy.js).
 let privacyAsking = Promise.resolve();
 function askPrivacy(lines, count) {
   // One question at a time: two parallel requests (a sub-task and the turn) never stack two dialogs.
@@ -7882,14 +7884,17 @@ function askPrivacy(lines, count) {
       els.privacyBar.classList.add("hidden");
       els.privacySend.removeEventListener("click", once);
       els.privacyAlways.removeEventListener("click", always);
+      els.privacyNever.removeEventListener("click", never);
       els.privacyCancel.removeEventListener("click", no);
       resolve(v);
     };
     const once = () => done("once");
     const always = () => done("always");
+    const never = () => done("never");
     const no = () => done("no");
     els.privacySend.addEventListener("click", once);
     els.privacyAlways.addEventListener("click", always);
+    els.privacyNever.addEventListener("click", never);
     els.privacyCancel.addEventListener("click", no);
   }));
   privacyAsking = asked.catch(() => {});
