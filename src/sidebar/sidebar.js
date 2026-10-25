@@ -2196,9 +2196,11 @@ function takeAttachments() {
   // Only items kept "included" in the context panel are sent (default = all included).
   const used = attachments.filter((a) => a.ctxIncluded !== false);
   const imgs = used.filter((a) => a.type === "image");
-  const texts = used.filter((a) => a.type === "text");
+  // A page selection is one item: its screenshot goes with the images, its text with the texts.
+  const texts = used.filter((a) => a.type === "text" || (a.isSelection && a.text));
   let textBlock = "";
   for (const a of texts) {
+    if (a.isSelection) { textBlock += `${a.text.slice(0, ATT_TXT_BUDGET)}\n\n`; continue; }
     const head = a.isPdf ? `[Attached PDF: ${a.name} (${a.pages} pages)]` : `[Attached file: ${a.name}]`;
     textBlock += `${head}\n${(a.text || "").slice(0, ATT_TXT_BUDGET)}\n\n`;
   }
@@ -2604,10 +2606,22 @@ async function pickElement() {
     const winId = tabs && tabs[0] ? tabs[0].windowId : undefined;
     img = await loadImage(await browser.tabs.captureVisibleTab(winId, { format: "png" }));
   } catch (_) {}
-  for (const el of list) {
-    if (img) { const crop = cropFromShot(img, el.rect, res.dpr || 1); if (crop) attachments.push({ type: "image", name: t("pick.imgName", { tag: el.tag }), dataUrl: crop, mediaType: "image/png" }); }
-    if (el.text) attachments.push({ type: "text", name: t("pick.attName", { tag: el.tag }), text: `[Selected <${el.tag}> on ${res.title} — ${res.url}]\n${el.text}` });
-  }
+  // ONE item for the whole selection (« il met plusieurs <div> en contexte ») — it used to be a
+  // screenshot AND a text per element: one screenshot of the area the elements cover, and their
+  // texts together, under one name.
+  const pad = 4;
+  const box = list.reduce((u, el) => {
+    const r = el.rect || { x: 0, y: 0, w: 0, h: 0 };
+    return { x1: Math.min(u.x1, r.x), y1: Math.min(u.y1, r.y), x2: Math.max(u.x2, r.x + r.w), y2: Math.max(u.y2, r.y + r.h) };
+  }, { x1: Infinity, y1: Infinity, x2: -Infinity, y2: -Infinity });
+  const crop = img && Number.isFinite(box.x1)
+    ? cropFromShot(img, { x: Math.max(0, box.x1 - pad), y: Math.max(0, box.y1 - pad), w: box.x2 - box.x1 + 2 * pad, h: box.y2 - box.y1 + 2 * pad }, res.dpr || 1)
+    : null;
+  const texts = list.filter((el) => el.text).map((el) => (list.length > 1 ? `<${el.tag}>\n${el.text}` : el.text));
+  const name = list.length > 1 ? t("pick.groupName", { n: list.length }) : t("pick.attName", { tag: list[0].tag });
+  const text = texts.length ? `[Selected on ${res.title} — ${res.url}]\n${texts.join("\n\n")}` : "";
+  if (crop) attachments.push({ type: "image", name, dataUrl: crop, mediaType: "image/png", ...(text ? { text, isSelection: true } : {}) });
+  else if (text) attachments.push({ type: "text", name, text });
   renderAttachStrip();
   els.input.focus();
 }

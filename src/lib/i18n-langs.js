@@ -3,6 +3,7 @@
 // back to English. Placeholders {name}, HTML tags and emojis are kept verbatim.
 
 export const ES = {
+  "pick.groupName": "Selección de la página ({n} elementos)",
   "cost.tokensTotal": "{n} tokens",
   "improve.pick": "Elige un estilo",
   "ctx.sizeAutoLabel": "Auto",
@@ -728,7 +729,6 @@ export const ES = {
   "pick.error": "No se pudo seleccionar en esta página (abre antes un sitio normal).",
   "pick.restricted": "Firefox bloquea todas las extensiones en esta página protegida (about:…, addons.mozilla.org, accounts.firefox.com…). La captura funciona en cualquier otro sitio, incluida tu intranet / tus servicios web internos.",
   "pick.attName": "Elemento seleccionado <{tag}>",
-  "pick.imgName": "Captura del elemento <{tag}>",
   "pick.added": "✓ Elemento <{tag}> capturado — haz tu pregunta abajo.",
   "pick.addedN": "✓ {n} elementos capturados — haz tu pregunta abajo.",
   "region.title": "Capturar un área de la página (captura) como contexto",
@@ -1137,6 +1137,7 @@ export const ES = {
 };
 
 export const DE = {
+  "pick.groupName": "Seitenauswahl ({n} Elemente)",
   "cost.tokensTotal": "{n} Tokens",
   "improve.pick": "Stil wählen",
   "ctx.sizeAutoLabel": "Auto",
@@ -1862,7 +1863,6 @@ export const DE = {
   "pick.error": "Auf dieser Seite nicht möglich (öffne zuerst eine normale Website).",
   "pick.restricted": "Firefox blockiert alle Erweiterungen auf dieser geschützten Seite (about:…, addons.mozilla.org, accounts.firefox.com…). Die Erfassung funktioniert auf jeder anderen Seite – auch in deinem Intranet / internen Webdiensten.",
   "pick.attName": "Ausgewähltes Element <{tag}>",
-  "pick.imgName": "Element-Screenshot <{tag}>",
   "pick.added": "✓ Element <{tag}> erfasst — stelle unten deine Frage.",
   "pick.addedN": "✓ {n} Elemente erfasst — stelle unten deine Frage.",
   "region.title": "Einen Bereich der Seite (Screenshot) als Kontext erfassen",
@@ -2271,6 +2271,7 @@ export const DE = {
 };
 
 export const IT = {
+  "pick.groupName": "Selezione della pagina ({n} elementi)",
   "cost.tokensTotal": "{n} token",
   "improve.pick": "Scegli uno stile",
   "ctx.sizeAutoLabel": "Auto",
@@ -2996,7 +2997,6 @@ export const IT = {
   "pick.error": "Impossibile selezionare su questa pagina (apri prima un sito normale).",
   "pick.restricted": "Firefox blocca tutte le estensioni su questa pagina protetta (about:…, addons.mozilla.org, accounts.firefox.com…). La cattura funziona su qualsiasi altro sito, inclusi la tua intranet / i servizi web interni.",
   "pick.attName": "Elemento selezionato <{tag}>",
-  "pick.imgName": "Screenshot dell'elemento <{tag}>",
   "pick.added": "✓ Elemento <{tag}> catturato — fai la tua domanda qui sotto.",
   "pick.addedN": "✓ {n} elementi catturati — fai la tua domanda qui sotto.",
   "region.title": "Cattura un'area della pagina (screenshot) come contesto",
@@ -3405,6 +3405,7 @@ export const IT = {
 };
 
 export const PT = {
+  "pick.groupName": "Seleção da página ({n} elementos)",
   "cost.tokensTotal": "{n} tokens",
   "improve.pick": "Escolha um estilo",
   "ctx.sizeAutoLabel": "Auto",
@@ -4130,7 +4131,6 @@ export const PT = {
   "pick.error": "Não foi possível selecionar nesta página (abra antes um site normal).",
   "pick.restricted": "O Firefox bloqueia todas as extensões nesta página protegida (about:…, addons.mozilla.org, accounts.firefox.com…). A captura funciona em qualquer outro site — incluindo a sua intranet / serviços web internos.",
   "pick.attName": "Elemento selecionado <{tag}>",
-  "pick.imgName": "Captura do elemento <{tag}>",
   "pick.added": "✓ Elemento <{tag}> capturado — faça sua pergunta abaixo.",
   "pick.addedN": "✓ {n} elementos capturados — faça sua pergunta abaixo.",
   "region.title": "Capturar uma área da página (captura de tela) como contexto",

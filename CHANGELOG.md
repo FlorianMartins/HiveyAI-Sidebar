@@ -12,6 +12,10 @@ Version de développement, toujours à jour :
 
 ### Jetons et contexte : un seul chiffre, le même partout
 
+- **« Choisir un élément » donne un seul élément de contexte** : une sélection (un ou plusieurs
+  éléments de la page) devenait une capture **et** un texte par élément (« <div> », « <div> »…). C'est
+  maintenant une seule pièce jointe : une capture de la zone couverte et le texte des éléments réunis.
+
 - **Thème clair** : les réponses ne sont plus dans un cadre (bordure, fond et ombre retirés) — elles
   s'affichent directement sur la page, comme en thème sombre.
 
