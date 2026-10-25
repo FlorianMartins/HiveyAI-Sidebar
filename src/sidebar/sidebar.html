@@ -62,8 +62,8 @@
       <div id="workArea">
 
     <!-- In-conversation search: find terms in the messages and jump between hits instead of
-         re-prompting. Placed ABOVE the page/selection tools (pageBar) so the search bar never
-         wedges between those icons and the answers. Hidden until the 🔍 header button is clicked. -->
+         re-prompting. Placed ABOVE the « N tabs in context » bar (pageBar). Hidden until the 🔍
+         header button is clicked. -->
     <div id="searchBar" class="searchbar hidden">
       <span class="search-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>
       <input id="searchInput" type="text" autocomplete="off" spellcheck="false" data-i18n-ph="search.ph" placeholder="Search in the conversation…" />
@@ -78,7 +78,6 @@
 
     <!-- "N tabs in context" — the page tools themselves live in the composer's "+" menu. -->
     <div id="pageBar" class="pagebar hidden" data-i18n-title="pagebar.title" title="Page seen by the AI">
-      <button id="pageToggle" class="eye eye-btn" type="button" aria-pressed="true" data-i18n-title="pagebar.toggle" title="Toggle page mode (selection tools)"><svg class="eye-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.9 4.24A9.1 9.1 0 0 1 12 4c6.4 0 10 7 10 7a13.2 13.2 0 0 1-1.67 2.42"/><path d="M6.6 6.6A13 13 0 0 0 2 12s3.6 7 10 7a9 9 0 0 0 5.4-1.6"/><path d="m2 2 20 20"/></svg></button>
       <span id="pageTitle" class="page-title"></span>
     </div>
     <div id="tabsPanel" class="panel hidden">
@@ -350,9 +349,6 @@
             <button id="wbManageBtn" class="icon wb-ctl-btn" type="button" data-i18n-title="wb.manageTitle" title="Manage collections & sources" aria-label="Manage"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></button>
             <button id="wbAddPageBtn" class="icon wb-ctl-btn" type="button" data-i18n-title="wb.addPageTitle" title="Add the current page to a collection" aria-label="Add current page"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M12 11v6"/><path d="M9 14h6"/></svg></button>
           </div>
-          <!-- Page tools toggle (translate/improve/image/pdf): opens a popup with the current page
-               reading + capture tools (screenshot / element), like the Chat tab's Page bar. -->
-          <button id="selPageToggle" class="ctoggle ctl-page-btn hidden" type="button" data-i18n-title="pagebar.selToggle" title="Show page tools (read page, screenshot, element)"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h6"/></svg></button>
         </div>
 
     <!-- Floating list of models for the searchable combobox. -->

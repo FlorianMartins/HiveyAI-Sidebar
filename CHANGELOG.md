@@ -16,6 +16,23 @@ Version de développement, toujours à jour :
 
 - **Image** : une icône de format précède « Taille », à la couleur du thème.
 
+### Documentation à jour, dépôt nettoyé
+
+- **Guide, README, politique de confidentialité, modèle de menaces et guide de contribution** décrivent
+  le produit tel qu'il est : la zone de saisie et son menu `+`, la page donnée avec `@` (plus d'office),
+  la recherche web seulement quand elle sert, les artefacts sur demande (un jeu s'ouvre dans un
+  onglet), les préréglages Hivey Free / Smart / Pro, l'onglet Web, les réglages et leurs raccourcis.
+  La politique de confidentialité nomme maintenant toutes les connexions (modèle de Wisebase,
+  React pour un artefact, pages surveillées) et la dictée. La mémoire y est dite « en préparation » :
+  ses modules existent, mais la sidebar ne les utilise pas encore.
+- **Toutes les captures refaites** avec l'interface actuelle, et sept nouvelles : premier lancement,
+  menu `+`, taille du contexte, Traduire, Wisebase, onglet Web, accès rapide des réglages.
+- **Ménage** : la page de démonstration `demo/` (de la version 1.x, plus utilisée), environ
+  1 100 lignes de code jamais exécutées (anciens boutons de la barre de page, bouton Envoyer, ancienne
+  animation du cadre, votes 👍/👎, fonctions jamais appelées, 110 textes d'interface inutilisés dans
+  les six langues) et des commentaires périmés. Rien ne change à l'usage. `jszip` est désormais vérifié
+  comme les autres bibliothèques tierces.
+
 ### La suggestion reste avec sa conversation
 
 - Une **nouvelle conversation** n'affiche plus la suggestion de la précédente ; **rouvrir une

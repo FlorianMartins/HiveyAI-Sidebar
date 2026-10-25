@@ -565,50 +565,6 @@ browser.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   return true;
 });
 
-// YouTube transcript fallback: fetch the watch page FRESH by video id (SPA-proof, avoids the
-// content script's stale inline ytInitialPlayerResponse) and pull the caption track. `hl=en` +
-// `bpctr` help skip the EU consent interstitial. Used by the universal-summary "Summarize" action.
-function bgExtractJsonObject(str, startIdx) {
-  let depth = 0, inStr = false, esc = false;
-  for (let i = startIdx; i < str.length; i++) {
-    const ch = str[i];
-    if (inStr) { if (esc) esc = false; else if (ch === "\\") esc = true; else if (ch === '"') inStr = false; }
-    else if (ch === '"') inStr = true;
-    else if (ch === "{") depth++;
-    else if (ch === "}") { depth--; if (depth === 0) return str.slice(startIdx, i + 1); }
-  }
-  return null;
-}
-async function ytTranscript(videoId) {
-  const html = await (await fetch(`https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}&hl=en&bpctr=9999999999&has_verified=1`, { credentials: "omit", cache: "no-store" })).text();
-  const i = html.indexOf("ytInitialPlayerResponse");
-  if (i < 0) return { ok: false, error: "no_player" };
-  const brace = html.indexOf("{", i);
-  const json = brace >= 0 ? bgExtractJsonObject(html, brace) : null;
-  let player;
-  try { player = JSON.parse(json); } catch (_) { return { ok: false, error: "parse" }; }
-  const tl = player && player.captions && player.captions.playerCaptionsTracklistRenderer;
-  const tracks = tl && tl.captionTracks;
-  if (!tracks || !tracks.length) return { ok: false, error: "no_captions" };
-  const track = tracks.find((t) => (t.languageCode || "").startsWith("en")) || tracks[0];
-  if (!track || !track.baseUrl) return { ok: false, error: "no_captions" };
-  const url = track.baseUrl + (track.baseUrl.includes("?") ? "&" : "?") + "fmt=json3";
-  const data = await (await fetch(url, { credentials: "omit", cache: "no-store" })).json();
-  const segments = (data.events || []).filter((e) => e.segs).map((e) => ({
-    start: Math.round((e.tStartMs || 0) / 1000),
-    text: e.segs.map((x) => x.utf8 || "").join("").replace(/\s+/g, " ").trim(),
-  })).filter((s) => s.text);
-  if (!segments.length) return { ok: false, error: "empty" };
-  return { ok: true, videoId, lang: track.languageCode, segments, title: (player.videoDetails && player.videoDetails.title) || "" };
-}
-browser.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  if (!msg || msg.type !== "yt:transcript" || !msg.videoId) return;
-  ytTranscript(msg.videoId)
-    .then((r) => sendResponse(r))
-    .catch((e) => sendResponse({ ok: false, error: e instanceof Error ? e.message : String(e) }));
-  return true;
-});
-
 // DeepSearch source reader: fetch an arbitrary URL and return its plain text. Runs in the
 // background (extension context) so it bypasses CORS via the <all_urls> host permission. Only
 // static HTML is read (no JS execution); credentials are omitted. Used to deep-read the best

@@ -109,8 +109,6 @@ body:not(.rail-collapsed) .menu-btn { color: var(--accent); }
   margin-left: -3px; padding: 3px 2px; transition: opacity 0.15s;
 }
 .brand-word:hover { opacity: 0.82; }
-/* Tabs rail hidden via the menu toggle. */
-body.rail-collapsed #rail { display: none; }
 /* Nudge the header icons right by half the width difference between the 34px accent
    buttons and the 24px page-bar icons, so the ⚙ gear lines up vertically with the 📑
    tabs-picker button below it. */
@@ -254,21 +252,6 @@ body.rail-right .rail { border-right: 0; border-left: 1px solid var(--border); }
 body.rail-right .railtab.active::before { left: auto; right: -6px; border-radius: 3px 0 0 3px; }
 
 .vs { color: var(--accent); font-weight: 700; font-size: 12px; }
-.select-wrap {
-  flex: 1 1 140px; min-width: 0; position: relative; border-radius: var(--radius-sm);
-  padding: 1px; background: var(--grad);
-}
-.select-wrap::after {
-  content: "▾"; position: absolute; right: 11px; top: 50%; transform: translateY(-50%);
-  color: var(--muted); pointer-events: none; font-size: 11px;
-}
-.select-wrap select {
-  width: 100%; appearance: none; -webkit-appearance: none;
-  padding: 8px 26px 8px 11px; border: 0; border-radius: calc(var(--radius-sm) - 1px);
-  background: var(--panel-2); color: var(--text); font-weight: 600; font-size: 13px;
-}
-.select-wrap select optgroup { color: var(--muted); font-weight: 600; }
-.select-wrap select option { color: var(--text); background: var(--panel-2); font-weight: 500; }
 
 /* ----- Toggle switches ----- */
 .switch { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
@@ -286,10 +269,6 @@ body.rail-right .railtab.active::before { left: auto; right: -6px; border-radius
 .switch input:focus-visible + .track { box-shadow: 0 0 0 2px var(--accent-2); }
 .switch .lbl { font-size: 12px; color: var(--muted); }
 .switch input:checked ~ .lbl { color: var(--text); }
-.switch.mini .track { width: 30px; height: 17px; }
-.switch.mini .track::before { width: 13px; height: 13px; }
-.switch.mini input:checked + .track::before { transform: translateX(13px); }
-.switch.mini .lbl { font-size: 11.5px; }
 
 /* ----- Dropdown panels (history / tabs) ----- */
 .panel {
@@ -352,8 +331,6 @@ body.rail-right .railtab.active::before { left: auto; right: -6px; border-radius
   content: ""; width: 4px; height: 8px; margin-top: -1px;
   border: solid var(--on-accent, #fff); border-width: 0 2px 2px 0; transform: rotate(45deg);
 }
-.cm-btn.cm-auto { font-size: 13px; }
-.cm-btn.cm-auto.on { filter: drop-shadow(0 0 4px color-mix(in srgb, var(--accent) 55%, transparent)); }
 /* 🛡 Quick analysis (Security tab) — a CUSTOM dropdown that copies the sidebar's select look exactly
    (translucent panel surface + blur + violet caret). The menu is fixed on <body> so it's never
    clipped by the composer container (that clipping squished the rows). */
@@ -480,16 +457,6 @@ body.rail-right .railtab.active::before { left: auto; right: -6px; border-radius
 #captureRegion svg { display: block; }
 #captureRegion.active { color: #fff; }
 .page-title { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-/* Eye = page-mode toggle on the selector tabs. */
-.eye-btn { border: 0; background: none; padding: 2px; cursor: pointer; color: var(--muted); display: inline-flex; align-items: center; border-radius: 6px; }
-.eye-btn:hover { color: var(--text); background: color-mix(in srgb, var(--text) 10%, transparent); }
-.eye-btn.hidden { display: none; }
-.pagebar .eye-btn svg.eye-off { display: none; }
-.pagebar.page-off .eye-btn { color: var(--muted); }
-.pagebar.page-off .eye-btn svg.eye-on { display: none; }
-.pagebar.page-off .eye-btn svg.eye-off { display: block; }
-/* When page mode is OFF, keep only the eye (to switch it back on); hide the tools + title. */
-.pagebar.page-off #pickEl, .pagebar.page-off #captureRegion, .pagebar.page-off .page-title { display: none; }
 
 /* ----- Messages ----- */
 .messages { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 11px; }
@@ -634,11 +601,8 @@ body.msg-noborder .msg.assistant { border-color: transparent; }
   color: var(--text); margin: 0; padding: 2px 8px; border-radius: 999px;
   background: var(--grad-soft); border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
 }
-/* Answer header: model pill (left) + Copy-answer button pinned to the FAR RIGHT of the embed. */
+/* Answer header: the model pill. */
 .msg .answer-head { display: flex; align-items: center; gap: 8px; margin: -2px 0 6px; }
-.msg .answer-head .answer-copy { margin-left: auto; flex: 0 0 auto; width: 26px; height: 24px; font-size: 14px; border-radius: 6px; color: var(--muted); opacity: .8; }
-.msg .answer-head .answer-copy:hover { opacity: 1; color: var(--text); background: var(--panel-2); }
-.msg .answer-head .answer-del { flex: 0 0 auto; width: 26px; height: 24px; border-radius: 6px; opacity: .85; }
 /* Delete action = red, everywhere (assistant answer-head + hover action bars). */
 .mdel { color: #ef6b6b !important; }
 .mdel:hover { color: #ff6161 !important; background: color-mix(in srgb, #ff6161 15%, transparent) !important; opacity: 1; }
@@ -661,7 +625,6 @@ body.msg-noborder .msg.assistant { border-color: transparent; }
 .ctl-group { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 /* Page-tools toggle sits right next to its tab control on the controls row (selector tabs),
    not pushed to the far right. Reuses the chat composer's .ctoggle chip design. */
-.ctl-page-btn { flex: 0 0 auto; }
 .ctl-group label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
 /* The translate language picker holds long labels (e.g. "Chinese (Simplified) — 简体中文") — give it
    room so neither the selected value nor the dropdown options are truncated. */
@@ -975,10 +938,8 @@ button[aria-expanded="true"], .combo-input:focus {
 .ctx-panel.hidden { display: none; }
 .ctx-head { display: flex; align-items: center; gap: 8px; padding: 9px 11px; border-bottom: 1px solid var(--border); }
 .ctx-title { flex: 1 1 auto; font-size: 12.5px; font-weight: 600; color: var(--text); }
-.ctx-clear, .ctx-delsel { background: none; border: 1px solid var(--border); color: var(--muted); font-size: 11px; padding: 2px 8px; border-radius: 7px; cursor: pointer; }
+.ctx-clear { background: none; border: 1px solid var(--border); color: var(--muted); font-size: 11px; padding: 2px 8px; border-radius: 7px; cursor: pointer; }
 .ctx-clear:hover { color: var(--text); border-color: var(--accent); }
-.ctx-delsel { color: #f87171; border-color: color-mix(in srgb, #f87171 45%, transparent); }
-.ctx-delsel.hidden { display: none; }
 .ctx-x { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 14px; }
 .ctx-note { padding: 6px 11px; font-size: 11px; color: var(--muted); border-bottom: 1px solid var(--border); line-height: 1.45; }
 .ctx-cb { accent-color: var(--accent); }
@@ -1315,20 +1276,6 @@ body.mode-code #confirmBar { display: none !important; }
 .cmp-popup .cmp-combo { max-width: none; flex: 1 1 0; }
 .cmp-popup .cmp-btn { width: 100%; justify-content: center; }
 .cmp-combo .combo-caret { right: 9px; font-size: 10px; }
-/* 👍/👎 rate-this-answer buttons (feed the 🏆 Auto model picker). */
-.cmp-rate { display: inline-flex; gap: 2px; }
-.cmp-vote {
-  width: 24px; height: 24px; border-radius: 6px; border: 1px solid transparent; background: transparent;
-  color: var(--muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
-}
-.cmp-vote svg { display: block; }
-.cmp-vote:hover { background: var(--panel-2); color: var(--text); }
-.cmp-like.on { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 55%, transparent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
-.cmp-dislike.on { color: #f87171; border-color: color-mix(in srgb, #f87171 55%, transparent); background: color-mix(in srgb, #f87171 12%, transparent); }
-.cmp-vote:disabled { opacity: 0.4; cursor: default; }
-/* Share button on the compare row, pushed to the far right. */
-.cmp-acts { margin-left: auto; display: inline-flex; gap: 4px; }
-.cmp-acts .mact { width: 26px; height: 24px; font-size: 14px; border-radius: 6px; }
 
 /* ----- Per-message hover actions (copy / resend / edit · copy answer) ------- */
 /* "Jump to latest" button — shown when the user has scrolled up. */
@@ -1626,7 +1573,6 @@ body.web-active .web-only-head { display: inline-flex; }
 }
 .webhivey-item:hover { background: var(--panel-2); color: var(--accent); }
 .webhivey-item svg { flex: 0 0 auto; }
-.webhivey-sep { height: 1px; background: var(--border); margin: 3px 4px; }
 /* Provider chooser — clean modern button + dropdown (like the native FF sidebar). */
 .webprov { position: relative; flex: 0 0 auto; }
 .webprov-btn {
@@ -1661,7 +1607,6 @@ body.web-active .web-only-head { display: inline-flex; }
 .webframe { flex: 1 1 auto; width: 100%; border: 0; background: var(--panel); }
 /* Claude wide-render: the frame is laid out wide & scaled down so its desktop nav shows. */
 .webframe.scaled { position: absolute; top: 0; left: 0; flex: none; }
-.wc-ext { margin-left: auto; color: var(--muted); font-size: 11px; }
 .webblocked {
   position: absolute; left: 10px; right: 10px; bottom: 10px; z-index: 2;
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center;
@@ -1705,7 +1650,6 @@ body.web-active .web-only-head { display: inline-flex; }
 .web-ov-btn:hover { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
 .web-ov-btn.active { color: var(--accent); background: var(--grad-soft); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
 .web-ov-btn svg { display: block; flex: 0 0 auto; }
-.web-ov-sep { height: 1px; background: var(--border); margin: 2px 4px; }
 /* Web tabs picker (select open tabs to send as context). */
 #webTabsMenu { min-width: 230px; max-width: 300px; }
 .web-tabs-list { display: flex; flex-direction: column; gap: 1px; max-height: 240px; overflow-y: auto; }
@@ -1714,8 +1658,8 @@ body.web-active .web-only-head { display: inline-flex; }
 .web-tab-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--text); }
 .web-tabs-empty { padding: 10px; font-size: 11.5px; color: var(--muted); text-align: center; }
 .web-tabs-send { justify-content: center; margin-top: 4px; }
-.panel-head .hd-ic, .pagebar .eye { display: inline-flex; align-items: center; vertical-align: -3px; color: var(--muted); }
-.panel-head .hd-ic svg, .pagebar .eye svg, .searchbar .search-ic svg { width: 15px; height: 15px; display: block; }
+.panel-head .hd-ic { display: inline-flex; align-items: center; vertical-align: -3px; color: var(--muted); }
+.panel-head .hd-ic svg, .searchbar .search-ic svg { width: 15px; height: 15px; display: block; }
 .searchbar input {
   flex: 1; min-width: 0; padding: 6px 9px; font-size: 13px;
   background: var(--panel); border: 1px solid var(--border); border-radius: 8px; color: var(--text);
@@ -1857,37 +1801,17 @@ mark.search-hit.current { background: #f6c945; color: #1a1408; }
 .combo-input:focus, .composer-box:focus-within { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent); }
 
 /* ── 2026 premium polish — glass + animated neon (matches Hivey Code) ───────── */
-/* soft glow that travels along the composer's edge (not a spinning frame). Shows while generating
-   (.is-busy) and softly on focus. */
 .composer-box { position: relative; background: color-mix(in srgb, var(--accent) 7%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
-/* ROTATING gradient border: a colour→transparent arc with a bright point at the centre of the
-   colour, sweeping around the chat zone. The conic gradient is masked to the border ring only. */
+/* Angle animated by the frame's fallback (.cb-ring, engines without offset-path: border-box). */
 @property --hvAngle { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
-.composer-box::before {
-  content: ""; position: absolute; inset: -1.5px; border-radius: 19px; padding: 1.5px;
-  pointer-events: none; z-index: 1; opacity: 0; transition: opacity .4s ease;
-  background: conic-gradient(from var(--hvAngle),
-      transparent 0deg,
-      color-mix(in srgb, var(--accent) 30%, transparent) 22deg,
-      var(--accent-2) 40deg,
-      color-mix(in srgb, var(--accent) 30%, transparent) 58deg,
-      transparent 80deg, transparent 360deg);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite: exclude;
-}
-.composer-box:focus-within::before { opacity: 1; animation: hvSpin 4.5s linear infinite; }
-/* While the AI is working the rotating conic border KEEPS spinning even without focus (it just isn't
-   the focus state). Focus still overrides with its own (slower) spin above. */
-.composer-box.is-busy::before { opacity: 1; animation: hvSpin 2.8s linear infinite; }
 @keyframes hvSpin { to { --hvAngle: 360deg; } }
-@media (prefers-reduced-motion: reduce) { .composer-box::before { animation: none; } }
 
 /* full-width glassy model bar + airier surfaces */
 .composer { background: rgba(255,255,255,.012); backdrop-filter: blur(12px); }
 .controls { background: rgba(255,255,255,.015); backdrop-filter: blur(12px); }
 
 /* glassy floating menus / dropdowns (those that exist; harmless otherwise) */
-.rail-add-menu, .rail-confirm, .menu, .dropdown, .pop, .hist-list, .cmp-menu {
+.rail-add-menu, .rail-confirm, .menu, .dropdown, .pop {
   background: rgba(26,24,38,.72) !important; backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
 }
 
@@ -1901,7 +1825,6 @@ mark.search-hit.current { background: #f6c945; color: #1a1408; }
 #workspace { position: relative; }
 #workArea { width: 100%; }
 .rail-resize { display: none; }                 /* no in-flow resize handle in overlay mode */
-body.rail-collapsed #rail { display: flex; }    /* overlay handles visibility, not display:none */
 
 #rail {
   position: absolute; top: 6px; left: 0; bottom: auto; z-index: 60; /* z-index 60 = ABOVE the web iframe (.webpanel z-40) */
@@ -2009,11 +1932,10 @@ body.opts-open .opts-toggle { color: var(--accent); }
 .composer-tools, .composer-main { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 .controls { background: transparent !important; border-top: 0 !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 /* Input / model-picker / tab-option selectors share HiveyCode's .composer-box surface: a soft violet
-   translucent tint + blur, border var(--border) (focus var(--accent)). The conic contour animation on
-   .composer-box::before is untouched. For the <select> we set background-COLOR only so the caret image
-   from its base rule survives. */
+   translucent tint + blur, border var(--border) (focus var(--accent)). For the <select> we set
+   background-COLOR only so the caret image from its base rule survives. */
 /* Only the coloured BORDER (a soft violet 1px ring) — no background fill, no backdrop blur, no glow
-   behind. The conic focus animation on .composer-box::before stays intact. */
+   behind. The busy-frame light is .cb-ring / .cb-comet, at the end of this file. */
 .composer-box, .combo-input, .sec-analysis-btn, .ctl-group#pdfControls .chip {
   background: transparent !important;
   -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
@@ -2036,9 +1958,7 @@ body.opts-open .opts-toggle { color: var(--accent); }
 body:not(.mode-chat):not(.mode-wisebase) #optsToggle { display: none !important; }
 body:not(.mode-chat):not(.mode-wisebase).opts-open #chatControls { display: none !important; }
 
-/* #5 — Thinking 3-segment control (off / on / max) */
-.think-row { cursor: default; }
-.think-row[hidden] { display: none; }
+/* #5 — Thinking segmented control */
 .think-seg { margin-left: auto; display: inline-flex; flex-wrap: wrap; justify-content: flex-end; gap: 2px; padding: 2px; border-radius: 8px; background: color-mix(in srgb, var(--text) 7%, transparent); }
 .ts-btn { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px; cursor: pointer; transition: background .14s, color .14s; }
 .ts-btn:hover { color: var(--text); }
@@ -2062,8 +1982,8 @@ body:not(.mode-chat):not(.mode-wisebase).opts-open #chatControls { display: none
   cursor: pointer; color: var(--accent); font-weight: 600;
 }
 .pagebar.selectors-only.has-tabsel .page-title:hover { text-decoration: underline; }
-/* The "Page" option (auto page reading) is removed from the options popup — the page TOOLS bar
-   (pick element / capture region / tab picker) is always available at the top instead. */
+/* The "Page" option (auto page reading) is not in the options popup: the page comes in with « @ »
+   (Current page) or the « The AI sees the current page » setting; the page tools are in the « + » menu. */
 #chatControls .ctoggle:has(#pageCtx) { display: none !important; }
 
 /* When the tabs rail is deployed (hover peek or pinned), shift the AI response list to the right so
@@ -2096,7 +2016,6 @@ body.theme-light {
 body.theme-light #messages { background: transparent !important; }
 body.theme-light .empty-logo svg,
 body.theme-light .empty-logo img,
-body.theme-light .empty-greeting,
 body.theme-light .empty-features,
 body.theme-light .empty-title { filter: none !important; text-shadow: none !important; }
 body.theme-light .menu-btn svg { filter: none !important; } /* brand keeps its violet colour, no halo */
@@ -2454,9 +2373,7 @@ details.think.live > summary::after { content: "…"; animation: thinkPulse 1.2s
 .think-pop .think-seg { display: flex; flex-direction: column; align-items: stretch; gap: 2px; margin: 0; padding: 0; background: none; }
 .think-pop .ts-btn { text-align: left; padding: 7px 10px; border-radius: 8px; font-size: 13px; }
 /* Send: the brand gradient; replaced by Stop while the model works. */
-.ctool.send-btn { border: 0; background: var(--grad); color: var(--on-accent); }
-.ctool.send-btn:hover { color: var(--on-accent); filter: brightness(1.08); }
-.ctool.send-btn.hidden, .ctool.stop.hidden { display: none; }
+.ctool.stop.hidden { display: none; }
 /* Under the frame: where the model runs, and how full its window is / what it has cost. */
 .composer-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 6px; min-height: 18px; }
 .cf-priv, .composer-foot .ctx-gauge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 6px; border: 0; border-radius: 6px;
@@ -2469,10 +2386,6 @@ details.think.live > summary::after { content: "…"; animation: thinkPulse 1.2s
 .composer-foot .ctx-gauge .cg-ring { width: 13px; height: 13px; }
 /* Under an answer: its tokens and its cost. */
 .answer-meta { margin-top: 6px; font-size: 11px; color: var(--muted); }
-/* Context actions that say what they do. */
-.mact-bar .mact.mact-labelled { width: auto; min-width: 0; padding: 0 8px; gap: 5px; display: inline-flex; align-items: center; border-radius: 999px; white-space: nowrap; }
-.mact-bar .mact.mact-labelled .mact-word { font-size: 11.5px; font-weight: 600; }
-.mact-bar .mact.mact-labelled.on { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
 button.ctx-tag { border: 0; background: transparent; padding: 0; cursor: pointer; font: inherit; text-align: inherit; }
 button.ctx-tag:hover { color: var(--text); text-decoration: underline; }
 /* The suggested next request, greyed in the empty box. */
@@ -2493,7 +2406,6 @@ button.ctx-tag:hover { color: var(--text); text-decoration: underline; }
 .composer-tools .model-chip .mc-icon { font-size: 15px; line-height: 1; }
 .composer-tools .cchip .tc-icon { display: inline-flex; }
 .composer-tools .model-chip .combo-caret, .composer-tools .cchip .tc-caret { color: var(--accent); opacity: .8; }
-.composer-tools .ctool.send-btn svg { width: 17px; height: 17px; }
 
 /* The "+" menu: attach a file, or bring the page in. */
 .plus-menu { min-width: 220px; padding: 6px; }
@@ -2514,7 +2426,6 @@ button.ctx-tag:hover { color: var(--text); text-decoration: underline; }
 .ctx-pop { width: 240px; }
 .ctx-pop .cp-used { font-size: 12.5px; color: var(--text); padding: 0 6px 8px; }
 .ctx-pop .cp-sub { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); padding: 6px 6px 4px; border-top: 1px solid var(--border); }
-.ctx-pop .cp-hint { margin: 6px 6px 4px; font-size: 11.5px; color: var(--muted); line-height: 1.35; }
 .ctx-pop .cp-sizes[hidden] { display: none; }
 .ctx-pop .cp-compact { width: 100%; margin-top: 6px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px;
   background: transparent; color: var(--accent); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
@@ -2550,8 +2461,6 @@ button.ctx-tag:hover { color: var(--text); text-decoration: underline; }
 .ctx-pop .ctx-seg .ts-btn:first-child { grid-column: 1 / -1; text-align: left; padding: 7px 10px; }
 /* Send wears the brand gradient (the transparent toolbar rule had left a white arrow on nothing,
    invisible on a light theme). */
-.composer-tools .ctool.send-btn { background: var(--grad) !important; color: var(--on-accent) !important; border-radius: 50%; }
-.composer-tools .ctool.send-btn:hover { filter: brightness(1.1); }
 body.theme-light .model-chip .combo-input { border: 0 !important; background: transparent !important; box-shadow: none !important; }
 
 /* ── Narrow sidebars (Firefox opens its sidebar about 250 px wide) ─────────────────────────────
@@ -2577,7 +2486,6 @@ body.theme-light .model-chip .combo-input { border: 0 !important; background: tr
    acts: a 1.5 px line in the theme's two accents, dimmed and still, and ONE light that runs round it
    along the frame's own edge (offset-path: border-box) at a constant speed — no dashes, no glow
    outside, nothing over the text. */
-.composer-box::before { display: none !important; }
 .composer-box:hover, .composer-box:focus-within {
   border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 12%, transparent);
 }

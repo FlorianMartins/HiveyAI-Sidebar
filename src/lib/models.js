@@ -413,28 +413,20 @@ export function baseUrlFor(providerId, settings) {
   return (override && override.trim()) || PROVIDERS[providerId].baseUrl;
 }
 
-// Selected model for this provider (falls back to the first default).
 // ----- "Hivey" smart auto-routing ------------------------------------------
-// One selectable pseudo-model that routes EACH task to the best OpenRouter model for the
-// job — cheap models for housekeeping, an affordable strong model for chat/code, premium
-// for heavy reasoning and the agent, and a premium image model — so big models (Opus) are
-// only spent when they're actually needed. All via the user's OpenRouter key.
-// ── Hivey: four smart-routing pseudo-models, cheapest → priciest ────────────
-// Each routes EVERY task to the best model of its budget. Tiers: utility=router +
+// Three selectable pseudo-models — Free, Smart, Pro — each route EVERY task to the best OpenRouter
+// model of its budget, all via the user's OpenRouter key, so big models are only spent when they're
+// actually needed. Internal ids (kept so saved choices keep working): hivey/free = Free,
+// hivey/hybrid = Smart, hivey/smart = Pro. Models per role: hivey-models.js. Tiers: utility=router +
 // housekeeping (never user-facing), light=trivial (kept cheap), chat=everyday
 // substantive answers (the BEST FORMATTER of the budget), code=real programming,
 // reasoning=deep/hardest, agent=tools, search=cheap web-research fetcher (a small
 // model gathers, then the routed model analyses), image=picture gen. `emoji`/`color`
 // = the price dot in the picker.
 //  • free 🎁 → 100% free models ($0), auto-rotating between the best free OpenRouter models
-//    as the user's free credits / rate-limits run out. This is now the ONLY Hivey variant:
-//    the paid composite variants (low-cost / balanced / pro) were removed because routing a
-//    single request across several paid APIs cost MORE for a WORSE result than just picking a
-//    good model directly — and all the good "technologies" (artifacts, Thinking max, web,
-//    verify) now work on ANY model the user selects, so the composite added no value.
+//    as the user's free credits / rate-limits run out — the default variant.
 export const HIVEY_DEFAULT = "hivey/free";
-export const HIVEY_AUTO = HIVEY_DEFAULT; // back-compat alias for old imports
-// Legacy selection ids (incl. the removed paid variants) → Hivey Free, so a persisted choice
+// Legacy selection ids (old variants that no longer exist) → Hivey Free, so a persisted choice
 // keeps working and silently falls back to the free variant.
 const HIVEY_ALIASES = {
   "hivey/auto": "hivey/free",
@@ -453,7 +445,7 @@ function orTiers(m) {
   for (const k in m) o[k] = "openrouter|" + m[k];
   return o;
 }
-// "Hivey" is the provider (group header); the models are just Smart / Optimize / Free (no redundant
+// "Hivey" is the provider (group header); the models are just Pro / Smart / Free (no redundant
 // "Hivey" prefix on every row).
 export const HIVEY_VARIANTS = {
   "hivey/smart": { label: "Pro", emoji: "✨", color: "#a855f7", tiers: orTiers(HIVEY_MODELS["hivey/smart"]) },
@@ -616,14 +608,10 @@ export const WRITING_PRESETS = [
   ["storytelling", "Storytelling", "Réécris ce texte sous forme de narration immersive (storytelling) qui capte l'attention."],
 ];
 
-// Improve mode is two-dimensional (Sider-style): an ACTION (WRITING_PRESETS above) × a TONE, plus an
-// optional LENGTH for content-generation actions. "auto" = no directive (keep the action's own voice).
-// Labels + prompt fragments live in i18n (tone.* / tonePrompt.* / length.* / lengthPrompt.*), so the
-// generated instructions are always in the user's language.
+// Improve mode is two-dimensional (Sider-style): an ACTION (WRITING_PRESETS above) × a TONE.
+// "auto" = no directive (keep the action's own voice). Labels + prompt fragments live in i18n
+// (tone.* / tonePrompt.*), so the generated instructions are always in the user's language.
 export const WRITING_TONES = [
   "auto", "professional", "friendly", "empathetic", "confident",
   "persuasive", "enthusiastic", "serious", "casual", "academic", "inspiring",
 ];
-export const WRITING_LENGTHS = ["auto", "short", "medium", "long"];
-// Actions whose length is intrinsic — the Length pin is hidden for these.
-export const NO_LENGTH_PRESETS = ["shorten", "tweet", "fixGrammar"];

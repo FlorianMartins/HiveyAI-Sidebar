@@ -161,61 +161,6 @@ function setHTML(el, html) { if (el) el.innerHTML = html == null ? "" : html; }
     return { selection: (window.getSelection() || "").toString().slice(0, 8000) };
   }
 
-  // --- YouTube transcript (for universal summary) -------------------------------
-  function ytVideoId() {
-    try {
-      const u = new URL(location.href);
-      if (/(^|\.)youtu\.be$/.test(u.hostname)) return u.pathname.slice(1);
-      return u.searchParams.get("v") || (location.pathname.startsWith("/shorts/") ? location.pathname.split("/")[2] : null);
-    } catch (_) { return null; }
-  }
-  // Extract one balanced {...} JSON object starting at `startIdx` (respecting strings/escapes).
-  function extractJsonObject(str, startIdx) {
-    let depth = 0, inStr = false, esc = false;
-    for (let i = startIdx; i < str.length; i++) {
-      const ch = str[i];
-      if (inStr) { if (esc) esc = false; else if (ch === "\\") esc = true; else if (ch === '"') inStr = false; }
-      else if (ch === '"') inStr = true;
-      else if (ch === "{") depth++;
-      else if (ch === "}") { depth--; if (depth === 0) return str.slice(startIdx, i + 1); }
-    }
-    return null;
-  }
-  async function readTranscript() {
-    const isYT = /(^|\.)youtube\.com$/.test(location.hostname) || /(^|\.)youtu\.be$/.test(location.hostname);
-    if (!isYT) return { ok: false, error: "not_youtube" };
-    let player = null;
-    try {
-      for (const s of document.scripts) {
-        const txt = s.textContent || "";
-        const i = txt.indexOf("ytInitialPlayerResponse");
-        if (i < 0) continue;
-        const brace = txt.indexOf("{", i);
-        if (brace < 0) continue;
-        const json = extractJsonObject(txt, brace);
-        if (json) { try { player = JSON.parse(json); } catch (_) {} }
-        if (player) break;
-      }
-    } catch (_) {}
-    const tl = player && player.captions && player.captions.playerCaptionsTracklistRenderer;
-    const tracks = tl && tl.captionTracks;
-    if (!tracks || !tracks.length) return { ok: false, error: "no_captions", videoId: ytVideoId() };
-    const uiLang = (document.documentElement.lang || "").slice(0, 2);
-    const track = tracks.find((t) => (t.languageCode || "").startsWith(uiLang)) || tracks.find((t) => (t.languageCode || "").startsWith("en")) || tracks[0];
-    if (!track || !track.baseUrl) return { ok: false, error: "no_captions", videoId: ytVideoId() };
-    const url = track.baseUrl + (track.baseUrl.includes("?") ? "&" : "?") + "fmt=json3";
-    try {
-      const res = await fetch(url);
-      const data = await res.json();
-      const segments = (data.events || []).filter((e) => e.segs).map((e) => ({
-        start: Math.round((e.tStartMs || 0) / 1000),
-        text: e.segs.map((x) => x.utf8 || "").join("").replace(/\s+/g, " ").trim(),
-      })).filter((s) => s.text);
-      if (!segments.length) return { ok: false, error: "empty", videoId: ytVideoId() };
-      return { ok: true, videoId: (player.videoDetails && player.videoDetails.videoId) || ytVideoId(), title: document.title.replace(/\s*-\s*YouTube$/, ""), url: location.href, lang: track.languageCode, segments };
-    } catch (_) { return { ok: false, error: "fetch_failed", videoId: ytVideoId() }; }
-  }
-
   // --- In-page translation (overlay) --------------------------------------
   // Collect the page's visible text nodes, hand them to the sidebar for translation, then swap them
   // back in place. Originals are kept so a floating toggle can flip between original / translated.
@@ -1036,8 +981,6 @@ function setHTML(el, html) { if (el) el.innerHTML = html == null ? "" : html; }
         return Promise.resolve(readPage());
       case "read_selection":
         return Promise.resolve(readSelection());
-      case "read_transcript":
-        return readTranscript();
       case "tr_collect":
         return Promise.resolve(trCollect());
       case "tr_apply":
