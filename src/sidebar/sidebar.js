@@ -218,12 +218,25 @@ const els = {
   confirmAllow: $("confirmAllow"),
   confirmDeny: $("confirmDeny"),
 };
-// The composer's height, for the rail to stop above it (CSS --composer-h).
+// The composer's height, for the rail to stop above it (CSS --composer-h). When the pinned rail's
+// tabs don't fit above the composer (a short sidebar), the rail keeps its full height — as on the
+// tabs without a composer (Benchmark, Hivey Code) — and the composer makes room beside it
+// (body.rail-tall) instead of the tabs being squeezed…
 (() => {
-  const c = document.querySelector("footer.composer");
+  const c = document.querySelector("footer.composer"), rail = document.getElementById("rail");
   if (!c || typeof ResizeObserver === "undefined") return;
-  const set = () => document.documentElement.style.setProperty("--composer-h", (c.hidden || c.offsetParent === null ? 0 : c.offsetHeight) + "px");
-  new ResizeObserver(set).observe(c); set();
+  const set = () => {
+    const h = c.hidden || c.offsetParent === null ? 0 : c.offsetHeight;
+    document.documentElement.style.setProperty("--composer-h", h + "px");
+    if (!rail || !rail.parentElement) return;
+    const tabs = rail.querySelectorAll(".railtab:not(.hidden)").length, cs = getComputedStyle(rail);
+    const need = tabs * 42 + Math.max(0, tabs - 1) * (parseFloat(cs.rowGap) || 5) + (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+    // …only while the composer keeps a usable width beside it (≥ 260 px): in Firefox's narrowest
+    // sidebar it would be left too narrow for its own row of buttons.
+    const roomBeside = rail.parentElement.clientWidth - (rail.offsetWidth || parseFloat(cs.width) || 56) - 4;
+    document.body.classList.toggle("rail-tall", h > 0 && need > rail.parentElement.clientHeight - h - 18 && roomBeside >= 260);
+  };
+  const ro = new ResizeObserver(set); ro.observe(c); if (rail && rail.parentElement) ro.observe(rail.parentElement); set();
 })();
 // Whether the current tab offers page tools (the "N tabs in context" bar shows only there).
 let pageBarAllowed = false;
@@ -570,7 +583,29 @@ async function init() {
   // An aspect-ratio mark before « Size », in the theme's colour like the row's other icons.
   { const b = els.imageSize.nextElementSibling;
     if (b && b.classList.contains("themed-sel-btn")) b.insertAdjacentHTML("afterbegin", '<svg class="sz-ic" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8V5a2 2 0 0 1 2-2h3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M21 16v3a2 2 0 0 1-2 2h-3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><rect x="7" y="8" width="10" height="8" rx="1.5"/></svg>'); }
+  // Wisebase's two side buttons become the last lines of the collection list (one button in the row).
+  els.wbScope._extras = ["wbManageBtn", "wbAddPageBtn"].map((id) => {
+    const b = document.getElementById(id), ic = b && b.querySelector("svg");
+    return { label: () => b.getAttribute("title") || "", icon: ic ? ic.outerHTML : "", onPick: () => b.click() };
+  });
+  els.wbScope._menuWidth = 240;
   themeNativeSelect(els.wbScope);
+  // The tab's own settings (language, style, analysis, collection) sit in the composer's row, as
+  // Image's « Size »: a button with the tab's icon — no bar above the frame for the rail to cover.
+  {
+    const slot = document.getElementById("tabOpts");
+    const place = (group, mode) => {
+      if (!slot || !group) return;
+      const ic = document.querySelector(`#rail .railtab[data-mode="${mode}"] svg`);
+      group._optIcon = ic ? ic.outerHTML.replace("<svg ", '<svg class="sz-ic" ') : "";
+      slot.appendChild(group);
+      group.querySelectorAll(".themed-sel-btn, .improve-pick-btn").forEach((b) => b.insertAdjacentHTML("afterbegin", group._optIcon));
+    };
+    place(document.getElementById("translateControls"), "translate");
+    place(document.getElementById("improveControls"), "improve");
+    place(document.getElementById("wisebaseControls"), "wisebase");
+    if (els.secRecipes) { els.secRecipes._optIcon = (document.querySelector('#rail .railtab[data-mode="security"] svg') || {}).outerHTML || ""; slot && slot.appendChild(els.secRecipes); }
+  }
   syncToggleVisibility();
   updateImageNote();
   wire();
@@ -1389,9 +1424,7 @@ function setupImprovePicker() {
     menu.classList.remove("hidden");
     const r = btn.getBoundingClientRect();
     menu.style.left = Math.max(8, Math.min(r.left, window.innerWidth - menu.offsetWidth - 8)) + "px";
-    const mh = menu.offsetHeight, above = r.top - 6 - mh;
-    menu.style.top = (above > 8 ? above : Math.min(r.bottom + 6, window.innerHeight - mh - 8)) + "px";
-    fitPopup(menu);
+    placeAbove(menu, r);
     const closer = (e) => { if (menu && !menu.contains(e.target) && !btn.contains(e.target)) { closeMenu(); document.removeEventListener("mousedown", closer); } };
     setTimeout(() => document.addEventListener("mousedown", closer), 0);
   };
@@ -2563,6 +2596,10 @@ function flashTopBanner(msg) {
   if (!b) { b = document.createElement("div"); b.id = "topBanner"; b.className = "top-banner"; }
   b.textContent = msg;
   host.appendChild(b);
+  // Level with the rail's first tab (Chat), centred on it — the CSS place stays when the rail is hidden.
+  const first = document.querySelector("#rail .railtab");
+  const fr = first && first.offsetParent ? first.getBoundingClientRect() : null;
+  b.style.top = fr && fr.height ? Math.max(4, fr.top - host.getBoundingClientRect().top + (fr.height - b.offsetHeight) / 2) + "px" : "";
   void b.offsetWidth; b.classList.add("show");
   clearTimeout(b._t);
   b._t = setTimeout(() => { b.classList.remove("show"); setTimeout(() => { if (b.parentNode) b.remove(); }, 300); }, 5000);
@@ -2949,8 +2986,7 @@ function setMode(next) {
   els.wisebaseControls.classList.toggle("hidden", next !== "wisebase");
   // The per-mode controls row is only useful for translate/improve/image/pdf/wisebase; hide it
   // entirely on Chat/Agent/Code so there's no empty bar.
-  els.controls.hidden = !["translate", "improve", "pdf", "wisebase"].includes(next)
-    || (next === "pdf" && pdfs.length === 0); // PDF tab: no empty bar — it appears once a PDF is added via "+"
+  els.controls.hidden = next !== "pdf" || pdfs.length === 0; // PDF tab: no empty bar — it appears once a PDF is added via "+"
   // Attach (+) is offered on Chat/Agent/Translate/Improve/Image + Security (for .pcap/logs) + PDF
   // (the "+" replaces the old "Load PDF" button — a PDF-only picker in the composer).
   const composeExtras = ["chat", "agent", "translate", "improve", "image", "security", "wisebase", "pdf"].includes(next);
@@ -5408,6 +5444,7 @@ function renderSecRecipes(next) {
   btn.type = "button"; btn.className = "sec-analysis-btn";
   btn.innerHTML = '<span class="sa-label"></span><span class="sa-caret" aria-hidden="true"><svg viewBox="0 0 10 10" width="10" height="10"><path d="M1 3l4 4 4-4" stroke="currentColor" fill="none" stroke-width="1.6"/></svg></span>';
   btn.querySelector(".sa-label").textContent = t("an.custom");
+  if (els.secRecipes._optIcon) btn.insertAdjacentHTML("afterbegin", els.secRecipes._optIcon.replace("<svg ", '<svg class="sz-ic" '));
   btn.addEventListener("click", (e) => { e.stopPropagation(); openAnalysisMenu(btn); });
   els.secRecipes.appendChild(btn);
   els.secRecipes.classList.remove("hidden");
@@ -5441,12 +5478,9 @@ function openAnalysisMenu(anchor) {
   // Position it (fixed) ABOVE the button, matching its width.
   const r = anchor.getBoundingClientRect();
   analysisMenuEl.style.left = `${r.left}px`;
-  analysisMenuEl.style.width = `${r.width}px`;
+  analysisMenuEl.style.width = `${Math.min(window.innerWidth - 16, Math.max(r.width, 240))}px`; // the button may be its icon only
   analysisMenuEl.classList.remove("hidden");
-  const mh = analysisMenuEl.offsetHeight;
-  const above = r.top - 6 - mh;
-  analysisMenuEl.style.top = `${above > 8 ? above : Math.min(r.bottom + 6, window.innerHeight - mh - 8)}px`;
-  fitPopup(analysisMenuEl);
+  placeAbove(analysisMenuEl, r);
   const closer = (e) => { if (analysisMenuEl && !analysisMenuEl.contains(e.target) && e.target !== anchor && !anchor.contains(e.target)) { closeAnalysisMenu(); document.removeEventListener("mousedown", closer); } };
   setTimeout(() => document.addEventListener("mousedown", closer), 0);
 }
@@ -5507,6 +5541,18 @@ function uiLanguageName() { return { fr: "French", es: "Spanish", de: "German", 
  * Keep a floating menu inside the work area: never over the pinned tab rail or the top bar, never
  * wider or taller than the room (on a small sidebar they opened over the rail and the header).
  */
+/** Opens a menu ABOVE its button (r = the button's box): a list taller than the room above is
+ *  capped there and scrolls, rather than coming down over the composer. Below only when the room
+ *  above is too small to be useful. */
+function placeAbove(el, r) {
+  const wa = document.getElementById("workArea");
+  const room = r.top - 6 - Math.max(wa ? wa.getBoundingClientRect().top + 4 : 8, 8);
+  el.style.maxHeight = ""; el.style.overflowY = "";
+  if (el.offsetHeight > room && room >= 140) { el.style.maxHeight = room + "px"; el.style.overflowY = "auto"; }
+  const mh = el.offsetHeight, above = r.top - 6 - mh;
+  el.style.top = (above > 8 ? above : Math.min(r.bottom + 6, window.innerHeight - mh - 8)) + "px";
+  fitPopup(el);
+}
 function fitPopup(el) {
   if (!el) return;
   const wa = document.getElementById("workArea");
@@ -5559,13 +5605,25 @@ function themeNativeSelect(sel) {
       item.addEventListener("click", pick); // Enter / Space on the focused item
       menuEl.appendChild(item);
     }
+    // Actions listed under the choices (Wisebase: manage the collections, add this page).
+    if (sel._extras && sel._extras.length) {
+      const sep = document.createElement("div"); sep.className = "sa-sep"; menuEl.appendChild(sep);
+      for (const x of sel._extras) {
+        const item = document.createElement("button");
+        item.type = "button"; item.className = "sa-item sa-extra";
+        if (x.icon) item.insertAdjacentHTML("afterbegin", x.icon);
+        const s = document.createElement("span"); s.textContent = x.label(); item.appendChild(s);
+        const run = () => { closeMenu(); x.onPick(); };
+        item.addEventListener("mousedown", (e) => { e.preventDefault(); run(); });
+        item.addEventListener("click", run);
+        menuEl.appendChild(item);
+      }
+    }
     const r = btn.getBoundingClientRect();
     const w = Math.min(window.innerWidth - 16, Math.max(Math.round(r.width), sel._menuWidth || 170));
     menuEl.style.left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8)) + "px"; menuEl.style.width = w + "px";
     menuEl.classList.remove("hidden");
-    const mh = menuEl.offsetHeight, above = r.top - 6 - mh;
-    menuEl.style.top = (above > 8 ? above : Math.min(r.bottom + 6, window.innerHeight - mh - 8)) + "px";
-    fitPopup(menuEl);
+    placeAbove(menuEl, r);
     const closer = (e) => { if (menuEl && !menuEl.contains(e.target) && !btn.contains(e.target)) { closeMenu(); document.removeEventListener("mousedown", closer); } };
     setTimeout(() => document.addEventListener("mousedown", closer), 0);
     // The keyboard finds an item: typing « fr » lands on Français, arrows move, Escape closes.

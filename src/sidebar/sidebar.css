@@ -2491,10 +2491,12 @@ body.theme-light .model-chip .combo-input { border: 0 !important; background: tr
    acts: a 1.5 px line in the theme's two accents, dimmed and still, and ONE light that runs round it
    along the frame's own edge at a constant speed — no dashes, no glow
    outside, nothing over the text. */
-.composer-box:hover, .composer-box:focus-within {
-  border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 12%, transparent);
+/* The accent border gets a half-pixel twin just outside it: a lone 1 px line is spread over two
+   pixels in the rounded corners and looked thinner there than along the straight sides. */
+.composer-box:hover, .composer-box:focus-within, .composer-box.is-busy {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 .5px var(--accent), 0 0 0 2.5px color-mix(in srgb, var(--accent) 12%, transparent);
 }
-.composer-box.is-busy { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 12%, transparent); } /* the colour of the focused frame */
 .cb-ring { display: none; position: absolute; inset: -1px; border-radius: 18px; pointer-events: none;
   padding: 1.5px;
   background: conic-gradient(from 200deg,
@@ -2590,6 +2592,11 @@ body:not(.web-active) .topbar .row #webHistorySlot > * { display: none; }
    (--composer-h, measured): on a short sidebar it covered the composer and its « + ». The composer
    keeps the full width. The prompt library opens beside the rail. */
 #rail { max-height: calc(100% - var(--composer-h, 0px) - 12px) !important; }
+/* A short sidebar: the pinned rail keeps its full height (as on Benchmark) and the composer sits
+   beside it (body.rail-tall, set by sidebar.js when the tabs don't fit above the composer). */
+body.rail-tall.rail-pinned #rail { max-height: calc(100% - 12px) !important; }
+body.rail-tall.rail-pinned:not(.rail-right) footer.composer { padding-left: calc(var(--rail-w, 56px) + 4px); }
+body.rail-tall.rail-pinned.rail-right footer.composer { padding-right: calc(var(--rail-w, 56px) + 4px); }
 body.rail-pinned:not(.rail-right) .plib-panel { left: calc(var(--rail-w, 56px) + 8px); }
 body.rail-pinned.rail-right .plib-panel { right: calc(var(--rail-w, 56px) + 8px); }
 /* Popups never taller than the room above the composer, nor wider than the work area. */
@@ -2617,3 +2624,27 @@ body.rail-pinned.rail-right .plib-panel { right: calc(var(--rail-w, 56px) + 8px)
 .top-banner.show { transform: translateY(0); }
 body.rail-pinned:not(.rail-right) .top-banner { left: calc(var(--rail-w, 56px) + 8px); }
 body.rail-pinned.rail-right .top-banner { right: calc(var(--rail-w, 56px) + 8px); }
+
+/* ── The tab's own settings in the composer's row (Translate, Improve, Security, Wisebase): one
+   button like Image's « Size » — the tab's icon, the current choice, a caret; on a narrow sidebar
+   the icon and the caret only. No bar above the frame any more, so the rail never covers it. */
+.tab-opts { display: inline-flex; align-items: center; min-width: 0; }
+.tab-opts .ctl-group, .tab-opts .sec-recipes, .tab-opts .improve-seg {
+  display: inline-flex; align-items: center; gap: 0; margin: 0; padding: 0; width: auto; min-width: 0; border: 0; background: none; }
+.tab-opts .ctl-group.hidden, .tab-opts .sec-recipes.hidden { display: none; }
+.tab-opts .wb-ctl-btn { display: none; } /* listed at the end of the collection menu instead */
+.tab-opts .sec-analysis-btn { width: auto; min-width: 0; max-width: 170px; height: 30px; padding: 0 8px; gap: 4px; border: 0 !important; border-radius: 8px;
+  background: transparent !important; box-shadow: none !important; color: var(--muted); font-size: 12.5px; font-weight: 600; flex: 0 1 auto; }
+.tab-opts .sec-analysis-btn:hover { background: color-mix(in srgb, var(--text) 8%, transparent) !important; }
+.tab-opts .sec-analysis-btn .sa-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.tab-opts .sec-analysis-btn .sz-ic { flex: 0 0 auto; width: 17px; height: 17px; color: var(--accent); }
+.tab-opts .sec-analysis-btn .sa-caret { color: var(--accent); flex: 0 0 auto; }
+@media (max-width: 380px) { .tab-opts .sec-analysis-btn .sa-label { display: none; } }
+.themed-sel-menu .sa-sep { height: 1px; margin: 4px 6px; background: var(--border); }
+.themed-sel-menu .sa-item.sa-extra { display: flex; align-items: center; gap: 8px; }
+.themed-sel-menu .sa-item.sa-extra svg { flex: 0 0 auto; color: var(--accent); }
+/* Short of room, the tab's button gives way before the model's name. */
+.composer-tools .tools-right { flex: 0 1 auto; min-width: 0; }
+.composer-tools .tools-left { flex-shrink: 0; }
+.tab-opts { flex: 0 1 auto; }
+.themed-sel-menu .sa-item.sa-extra span { white-space: normal; overflow: visible; text-overflow: clip; }
