@@ -10,6 +10,8 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Bandeau de confirmation** (« Connecté à OpenRouter »…) : il occupe toute la largeur à droite de la barre des onglets, et son texte passe à la ligne au lieu d'être coupé par « … » ou de passer sous la barre.
+
 - **Image : chaque modèle propose les tailles qu'il respecte vraiment** (mesuré sur OpenRouter) :
   - tous les modèles **Gemini** ont les 6 formats ; en plus, la **2K** pour Gemini 3 Pro Image et
     la **4K** pour Gemini 3.1 Flash Image et Nano Banana 2.1 (Gemini 2.5 Flash Image et 3.1 Flash
