@@ -10,6 +10,17 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Zone de saisie : bordure régulière** au survol et pendant une réponse. Les coins arrondis ne
+  paraissent plus plus fins que les côtés.
+- **Options des onglets dans la zone de saisie** : sur Traduction, Improve, Cybersécurité et
+  Wisebase, la langue, le style, l'analyse ou la collection se choisissent avec un bouton à icône dans
+  la rangée du bas, comme « Size » sur l'onglet Image. La barre au-dessus du cadre, que la barre des
+  onglets recouvrait sur un petit écran, disparaît. Sur Wisebase, « Gérer les collections » et
+  « Ajouter la page » sont en bas de la liste des collections. Les listes s'ouvrent au-dessus du bouton.
+- **Barre des onglets sur un écran peu haut** : elle garde toute sa hauteur et son espacement, comme
+  sur Benchmark et Hivey Code, et la zone de saisie se place à côté (si la sidebar est assez large ;
+  sinon la barre s'arrête au-dessus de la zone de saisie, comme avant).
+- **Le message « Connecté à OpenRouter »** s'affiche au niveau de l'onglet Chat.
 - **Bouton Stop** : même taille que les autres boutons de la zone de saisie, un carré rouge en
   contour au lieu d'un carré plein.
 - **Le cadre lumineux de la page pilotée par l'agent pulse sans saccade** (même rendu) : la pulsation
