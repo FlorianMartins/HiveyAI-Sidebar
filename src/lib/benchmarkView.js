@@ -57,13 +57,13 @@ export function buildRows({ catalogue = [], measured = {} }) {
       measured: mine?.score ?? null,
       measuredAt: mine?.at || null,
       measuredThin: mine ? mine.answered < mine.total : false,
-      aider: web.aider?.pass ?? null,
-      aiderAs: web.aider?.as || null,
+      code: web.webdev?.elo ?? null,
+      codeAs: web.webdev?.as || null,
       halluc: web.vectara?.hallucination ?? null,
       hallucAs: web.vectara?.as || null,
       price: cat?.pricing?.completion ? +cat.pricing.completion * 1e6 : null,
       ctx: cat?.context_length ?? null,
-      covered: !!(web.aider || web.vectara),
+      covered: !!(web.webdev || web.vectara),
       created: cat?.created || 0,
     });
   }
@@ -121,7 +121,7 @@ export function initBenchmarkView({ els, t, lang = () => "fr", callModel, load, 
   let measured = {};
   let picked = [];
   let families = FAMILIES.slice();
-  let sortKey = "aider";
+  let sortKey = "code";
   let abort = null;
 
   const el = (tag, cls, text) => {
@@ -439,8 +439,9 @@ export function initBenchmarkView({ els, t, lang = () => "fr", callModel, load, 
         s.title = title;
         vals.append(s);
       };
-      val("aider", t("bench.pub.code"), r.aider == null ? null : `${nf(r.aider, 0)} %`,
-        t("bench.pub.codeTitle") + (r.aiderAs && r.aiderAs !== r.id ? ` — ${t("bench.publishedAs", { as: r.aiderAs })}` : ""));
+      // An Elo rating (LMArena WebDev): no unit, only the order and the gaps mean something.
+      val("code", t("bench.pub.code"), r.code == null ? null : nf(r.code, 0),
+        t("bench.pub.codeTitle") + (r.codeAs && r.codeAs !== r.id ? ` — ${t("bench.publishedAs", { as: r.codeAs })}` : ""));
       val("halluc", t("bench.pub.halluc"), r.halluc == null ? null : `${nf(r.halluc, 1)} %`,
         t("bench.pub.hallucTitle") + (r.hallucAs && r.hallucAs !== r.id ? ` — ${t("bench.publishedAs", { as: r.hallucAs })}` : ""));
       val("price", t("bench.pub.price"), r.price == null ? null : `${nf(r.price, 2)} $`, t("bench.pub.priceTitle"));

@@ -344,8 +344,9 @@ et bases Wisebase restent dans votre navigateur. Détails :
   les faits) et **pièges** (un ordre caché dans un e-mail ou une page, à ne pas suivre). Relancer un
   seul type ne remplace que celui-là dans le résultat du modèle. Le **rapport détaillé** s'ouvre à
   la fin : graphique, détail par type de question, chaque question manquée avec la réponse du
-  modèle, à enregistrer en HTML ou imprimer en PDF. Les **classements publics** (Aider pour le code,
-  Vectara pour les inventions) sont repliés en bas, en liste triable, avec leur retard en mois.
+  modèle, à enregistrer en HTML ou imprimer en PDF. Les **classements publics** (LMArena WebDev pour le code,
+  Vectara pour les inventions) sont repliés en bas, en liste triable, avec la date des modèles les
+  plus récents qu'ils couvrent ; ils sont remis à jour chaque jour avec le catalogue des modèles.
 
 <br clear="right" />
 

@@ -72,16 +72,16 @@ test("the published name is carried so a fuzzy join can be audited by eye", () =
   const entry = BENCHMARK_WEB[webId];
   const rows = buildRows({ catalogue: [cat(webId)], measured: {} });
   const r = rows[0];
-  if (entry.aider) assert.equal(r.aiderAs, entry.aider.as);
+  if (entry.webdev) assert.equal(r.codeAs, entry.webdev.as);
   if (entry.vectara) assert.equal(r.hallucAs, entry.vectara.as);
 });
 
 // ── Sorting ────────────────────────────────────────────────────────────────────────────────
 
 const rows = () => [
-  { id: "a/unmeasured", measured: null, aider: 50, halluc: 5, price: 3, ctx: 100, created: 300, covered: true },
-  { id: "b/good", measured: 0.9, aider: 80, halluc: 2, price: 10, ctx: 200, created: 200, covered: true },
-  { id: "c/poor", measured: 0.4, aider: 20, halluc: 9, price: 1, ctx: 50, created: 100, covered: true },
+  { id: "a/unmeasured", measured: null, code: 50, halluc: 5, price: 3, ctx: 100, created: 300, covered: true },
+  { id: "b/good", measured: 0.9, code: 80, halluc: 2, price: 10, ctx: 200, created: 200, covered: true },
+  { id: "c/poor", measured: 0.4, code: 20, halluc: 9, price: 1, ctx: 50, created: 100, covered: true },
 ];
 
 test("an unmeasured model sorts last, never as a zero", () => {
@@ -104,8 +104,8 @@ test("cheaper and less hallucinatory are better, so they sort first", () => {
 });
 
 test("clicking the same column again reverses it", () => {
-  const desc = sortRows(rows(), "aider").map((r) => r.id);
-  const asc = sortRows(rows(), "aider", "asc").map((r) => r.id);
+  const desc = sortRows(rows(), "code").map((r) => r.id);
+  const asc = sortRows(rows(), "code", "asc").map((r) => r.id);
   assert.deepEqual(asc, desc.slice().reverse());
 });
 

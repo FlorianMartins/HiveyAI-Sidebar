@@ -3,6 +3,7 @@
 // back to English. Placeholders {name}, HTML tags and emojis are kept verbatim.
 
 export const ES = {
+  "bench.src.webdev": "Código: personas dan la misma tarea de aplicación web a dos modelos y votan por el mejor (LMArena WebDev, actualizado cada día). Una puntuación Elo: más alto = mejor, solo cuentan las diferencias.",
   "an.btn": "Análisis",
   "size.colFormat": "Formato",
   "size.colQuality": "Calidad",
@@ -228,7 +229,6 @@ export const ES = {
   "bench.errorsNote": "{n} pregunta(s) sin respuesta (error de red o del proveedor) — no cuentan contra el modelo.",
   "bench.step3": "Clasificaciones públicas",
   "bench.pubSub": "Lo que otros midieron, en otras tareas. Útil para los modelos conocidos; a menudo con meses de retraso respecto a los nuevos.",
-  "bench.src.aider": "Código: proporción de 225 ejercicios de programación que el modelo resuelve. Más alto = mejor.",
   "bench.src.vectara": "Inventa: con qué frecuencia el modelo añade un hecho que no está en el texto que resume. Más bajo = mejor.",
   "bench.pubLegend": "Precio: dólares por millón de tokens escritos (unas 750 000 palabras). Memoria: cuánto texto lee el modelo de una vez, en miles de tokens.",
   "bench.covers": "cubre los modelos publicados hasta {date} ({months} meses de retraso)",
@@ -241,7 +241,7 @@ export const ES = {
   "bench.sort.ctx": "La mayor memoria",
   "bench.sort.name": "Nombre",
   "bench.pub.code": "Código",
-  "bench.pub.codeTitle": "Ejercicios de programación resueltos (Aider Polyglot) — más alto = mejor",
+  "bench.pub.codeTitle": "Código web, votos de los usuarios (LMArena WebDev, puntuación Elo) — más alto = mejor",
   "bench.pub.halluc": "Inventa",
   "bench.pub.hallucTitle": "Resúmenes con un hecho inventado (Vectara) — más bajo = mejor",
   "bench.pub.price": "Precio",
@@ -1040,6 +1040,7 @@ export const ES = {
 };
 
 export const DE = {
+  "bench.src.webdev": "Code: Menschen geben zwei Modellen dieselbe Web-App-Aufgabe und stimmen für das bessere (LMArena WebDev, täglich aktualisiert). Ein Elo-Wert: höher = besser, nur die Abstände zählen.",
   "an.btn": "Analyse",
   "size.colFormat": "Format",
   "size.colQuality": "Qualität",
@@ -1265,7 +1266,6 @@ export const DE = {
   "bench.errorsNote": "{n} Frage(n) ohne Antwort (Netzwerk- oder Anbieterfehler) — zählen nicht gegen das Modell.",
   "bench.step3": "Öffentliche Ranglisten",
   "bench.pubSub": "Was andere gemessen haben, mit anderen Aufgaben. Nützlich für bekannte Modelle; oft Monate hinter den neuesten.",
-  "bench.src.aider": "Code: Anteil von 225 Programmieraufgaben, die das Modell löst. Höher = besser.",
   "bench.src.vectara": "Erfindet: wie oft das Modell eine Tatsache hinzufügt, die nicht im zusammengefassten Text steht. Niedriger = besser.",
   "bench.pubLegend": "Preis: Dollar pro Million geschriebener Tokens (etwa 750 000 Wörter). Gedächtnis: wie viel Text das Modell auf einmal liest, in Tausend Tokens.",
   "bench.covers": "deckt Modelle bis {date} ab ({months} Monate Rückstand)",
@@ -1278,7 +1278,7 @@ export const DE = {
   "bench.sort.ctx": "Größtes Gedächtnis",
   "bench.sort.name": "Name",
   "bench.pub.code": "Code",
-  "bench.pub.codeTitle": "Gelöste Programmieraufgaben (Aider Polyglot) — höher = besser",
+  "bench.pub.codeTitle": "Web-Code, Stimmen der Nutzer (LMArena WebDev, Elo-Wert) — höher = besser",
   "bench.pub.halluc": "Erfindet",
   "bench.pub.hallucTitle": "Zusammenfassungen mit einer erfundenen Tatsache (Vectara) — niedriger = besser",
   "bench.pub.price": "Preis",
@@ -2077,6 +2077,7 @@ export const DE = {
 };
 
 export const IT = {
+  "bench.src.webdev": "Codice: delle persone danno a due modelli lo stesso compito di app web e votano il migliore (LMArena WebDev, aggiornato ogni giorno). Un punteggio Elo: più alto = meglio, contano solo le differenze.",
   "an.btn": "Analisi",
   "size.colFormat": "Formato",
   "size.colQuality": "Qualità",
@@ -2302,7 +2303,6 @@ export const IT = {
   "bench.errorsNote": "{n} domanda/e senza risposta (errore di rete o del fornitore) — non contano contro il modello.",
   "bench.step3": "Classifiche pubbliche",
   "bench.pubSub": "Ciò che altri hanno misurato, su altri compiti. Utile per i modelli noti; spesso in ritardo di mesi sui nuovi.",
-  "bench.src.aider": "Codice: quota di 225 esercizi di programmazione che il modello risolve. Più alto = meglio.",
   "bench.src.vectara": "Inventa: quanto spesso il modello aggiunge un fatto assente dal testo che riassume. Più basso = meglio.",
   "bench.pubLegend": "Prezzo: dollari per milione di token scritti (circa 750 000 parole). Memoria: quanto testo il modello legge in una volta, in migliaia di token.",
   "bench.covers": "copre i modelli usciti fino a {date} ({months} mesi di ritardo)",
@@ -2315,7 +2315,7 @@ export const IT = {
   "bench.sort.ctx": "La memoria più grande",
   "bench.sort.name": "Nome",
   "bench.pub.code": "Codice",
-  "bench.pub.codeTitle": "Esercizi di programmazione risolti (Aider Polyglot) — più alto = meglio",
+  "bench.pub.codeTitle": "Codice web, voti degli utenti (LMArena WebDev, punteggio Elo) — più alto = meglio",
   "bench.pub.halluc": "Inventa",
   "bench.pub.hallucTitle": "Riassunti con un fatto inventato (Vectara) — più basso = meglio",
   "bench.pub.price": "Prezzo",
@@ -3114,6 +3114,7 @@ export const IT = {
 };
 
 export const PT = {
+  "bench.src.webdev": "Código: pessoas dão a mesma tarefa de aplicação web a dois modelos e votam no melhor (LMArena WebDev, atualizado todos os dias). Uma pontuação Elo: mais alto = melhor, só as diferenças contam.",
   "an.btn": "Análise",
   "size.colFormat": "Formato",
   "size.colQuality": "Qualidade",
@@ -3339,7 +3340,6 @@ export const PT = {
   "bench.errorsNote": "{n} pergunta(s) sem resposta (erro de rede ou do fornecedor) — não contam contra o modelo.",
   "bench.step3": "Classificações públicas",
   "bench.pubSub": "O que outros mediram, noutras tarefas. Útil para os modelos conhecidos; muitas vezes com meses de atraso face aos novos.",
-  "bench.src.aider": "Código: parte de 225 exercícios de programação que o modelo resolve. Mais alto = melhor.",
   "bench.src.vectara": "Inventa: com que frequência o modelo acrescenta um facto que não está no texto que resume. Mais baixo = melhor.",
   "bench.pubLegend": "Preço: dólares por milhão de tokens escritos (cerca de 750 000 palavras). Memória: quanto texto o modelo lê de uma vez, em milhares de tokens.",
   "bench.covers": "cobre os modelos lançados até {date} ({months} meses de atraso)",
@@ -3352,7 +3352,7 @@ export const PT = {
   "bench.sort.ctx": "A maior memória",
   "bench.sort.name": "Nome",
   "bench.pub.code": "Código",
-  "bench.pub.codeTitle": "Exercícios de programação resolvidos (Aider Polyglot) — mais alto = melhor",
+  "bench.pub.codeTitle": "Código web, votos dos utilizadores (LMArena WebDev, pontuação Elo) — mais alto = melhor",
   "bench.pub.halluc": "Inventa",
   "bench.pub.hallucTitle": "Resumos com um facto inventado (Vectara) — mais baixo = melhor",
   "bench.pub.price": "Preço",

@@ -14,6 +14,7 @@ import { setHTML } from "./dom.js";
 let lang = "en";
 
 const EN = {
+  "bench.src.webdev": "Code: people give two models the same web-app task and vote for the better one (LMArena WebDev, updated every day). An Elo score: higher is better, only the gaps mean something.",
   "an.btn": "Analysis",
   "size.colFormat": "Format",
   "size.colQuality": "Quality",
@@ -239,7 +240,6 @@ const EN = {
   "bench.errorsNote": "{n} question(s) not answered (network or provider error) — not counted against the model.",
   "bench.step3": "Public leaderboards",
   "bench.pubSub": "What others measured, on other tasks. Useful for well-known models; often months behind the newest ones.",
-  "bench.src.aider": "Code: share of 225 programming exercises the model solves. Higher is better.",
   "bench.src.vectara": "Invents: how often the model adds a fact that is not in the text it summarises. Lower is better.",
   "bench.pubLegend": "Price: dollars per million tokens written (about 750,000 words). Memory: how much text the model reads at once, in thousands of tokens.",
   "bench.covers": "covers models released up to {date} ({months} months behind)",
@@ -252,7 +252,7 @@ const EN = {
   "bench.sort.ctx": "Largest memory",
   "bench.sort.name": "Name",
   "bench.pub.code": "Code",
-  "bench.pub.codeTitle": "Coding exercises solved (Aider Polyglot) — higher is better",
+  "bench.pub.codeTitle": "Web coding, people's votes (LMArena WebDev, Elo score) — higher is better",
   "bench.pub.halluc": "Invents",
   "bench.pub.hallucTitle": "Summaries with an invented fact (Vectara) — lower is better",
   "bench.pub.price": "Price",
@@ -1126,6 +1126,7 @@ const EN = {
 };
 
 const FR = {
+  "bench.src.webdev": "Code : des personnes donnent la même application web à faire à deux modèles et votent pour le meilleur (LMArena WebDev, mis à jour chaque jour). Un score Elo : plus haut = mieux, seuls les écarts comptent.",
   "an.btn": "Analyse",
   "size.colFormat": "Format",
   "size.colQuality": "Qualité",
@@ -1351,7 +1352,6 @@ const FR = {
   "bench.errorsNote": "{n} question(s) sans réponse (erreur réseau ou du fournisseur) — non comptée(s) contre le modèle.",
   "bench.step3": "Classements publics",
   "bench.pubSub": "Ce que d'autres ont mesuré, sur d'autres tâches. Utile pour les modèles connus ; souvent en retard de plusieurs mois sur les nouveaux.",
-  "bench.src.aider": "Code : part de 225 exercices de programmation que le modèle réussit. Plus haut = mieux.",
   "bench.src.vectara": "Invente : à quelle fréquence le modèle ajoute un fait absent du texte qu'il résume. Plus bas = mieux.",
   "bench.pubLegend": "Prix : dollars par million de jetons écrits (environ 750 000 mots). Mémoire : quantité de texte que le modèle lit d'un coup, en milliers de jetons.",
   "bench.covers": "couvre les modèles sortis jusqu'en {date} ({months} mois de retard)",
@@ -1364,7 +1364,7 @@ const FR = {
   "bench.sort.ctx": "La plus grande mémoire",
   "bench.sort.name": "Nom",
   "bench.pub.code": "Code",
-  "bench.pub.codeTitle": "Exercices de programmation réussis (Aider Polyglot) — plus haut = mieux",
+  "bench.pub.codeTitle": "Code web, votes des utilisateurs (LMArena WebDev, score Elo) — plus haut = mieux",
   "bench.pub.halluc": "Invente",
   "bench.pub.hallucTitle": "Résumés contenant un fait inventé (Vectara) — plus bas = mieux",
   "bench.pub.price": "Prix",
