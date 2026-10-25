@@ -10,6 +10,11 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Fenêtre des données sensibles (mode non anonymisé)** : ses boutons disent ce qu'ils font —
+  **Masquer**, **Toujours masquer** ou **Ne jamais masquer (cette conversation)**, ou **Annuler**.
+  « Ne jamais masquer » envoie cette demande et la suite de la conversation telles quelles, sans
+  plus rien demander ; une autre conversation reste masquée. La fenêtre et la confirmation des
+  actions ne passent plus sous la barre des onglets.
 - **Agent : « Refuser » arrête vraiment l'agent.** Après un refus, plus aucune action de la tâche
   n'est exécutée et l'IA n'est plus rappelée (elle pouvait tenter la même chose autrement, par
   exemple par un clic à des coordonnées). Une ligne l'indique : « Action refusée : l'agent s'est

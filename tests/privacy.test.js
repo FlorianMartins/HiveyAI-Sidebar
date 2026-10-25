@@ -136,6 +136,22 @@ test("not anonymised: the window asks about a key, once per value, with where it
   assert.equal(n, 1, "« Toujours envoyer » covers the rest of the conversation");
 });
 
+test("not anonymised: « Never mask » sends this request and the rest of the conversation as written", async () => {
+  const off = { privacyLevel: "off" };
+  forgetConversation("c12");
+  let asked = 0;
+  const never = async () => { asked++; return "never"; };
+  const key = "sk-ant-api03-EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE";
+  const first = await turn("openrouter", { history: [{ role: "user", content: `clé ${key}` }], settings: off, privacy: { conversation: "c12", ask: never } });
+  assert.match(sent(first.body), new RegExp(key), "sent as written once the user chose it");
+  const second = await turn("openrouter", { history: [{ role: "user", content: "et sk-ant-api03-FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF ?" }], settings: off, privacy: { conversation: "c12", ask: never } });
+  assert.match(sent(second.body), /sk-ant-api03-F/);
+  assert.equal(asked, 1, "not asked again in that conversation");
+  forgetConversation("c13");
+  const other = await turn("openrouter", { history: [{ role: "user", content: `clé ${key}` }], settings: off, privacy: { conversation: "c13", ask: async () => "once" } });
+  assert.doesNotMatch(sent(other.body), /sk-ant-api03-E/, "another conversation still masks");
+});
+
 test("not anonymised, a side task nobody watches is not sent when it would have to ask", async () => {
   await assert.rejects(
     turn("openrouter", { history: [{ role: "user", content: "voici ma clé sk-ant-api03-BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB" }], settings: { privacyLevel: "off" } }),
