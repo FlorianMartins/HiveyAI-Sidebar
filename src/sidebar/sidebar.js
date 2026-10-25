@@ -3219,8 +3219,15 @@ function codeAppLaunchUrl() {
 
   return url + (url.includes("#") ? "&" : "#") + params.join("&");
 }
+// The rail's Hivey Code icon TOGGLES the workshop, like the Settings gear: a first click opens it,
+// a second click closes the workshop tab(s) again — found by the workshop's address.
 async function openCodeApp() {
   if (!(settings.codeAppUrl || "").trim()) return browser.runtime.openOptionsPage();
+  try {
+    const origin = new URL(settings.codeAppUrl.trim()).origin;
+    const open = (await browser.tabs.query({})).filter((tb) => { try { return new URL(tb.url || "").origin === origin; } catch (_) { return false; } });
+    if (open.length) { await browser.tabs.remove(open.map((tb) => tb.id).filter((id) => id != null)); return; }
+  } catch (_) { /* no tab access → just open it */ }
   const url = codeAppLaunchUrl();
   try { await browser.tabs.create({ url }); } catch (_) { window.open(url, "_blank", "noopener"); }
 }

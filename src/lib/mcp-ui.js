@@ -6,7 +6,7 @@
 // storage.local under `mcpSecrets`, never in the settings that an export or a sync could carry.
 
 import {
-  MCP_CATALOGUE, McpClient, McpAuthError, toolDefs, resultForModel, discoverAuth, registerClient,
+  MCP_CATALOGUE, MCP_CATEGORIES, McpClient, McpAuthError, toolDefs, resultForModel, discoverAuth, registerClient,
   authorizeUrl, exchangeCode, refreshToken, pkcePair, mcpSystemNote,
 } from "./mcp.js";
 
@@ -18,7 +18,8 @@ export function initMcp({ t, getSettings, setSettings, confirm, onChange = () =>
   const status = new Map();    // id → { state: "ok" | "loading" | "auth" | "error", msg }
   let toolMap = new Map();     // model-facing name → { serverId, tool, readOnly }
   let panel = null;
-  let addingToken = null;      // catalogue id whose token field is open
+  let adding = null;           // catalogue id whose token / OAuth-client form is open
+  let query = "";              // the panel's search
 
   const servers = () => (getSettings().mcpServers || []).slice();
   const save = (list) => setSettings({ mcpServers: list });
@@ -59,9 +60,13 @@ export function initMcp({ t, getSettings, setSettings, confirm, onChange = () =>
     const d = await discoverAuth(s.url, { resourceMetadata });
     const redirectUri = browser.identity.getRedirectURL("mcp");
     const sec = (await secrets())[s.id] || {};
-    const reg = sec.clientId && sec.redirectUri === redirectUri && sec.tokenEndpoint === d.as.token_endpoint
-      ? { clientId: sec.clientId, clientSecret: sec.clientSecret }
-      : await registerClient(d.as, redirectUri);
+    // « client »: the user's own OAuth client (the service registers no app by itself).
+    const reg = s.auth === "client"
+      ? { clientId: sec.clientId, clientSecret: sec.clientSecret || "" }
+      : sec.clientId && sec.redirectUri === redirectUri && sec.tokenEndpoint === d.as.token_endpoint
+        ? { clientId: sec.clientId, clientSecret: sec.clientSecret }
+        : await registerClient(d.as, redirectUri);
+    if (!reg.clientId) throw new Error(t("mcp.errNoClient"));
     const { verifier, challenge } = await pkcePair();
     const state = crypto.randomUUID();
     const back = await browser.identity.launchWebAuthFlow({
@@ -79,6 +84,12 @@ export function initMcp({ t, getSettings, setSettings, confirm, onChange = () =>
   /** Handshake + tool list; signs in when the service asks for it and `interactive` allows it. */
   async function load(s, { interactive = false } = {}) {
     setStatus(s.id, "loading");
+    // Some servers list their tools to anyone (Google's) and refuse only the calls: with the user's
+    // own client, sign in first rather than look connected and fail on the first use.
+    if (s.auth === "client" && !((await secrets())[s.id] || {}).accessToken) {
+      if (!interactive) { setStatus(s.id, "auth", t("mcp.needSignIn")); return; }
+      try { setStatus(s.id, "loading", t("mcp.signingIn")); await signIn(s, ""); } catch (e) { setStatus(s.id, "error", String((e && e.message) || e)); return; }
+    }
     try {
       tools.set(s.id, await client(s).listTools());
       setStatus(s.id, "ok");
@@ -90,7 +101,7 @@ export function initMcp({ t, getSettings, setSettings, confirm, onChange = () =>
           tools.set(s.id, await client(s).listTools());
           setStatus(s.id, "ok");
         } catch (e2) {
-          setStatus(s.id, "error", /register/i.test(String(e2 && e2.message)) ? t("mcp.errNoDcr") : String((e2 && e2.message) || e2));
+          setStatus(s.id, "error", /regist/i.test(String(e2 && e2.message)) ? t("mcp.errNoDcr") : String((e2 && e2.message) || e2));
         }
         return;
       }
@@ -107,7 +118,7 @@ export function initMcp({ t, getSettings, setSettings, confirm, onChange = () =>
   }
 
   /** Called from a click: the host permission must be asked before anything is awaited. */
-  async function connect(entry, { token = "" } = {}) {
+  async function connect(entry, { token = "", clientId = "", clientSecret = "" } = {}) {
     const perm = browser.permissions && browser.permissions.request
       ? browser.permissions.request({ origins: ["<all_urls>"] }).catch(() => false)
       : Promise.resolve(true);
@@ -115,11 +126,12 @@ export function initMcp({ t, getSettings, setSettings, confirm, onChange = () =>
     const list = servers();
     let id = entry.id || ("srv-" + new URL(entry.url).hostname.replace(/[^a-z0-9]+/gi, "-").toLowerCase());
     if (!entry.catalogue) for (let i = 2; list.some((x) => x.id === id && x.url !== entry.url); i++) id = id.replace(/-\d+$/, "") + "-" + i;
-    const s = { id, name: entry.name || new URL(entry.url).hostname, url: entry.url, auth: token ? "token" : entry.auth || "oauth", enabled: true };
+    const s = { id, name: entry.name || new URL(entry.url).hostname, url: entry.url, auth: token ? "token" : clientId ? "client" : entry.auth || "oauth", enabled: true };
     const at = list.findIndex((x) => x.id === id);
     if (at >= 0) list[at] = { ...list[at], ...s }; else list.push(s);
     await save(list);
     if (token) await saveSecret(id, { token });
+    if (clientId) await saveSecret(id, { clientId, clientSecret, accessToken: "", refreshToken: "" });
     clients.delete(id);
     await load(s, { interactive: true });
     warmed = null;
@@ -166,6 +178,46 @@ export function initMcp({ t, getSettings, setSettings, confirm, onChange = () =>
   const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
   const btn = (cls, text, onClick, title) => { const b = el("button", cls, text); b.type = "button"; if (title) b.title = title; b.addEventListener("click", (e) => { e.stopPropagation(); onClick(e); }); return b; };
 
+  /** A catalogue line: the name, what it brings, and how it connects (one click, a token, or the
+   *  user's own OAuth client — with the return address to declare in it). */
+  function catalogueRow(c) {
+    const row = el("div", "mcp-row");
+    const txt = el("div", "mcp-txt");
+    txt.append(el("div", "mcp-name", c.name));
+    const sub = c.desc ? t(c.desc) : c.auth === "none" ? t("mcp.noAccount") : "";
+    if (sub) txt.append(el("div", "mcp-sub", sub));
+    row.append(txt);
+    if (adding === c.id && (c.auth === "token" || c.auth === "client")) {
+      const f = el("form", "mcp-token");
+      const go = () => f.requestSubmit();
+      if (c.auth === "token") {
+        const inp = el("input"); inp.type = "password"; inp.placeholder = t("mcp.tokenPh"); inp.required = true;
+        f.append(inp, btn("mcp-act", t("mcp.connect"), go));
+        f.addEventListener("submit", (e) => { e.preventDefault(); adding = null; connect({ ...c, catalogue: true }, { token: inp.value.trim() }); });
+        setTimeout(() => inp.focus(), 0);
+      } else {
+        const id = el("input"); id.placeholder = t("mcp.clientIdPh"); id.required = true;
+        const sec = el("input"); sec.type = "password"; sec.placeholder = t("mcp.clientSecretPh");
+        const redirect = browser.identity.getRedirectURL("mcp");
+        const ret = el("div", "mcp-redirect");
+        ret.append(el("span", null, t("mcp.redirectLabel")), el("code", null, redirect),
+          btn("mcp-x", "⧉", () => { navigator.clipboard.writeText(redirect).catch(() => {}); }, t("mcp.copy")));
+        f.append(ret, id, sec);
+        if (c.help) { const a = el("a", "mcp-help", t("mcp.clientHelp")); a.href = c.help; a.target = "_blank"; a.rel = "noopener noreferrer"; f.append(a); }
+        f.append(btn("mcp-act", t("mcp.connect"), go));
+        f.addEventListener("submit", (e) => { e.preventDefault(); adding = null; connect({ ...c, catalogue: true }, { clientId: id.value.trim(), clientSecret: sec.value.trim() }); });
+        setTimeout(() => id.focus(), 0);
+      }
+      txt.append(f);
+    } else {
+      row.append(btn("mcp-act", t("mcp.connect"), () => {
+        if (c.auth === "token" || c.auth === "client") { adding = c.id; renderPanel(); return; }
+        connect({ ...c, catalogue: true });
+      }));
+    }
+    return row;
+  }
+
   function renderPanel() {
     if (!panel || panel.classList.contains("hidden")) return;
     const body = panel.querySelector(".mcp-body");
@@ -192,39 +244,30 @@ export function initMcp({ t, getSettings, setSettings, confirm, onChange = () =>
     }
 
     body.append(el("div", "mcp-sec", t("mcp.add")));
-    for (const c of MCP_CATALOGUE.filter((c) => !list.some((s) => s.id === c.id))) {
-      const row = el("div", "mcp-row");
-      const txt = el("div", "mcp-txt");
-      txt.append(el("div", "mcp-name", c.name));
-      txt.append(el("div", "mcp-sub", t(c.desc)));
-      row.append(txt);
-      if (c.auth === "token" && addingToken === c.id) {
-        const f = el("form", "mcp-token");
-        const inp = el("input"); inp.type = "password"; inp.placeholder = t("mcp.tokenPh"); inp.required = true;
-        f.append(inp, btn("mcp-act", t("mcp.connect"), () => f.requestSubmit()));
-        f.addEventListener("submit", (e) => { e.preventDefault(); addingToken = null; connect({ ...c, catalogue: true }, { token: inp.value.trim() }); });
-        txt.append(f);
-        setTimeout(() => inp.focus(), 0);
-      } else {
-        row.append(btn("mcp-act", t("mcp.connect"), () => {
-          if (c.auth === "token") { addingToken = c.id; renderPanel(); return; }
-          connect({ ...c, catalogue: true });
-        }));
-      }
-      body.append(row);
+    const search = el("input", "mcp-search"); search.type = "search"; search.placeholder = t("mcp.searchPh"); search.value = query;
+    search.addEventListener("input", () => { query = search.value; renderPanel(); const n = panel.querySelector(".mcp-search"); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } });
+    body.append(search);
+    const q = query.trim().toLowerCase();
+    const match = (c) => !q || c.name.toLowerCase().includes(q) || c.url.includes(q) || (c.desc && t(c.desc).toLowerCase().includes(q)) || t("mcp.catg." + c.cat).toLowerCase().includes(q);
+    for (const cat of MCP_CATEGORIES) {
+      const items = MCP_CATALOGUE.filter((c) => c.cat === cat && !list.some((s) => s.id === c.id) && match(c));
+      if (!items.length) continue;
+      body.append(el("div", "mcp-cat", t("mcp.catg." + cat)));
+      for (const c of items) body.append(catalogueRow(c));
     }
-
     body.append(el("div", "mcp-sec", t("mcp.custom")));
     const f = el("form", "mcp-custom");
     const url = el("input"); url.type = "url"; url.placeholder = t("mcp.urlPh"); url.required = true;
     const tok = el("input"); tok.type = "password"; tok.placeholder = t("mcp.tokenOptPh");
-    f.append(url, tok, btn("mcp-act", t("mcp.connect"), () => f.requestSubmit()));
+    const cid = el("input"); cid.placeholder = t("mcp.clientIdOptPh");
+    const csec = el("input"); csec.type = "password"; csec.placeholder = t("mcp.clientSecretPh");
+    f.append(url, tok, cid, csec, btn("mcp-act", t("mcp.connect"), () => f.requestSubmit()));
     f.addEventListener("submit", (e) => {
       e.preventDefault();
       let u;
       try { u = new URL(url.value.trim()); } catch (_) { return; }
       if (u.protocol !== "https:" && !/^(localhost|127\.0\.0\.1)$/.test(u.hostname)) { setStatus("custom", "error", t("mcp.errHttps")); return; }
-      connect({ url: u.href }, { token: tok.value.trim() });
+      connect({ url: u.href }, { token: tok.value.trim(), clientId: cid.value.trim(), clientSecret: csec.value.trim() });
     });
     body.append(f);
     const cs = status.get("custom");

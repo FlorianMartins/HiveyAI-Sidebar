@@ -6,7 +6,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   McpClient, McpAuthError, parseSse, resourceMetadataOf, resultForModel, toolDefs, isReadOnly,
-  discoverAuth, registerClient, authorizeUrl, exchangeCode, pkcePair, MCP_CATALOGUE,
+  discoverAuth, registerClient, authorizeUrl, exchangeCode, pkcePair, MCP_CATALOGUE, MCP_CATEGORIES,
 } from "../src/lib/mcp.js";
 
 const res = (status, body, headers = {}) => ({
@@ -123,12 +123,24 @@ test("a server without self-registration asks for a personal token instead", asy
   await assert.rejects(registerClient({ authorization_endpoint: "x" }, "https://r"), /personal token/);
 });
 
-test("the catalogue holds only https servers, each with its sign-in kind and description", () => {
+test("the catalogue holds only https servers, each with its sign-in kind and a known category", () => {
   const ids = new Set();
   for (const s of MCP_CATALOGUE) {
     assert.match(s.url, /^https:\/\//);
-    assert.ok(["oauth", "token", "none"].includes(s.auth), s.id);
-    assert.ok(s.desc.startsWith("mcp.cat."));
+    assert.ok(["oauth", "client", "token", "none"].includes(s.auth), s.id);
+    assert.ok(MCP_CATEGORIES.includes(s.cat), `${s.id}: ${s.cat}`);
+    if (s.desc) assert.ok(s.desc.startsWith("mcp.cat."));
+    if (s.auth === "client") assert.match(s.help || "", /^https:\/\//, `${s.id}: says where to create the client`);
     assert.ok(!ids.has(s.id)); ids.add(s.id);
   }
+  for (const gone of ["figma", "vercel", "dropbox", "intercom", "gamma", "square"]) assert.ok(!ids.has(gone), `${gone} refuses extension sign-ins`);
+  for (const g of ["gmail", "gcalendar", "gdrive"]) assert.ok(ids.has(g));
+});
+
+test("Google sign-in asks for offline access, so the session can be renewed", () => {
+  const u = new URL(authorizeUrl({ as: { authorization_endpoint: "https://accounts.google.com/o/oauth2/v2/auth" }, clientId: "c", redirectUri: "https://r", challenge: "x", state: "s", resource: "https://gmailmcp.googleapis.com/mcp/v1" }));
+  assert.equal(u.searchParams.get("access_type"), "offline");
+  assert.equal(u.searchParams.get("prompt"), "consent");
+  const other = new URL(authorizeUrl({ as: { authorization_endpoint: "https://mcp.notion.com/authorize" }, clientId: "c", redirectUri: "https://r", challenge: "x", state: "s", resource: "r" }));
+  assert.equal(other.searchParams.get("access_type"), null);
 });

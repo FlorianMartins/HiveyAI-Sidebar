@@ -10,6 +10,14 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **MCP : plus de 70 services**, classés par catégorie, avec une recherche. Gmail, Google Agenda et
+  Google Drive via les serveurs officiels de Google (avec votre propre client OAuth Google Cloud :
+  l'adresse de retour à déclarer est affichée, avec un lien vers le guide), Slack, HubSpot, Asana,
+  Box… de la même façon, et une cinquantaine de services en connexion directe (ClickUp, Airtable,
+  Miro, Calendly, Supabase, GitLab, PostHog, Attio, Make, Pipedream, WordPress…). Chacun a été
+  vérifié ; Figma et Vercel, qui refusent les extensions, sont retirés.
+- **Hivey Code** : l'icône s'ouvre et se referme comme les réglages (un clic ouvre app.hivey.be, un
+  second clic ferme l'onglet) ; la petite flèche violette a disparu.
 - **Anonymisation sans interruption** : en mode « Cloud · anonymisé », la fenêtre « ce que vous allez
   envoyer contient N donnée(s) sensible(s) » ne s'ouvre plus (les valeurs partent déjà en marqueurs,
   et elle revenait à chaque étape de l'agent). Elle ne s'affiche plus qu'avec l'anonymisation

@@ -172,9 +172,10 @@ masque, et le choix est gardé), donne accès à :
   réglable (beaucoup de modèles rapides/gratuits ne savent pas appeler d'outils).
 - 🔌 **MCP — vos services dans la conversation** : connectez des serveurs **MCP distants** et
   demandez en langage naturel (« retrouve la dernière facture », « crée une tâche »). Un catalogue
-  vérifié en un clic — **Zapier** (Gmail, Google Agenda, Drive, Slack… 8 000 applis), Notion, Linear,
-  Atlassian (Jira, Confluence), Todoist, monday, Canva, Figma, Sentry, Vercel, Stripe, Hugging Face,
-  GitHub (jeton personnel), DeepWiki et Cloudflare Docs (sans compte) — plus **n'importe quelle
+  de **plus de 70 services vérifiés**, classés et cherchables — Gmail, Google Agenda et Drive (serveurs
+  officiels de Google, avec votre propre client OAuth), Zapier et Pipedream (des milliers d'applis),
+  Slack, Notion, Jira/Confluence, Linear, Asana, ClickUp, Airtable, HubSpot, Attio, Stripe, PayPal,
+  Supabase, GitLab, Sentry, PostHog, Canva, Webflow… — plus **n'importe quelle
   adresse** de serveur MCP. Connexion **OAuth 2.1** dans la fenêtre de connexion du navigateur
   (enregistrement automatique du client, PKCE), jetons gardés dans ce navigateur. **La lecture se fait
   seule ; tout outil qui envoie, crée, modifie ou supprime demande votre accord**, et ce que

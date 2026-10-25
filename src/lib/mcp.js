@@ -12,25 +12,94 @@
 
 export const MCP_PROTOCOL = "2025-06-18";
 
-/** Servers known to work from the add-on, checked on 2026-10-25: each answered the MCP handshake
- *  (or its 401 named an authorization server that registers clients by itself). `auth`: "oauth" →
- *  the sign-in window; "token" → a personal token in a header; "none" → nothing to sign. */
+/**
+ * Servers known to work from the add-on, checked on 2026-10-25: each answered the MCP handshake, and
+ * for « oauth » its authorization server registered a client with an extension's return address
+ * (chromiumapp.org AND extensions.allizom.org) — those that refuse it (Dropbox, Figma, Vercel,
+ * Intercom, Gamma, Square: allowlists) are left out.
+ *   oauth   the service's sign-in window, the add-on registers itself (DCR)
+ *   client  the service's sign-in window with the user's OWN OAuth client (no self-registration:
+ *           Google's Gmail/Drive/Calendar servers, Slack, HubSpot…) — `help` says where to create it
+ *   token   a personal token in a header
+ *   none    nothing to sign
+ * `desc` (a translation key) only where the name alone does not say what the service brings.
+ */
+const G_HELP = "https://developers.google.com/workspace/guides/configure-mcp-servers";
+export const MCP_CATEGORIES = ["google", "comm", "docs", "tasks", "dev", "data", "sales", "design", "pay", "auto", "know"];
 export const MCP_CATALOGUE = [
-  { id: "zapier", name: "Zapier", url: "https://mcp.zapier.com/api/mcp/mcp", auth: "oauth", desc: "mcp.cat.zapier" },
-  { id: "notion", name: "Notion", url: "https://mcp.notion.com/mcp", auth: "oauth", desc: "mcp.cat.notion" },
-  { id: "linear", name: "Linear", url: "https://mcp.linear.app/mcp", auth: "oauth", desc: "mcp.cat.linear" },
-  { id: "atlassian", name: "Atlassian (Jira, Confluence)", url: "https://mcp.atlassian.com/v1/mcp", auth: "oauth", desc: "mcp.cat.atlassian" },
-  { id: "todoist", name: "Todoist", url: "https://ai.todoist.net/mcp", auth: "oauth", desc: "mcp.cat.todoist" },
-  { id: "monday", name: "monday.com", url: "https://mcp.monday.com/mcp", auth: "oauth", desc: "mcp.cat.monday" },
-  { id: "canva", name: "Canva", url: "https://mcp.canva.com/mcp", auth: "oauth", desc: "mcp.cat.canva" },
-  { id: "figma", name: "Figma", url: "https://mcp.figma.com/mcp", auth: "oauth", desc: "mcp.cat.figma" },
-  { id: "github", name: "GitHub", url: "https://api.githubcopilot.com/mcp/", auth: "token", desc: "mcp.cat.github" },
-  { id: "sentry", name: "Sentry", url: "https://mcp.sentry.dev/mcp", auth: "oauth", desc: "mcp.cat.sentry" },
-  { id: "vercel", name: "Vercel", url: "https://mcp.vercel.com", auth: "oauth", desc: "mcp.cat.vercel" },
-  { id: "stripe", name: "Stripe", url: "https://mcp.stripe.com", auth: "oauth", desc: "mcp.cat.stripe" },
-  { id: "huggingface", name: "Hugging Face", url: "https://huggingface.co/mcp", auth: "oauth", desc: "mcp.cat.huggingface" },
-  { id: "deepwiki", name: "DeepWiki", url: "https://mcp.deepwiki.com/mcp", auth: "none", desc: "mcp.cat.deepwiki" },
-  { id: "cfdocs", name: "Cloudflare Docs", url: "https://docs.mcp.cloudflare.com/mcp", auth: "none", desc: "mcp.cat.cfdocs" },
+  { id: "gmail", name: "Gmail", url: "https://gmailmcp.googleapis.com/mcp/v1", auth: "client", cat: "google", help: G_HELP, desc: "mcp.cat.googleClient" },
+  { id: "gcalendar", name: "Google Agenda", url: "https://calendarmcp.googleapis.com/mcp/v1", auth: "client", cat: "google", help: G_HELP, desc: "mcp.cat.googleClient" },
+  { id: "gdrive", name: "Google Drive", url: "https://drivemcp.googleapis.com/mcp/v1", auth: "client", cat: "google", help: G_HELP, desc: "mcp.cat.googleClient" },
+  { id: "zapier", name: "Zapier", url: "https://mcp.zapier.com/api/mcp/mcp", auth: "oauth", cat: "auto", desc: "mcp.cat.zapier" },
+  { id: "make", name: "Make", url: "https://mcp.make.com", auth: "oauth", cat: "auto" },
+  { id: "pipedream", name: "Pipedream", url: "https://mcp.pipedream.net/v2", auth: "oauth", cat: "auto", desc: "mcp.cat.pipedream" },
+  { id: "slack", name: "Slack", url: "https://mcp.slack.com/mcp", auth: "client", cat: "comm", help: "https://api.slack.com/apps" },
+  { id: "calendly", name: "Calendly", url: "https://mcp.calendly.com", auth: "oauth", cat: "comm" },
+  { id: "granola", name: "Granola", url: "https://mcp.granola.ai/mcp", auth: "oauth", cat: "comm" },
+  { id: "fireflies", name: "Fireflies", url: "https://api.fireflies.ai/mcp", auth: "oauth", cat: "comm" },
+  { id: "resend", name: "Resend", url: "https://mcp.resend.com/mcp", auth: "oauth", cat: "comm" },
+  { id: "notion", name: "Notion", url: "https://mcp.notion.com/mcp", auth: "oauth", cat: "docs" },
+  { id: "coda", name: "Coda", url: "https://coda.io/apis/mcp", auth: "oauth", cat: "docs" },
+  { id: "box", name: "Box", url: "https://mcp.box.com", auth: "client", cat: "docs", help: "https://app.box.com/developers/console" },
+  { id: "egnyte", name: "Egnyte", url: "https://mcp-server.egnyte.com/mcp", auth: "oauth", cat: "docs" },
+  { id: "docusign", name: "DocuSign", url: "https://mcp.docusign.com/mcp", auth: "client", cat: "docs", help: "https://admindemo.docusign.com/apps-and-keys" },
+  { id: "wordpress", name: "WordPress.com", url: "https://public-api.wordpress.com/wpcom/v2/mcp/v1", auth: "oauth", cat: "docs" },
+  { id: "sanity", name: "Sanity", url: "https://mcp.sanity.io", auth: "oauth", cat: "docs" },
+  { id: "supermemory", name: "Supermemory", url: "https://mcp.supermemory.ai/mcp", auth: "oauth", cat: "docs" },
+  { id: "linear", name: "Linear", url: "https://mcp.linear.app/mcp", auth: "oauth", cat: "tasks" },
+  { id: "atlassian", name: "Atlassian (Jira, Confluence)", url: "https://mcp.atlassian.com/v1/mcp", auth: "oauth", cat: "tasks" },
+  { id: "asana", name: "Asana", url: "https://mcp.asana.com/v2/mcp", auth: "client", cat: "tasks", help: "https://app.asana.com/0/my-apps" },
+  { id: "clickup", name: "ClickUp", url: "https://mcp.clickup.com/mcp", auth: "oauth", cat: "tasks" },
+  { id: "todoist", name: "Todoist", url: "https://ai.todoist.net/mcp", auth: "oauth", cat: "tasks" },
+  { id: "monday", name: "monday.com", url: "https://mcp.monday.com/mcp", auth: "oauth", cat: "tasks" },
+  { id: "airtable", name: "Airtable", url: "https://mcp.airtable.com/mcp", auth: "oauth", cat: "tasks" },
+  { id: "miro", name: "Miro", url: "https://mcp.miro.com/", auth: "oauth", cat: "tasks" },
+  { id: "jotform", name: "Jotform", url: "https://mcp.jotform.com", auth: "oauth", cat: "tasks" },
+  { id: "tally", name: "Tally", url: "https://api.tally.so/mcp", auth: "oauth", cat: "tasks" },
+  { id: "github", name: "GitHub", url: "https://api.githubcopilot.com/mcp/", auth: "token", cat: "dev", desc: "mcp.cat.github" },
+  { id: "gitlab", name: "GitLab", url: "https://gitlab.com/api/v4/mcp", auth: "oauth", cat: "dev" },
+  { id: "sentry", name: "Sentry", url: "https://mcp.sentry.dev/mcp", auth: "oauth", cat: "dev" },
+  { id: "supabase", name: "Supabase", url: "https://mcp.supabase.com/mcp", auth: "oauth", cat: "dev" },
+  { id: "neon", name: "Neon", url: "https://mcp.neon.tech/mcp", auth: "oauth", cat: "dev" },
+  { id: "prisma", name: "Prisma", url: "https://mcp.prisma.io/mcp", auth: "oauth", cat: "dev" },
+  { id: "netlify", name: "Netlify", url: "https://netlify-mcp.netlify.app/mcp", auth: "oauth", cat: "dev" },
+  { id: "postman", name: "Postman", url: "https://mcp.postman.com/mcp", auth: "oauth", cat: "dev" },
+  { id: "buildkite", name: "Buildkite", url: "https://mcp.buildkite.com/mcp", auth: "oauth", cat: "dev" },
+  { id: "grafana", name: "Grafana", url: "https://mcp.grafana.com/mcp", auth: "oauth", cat: "dev" },
+  { id: "jam", name: "Jam", url: "https://mcp.jam.dev/mcp", auth: "oauth", cat: "dev" },
+  { id: "stytch", name: "Stytch", url: "https://mcp.stytch.dev/mcp", auth: "oauth", cat: "dev" },
+  { id: "apify", name: "Apify", url: "https://mcp.apify.com", auth: "oauth", cat: "dev" },
+  { id: "cfbindings", name: "Cloudflare Workers", url: "https://bindings.mcp.cloudflare.com/mcp", auth: "oauth", cat: "dev" },
+  { id: "cfobs", name: "Cloudflare Observability", url: "https://observability.mcp.cloudflare.com/mcp", auth: "oauth", cat: "dev" },
+  { id: "cfbrowser", name: "Cloudflare Browser Rendering", url: "https://browser.mcp.cloudflare.com/mcp", auth: "oauth", cat: "dev" },
+  { id: "cfradar", name: "Cloudflare Radar", url: "https://radar.mcp.cloudflare.com/mcp", auth: "oauth", cat: "dev" },
+  { id: "render", name: "Render", url: "https://mcp.render.com/mcp", auth: "client", cat: "dev", help: "https://dashboard.render.com" },
+  { id: "mongodb", name: "MongoDB Atlas", url: "https://mcp.mongodb.com/mcp", auth: "client", cat: "dev", help: "https://cloud.mongodb.com" },
+  { id: "pagerduty", name: "PagerDuty", url: "https://mcp.pagerduty.com/mcp", auth: "client", cat: "dev", help: "https://app.pagerduty.com/developer/apps" },
+  { id: "posthog", name: "PostHog", url: "https://mcp.posthog.com/mcp", auth: "oauth", cat: "data" },
+  { id: "mixpanel", name: "Mixpanel", url: "https://mcp.mixpanel.com/mcp", auth: "oauth", cat: "data" },
+  { id: "amplitude", name: "Amplitude", url: "https://mcp.amplitude.com/mcp", auth: "oauth", cat: "data" },
+  { id: "ahrefs", name: "Ahrefs", url: "https://api.ahrefs.com/mcp/mcp", auth: "oauth", cat: "data" },
+  { id: "huggingface", name: "Hugging Face", url: "https://huggingface.co/mcp", auth: "oauth", cat: "data" },
+  { id: "hubspot", name: "HubSpot", url: "https://mcp.hubspot.com", auth: "client", cat: "sales", help: "https://developers.hubspot.com" },
+  { id: "attio", name: "Attio", url: "https://mcp.attio.com/mcp", auth: "oauth", cat: "sales" },
+  { id: "close", name: "Close", url: "https://mcp.close.com/mcp", auth: "oauth", cat: "sales" },
+  { id: "apollo", name: "Apollo.io", url: "https://mcp.apollo.io/mcp", auth: "oauth", cat: "sales" },
+  { id: "lemlist", name: "lemlist", url: "https://app.lemlist.com/mcp", auth: "oauth", cat: "sales" },
+  { id: "zendesk", name: "Zendesk", url: "https://mcp.zendesk.com/mcp", auth: "client", cat: "sales", help: "https://support.zendesk.com/hc/en-us/articles/4408845965210" },
+  { id: "canva", name: "Canva", url: "https://mcp.canva.com/mcp", auth: "oauth", cat: "design" },
+  { id: "webflow", name: "Webflow", url: "https://mcp.webflow.com/mcp", auth: "oauth", cat: "design" },
+  { id: "wix", name: "Wix", url: "https://mcp.wix.com/mcp", auth: "oauth", cat: "design" },
+  { id: "stripe", name: "Stripe", url: "https://mcp.stripe.com", auth: "oauth", cat: "pay" },
+  { id: "paypal", name: "PayPal", url: "https://mcp.paypal.com/mcp", auth: "oauth", cat: "pay" },
+  { id: "plaid", name: "Plaid", url: "https://api.dashboard.plaid.com/mcp", auth: "oauth", cat: "pay" },
+  { id: "deepwiki", name: "DeepWiki", url: "https://mcp.deepwiki.com/mcp", auth: "none", cat: "know", desc: "mcp.cat.deepwiki" },
+  { id: "context7", name: "Context7", url: "https://mcp.context7.com/mcp", auth: "none", cat: "know", desc: "mcp.cat.context7" },
+  { id: "exa", name: "Exa", url: "https://mcp.exa.ai/mcp", auth: "none", cat: "know", desc: "mcp.cat.exa" },
+  { id: "tavily", name: "Tavily", url: "https://mcp.tavily.com/mcp", auth: "oauth", cat: "know", desc: "mcp.cat.exa" },
+  { id: "mslearn", name: "Microsoft Learn", url: "https://learn.microsoft.com/api/mcp", auth: "none", cat: "know", desc: "mcp.cat.docsFree" },
+  { id: "awsknowledge", name: "AWS Knowledge", url: "https://knowledge-mcp.global.api.aws", auth: "none", cat: "know", desc: "mcp.cat.docsFree" },
+  { id: "cfdocs", name: "Cloudflare Docs", url: "https://docs.mcp.cloudflare.com/mcp", auth: "none", cat: "know", desc: "mcp.cat.docsFree" },
 ];
 
 export class McpAuthError extends Error {
@@ -252,6 +321,8 @@ export async function registerClient(as, redirectUri, { fetchImpl = (...a) => fe
 export function authorizeUrl({ as, clientId, redirectUri, challenge, state, resource, scopes = [] }) {
   const q = new URLSearchParams({ response_type: "code", client_id: clientId, redirect_uri: redirectUri, code_challenge: challenge, code_challenge_method: "S256", state, resource });
   if (scopes.length) q.set("scope", scopes.join(" "));
+  // Google hands out a refresh token only when asked for offline access, with the consent shown again.
+  if (/(^|\.)google\.com$/.test(new URL(as.authorization_endpoint).hostname)) { q.set("access_type", "offline"); q.set("prompt", "consent"); }
   return `${as.authorization_endpoint}${as.authorization_endpoint.includes("?") ? "&" : "?"}${q}`;
 }
 
