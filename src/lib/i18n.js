@@ -2384,6 +2384,13 @@ export function t(key, vars) {
   return s;
 }
 
+/** A key's translation (the interface language, else English), or null — never the key itself. */
+function translationOf(key) {
+  const table = DICT[lang] || EN;
+  if (Object.prototype.hasOwnProperty.call(table, key)) return table[key];
+  return Object.prototype.hasOwnProperty.call(EN, key) ? EN[key] : null;
+}
+
 // Fill annotated static markup. Supported attributes:
 //   data-i18n        → textContent
 //   data-i18n-html   → innerHTML (for strings containing markup)
@@ -2394,7 +2401,12 @@ export function applyDom(root = document) {
     el.textContent = t(el.getAttribute("data-i18n"));
   });
   root.querySelectorAll("[data-i18n-html]").forEach((el) => {
-    setHTML(el, t(el.getAttribute("data-i18n-html")));
+    // Markup only from the dictionaries: an unknown key is shown as plain text, never parsed as
+    // HTML (`t` falls back to the key itself, which is page text — CodeQL js/xss-through-dom).
+    const key = el.getAttribute("data-i18n-html");
+    const html = translationOf(key);
+    if (html == null) el.textContent = key;
+    else setHTML(el, html);
   });
   root.querySelectorAll("[data-i18n-title]").forEach((el) => {
     el.title = t(el.getAttribute("data-i18n-title"));

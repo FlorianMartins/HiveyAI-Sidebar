@@ -4,7 +4,12 @@
 
 // Single chokepoint for HTML insertion in this content script — see src/lib/dom.js
 // for the rationale. Callers pass only sanitized (miniMarkdown) or trusted HTML.
-function setHTML(el, html) { if (el) el.innerHTML = html == null ? "" : html; }
+// Parsed in an inert document and moved in as nodes (no innerHTML on the page).
+function setHTML(el, html) {
+  if (!el) return;
+  const doc = new DOMParser().parseFromString(`<body>${html == null ? "" : html}</body>`, "text/html");
+  el.replaceChildren(...doc.body.childNodes);
+}
 
 (function () {
   if (window.__aiSidebarInjected) return;
