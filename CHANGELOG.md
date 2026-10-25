@@ -10,8 +10,7 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
-- **Une couleur par mode de protection** : « Clés masquées » en vert, « Non anonymisé » en rouge,
-  « Anonymisé » aux couleurs du thème — dans la fenêtre comme sur le badge sous la zone de saisie.
+- **Le badge « Cloud · clés masquées »** sous la zone de saisie s'affiche en vert.
 - **Agent : la réflexion se lit pendant qu'elle se fait.** Dans l'onglet Agent, le bloc
   « Réflexion » s'ouvre pendant que l'IA réfléchit et se replie dès qu'elle agit ou répond (et se
   rouvre à l'étape suivante si elle réfléchit encore). Ailleurs, il reste replié comme avant. Le
