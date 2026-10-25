@@ -2628,11 +2628,14 @@ body.rail-right.rail-pinned .codeview, body.rail-right.rail-peek .codeview {
 /* The image sizes' menu shows each size in full (it was cut: « Fond d'écran / paysage 16:9 — 179… »). */
 .themed-sel-menu.img-size-menu .sa-item span { white-space: normal; overflow: visible; text-overflow: clip; }
 
+/* A soft white: always readable, brighter than the grey of tokens and prices (--muted). */
+:root { --soft-text: color-mix(in srgb, var(--text) 80%, var(--bg)); }
+body.theme-light { --soft-text: var(--text); }
 /* One calm text tone in the composer and the tab selectors (no bright white): the model's name, the
    thinking level, « Choose a language », « Choose a style », the image size, « Choose an
    analysis », the Wisebase collection — brighter on hover. */
 .model-chip .combo-input, .composer-tools .cchip, .img-size .themed-sel-btn,
-.sec-analysis-btn .sa-label, .themed-sel-btn .sa-label, .improve-pick-btn .sa-label { color: var(--muted) !important; }
+.sec-analysis-btn .sa-label, .themed-sel-btn .sa-label, .improve-pick-btn .sa-label { color: var(--soft-text) !important; }
 .combo.model-chip:hover .combo-input, .model-chip .combo-input:focus, .composer-tools .cchip:hover,
 .sec-analysis-btn:hover .sa-label, .img-size .themed-sel-btn:hover { color: var(--text) !important; }
 /* Model and thinking sit close together: no padding between the two chips. */

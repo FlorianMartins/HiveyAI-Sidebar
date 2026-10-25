@@ -3,6 +3,7 @@
 // back to English. Placeholders {name}, HTML tags and emojis are kept verbatim.
 
 export const ES = {
+  "cost.tokensTotal": "{n} tokens",
   "improve.pick": "Elige un estilo",
   "ctx.sizeAutoLabel": "Auto",
   "ctx.sizeAutoTitle": "Auto — la mayor ventana del modelo elegido ({n})",
@@ -33,7 +34,7 @@ export const ES = {
   "priv.badge.anon": "anonimizado",
   "priv.badgeTitle.local": "El modelo funciona en su equipo o red local: nada sale de ahí. Clic para los ajustes.",
   "priv.badgeTitle.gateway": "El modelo funciona en su propio servidor: sus datos se quedan con usted. Clic para los ajustes.",
-  "cost.tokens": "{in} → {out} tokens",
+  "cost.tokens": "{in} enviados → {out} recibidos",
   "cost.exactTitle": "Coste exacto, según el proveedor",
   "cost.estimateTitle": "Estimado con los precios públicos del proveedor",
   "opt.behavior.suggestNext": "<b>Sugerir la siguiente petición</b> en el campo tras cada respuesta (Tab para usarla)",
@@ -1136,6 +1137,7 @@ export const ES = {
 };
 
 export const DE = {
+  "cost.tokensTotal": "{n} Tokens",
   "improve.pick": "Stil wählen",
   "ctx.sizeAutoLabel": "Auto",
   "ctx.sizeAutoTitle": "Auto — das größte Fenster des gewählten Modells ({n})",
@@ -1166,7 +1168,7 @@ export const DE = {
   "priv.badge.anon": "anonymisiert",
   "priv.badgeTitle.local": "Das Modell läuft auf Ihrem Gerät oder im lokalen Netz: nichts verlässt es. Klicken für die Einstellungen.",
   "priv.badgeTitle.gateway": "Das Modell läuft auf Ihrem eigenen Server: Ihre Daten bleiben bei Ihnen. Klicken für die Einstellungen.",
-  "cost.tokens": "{in} → {out} Tokens",
+  "cost.tokens": "{in} gesendet → {out} empfangen",
   "cost.exactTitle": "Genaue Kosten, laut Anbieter",
   "cost.estimateTitle": "Geschätzt nach den Listenpreisen des Anbieters",
   "opt.behavior.suggestNext": "<b>Nächste Anfrage vorschlagen</b> im Eingabefeld nach jeder Antwort (Tab zum Übernehmen)",
@@ -2269,6 +2271,7 @@ export const DE = {
 };
 
 export const IT = {
+  "cost.tokensTotal": "{n} token",
   "improve.pick": "Scegli uno stile",
   "ctx.sizeAutoLabel": "Auto",
   "ctx.sizeAutoTitle": "Auto — la finestra più grande del modello scelto ({n})",
@@ -2299,7 +2302,7 @@ export const IT = {
   "priv.badge.anon": "anonimizzato",
   "priv.badgeTitle.local": "Il modello gira sul tuo dispositivo o nella rete locale: nulla ne esce. Clic per le impostazioni.",
   "priv.badgeTitle.gateway": "Il modello gira sul tuo server: i dati restano con te. Clic per le impostazioni.",
-  "cost.tokens": "{in} → {out} token",
+  "cost.tokens": "{in} inviati → {out} ricevuti",
   "cost.exactTitle": "Costo esatto, come indicato dal fornitore",
   "cost.estimateTitle": "Stimato dai prezzi di listino del fornitore",
   "opt.behavior.suggestNext": "<b>Suggerisci la prossima richiesta</b> nel campo dopo ogni risposta (Tab per usarla)",
@@ -3402,6 +3405,7 @@ export const IT = {
 };
 
 export const PT = {
+  "cost.tokensTotal": "{n} tokens",
   "improve.pick": "Escolha um estilo",
   "ctx.sizeAutoLabel": "Auto",
   "ctx.sizeAutoTitle": "Auto — a maior janela do modelo escolhido ({n})",
@@ -3432,7 +3436,7 @@ export const PT = {
   "priv.badge.anon": "anonimizado",
   "priv.badgeTitle.local": "O modelo corre no seu dispositivo ou rede local: nada sai daí. Clique para as definições.",
   "priv.badgeTitle.gateway": "O modelo corre no seu próprio servidor: os dados ficam consigo. Clique para as definições.",
-  "cost.tokens": "{in} → {out} tokens",
+  "cost.tokens": "{in} enviados → {out} recebidos",
   "cost.exactTitle": "Custo exato, conforme o fornecedor",
   "cost.estimateTitle": "Estimado pelos preços de tabela do fornecedor",
   "opt.behavior.suggestNext": "<b>Sugerir o próximo pedido</b> no campo após cada resposta (Tab para o usar)",
