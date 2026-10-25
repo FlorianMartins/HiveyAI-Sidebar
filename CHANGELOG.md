@@ -12,6 +12,9 @@ Version de développement, toujours à jour :
 
 ### Jetons et contexte : un seul chiffre, le même partout
 
+- **Thème clair** : les réponses ne sont plus dans un cadre (bordure, fond et ombre retirés) — elles
+  s'affichent directement sur la page, comme en thème sombre.
+
 - **Sous chaque réponse** : seulement le nombre de jetons et le prix (« 820 jetons · 0,0083 $ ») ; le
   détail envoyés → reçus est au survol.
 - **La jauge et la réponse disent la même chose** : la jauge n'estimait que la conversation, alors

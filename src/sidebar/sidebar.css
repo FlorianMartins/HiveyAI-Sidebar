@@ -2648,3 +2648,6 @@ body.theme-light { --soft-text: var(--text); }
 body:not(.theme-light) .msg.assistant { color: color-mix(in srgb, var(--text) 82%, var(--bg)); }
 body:not(.theme-light) .msg.assistant :is(strong, b, h1, h2, h3, h4) { color: color-mix(in srgb, var(--text) 90%, var(--bg)); }
 body:not(.theme-light) .msg.user > .umsg-text { color: color-mix(in srgb, var(--on-accent) 88%, transparent); }
+/* Answers sit on the page, not in a card: no frame, shadow or panel behind them — on the light
+   theme they read as a bordered box. */
+.msg.assistant, body.theme-light .msg.assistant { background: transparent !important; box-shadow: none !important; border: 0 !important; }
