@@ -19,20 +19,20 @@ modèle, réflexion, agent, contexte, confidentialité.
 
 ## 11 espaces de travail
 
-Une **barre latérale d'activité** à gauche (convention « activity bar » façon
-VS Code / Slack — scale mieux qu'une rangée d'onglets) donne accès à :
+Une **barre d'onglets** à gauche (façon « activity bar » de VS Code), ouverte par défaut (☰ la
+masque, et le choix est gardé), donne accès à :
 
 | Espace | Rôle |
 |---|---|
-| 💬 **Chat** | Conversation avec la page comme contexte + DeepSearch, résumé |
+| 💬 **Chat** | Conversation avec la page comme contexte, recherche web quand la question le demande, DeepSearch, artefacts |
 | 🌐 **Web chats** | Gemini, Claude, ChatGPT, Copilot, Mistral, DeepSeek, Qwen, Kimi, Z.ai, HuggingFace **dans la sidebar, sans clé API** (votre session web) |
 | 🤖 **Agent** | L'IA lit, navigue, clique, remplit — autorisations réglables + garde-fou anti-achat |
-| 🌍 **Traduire** | Traduction page / sélection |
+| 🌍 **Traduire** | Traduction d'un texte, de la page ou de la sélection ; langue choisie au-dessus du cadre (liste alphabétique, on tape pour y sauter) |
 | ✨ **Améliorer** | Réécriture avec styles (Marketing, Newsletter, Email pro, LinkedIn, Tweet, Blog…) |
 | 🎨 **Image** | Génération d'images (endpoint compatible OpenAI) |
 | 📄 **PDF** | Lecture d'un document et questions dessus |
 | 🛡 **Sécurité** | Assistant **cybersécurité défensive** — analyse de capture `.pcap` résumée localement |
-| 🧠 **Wisebase** | **Base de connaissance locale + RAG**, embeddings calculés dans le navigateur |
+| 🧠 **Wisebase** | **Base de connaissance locale + RAG**, embeddings calculés dans le navigateur ; « Créer ma première collection » quand elle est vide |
 | 📊 **Benchmark** | **Testez vos modèles** (tout fournisseur connecté, local et passerelle compris) sur jusqu'à 39 questions notées automatiquement (logique, consignes, JSON, outils, plusieurs étapes, code, rédaction, pièges — au choix), avec un **rapport** qui s'ouvre tout seul ; classements **publiés** à côté, avec leur fraîcheur réelle |
 | `</>` **Code** | Atelier d'app IA complet (aperçu live, terminal, QR Expo Go) |
 
@@ -55,17 +55,29 @@ VS Code / Slack — scale mieux qu'une rangée d'onglets) donne accès à :
 - 🎛 **Un contexte maîtrisé, dans tous les onglets** : mettre un échange **en veille** (affiché mais
   plus envoyé), l'**épingler** (gardé mot pour mot dans les résumés), le **supprimer** ; une **jauge
   de contexte** cliquable pour résumer et libérer la fenêtre.
-- 🐝 **Moteur Hivey — orchestration multi-modèles** : au lieu de choisir un modèle,
-  choisissez une **intention**. Trois variantes (**🎁 Free**, **⚡ Smart**, **✨ Pro**)
-  routent chaque message vers le meilleur modèle pour la tâche — un dispatcher LLM
-  bon marché classe la demande (code / raisonnement / recherche / maths / créatif /
-  test / trivial) et bascule sur le palier adéquat, avec repli heuristique si le
-  dispatcher échoue. Le catalogue est **auto-curé quotidiennement**, sans version en dur.
+- 🐝 **Moteur Hivey — orchestration multi-modèles** (via OpenRouter) : au lieu de choisir un
+  modèle, choisissez une **intention**. Trois variantes routent chaque message vers le meilleur
+  modèle pour la tâche — un dispatcher bon marché classe la demande (code / raisonnement /
+  recherche / maths / créatif / test / trivial), avec repli heuristique s'il échoue :
+  - **🎁 Free** — les meilleurs modèles gratuits, avec rotation automatique quand l'un est limité ;
+  - **⚡ Smart** — le plus précis pour le moins cher : **Sonnet 5.5** partout, **Opus 5.5** pour
+    les raisonnements et les maths ;
+  - **✨ Pro** — le plus puissant : **Fable 5.1** pour les raisonnements et les maths, **Opus 5.5**
+    pour le chat, le code, l'agent et la rédaction, **Sonnet 5.5** pour la vision, la recherche et
+    la vérification.
+
+  La jauge de contexte affiche la plus petite fenêtre des modèles du préréglage. Le catalogue est
+  **auto-curé quotidiennement**, sans version en dur.
 - 🧠 **Wisebase (RAG 100% local)** : importez documents et pages dans des collections ;
   le texte est découpé, **vectorisé dans le navigateur** (transformers.js +
   onnxruntime WASM, modèle `all-MiniLM-L6-v2`) et stocké en **IndexedDB**. Les
   réponses citent vos sources. Rien n'est jamais téléversé ; désinstaller l'extension
   purge la base.
+- 🌐 **Recherche web quand elle sert** : « Web » est activé par défaut dans le Chat, mais une
+  règle gratuite décide si la question en a besoin (un lien, l'actualité, un prix, des horaires →
+  recherche ; écrire, traduire, coder, calculer → non) et seuls les cas douteux posent une question
+  oui/non d'un mot à un modèle économique. Le modèle choisi cherche lui-même quand son fournisseur le
+  permet (OpenRouter, Anthropic) et cite ses sources.
 - 🔎 **DeepSearch** : bascule de recherche web approfondie dans le chat, avec une
   **profondeur réglable** (rapide / standard / approfondie).
 - 📚 **Prompt Library** : prompts prêts à l'emploi (rédaction, code, cybersec,
@@ -77,8 +89,9 @@ VS Code / Slack — scale mieux qu'une rangée d'onglets) donne accès à :
 - 📊 **Modèles classés par spécialité** : chaque espace trie sa liste de modèles selon
   un **index de qualité curé par catégorie** (les endpoints `/models` n'exposent aucun
   score) — le picker de l'onglet Image ne classe pas comme celui de l'onglet Code.
-- ⌨️ **Raccourcis clavier configurables** (nouveau chat, focus composer, historique…) : on
-  clique, on appuie sur la combinaison ; conflits et combinaisons réservées au navigateur signalés.
+- ⌨️ **Raccourcis clavier configurables** (nouveau chat, zone de saisie, historique, recherche
+  web, onglets, bibliothèque de prompts) : on clique, on appuie sur la combinaison ; Échap annule,
+  Retour arrière désactive, ↺ rétablit ; conflits et combinaisons réservées au navigateur signalés.
 - 🎛️ **Réglages clairs** : une colonne de cartes qui suit votre thème, de 360 px à l'écran large,
   et un **Accès rapide** d'interrupteurs (anonymisation, recherche web, suggestion, artefacts,
   vérification, compaction, mémoire, son, thème clair…) enregistrés aussitôt.
@@ -88,15 +101,20 @@ VS Code / Slack — scale mieux qu'une rangée d'onglets) donne accès à :
 - 📤 **Export de conversation** (impression / PDF via le rendu natif du navigateur).
 - 🎨 **Interface moderne & personnalisable** : **6 thèmes** (Dark, Hive, Modern, Neon,
   Sunset, Light) avec **personnalisation des couleurs par-dessus** (accent, fond,
-  surface, texte) et une **pipette** pour capturer une couleur à l'écran. Zone de
-  saisie unifiée façon Claude/Gemini, et **sélecteur de modèle unifié** au-dessus
-  du chat (une seule liste groupée par fournisseur connecté).
+  surface, texte) et une **pipette** pour capturer une couleur à l'écran.
+- ✍️ **Une seule zone de saisie dans tous les onglets**, comme dans Hivey Code : le texte, puis
+  `+` (joindre un fichier ; capturer une zone, choisir un élément, onglets ouverts, surveiller la
+  page), micro, **la puce du modèle** avec l'icône de son fournisseur, **la puce de réflexion** (le
+  niveau recommandé du modèle, retenu par modèle) et les options (Vérifier, DeepSearch, Web,
+  Artifacts). Pas de bouton Envoyer : **Entrée** envoie, ■ arrête. Le cadre s'illumine pendant que
+  le modèle répond ou agit. Sous le cadre : où tourne le modèle (🏠 / 🔒 / ☁️, cliquable pour
+  l'anonymisation) et **la jauge de contexte** avec le coût de la conversation.
 - 🔌 **Tous les fournisseurs** : **Claude**, **OpenAI**, **Gemini**, **Mistral**,
   **Groq**, **DeepSeek**, **xAI (Grok)**, **Perplexity**, **Together**, **Fireworks**,
   **DeepInfra**, **Cerebras**, **Cohere**, **OpenRouter**, et les **modèles locaux**
   **Ollama** / **LM Studio** (ou tout serveur compatible OpenAI via URL personnalisée).
-- 📋 **Seulement les modèles disponibles** : la liste (unifiée, juste au-dessus du
-  chat) n'affiche que les fournisseurs **connectés** (clé/compte/serveur local) et,
+- 📋 **Seulement les modèles disponibles** : la liste (unifiée, ouverte par la puce du
+  modèle) n'affiche que les fournisseurs **connectés** (clé/compte/serveur local) et,
   pour chacun, les **modèles réellement accessibles** à votre clé (lus en direct via
   l'endpoint `/models`).
 - 🔑 **Connexion par compte** : bouton **« Se connecter avec OpenRouter »** (OAuth
@@ -104,16 +122,19 @@ VS Code / Slack — scale mieux qu'une rangée d'onglets) donne accès à :
   modèles. Les autres fournisseurs utilisent une clé API (ils n'offrent pas d'OAuth).
 - ⚖️ **Comparaison de modèles** : sur **la dernière réponse**, un bouton
   **« Comparer »** rejoue votre demande sur **un autre modèle**, directement dans le chat.
-- 🧩 **Artifacts interactifs (façon Claude)** : demandez une app, un outil ou un
-  **jeu** → l'IA renvoie un document HTML/JS (ou un composant **React/JSX**) qui
-  s'exécute dans un aperçu sandboxé **et avec lequel vous interagissez/jouez**
-  directement. (Mermaid/SVG pour les diagrammes.)
+- 🧩 **Artifacts interactifs (façon Claude)**, **seulement quand vous le demandez** : demandez une
+  app, un outil ou un **jeu** → l'IA renvoie un document HTML/JS (ou un composant **React/JSX**) ;
+  une carte « Ouvrir dans un onglet » le lance en plein écran, isolé, où il est jouable. Les
+  diagrammes **Mermaid** et le SVG s'affichent dans la réponse, aux couleurs du thème, avec zoom
+  (− ⟲ +, Ctrl + molette, glisser pour se déplacer).
 - 🕘 **Historique local** : vos conversations sont enregistrées **uniquement dans
   ce navigateur** (privacy) ; liste, rechargement, et « tout effacer ».
 - 🌐 **Web chats sans clé API** : dix IA grand public (Gemini, Claude, ChatGPT,
   Copilot, Mistral, DeepSeek, Qwen, Kimi, Z.ai, HuggingFace) s'ouvrent **dans la
   sidebar**, via votre session web déjà connectée — utile quand vous n'avez pas de
-  clé ou que votre abonnement est déjà payé.
+  clé ou que votre abonnement est déjà payé. Claude y garde **son propre menu** (conversations
+  passées, projets) et sa page de connexion ; un site qui refuse de s'afficher propose de s'ouvrir
+  dans un onglet. Ces sites ne peuvent être intégrés que par l'extension, pas par une autre page.
 - 🛡 **Espace Sécurité défensive** : assistant orienté défense, avec un parseur
   `.pcap` **côté client** qui ne produit qu'un **résumé anonymisé** (flux, top
   talkers/ports, mix protocolaire, heuristiques de scan TCP) — **jamais** les
@@ -121,17 +142,19 @@ VS Code / Slack — scale mieux qu'une rangée d'onglets) donne accès à :
 - 🌍 **Interface multilingue** : anglais, français, espagnol, allemand, italien,
   portugais (réglable dans les paramètres) — les six sont **complètes**, et un test
   échoue si une clé manque dans l'une d'elles.
-- 👁 **L'IA voit la page** : le contenu est lu automatiquement à l'ouverture d'un
-  site **et à chaque navigation** (y compris changement de sous-domaine et
-  navigations SPA), puis utilisé comme support pour répondre.
+- 👁 **L'IA voit la page, quand vous le voulez** : tapez `@` dans la zone de saisie → « Page
+  actuelle » (ou un onglet ouvert), ou activez « L'IA voit la page courante » dans les réglages
+  (désactivé par défaut). La page est alors relue **à chaque navigation** (changement de
+  sous-domaine et navigations SPA compris) et donnée une fois par conversation.
 - 📑 **Lecture multi-onglets** : cochez plusieurs onglets ouverts pour les donner
   comme contexte à l'IA (comparer, synthétiser, recouper).
 - ⚡ **Actions rapides** + **clic droit** : Résumer / Traduire la **page** ou la
   **sélection**, Expliquer, Améliorer, **Rédiger une réponse**.
-- 🔍 **Recherche dans la conversation**, **glisser-déposer** de fichiers, et un
-  **outil de capture de zone** (📸) qui ajoute une capture d'écran de la page au contexte.
+- 🔍 **Recherche dans la conversation**, **glisser-déposer** de fichiers, et dans le menu `+` un
+  **outil de capture de zone** qui ajoute une capture d'écran de la page au contexte, ou **choisir
+  un élément** (une capture de la zone et le texte des éléments, en une seule pièce jointe).
 - 💭 **Réflexion** : le raisonnement du modèle (thinking adaptatif de Claude, `reasoning` d'OpenRouter,
-  `reasoning_content` de DeepSeek et des serveurs llama.cpp) s'affiche dans un bloc repliable, et
+  `reasoning_content` de DeepSeek et des serveurs llama.cpp) s'affiche dans un bloc replié par défaut, et
   **revient au modèle à l'étape suivante** — il reprend son raisonnement au lieu de tout recommencer.
 - 🤖 **Espace Agent** (onglet dédié) : l'IA peut lire la page/les onglets, naviguer,
   cliquer, remplir des champs. **Sans limite d'étapes** : il s'arrête quand la tâche est finie, sur
@@ -141,7 +164,8 @@ VS Code / Slack — scale mieux qu'une rangée d'onglets) donne accès à :
   exécution automatique, mais les **actions sensibles** comme télécharger, réserver,
   supprimer, s'inscrire demandent quand même confirmation) ou *validation manuelle*
   (confirmation avant chaque action). Un **liseré lumineux** s'affiche sur la page
-  pendant que l'agent travaille.
+  pendant que l'agent travaille. Musique et vidéos : quand le navigateur n'autorise le son qu'après
+  un clic sur la page (Firefox), la vidéo attend **en pause, son activé** — un seul clic la lance.
   Dans les deux cas, le **garde-fou anti-achat** s'applique : elle peut remplir un
   panier mais **ne peut jamais payer/commander**. Un **modèle d'agent** dédié est
   réglable (beaucoup de modèles rapides/gratuits ne savent pas appeler d'outils).
@@ -160,21 +184,33 @@ VS Code / Slack — scale mieux qu'une rangée d'onglets) donne accès à :
 
 ## Captures
 
-| Anonymisation avant le cloud | Contexte maîtrisé | Niveaux de réflexion du modèle |
+| Premier lancement | La zone de saisie et son menu `+` | Anonymisation avant le cloud |
 |---|---|---|
-| ![Une adresse e-mail anonymisée avant l'envoi, remise en clair dans la réponse](docs/screenshots/sidebar-privacy.png) | ![Un échange mis en veille : grisé, « Hors contexte »](docs/screenshots/sidebar-context.png) | ![Le menu de réflexion : Direct, Bref, Approfondi, Maximum pour DeepSeek V4.1 Flash](docs/screenshots/sidebar-thinking.png) |
+| ![Le premier lancement : se connecter à OpenRouter, modèle local, passerelle, autres fournisseurs](docs/screenshots/sidebar-onboarding.png) | ![Le menu + ouvert : joindre un fichier, capturer une zone, choisir un élément, onglets ouverts, surveiller cette page ; dessous, la puce du modèle DeepSeek V4.1 Flash et la réflexion « Approfondi »](docs/screenshots/sidebar-plus-menu.png) | ![Une adresse e-mail anonymisée avant l'envoi au cloud, remise en clair dans la réponse ; sous la réponse, 906 jetons et le prix](docs/screenshots/sidebar-privacy.png) |
 
-| L'agent dans le navigateur | L'onglet Benchmark | Le rapport, ouvert à la fin du test |
+| Niveaux de réflexion du modèle | Contexte maîtrisé | Taille du contexte |
 |---|---|---|
-| ![L'agent sur Wikipédia : sa réflexion, puis la réponse sourcée](docs/screenshots/sidebar-agent.png) | ![Trois modèles testés : le conseil en tête, puis le classement avec score, temps et coût](docs/screenshots/sidebar-benchmark.png) | ![Le rapport : le conseil, les scores, le détail par type de question, le temps et le coût](docs/screenshots/bench-report.png) |
+| ![Le menu de réflexion de DeepSeek V4.1 Flash : Direct, Bref, Approfondi, Maximum](docs/screenshots/sidebar-thinking.png) | ![Un échange mis en veille : la question en pointillés, la réponse grisée, « En veille — n'est plus envoyé au modèle »](docs/screenshots/sidebar-context.png) | ![Le menu de la jauge : 865 jetons utilisés sur 1 049 k, tailles de Auto à 1 049 k, Résumer maintenant](docs/screenshots/sidebar-ctxgauge.png) |
 
-| Réglages de confidentialité | Fournisseurs : local d'abord |
+| L'agent dans le navigateur | Un diagramme aux couleurs du thème | Un artefact (jeu HTML) |
+|---|---|---|
+| ![L'agent sur Wikipédia : ses deux actions repliées, puis la réponse sourcée sur la tour Eiffel](docs/screenshots/sidebar-agent.png) | ![Un diagramme Mermaid du parcours d'une commande, en thème sombre, avec les boutons de zoom − ⟲ +](docs/screenshots/sidebar-markdown-mermaid.png) | ![Un compteur de clics demandé au modèle : la carte « Ouvrir dans un onglet » et les boutons Code, Ouvrir, Copier](docs/screenshots/artifact-html-preview.png) |
+
+| Traduire | Wisebase, avant la première collection | L'onglet Web (Mistral) |
+|---|---|---|
+| ![L'onglet Traduire : « Anglais » choisi au-dessus du cadre, un message traduit](docs/screenshots/sidebar-translate.png) | ![Wisebase vide : « Créer ma première collection »](docs/screenshots/sidebar-wisebase.png) | ![L'onglet Web : la liste des dix sites ouverte au-dessus de la page de Mistral](docs/screenshots/sidebar-web.png) |
+
+| L'onglet Benchmark | Le rapport, ouvert à la fin du test |
 |---|---|
-| ![Niveau d'anonymisation, termes, confiance dans ses serveurs](docs/screenshots/settings-privacy.png) | ![Les fournisseurs rangés local, passerelle, cloud, chacun replié avec son état](docs/screenshots/settings-providers.png) |
+| ![Trois modèles testés : « Notre conseil : DeepSeek V4.1 Flash », les modèles à comparer, les huit types de questions, le coût total](docs/screenshots/sidebar-benchmark.png) | ![Le rapport : le conseil, le score global, le détail par type de question, le temps et le coût de chaque modèle](docs/screenshots/bench-report.png) |
 
-Captures faites le 24 octobre 2026 dans Chromium avec l'extension réelle et un vrai modèle cloud
-(DeepSeek V4.1 Flash via OpenRouter). Artifacts : [aperçu HTML](docs/screenshots/artifact-html-preview.png),
-[Markdown et Mermaid](docs/screenshots/sidebar-markdown-mermaid.png).
+| Réglages : accès rapide | Réglages de confidentialité | Fournisseurs : local d'abord |
+|---|---|---|
+| ![L'accès rapide : anonymisation, recherche web, suggestion, artefacts, vérification, compaction, mémoire, son, notifications, thème clair…](docs/screenshots/settings-quick-access.png) | ![Sécurité & confidentialité : anti-achat, historique local, niveau d'anonymisation, termes, confiance dans ses serveurs](docs/screenshots/settings-privacy.png) | ![Les fournisseurs rangés local, passerelle, cloud, chacun replié avec son état](docs/screenshots/settings-providers.png) |
+
+Captures faites le 25 octobre 2026 dans Chromium avec l'extension réelle, l'interface en français et
+de vrais modèles cloud via OpenRouter (DeepSeek V4.1 Flash ; Qwen3.8 27B et Gemini 3.7 Flash pour le
+Benchmark).
 
 ## Installation
 
@@ -242,13 +278,18 @@ compatible OpenAI — une URL hors du réseau local est traitée comme une passe
 ```
 manifest.json            MV3 Firefox (sidebar_action, event page)
 manifest.chrome.json     MV3 Chromium (side_panel, service worker)
-scripts/build-chrome.sh  Assemble le paquet Chromium (.zip / dossier)
+scripts/build.sh         Assemble les paquets Firefox et Chromium (.zip)
+scripts/build-chrome.sh  Assemble le paquet Chromium (.zip + dossier .build-chrome/)
+rules/frame-unblock.json Sites de l'onglet Web et en-têtes anti-cadre retirés (règle de session)
 src/
-  background/sw-chrome.js  Entrée service worker Chromium (importScripts)
-  background/            Event page : menus contextuels (résumer/traduire/…)
-  sidebar/               UI principale (chat, streaming, thinking, actions rapides)
-  content/               Lecture page + actions DOM + notif. de navigation SPA
+  background/            Event page (Firefox) / service worker module (Chromium) : menus
+                         contextuels, surveillance de pages, règle anti-cadre de l'onglet Web
+  sidebar/               UI principale (zone de saisie, chat, streaming, réflexion, onglets)
+  content/               Lecture page + actions DOM + notif. de navigation SPA ; liseré de
+                         l'agent (agent-frame.js) ; ponts de l'onglet Web (webchat-*.js)
   options/               Réglages : accès rapide, cartes par section, clés BYOK par fournisseur
+  permission/            Page qui demande l'accès au micro (dictée)
+  report/                Page du rapport de Benchmark
   lib/
     models.js            Catalogue des fournisseurs + modèles + presets d'écriture
     providers.js         Client Anthropic natif + client générique OpenAI ; images ; aucun plafond fixe,
@@ -259,6 +300,12 @@ src/
     context-control.js   Veille / épingle / suppression par échange (clés `_` jamais envoyées)
     agent-guards.js      Freins de l'agent : boucles, réflexion qui tourne, fenêtre, correction en route
     privacy.js           Local / passerelle / cloud ; anonymisation et fenêtre des données sensibles
+    untrusted.js         Contenu non fiable (pages, onglets, PDF) en messages séparés, clôture à nonce
+    web-need.js          La question a-t-elle besoin du web ? Règle gratuite, puis oui/non d'un modèle
+    next-step.js         Suggestion de la prochaine demande (Tab la reprend)
+    cost.js              Coût d'une réponse et de la conversation (prix OpenRouter ou publics)
+    frame-unblock.js     Règle anti-cadre de l'onglet Web, limitée aux pages de l'extension
+    memory*.js, recall.js  Mémoire à étages (opt-in) : politique, extraction, consolidation, rappel
     redaction/           Détecteurs, coffre de marqueurs, restitution en flux (repris de Hivey Code)
     user-language.js     Langue de l'utilisateur (7 langues), nommée au modèle
     harness.js           Noyau de raisonnement : coutures, journal de session, événements
@@ -273,7 +320,8 @@ src/
     benchmark-web.js     GÉNÉRÉ : résultats publiés (Aider, Vectara) + fraîcheur de chaque source
     benchmarkView.js     Espace Benchmark : modèles à tester, résultats par famille, classements publiés
     bench-report.js      Rapport de benchmark (HTML autonome, sans script) ouvert à la fin d'un test
-    livebench.js         Épreuves notées par programme (raisonnement, consigne, JSON, outils)
+    livebench.js         39 questions notées par programme, en 8 familles (logique, consignes, JSON,
+                         outils, plusieurs étapes, code, rédaction, pièges)
     wisebase.js          Base de connaissance locale + RAG (collections, chunks, IndexedDB)
     embeddings.js        Embeddings calculés dans le navigateur (transformers.js / WASM)
     skills.js            Skills experts + objectifs, exposés en slash-commands
@@ -368,8 +416,8 @@ scripts/update-benchmarks.mjs  Collecte des classements publiés (timer quotidie
   bouton qui réserve, suppression, virement, inscription, installation…) — chercher et
   comparer sur un site de réservation reste libre ; en *validation
   manuelle* chaque action modifiant l'état est confirmée ; en *tout autoriser* l'agent enchaîne
-  sans demande — mais le **garde-fou anti-achat reste actif dans les deux cas**
-  (refus codé en dur, indépendant du prompt). Le défaut sûr est la validation manuelle.
+  sans demande — mais le **garde-fou anti-achat reste actif dans tous les cas**
+  (refus codé en dur, indépendant du prompt).
 - **Espace Code isolé** : l'atelier d'app IA s'ouvre dans un **onglet distinct**
   (origine séparée, protégé côté serveur). Aucune clé, aucun réglage et aucune donnée
   de la sidebar n'est partagé avec l'atelier ; l'URL cible est explicitement
@@ -389,16 +437,18 @@ scripts/update-benchmarks.mjs  Collecte des classements publiés (timer quotidie
 - **Point d'insertion HTML unique** : toute écriture de HTML passe par `src/lib/dom.js`,
   ce qui réduit la surface XSS à un seul fichier auditable. Le Markdown du modèle est
   systématiquement passé dans **DOMPurify** avant rendu.
-- **`declarativeNetRequest` au périmètre minimal** : les règles ne s'appliquent qu'aux
-  **11 domaines de chat web** effectivement supportés — aucun domaine
-  d'authentification, aucun domaine parent large.
+- **`declarativeNetRequest` au périmètre minimal** : la règle qui retire les protections anti-cadre
+  ne vise que les **domaines des chats web** de l'onglet Web (aucun domaine d'authentification,
+  aucun domaine parent large), et **seulement pour les cadres chargés par l'extension** (ou par le
+  site lui-même dans son cadre) : une page tierce qui tente d'intégrer vos chats connectés reçoit
+  le refus du site (`src/lib/frame-unblock.js`, règle de session recréée à chaque démarrage).
 - **CSP stricte** sur les pages d'extension (`script-src 'self'`) ; les artifacts
   (HTML/JS/React/SVG/Mermaid) s'exécutent en **iframe sandboxée** (origine opaque,
-  sans `allow-same-origin`), isolés de l'extension, des pages et des clés.
+  sans `allow-same-origin`) ou dans un onglet isolé, séparés de l'extension, des pages et des clés.
 - **Historique 100% local** : les conversations sont stockées dans
   `storage.local` (jamais synchronisées) ; désactivable et effaçable dans les réglages.
 - **Note artifacts React** : un artifact `jsx`/`react` charge React + Babel depuis
-  un CDN public (`unpkg`) **à l'intérieur de l'iframe sandboxée uniquement**, et
+  un CDN public (`unpkg`) **à l'intérieur de son cadre isolé uniquement**, et
   seulement quand un tel artifact est affiché. Les artifacts **HTML/JS** (jeux, apps)
   ne dépendent d'aucun CDN. La connexion OpenRouter passe par `browser.identity`.
 - `anthropic-dangerous-direct-browser-access` expose la clé Anthropic au contexte
@@ -408,15 +458,22 @@ scripts/update-benchmarks.mjs  Collecte des classements publiés (timer quotidie
 
 Réponses rendues en **Markdown** (marked + DOMPurify, vendorés dans `vendor/`).
 Blocs de code avec barre d'outils (**Copier**), et des **artifacts interactifs**
-(façon Claude) dans des **iframes sandboxées**, avec bascule **Aperçu / Code** et
-bouton **Ouvrir** (plein écran) :
+(façon Claude), avec bascule **Code** et bouton **Ouvrir** (plein écran). Avec l'option
+« Artifacts », le modèle n'en produit que si vous le demandez (construire, lancer, dessiner,
+visualiser…) :
 
-- ` ```html ` → **app / jeu / outil** autonome, exécuté et **jouable** dans l'aperçu
+- ` ```html ` → **app / jeu / outil** autonome : une carte « Ouvrir dans un onglet » le lance, isolé
+  et **jouable**
 - ` ```jsx ` (ou `react`) → **composant React** (définir `App`), transpilé en direct
-- ` ```svg ` → graphique vectoriel rendu
-- ` ```mermaid ` → diagramme rendu automatiquement
+- ` ```svg ` → graphique vectoriel rendu dans la réponse
+- ` ```mermaid ` → diagramme rendu automatiquement, **aux couleurs du thème**, avec zoom (− ⟲ +,
+  Ctrl + molette ou pincement, glisser pour se déplacer, double-clic pour revenir à 100 %)
 
-## Mémoire (opt-in, désactivée par défaut)
+## Mémoire (en préparation)
+
+> **Pas encore active dans l'extension** : les modules ci-dessous (`src/lib/memory*.js`,
+> `recall.js`) et leur banc existent et sont testés, mais la sidebar ne les appelle pas encore —
+> l'interrupteur « Mémoire » des réglages n'a pour l'instant aucun effet, et rien n'est mémorisé.
 
 Une mémoire **à étages**, consultée à la demande, conçue pour ne pas augmenter votre facture.
 Ce n'est pas de la compression de jetons : c'est un **déplacement de la dépense**.

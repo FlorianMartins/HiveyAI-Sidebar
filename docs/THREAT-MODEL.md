@@ -189,6 +189,33 @@ disabled). A third-party page framing a provider gets the site's own refusal. Me
 ESR and Chromium: before, a local page framing chatgpt.com received the page's hello; after, it does
 not, while the sidebar still loads Claude, ChatGPT and Mistral.
 
+**Claude's own menu in the Web tab.** claude.ai hides its menu and refuses to sign in when it sees
+it is framed (`window.self !== window.top`). `src/content/webchat-top.js` runs in the page's world
+and makes `window.self` read as `window.top` — **only** when the isolated bridge has marked the frame
+as Hivey's own panel; a frame loaded by any other site, or a top-level tab, is left untouched, so
+Claude's own guard against being framed stays whole there.
+
+**Residual, accepted.** Inside the Web tab the provider pages run without their anti-framing headers
+and, for claude.ai, believe they are top-level. That is the feature; it rests on the frame being
+loaded by the extension, which a web page cannot do.
+
+---
+
+## 8. Small side requests
+
+**Vector.** Besides the answer itself, the sidebar sends short requests of its own: a conversation
+title, a summary when the context fills up, the suggested next request, and — with « Web » on and a
+question the free rule cannot classify — a one-word « does this need the web? » question.
+
+**Mitigation (code).** They go through the same `makeProvider` wrapper as everything else, so a cloud
+provider receives them anonymised; a side task that would need the sensitive-data window is not
+sent (`src/lib/privacy.js`). The web question uses the Hivey preset's utility model, or the model in
+use with thinking off (`decideWeb` in `src/sidebar/sidebar.js`); if it fails, the search runs, since
+the user asked for the web.
+
+**Residual, accepted.** They are extra requests to the provider the user chose, billed to the user's
+key (fractions of a cent); the next-request suggestion can be turned off in the settings.
+
 ## What is deliberately out of scope
 
 - **Proactivity.** An assistant that decides on its own when to speak, using memory, is a
