@@ -23,19 +23,25 @@
 // A "-code" suffix is a claim; the bench is a result. Re-run it before changing these back.
 // (z-ai/glm-5.2:free scored 0 in the first sweep purely by exhausting its rate-limit retries —
 // it answers 200 fine. That was the bench's impatience, not the model.)
+// Pro (hivey/smart) and Smart (hivey/hybrid), user's brief, 2026-10-25:
+//   Pro — the most precise answers, a little cheaper where it costs nothing: Fable 5.1 for hard
+//   reasoning and maths, Opus 5.5 for chat, code, the agent and writing, Sonnet 5.5 for vision,
+//   search, verification, simple chat and extraction; Haiku only routes.
+//   Smart — the middle one, most precision for the least cost: Sonnet 5.5 everywhere, Opus 5.5 for
+//   hard reasoning and maths; Haiku routes and extracts.
 // <hivey:start>
 export const HIVEY_MODELS = {
   "hivey/smart": {
     "router": "anthropic/claude-haiku-5.5",
     "utility": "anthropic/claude-haiku-5.5",
-    "light": "anthropic/claude-haiku-5.5",
+    "light": "anthropic/claude-sonnet-5.5",
     "chat": "anthropic/claude-opus-5.5",
     "code": "anthropic/claude-opus-5.5",
     "test": "qwen/qwen3-coder",
-    "reasoning": "anthropic/claude-opus-5.5",
-    "math": "anthropic/claude-opus-5.5",
+    "reasoning": "anthropic/claude-fable-5.1",
+    "math": "anthropic/claude-fable-5.1",
     "creative": "anthropic/claude-opus-5.5",
-    "extract": "anthropic/claude-haiku-5.5",
+    "extract": "anthropic/claude-sonnet-5.5",
     "vision": "anthropic/claude-sonnet-5.5",
     "verify": "anthropic/claude-sonnet-5.5",
     "agent": "anthropic/claude-opus-5.5",
@@ -45,18 +51,18 @@ export const HIVEY_MODELS = {
   "hivey/hybrid": {
     "router": "anthropic/claude-haiku-5.5",
     "utility": "anthropic/claude-haiku-5.5",
-    "light": "anthropic/claude-haiku-5.5",
-    "chat": "anthropic/claude-haiku-5.5",
+    "light": "anthropic/claude-sonnet-5.5",
+    "chat": "anthropic/claude-sonnet-5.5",
     "code": "anthropic/claude-sonnet-5.5",
     "test": "qwen/qwen3-coder",
-    "reasoning": "anthropic/claude-sonnet-5.5",
-    "math": "anthropic/claude-sonnet-5.5",
-    "creative": "anthropic/claude-haiku-5.5",
+    "reasoning": "anthropic/claude-opus-5.5",
+    "math": "anthropic/claude-opus-5.5",
+    "creative": "anthropic/claude-sonnet-5.5",
     "extract": "anthropic/claude-haiku-5.5",
-    "vision": "anthropic/claude-haiku-5.5",
-    "verify": "anthropic/claude-haiku-5.5",
+    "vision": "anthropic/claude-sonnet-5.5",
+    "verify": "anthropic/claude-sonnet-5.5",
     "agent": "anthropic/claude-sonnet-5.5",
-    "search": "anthropic/claude-haiku-5.5",
+    "search": "anthropic/claude-sonnet-5.5",
     "image": "google/gemini-3.1-flash-image"
   },
   "hivey/free": {

@@ -6911,7 +6911,11 @@ async function suggestNextAfter(question, answer, sess, m, sel) {
     const hid = isHivey(sel.modelId) ? sel.modelId : null;
     const use = hid ? ensureUsable(parseSel(hiveyTiers(hid).utility || hiveyTiers(hid).chat), hid) : sel;
     const provider = makeProvider({ ...settings, provider: use.providerId, models: { ...settings.models, [use.providerId]: use.modelId } }, {});
-    const { system, history } = nextStepMessages(question, answer, detectUserLanguage(String(question || ""), getLang()));
+    // The conversation's language: the question AND the answer, code blocks left out — the question
+    // alone (« explain TCP », a pasted error) often read as English in a French chat.
+    const prose = (x) => String(x || "").replace(/```[\s\S]*?```/g, " ");
+    const lang = detectUserLanguage(`${prose(question)}\n${prose(answer).slice(0, 3000)}`, getLang());
+    const { system, history } = nextStepMessages(question, answer, lang);
     const r = await provider.runTurn({ system, history, tools: [], chore: true });
     const next = parseNextStep(r && r.text);
     if (!next || sess.convId !== convAt || sess.transcript.length !== lenAt) return;
@@ -8500,7 +8504,14 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
     { ...settings, provider: turnSel.providerId, models: { ...settings.models, [turnSel.providerId]: turnSel.modelId } },
     { thinkLevel: effThink, webSearch: webPlugin, privacy: privacyOpts(sess, boundConvId, sessMode) }
   );
-  const system = buildSystemPrompt({ agentMode, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: runMode, blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked, thinkLevel: effThink, skill: activeSkill ? activeSkill.system : "", goal: goalMode ? GOAL_SYSTEM : "", interactive: agentMode && !!settings.agentInteractive, region: userRegion(), replyLanguage: replyLanguageOf(displayText || modelContent, settings) });
+  let system = buildSystemPrompt({ agentMode, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: runMode, blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked, thinkLevel: effThink, skill: activeSkill ? activeSkill.system : "", goal: goalMode ? GOAL_SYSTEM : "", interactive: agentMode && !!settings.agentInteractive, region: userRegion(), replyLanguage: replyLanguageOf(displayText || modelContent, settings) });
+  // « il me dit "Je ne peux pas consulter le web" alors que le mode web est activé »: the model was
+  // never told the app searches for it. With Web on (and nothing about it otherwise sent), it is.
+  if (!agentMode && els.webSearch.checked) {
+    system += wantWeb
+      ? "\n\nWEB: this app searched the web for this request — the results are part of what you received. Use them and cite their sources; never say you cannot access the internet."
+      : "\n\nWEB: this app can search the web for the user, and judged it unnecessary for this request. Answer from your knowledge; never say you cannot access the internet — if up-to-date facts would change the answer, say so in one line and offer to search.";
+  }
   const tools = activeTools({ agentMode });
   if (hstep) hstep.set(t("step.generate"));
   const pending = addPendingIndicator(sessMode);

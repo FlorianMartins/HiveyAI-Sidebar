@@ -10,6 +10,20 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+### Hivey Smart et Pro revus, le web assumé, la suggestion dans la bonne langue
+
+- **Hivey Smart** — le modèle moyen, le plus précis pour le moins cher : **Sonnet 5.5** partout,
+  **Opus 5.5** pour les raisonnements et les maths (Haiku ne fait plus que le routage et l'extraction).
+- **Hivey Pro** — le plus puissant, un peu moins cher là où ça ne coûte rien en précision :
+  **Fable 5.1** pour les raisonnements et les maths, **Opus 5.5** pour le chat, le code, l'agent et
+  la rédaction, **Sonnet 5.5** pour la vision, la recherche, la vérification et les réponses simples.
+- **« Je ne peux pas consulter le web »** : avec Web activé, le modèle sait maintenant que l'app
+  cherche pour lui — il utilise les résultats quand une recherche a eu lieu, et sinon répond sans
+  prétendre ne pas avoir accès à internet (il propose de chercher si des faits récents comptent).
+- **La suggestion du prochain message garde la langue de la conversation** : elle était devinée sur la
+  seule question (une question courte, technique ou pleine de code passait en anglais) ; elle l'est
+  maintenant sur la question et la réponse, sans les blocs de code.
+
 ### La recherche web, seulement quand elle sert
 
 - **« Web » activé ne cherche plus à chaque message** : une règle gratuite tranche les cas clairs —
