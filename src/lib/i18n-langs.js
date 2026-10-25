@@ -3,10 +3,10 @@
 // back to English. Placeholders {name}, HTML tags and emojis are kept verbatim.
 
 export const ES = {
-  "improve.pick": "Elige un estilo…",
+  "improve.pick": "Elige un estilo",
   "ctx.sizeAutoLabel": "Auto",
   "ctx.sizeAutoTitle": "Auto — la mayor ventana del modelo elegido ({n})",
-  "translate.pick": "Elija el idioma de destino…",
+  "translate.pick": "Elige un idioma",
   "plus.title": "Adjuntar un archivo o traer la página",
   "plus.file": "Adjuntar un archivo",
   "plus.pdf": "Añadir un PDF",
@@ -1136,10 +1136,10 @@ export const ES = {
 };
 
 export const DE = {
-  "improve.pick": "Stil wählen…",
+  "improve.pick": "Stil wählen",
   "ctx.sizeAutoLabel": "Auto",
   "ctx.sizeAutoTitle": "Auto — das größte Fenster des gewählten Modells ({n})",
-  "translate.pick": "Zielsprache wählen…",
+  "translate.pick": "Sprache wählen",
   "plus.title": "Datei anhängen oder die Seite einbeziehen",
   "plus.file": "Datei anhängen",
   "plus.pdf": "PDF hinzufügen",
@@ -2269,10 +2269,10 @@ export const DE = {
 };
 
 export const IT = {
-  "improve.pick": "Scegli uno stile…",
+  "improve.pick": "Scegli uno stile",
   "ctx.sizeAutoLabel": "Auto",
   "ctx.sizeAutoTitle": "Auto — la finestra più grande del modello scelto ({n})",
-  "translate.pick": "Scegli la lingua di destinazione…",
+  "translate.pick": "Scegli una lingua",
   "plus.title": "Allega un file o aggiungi la pagina",
   "plus.file": "Allega un file",
   "plus.pdf": "Aggiungi un PDF",
@@ -3402,10 +3402,10 @@ export const IT = {
 };
 
 export const PT = {
-  "improve.pick": "Escolha um estilo…",
+  "improve.pick": "Escolha um estilo",
   "ctx.sizeAutoLabel": "Auto",
   "ctx.sizeAutoTitle": "Auto — a maior janela do modelo escolhido ({n})",
-  "translate.pick": "Escolha o idioma de destino…",
+  "translate.pick": "Escolha um idioma",
   "plus.title": "Anexar um arquivo ou trazer a página",
   "plus.file": "Anexar um arquivo",
   "plus.pdf": "Adicionar um PDF",

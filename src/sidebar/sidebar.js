@@ -220,23 +220,6 @@ const els = {
   confirmAllow: $("confirmAllow"),
   confirmDeny: $("confirmDeny"),
 };
-// The frame's running light (an SVG stroke, see .cb-ring) is drawn at the frame's exact size: a
-// percentage width on an SVG <rect> does not resolve the same way in every engine.
-(() => {
-  const ring = document.querySelector(".composer-box .cb-ring");
-  if (!ring || typeof ResizeObserver === "undefined") return;
-  const fit = () => {
-    const w = ring.clientWidth, h = ring.clientHeight;
-    if (!w || !h) return;
-    for (const r of ring.querySelectorAll("rect")) {
-      r.setAttribute("x", "0.5"); r.setAttribute("y", "0.5");
-      r.setAttribute("width", String(w - 1)); r.setAttribute("height", String(h - 1));
-      r.setAttribute("rx", "17.5"); r.setAttribute("ry", "17.5");
-    }
-  };
-  new ResizeObserver(fit).observe(ring);
-  fit();
-})();
 // Whether the current tab offers page tools (the "N tabs in context" bar shows only there).
 let pageBarAllowed = false;
 

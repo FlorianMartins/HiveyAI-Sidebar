@@ -2572,32 +2572,36 @@ body.theme-light .model-chip .combo-input { border: 0 !important; background: tr
 .ctx-pop { width: min(264px, calc(100vw - 16px)); }
 .plus-menu { min-width: min(220px, calc(100vw - 16px)); }
 
-/* ── The frame's light, round 4 ──────────────────────────────────────────────────────────────
-   Focused, hovered or working: the same accent border. While focused or working, a light-violet
-   arc runs round it at a constant speed (an SVG stroke along the rounded frame — the old conic
-   gradient turned by angle, so it raced through the corners and crawled mid-edge). */
+/* ── The frame, as in Hivey Code (hivey-vscode media/style.css, « composer-ring / comet ») ─────────
+   Hover and focus: the border takes the accent — nothing moves. Only while the model answers or
+   acts: a 1.5 px line in the theme's two accents, dimmed and still, and ONE light that runs round it
+   along the frame's own edge (offset-path: border-box) at a constant speed — no dashes, no glow
+   outside, nothing over the text. */
 .composer-box::before { display: none !important; }
-.composer-box:hover, .composer-box:focus-within, .composer-box.is-busy {
+.composer-box:hover, .composer-box:focus-within {
   border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 12%, transparent);
 }
-.cb-ring { position: absolute; inset: -1px; width: calc(100% + 2px); height: calc(100% + 2px); overflow: visible;
-  pointer-events: none; z-index: 1; opacity: 0; transition: opacity .35s ease; }
-/* The light: five dashes of the border's own width, centred on the same point, longer ones fainter —
-   it brightens towards its middle and fades out on both sides (no blur, no glow outside). Each dash
-   is centred on the others: it starts 15 − its half-length along the frame (a negative delay). */
-.cb-ring rect { fill: none; stroke: color-mix(in srgb, var(--accent) 35%, #fff); stroke-width: 1.5px; stroke-linecap: butt;
-  animation: cbRun var(--cb-dur, 4.2s) linear infinite paused; }
-.cb-ring .cb-l1 { stroke-dasharray: 4 96;  opacity: .9; animation-delay: calc(var(--cb-dur, 4.2s) * -0.13); }
-.cb-ring .cb-l2 { stroke-dasharray: 9 91;  opacity: .4; animation-delay: calc(var(--cb-dur, 4.2s) * -0.105); }
-.cb-ring .cb-l3 { stroke-dasharray: 15 85; opacity: .15; animation-delay: calc(var(--cb-dur, 4.2s) * -0.075); }
-.cb-ring .cb-l4 { stroke-dasharray: 22 78; opacity: .09; animation-delay: calc(var(--cb-dur, 4.2s) * -0.04); }
-.cb-ring .cb-l5 { stroke-dasharray: 30 70; opacity: .05; animation-delay: calc(var(--cb-dur, 4.2s) * 0); }
-body.theme-light .cb-ring rect { stroke: var(--accent); }
-.composer-box:focus-within .cb-ring, .composer-box.is-busy .cb-ring { opacity: 1; }
-.composer-box:focus-within .cb-ring rect, .composer-box.is-busy .cb-ring rect { animation-play-state: running; }
-.composer-box.is-busy .cb-ring { --cb-dur: 2.8s; }
-@keyframes cbRun { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -100; } }
-@media (prefers-reduced-motion: reduce) { .cb-ring rect { animation: none; } }
+.composer-box.is-busy { border-color: color-mix(in srgb, var(--accent) 20%, transparent); box-shadow: none; }
+.cb-ring { display: none; position: absolute; inset: -1px; border-radius: 18px; pointer-events: none; z-index: 1; overflow: hidden;
+  padding: 1.5px;
+  background: conic-gradient(from 200deg,
+    color-mix(in srgb, var(--accent) 35%, transparent), color-mix(in srgb, var(--accent-2) 35%, transparent),
+    color-mix(in srgb, var(--accent) 35%, transparent));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite: exclude; }
+.composer-box.is-busy .cb-ring { display: block; }
+.cb-comet { position: absolute; top: 0; left: 0; width: 220px; height: 220px;
+  offset-path: border-box; offset-rotate: 0deg;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 45%, white), var(--accent) 30%,
+    color-mix(in srgb, var(--accent) 45%, transparent) 65%, transparent);
+  animation: cbComet 3.5s linear infinite; }
+@keyframes cbComet { from { offset-distance: 0%; } to { offset-distance: 100%; } }
+/* No offset-path on the border box (older engines): the line's colours turn slowly instead. */
+@supports not (offset-path: border-box) {
+  .cb-comet { display: none; }
+  .cb-ring { background: conic-gradient(from var(--hvAngle), var(--accent), var(--accent-2), var(--accent)); animation: hvSpin 6s linear infinite; }
+}
+@media (prefers-reduced-motion: reduce) { .cb-comet { animation: none; display: none; } }
 
 /* No carets after the model and the thinking level: the chips open their menus as they are. */
 .composer-tools .model-chip .combo-caret, .composer-tools .cchip .tc-caret { display: none !important; }
@@ -2623,3 +2627,21 @@ body.rail-right.rail-pinned .codeview, body.rail-right.rail-peek .codeview {
 
 /* The image sizes' menu shows each size in full (it was cut: « Fond d'écran / paysage 16:9 — 179… »). */
 .themed-sel-menu.img-size-menu .sa-item span { white-space: normal; overflow: visible; text-overflow: clip; }
+
+/* One calm text tone in the composer and the tab selectors (no bright white): the model's name, the
+   thinking level, « Choose a language », « Choose a style », the image size, « Choose an
+   analysis », the Wisebase collection — brighter on hover. */
+.model-chip .combo-input, .composer-tools .cchip, .img-size .themed-sel-btn,
+.sec-analysis-btn .sa-label, .themed-sel-btn .sa-label, .improve-pick-btn .sa-label { color: var(--muted) !important; }
+.combo.model-chip:hover .combo-input, .model-chip .combo-input:focus, .composer-tools .cchip:hover,
+.sec-analysis-btn:hover .sa-label, .img-size .themed-sel-btn:hover { color: var(--text) !important; }
+/* Model and thinking sit close together: no padding between the two chips. */
+.composer-tools .combo.model-chip { padding-right: 2px; }
+.composer-tools .cchip { padding-left: 2px; }
+
+/* Reading comfort on the dark themes: questions and answers in a softened white (the theme's text
+   white felt glaring in long answers); headings and bold keep a touch more contrast. The light
+   theme keeps its own dark text. */
+body:not(.theme-light) .msg.assistant { color: color-mix(in srgb, var(--text) 82%, var(--bg)); }
+body:not(.theme-light) .msg.assistant :is(strong, b, h1, h2, h3, h4) { color: color-mix(in srgb, var(--text) 90%, var(--bg)); }
+body:not(.theme-light) .msg.user > .umsg-text { color: color-mix(in srgb, var(--on-accent) 88%, transparent); }

@@ -14,10 +14,10 @@ import { setHTML } from "./dom.js";
 let lang = "en";
 
 const EN = {
-  "improve.pick": "Choose a style…",
+  "improve.pick": "Choose a style",
   "ctx.sizeAutoLabel": "Auto",
   "ctx.sizeAutoTitle": "Auto — the largest window of the model in use ({n})",
-  "translate.pick": "Choose the language to translate into…",
+  "translate.pick": "Choose a language",
   "plus.title": "Attach a file or bring in the page",
   "plus.file": "Attach a file",
   "plus.pdf": "Add a PDF",
@@ -1232,10 +1232,10 @@ const EN = {
 };
 
 const FR = {
-  "improve.pick": "Choisissez un style…",
+  "improve.pick": "Choisissez un style",
   "ctx.sizeAutoLabel": "Auto",
   "ctx.sizeAutoTitle": "Auto — la plus grande fenêtre du modèle choisi ({n})",
-  "translate.pick": "Choisissez la langue de traduction…",
+  "translate.pick": "Choisissez une langue",
   "plus.title": "Joindre un fichier ou ajouter la page",
   "plus.file": "Joindre un fichier",
   "plus.pdf": "Ajouter un PDF",
