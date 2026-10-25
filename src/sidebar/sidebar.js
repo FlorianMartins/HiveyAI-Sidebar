@@ -19,7 +19,7 @@ import { compactHistory, contextWindowFor, modelContextWindow, ctxSizeKey, conte
 import { costOf, formatUsd, formatTokens, priceOf } from "../lib/cost.js";
 import { vendorSlug, vendorIcon } from "../lib/vendor-icon.js";
 import { nextStepMessages, parseNextStep } from "../lib/next-step.js";
-import { IMAGE_SHAPES, imageResolutions } from "../lib/image-sizes.js";
+import { IMAGE_SHAPES, imageResolutions, pixelSizes } from "../lib/image-sizes.js";
 import { webNeedRule, webNeedMessages, parseWebNeed } from "../lib/web-need.js";
 import { detectUserLanguage } from "../lib/user-language.js";
 import { SKILLS, GOAL_SYSTEM, ENHANCE_SYSTEM } from "../lib/skills.js";
@@ -28,7 +28,7 @@ import { initBenchmarkView } from "../lib/benchmarkView.js";
 import { buildTurn } from "../lib/untrusted.js";
 import { isWebChatUrl } from "../lib/memory-policy.js";
 import { configureMarkdown, renderMarkdown, enhanceArtifacts, setArtifactsLive, setJudge0Config } from "../lib/markdown.js";
-import { PROVIDERS, PROVIDER_ORDER, modelFor, keyFor, connectedProviders, defaultSearchModel, IMAGE_SIZES, WRITING_PRESETS, WRITING_TONES, HIVEY_VARIANTS, hiveyTiers, hiveyTierFor, hiveyHeuristicKey, hiveyLabelKey, hiveyRouterModel, HIVEY_ROUTER_SYSTEM, isHivey } from "../lib/models.js";
+import { PROVIDERS, PROVIDER_ORDER, modelFor, keyFor, connectedProviders, defaultSearchModel, WRITING_PRESETS, WRITING_TONES, HIVEY_VARIANTS, hiveyTiers, hiveyTierFor, hiveyHeuristicKey, hiveyLabelKey, hiveyRouterModel, HIVEY_ROUTER_SYSTEM, isHivey } from "../lib/models.js";
 import { categoryForMode, categoryLabel, modelScore } from "../lib/benchmarks.js";
 import { connectOpenRouter } from "../lib/auth.js";
 import { applyTheme, effectivePalette, applyFont, withOpacity } from "../lib/theme.js";
@@ -1429,13 +1429,15 @@ function populateImageSizes() {
       els.imageSize.appendChild(o);
     }
   } else {
-    for (const [value] of IMAGE_SIZES) {
+    for (const value of pixelSizes(settings.imageProvider || "openai", settings.imageModel)) {
       const o = document.createElement("option");
       o.value = value;
       o.textContent = t("size." + value);
       els.imageSize.appendChild(o);
     }
   }
+  // No size to choose (OpenAI's models through OpenRouter ignore it): no chip.
+  if (els.imageControls) els.imageControls.classList.toggle("no-sizes", els.imageSize.options.length <= 1);
   // A size the new model doesn't offer falls back to « Size » (the model's default).
   if (![...els.imageSize.options].some((o) => o.value === (settings.imageSize || ""))) els.imageSize.value = "";
   else els.imageSize.value = settings.imageSize || "";

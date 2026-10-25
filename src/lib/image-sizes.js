@@ -11,10 +11,32 @@ const FOUR_K = [/gemini-3\.1-flash-image/, /gemini-3-pro-image-preview/, /gemini
 /** Models with a resolution setting at all (2K and up): the Gemini 3.x image family. */
 const SIZED = [/gemini-3(\.\d)?-(pro|flash)-image/, /gemini-nano-banana/];
 
+/**
+ * The resolutions a model offers with formats, or [] when it takes pixel sizes (or none).
+ * Every Gemini image model takes the format; 2K and 4K only where measured. (OpenAI's image models
+ * through OpenRouter ignore both — measured: 16:9 and 9:16 both came back 1024×1024.)
+ */
 export function imageResolutions(modelId) {
   const id = String(modelId || "");
-  if (!SIZED.some((r) => r.test(id))) return [];
-  return FOUR_K.some((r) => r.test(id)) ? ["1K", "2K", "4K"] : ["1K", "2K"];
+  if (FOUR_K.some((r) => r.test(id))) return ["1K", "2K", "4K"];
+  if (SIZED.some((r) => r.test(id))) return ["1K", "2K"];
+  if (/^google\/gemini.*image/.test(id)) return ["1K"]; // 2.5 Flash Image, 3.1 Flash Lite Image: format only
+  return [];
+}
+
+/**
+ * The pixel sizes a model really takes, for the models with a size parameter. OpenAI's own API
+ * accepts only these (the list used to offer every size to every model).
+ */
+export function pixelSizes(providerId, modelId) {
+  const id = String(modelId || "");
+  if (providerId === "openai") {
+    if (/dall-e-2/.test(id)) return ["256x256", "512x512", "1024x1024"];
+    if (/dall-e-3/.test(id)) return ["1024x1024", "1792x1024", "1024x1792"];
+    return ["1024x1024", "1536x1024", "1024x1536"]; // gpt-image-*
+  }
+  if (providerId === "openrouter") return []; // no size control outside the Gemini models above
+  return ["512x512", "1024x1024", "1536x1024", "1024x1536", "1792x1024", "1024x1792"]; // FLUX, Grok…: free sizes
 }
 
 /** "16:9@4K" → { aspect_ratio: "16:9", image_size: "4K" }; a pixel size "1792x1024" → its ratio; null otherwise. */

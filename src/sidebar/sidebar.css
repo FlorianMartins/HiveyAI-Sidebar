@@ -2597,3 +2597,4 @@ body.rail-pinned.rail-right .plib-panel { right: calc(var(--rail-w, 56px) + 8px)
 .img-ref-btn { padding: 5px 12px; border: 1px solid var(--border); border-radius: 8px; background: transparent;
   color: var(--soft-text, var(--text)); font: inherit; font-size: 12px; cursor: pointer; }
 .img-ref-btn:hover { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.img-size.no-sizes { display: none !important; }
