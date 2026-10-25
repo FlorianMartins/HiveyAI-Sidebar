@@ -30,12 +30,16 @@ const OUT_FILE = join(__dirname, "..", "src", "lib", "benchmark-web.js");
 const CHECK_ONLY = process.argv.includes("--check");
 
 const SOURCES = {
-  aider: {
-    label: "Aider Polyglot",
-    url: "https://raw.githubusercontent.com/Aider-AI/aider/main/aider/website/_data/polyglot_leaderboard.yml",
-    home: "https://aider.chat/docs/leaderboards/",
-    metric: "pass",
-    about: "225 coding exercises in C++, Go, Java, JavaScript, Python and Rust. The model must edit real files, so it measures editing as much as writing.",
+  // Code: LMArena's WebDev arena — people give two models the same web-app task and vote for the
+  // better result. Published daily, and it ranks this month's models, where Aider's polyglot
+  // leaderboard (the previous source) stopped at models from 2025. Its score is an Elo rating:
+  // only the order and the gaps mean something, not the number on its own.
+  webdev: {
+    label: "LMArena WebDev",
+    url: "https://datasets-server.huggingface.co/rows?dataset=lmarena-ai/leaderboard-dataset&config=webdev&split=latest",
+    home: "https://lmarena.ai/leaderboard/webdev",
+    metric: "elo",
+    about: "People give two anonymous models the same web-app task and vote for the better result. The score is an Elo rating: higher is better, and only the gaps between models mean something.",
   },
   vectara: {
     label: "Vectara Hallucination",
@@ -50,34 +54,27 @@ const SOURCES = {
 // Both files are simple enough to read without a YAML or Markdown dependency, and an add-on that
 // ships no npm dependency should not grow one for two shapes this regular.
 
-function parseAider(text) {
-  const rows = [];
-  let cur = null;
-  for (const line of text.split("\n")) {
-    if (/^- dirname:/.test(line)) {
-      if (cur?.model) rows.push(cur);
-      cur = { date: (/(\d{4}-\d{2}-\d{2})/.exec(line) || [])[1] || null };
-      continue;
-    }
-    if (!cur) continue;
-    const m = /^\s{2}(\w+):\s*(.+?)\s*$/.exec(line);
-    if (!m) continue;
-    const [, k, raw] = m;
-    const v = raw.replace(/^["']|["']$/g, "");
-    if (k === "model") cur.model = v;
-    else if (k === "pass_rate_2") cur.pass = parseFloat(v);
-    else if (k === "percent_cases_well_formed") cur.wellFormed = parseFloat(v);
-  }
-  if (cur?.model) rows.push(cur);
-  // A model can appear several times (different edit formats or effort levels). Keep its best
-  // result: the leaderboard's own headline number for that model is its best configuration.
-  const best = new Map();
+/** LMArena publishes its leaderboard as a Hugging Face dataset; the dataset server pages it as
+ *  JSON (100 rows a page). Only the overall WebDev ranking is kept, and a model listed at several
+ *  effort levels (« (High) », « (Max) ») keeps its best — the join drops the level anyway. */
+export function parseArena(rows) {
+  const out = [];
   for (const r of rows) {
-    if (typeof r.pass !== "number") continue;
-    const prev = best.get(r.model);
-    if (!prev || r.pass > prev.pass) best.set(r.model, r);
+    if (!r || r.category !== "overall" || !r.model_name || !Number.isFinite(r.rating)) continue;
+    out.push({ model: r.model_name, elo: Math.round(r.rating), votes: Math.round(r.vote_count || 0), date: r.leaderboard_publish_date || null });
   }
-  return [...best.values()];
+  return out;
+}
+
+async function fetchArena(url) {
+  const rows = [];
+  for (let offset = 0, total = Infinity; offset < total; offset += 100) {
+    const page = JSON.parse(await get(`${url}&offset=${offset}&length=100`));
+    total = page.num_rows_total ?? 0;
+    rows.push(...(page.rows || []).map((x) => x.row));
+    if (!page.rows || !page.rows.length) break;
+  }
+  return rows;
 }
 
 function parseVectara(text) {
@@ -100,41 +97,58 @@ function parseVectara(text) {
 // conservatively and what fails to match is REPORTED rather than forced: a wrong join would
 // attach one model's score to another, which is worse than a blank cell.
 
-export function normalise(name) {
+/** The name with what is not identity removed, its words still apart. */
+function clean(name) {
   return String(name)
     .toLowerCase()
     .replace(/\([^)]*\)/g, " ")          // "(high)", "(Chat)" — a configuration, not a model
     .replace(/:free$|:beta$|:extended$/g, " ")
-    .replace(/\b(instruct|chat|preview|latest|exp|turbo|it)\b/g, " ")
-    .replace(/[^a-z0-9.]+/g, "");
+    .replace(/(^|[^0-9])20\d{6}(?![0-9])/g, "$1 ") // a release date "20250219" — a snapshot, not a model
+    .replace(/(^|[^0-9.])(\d)-(\d)(?![0-9])/g, "$1$2.$3") // "claude-3-7" is how 3.7 is written in an API id
+    .replace(/\b(instruct|chat|preview|latest|exp|turbo|it)\b/g, " ");
+}
+
+export function normalise(name) {
+  return clean(name).replace(/[^a-z0-9.]+/g, "");
 }
 
 /** The numbers in a model name ARE its identity: "grok-4" and "grok-4.6" are different models,
- *  and so are "gpt-5" and "gpt-5.6". Plain containment happily joins them — it did, attaching
- *  Aider's grok-4 score to grok-4.6, which is precisely the silent mis-attribution this join is
- *  supposed to avoid. Two names may only match if their numeric signature is identical. */
+ *  and so are "gpt-5" and "gpt-5.6". */
 export function versions(s) {
   return (String(s).match(/\d+(?:\.\d+)*/g) || []).join(",");
 }
 
+/** A name's identity: its words and numbers, in any order (« claude-4-opus » is « claude-opus-4 »).
+ *  `undated` also drops a dashed release date (« gpt-5.4-nano-2026-03-17 »). */
+export function identity(name, { undated = false } = {}) {
+  let s = String(name);
+  if (undated) s = s.replace(/-?20\d\d-\d\d-\d\d(?![0-9])/g, " ");
+  return (clean(s).match(/[a-z]+|\d+(?:\.\d+)*/g) || []).sort().join(" ");
+}
+
+/**
+ * The OpenRouter id a leaderboard row names, or null. EXACT identity only — same words, same
+ * numbers. The earlier containment test joined « Muse Wonder Full » to muse-wonder and
+ * « Qwen3.8-Flash-Next » to qwen3.8-flash: one model's score shown on another, which is worse
+ * than a blank cell. The vendor before a « / » is not part of the name (Vectara writes
+ * « openai/gpt-5 »). A dated snapshot joins its own dated id first, else the undated one.
+ * Several ids with the same identity (a :extended twin) → the shortest.
+ */
 export function matchModel(name, catalogueIds) {
-  const n = normalise(name);
-  if (n.length < 3) return null;
-  const nv = versions(n);
-  let best = null;
-  for (const id of catalogueIds) {
-    const tail = normalise(id.split("/").slice(1).join("/"));
-    if (!tail) continue;
-    // Containment in either direction, with a length guard: "gpt-5" must not swallow "gpt-5.6",
-    // so the shorter string has to be a substantial part of the longer one.
-    if (versions(tail) !== nv) continue;   // same family, different version = a different model
-    const [long, short] = tail.length >= n.length ? [tail, n] : [n, tail];
-    if (!long.includes(short)) continue;
-    if (short.length / long.length < 0.62) continue;
-    const score = short.length / long.length;
-    if (!best || score > best.score || (score === best.score && id.length < best.id.length)) best = { id, score };
+  const bare = String(name).split("/").pop();
+  if (normalise(bare).length < 2) return null;
+  for (const undated of [false, true]) {
+    const n = identity(bare, { undated });
+    if (!n) return null;
+    let best = null;
+    for (const id of catalogueIds) {
+      const tail = id.split("/").slice(1).join("/");
+      if (!tail || identity(tail, { undated }) !== n) continue;
+      if (!best || id.length < best.length) best = id;
+    }
+    if (best) return best;
   }
-  return best ? best.id : null;
+  return null;
 }
 
 // ── Run ──────────────────────────────────────────────────────────────────────────────────────
@@ -155,19 +169,22 @@ async function main() {
   const meta = {};
   const unmatched = [];
 
-  const aider = parseAider(await get(SOURCES.aider.url));
+  const webdev = parseArena(await fetchArena(SOURCES.webdev.url));
   const vectara = parseVectara(await get(SOURCES.vectara.url));
 
-  for (const [key, rows, take] of [
-    ["aider", aider, (r) => ({ pass: r.pass, wellFormed: r.wellFormed })],
-    ["vectara", vectara, (r) => ({ hallucination: r.hallucination, factual: r.factual, answerRate: r.answerRate })],
+  for (const [key, rows, take, better] of [
+    ["webdev", webdev, (r) => ({ elo: r.elo, votes: r.votes }), (a, b) => a.elo > b.elo],
+    ["vectara", vectara, (r) => ({ hallucination: r.hallucination, factual: r.factual, answerRate: r.answerRate }), (a, b) => a.hallucination < b.hallucination],
   ]) {
     let hit = 0;
     for (const r of rows) {
       const id = matchModel(r.model, ids);
       if (!id) { unmatched.push({ source: key, model: r.model }); continue; }
       hit++;
-      (merged[id] ||= {})[key] = { ...take(r), as: r.model };
+      const prev = merged[id]?.[key];
+      const next = { ...take(r), as: r.model };
+      // One model at several effort levels: its best showing is its score.
+      if (!prev || (better && better(next, prev))) (merged[id] ||= {})[key] = next;
     }
     meta[key] = { ...SOURCES[key], matched: hit, total: rows.length };
     console.log(`${SOURCES[key].label}: ${rows.length} rows, ${hit} matched to a live OpenRouter id.`);

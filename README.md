@@ -317,7 +317,7 @@ src/
     markdown.js          Rendu Markdown + artifacts interactifs (HTML/JS, React, SVG, Mermaid)
     hivey-models.js      Moteur Hivey : paliers par capacité, auto-curation du catalogue
     benchmarks.js        Index de qualité curé par famille de modèle et par catégorie
-    benchmark-web.js     GÉNÉRÉ : résultats publiés (Aider, Vectara) + fraîcheur de chaque source
+    benchmark-web.js     GÉNÉRÉ chaque jour : résultats publiés (LMArena WebDev, Vectara) + fraîcheur de chaque source
     benchmarkView.js     Espace Benchmark : modèles à tester, résultats par famille, classements publiés
     bench-report.js      Rapport de benchmark (HTML autonome, sans script) ouvert à la fin d'un test
     livebench.js         39 questions notées par programme, en 8 familles (logique, consignes, JSON,
@@ -514,7 +514,7 @@ npm run vendor:check  # les bibliothèques tierces sont-elles les originaux amon
 npm run bench -- --url http://127.0.0.1:8080/v1 --model qwen-27b   # le banc chat + agent
 ```
 
-**469 tests** (node:test) couvrent le noyau de raisonnement et le tour d'agent de bout en bout, les
+**472 tests** (node:test) couvrent le noyau de raisonnement et le tour d'agent de bout en bout, les
 niveaux de réflexion de chaque fournisseur (le corps exact de chaque requête), l'anonymisation
 (détecteurs, faux positifs, restitution, fenêtre des données sensibles), la gestion du contexte, les
 freins de l'agent, le routage Hivey, et **la complétude des six langues**. Les tests des niveaux de

@@ -10,6 +10,12 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Benchmark : classements publics à jour chaque jour.** Le tri « Code » s'appuie maintenant sur
+  LMArena WebDev (votes sur de vraies applications web, publié quotidiennement) au lieu d'Aider, qui
+  s'arrêtait aux modèles de 2025. Les modèles Claude y figurent enfin : Claude Opus 5.5 est premier.
+  Les classements sont remis à jour automatiquement chaque jour avec le catalogue des modèles. Les
+  noms sont reliés aux modèles plus strictement : plus aucun score attribué au modèle voisin, et
+  58 modèles notés pour les inventions au lieu de 20.
 - **Le choix complet au survol** : quand le texte d'un bouton de choix est coupé (style et ton
   d'Improve, langue, analyse, collection, taille d'image) ou masqué sur une sidebar étroite, il
   s'affiche en entier dans une bulle au-dessus du bouton.

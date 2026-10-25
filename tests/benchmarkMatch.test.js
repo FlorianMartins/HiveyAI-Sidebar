@@ -69,6 +69,29 @@ test("an unknown model yields null, not a guess", () => {
   assert.equal(matchModel("x", CATALOGUE), null);
 });
 
+test("a variant is never joined to its sibling (« Full », « Next », « Pro » are different models)", () => {
+  const cat = ["meta/muse-wonder", "qwen/qwen3.8-flash", "qwen/qwen3.8-max-prime", "moonshotai/kimi-k3.1-pro"];
+  assert.equal(matchModel("Muse Wonder Full (Max)", cat), null);
+  assert.equal(matchModel("Qwen3.8-Flash-Next", cat), null);
+  assert.equal(matchModel("Qwen3.8-Max (0902)", cat), null);
+  assert.equal(matchModel("Kimi K3.1 Pro (Max)", cat), "moonshotai/kimi-k3.1-pro");
+});
+
+test("Anthropic's API spellings join their OpenRouter ids (« Claude was missing »)", () => {
+  const cat = ["anthropic/claude-3.7-sonnet", "anthropic/claude-opus-4.5", "anthropic/claude-opus-5.5", "anthropic/claude-opus-5.5:batch"];
+  assert.equal(matchModel("claude-3-7-sonnet-20250219 (32k thinking tokens)", cat), "anthropic/claude-3.7-sonnet");
+  assert.equal(matchModel("anthropic/claude-opus-4-5", cat), "anthropic/claude-opus-4.5");
+  assert.equal(matchModel("Claude Opus 5.5 (Max)", cat), "anthropic/claude-opus-5.5");
+  assert.equal(matchModel("claude-4-5-opus", cat), "anthropic/claude-opus-4.5");
+});
+
+test("a dated snapshot joins its own id first, the undated one otherwise", () => {
+  const cat = ["openai/gpt-4o", "openai/gpt-4o-2024-08-06", "openai/gpt-5.4-nano"];
+  assert.equal(matchModel("openai/gpt-4o-2024-08-06", cat), "openai/gpt-4o-2024-08-06");
+  assert.equal(matchModel("openai/gpt-5.4-nano-2026-03-17", cat), "openai/gpt-5.4-nano");
+  assert.equal(matchModel("DeepSeek-V4.1-Flash-20261017 (Max)", ["deepseek/deepseek-v4.1-flash"]), "deepseek/deepseek-v4.1-flash");
+});
+
 // ── The shipped data ───────────────────────────────────────────────────────────────────────
 
 test("every harvested score is attached to a real catalogue-shaped id", () => {
@@ -103,9 +126,9 @@ test("the uncovered list holds models no source scored — the gap the live test
 
 test("a published score is a plausible number, not a parsing accident", () => {
   for (const [id, v] of Object.entries(BENCHMARK_WEB)) {
-    if (v.aider) {
-      assert.ok(v.aider.pass >= 0 && v.aider.pass <= 100, `${id} aider pass ${v.aider.pass}`);
-      assert.ok(v.aider.as, "the original leaderboard name must be kept, so a join can be audited");
+    if (v.webdev) {
+      assert.ok(v.webdev.elo >= 500 && v.webdev.elo <= 3000, `${id} webdev elo ${v.webdev.elo}`);
+      assert.ok(v.webdev.as, "the original leaderboard name must be kept, so a join can be audited");
     }
     if (v.vectara) {
       assert.ok(v.vectara.hallucination >= 0 && v.vectara.hallucination <= 100, `${id} hallucination`);

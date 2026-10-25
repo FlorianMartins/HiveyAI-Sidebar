@@ -1,7 +1,8 @@
 name: Update model catalogue
 
 # Keeps src/lib/models.js fresh automatically: adds newly released OpenRouter models and drops ones
-# a provider removed. Runs daily and on manual dispatch.
+# a provider removed — and the Benchmark tab's published leaderboards with them. Runs daily and on
+# manual dispatch.
 #
 # The refresh lands as a pull request, merged once main's required checks have passed on it — main
 # is protected, so a direct push is refused. CI and the security baseline are started on it by hand
@@ -37,13 +38,19 @@ jobs:
       - name: Refresh OpenRouter model catalogue
         run: node scripts/update-models.mjs
 
+      # The Benchmark tab's public leaderboards (LMArena WebDev, Vectara), joined to the catalogue
+      # just refreshed. A source being down must not hold back the model update: the previous
+      # scores stay, and tomorrow's run tries again.
+      - name: Refresh published benchmarks
+        run: node scripts/update-benchmarks.mjs || echo "::warning::benchmark refresh failed — keeping the previous scores"
+
       - name: Land the changes (if any)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           # hivey-models.js too: the script also re-curates the 🐝 Hivey per-role assignments,
           # and staging only models.js silently threw those bumps away.
-          FILES=(src/lib/models.js src/lib/hivey-models.js src/lib/model-catalog.generated.js)
+          FILES=(src/lib/models.js src/lib/hivey-models.js src/lib/model-catalog.generated.js src/lib/benchmark-web.js)
           if [[ -n "$(git status --porcelain "${FILES[@]}")" ]]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
