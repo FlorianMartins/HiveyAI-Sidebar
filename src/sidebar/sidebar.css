@@ -2662,8 +2662,12 @@ body.rail-pinned.rail-right .top-banner { right: calc(var(--rail-w, 56px) + 8px)
 .mcp-token input:focus, .mcp-custom input:focus { outline: none; border-color: var(--accent); }
 .mcp-err { font-size: 12px; color: #f87171; }
 .mcp-empty-btn { margin-top: 12px; padding: 8px 16px; font-size: 13px; }
-/* The Hivey Code link at the foot of the rail: an icon with a small ↗ — it opens a tab, it is not one. */
-.railtab.rail-ext { opacity: .75; }
-.railtab.rail-ext:hover { opacity: 1; }
-.rail-ext-arrow { position: absolute; right: 7px; top: 6px; font-size: 10px; line-height: 1; color: var(--accent); }
+/* The Hivey Code link at the foot of the rail: it opens (and closes) a tab, it is not one. */
 .mcp-custom input { flex-basis: 100%; }
+.mcp-search { box-sizing: border-box; width: 100%; height: 32px !important; min-height: 32px; padding: 0 9px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 12.5px; }
+.mcp-search:focus { outline: none; border-color: var(--accent); }
+.mcp-cat { margin-top: 6px; font-size: 11.5px; font-weight: 600; color: var(--accent); }
+.mcp-redirect { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: 11.5px; color: var(--muted); }
+.mcp-redirect code { font-size: 11px; word-break: break-all; color: var(--text); }
+.mcp-token input { flex-basis: 100%; }
+.mcp-help { flex-basis: 100%; font-size: 11.5px; color: var(--accent); }
