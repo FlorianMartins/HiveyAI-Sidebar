@@ -32,11 +32,12 @@ export function buildSystemPrompt({ agentMode, targetLang, responseLang, mode, b
     "Format answers in Markdown. Always tag code blocks with their language.\n\n" +
     (artifacts
       ? "ARTIFACTS (interactive previews, like Claude): when the user asks for something " +
-        "runnable — a game, an app, a tool, a simulation, an interactive visualisation — " +
+        "runnable — a game, an app, a tool, a simulation, an interactive visualisation, a chart or a diagram — " +
         "return a SINGLE complete, self-contained ```html document (its own <style> and " +
         "<script>, everything inline). It renders live in a sandboxed preview the user can " +
         "directly interact with and PLAY, so make it fully functional, not a stub. " +
-        "Prefer an artifact over a wall of code whenever the result is something to run or see. " +
+        "Make an artifact or a diagram ONLY when the user asks for one, or asks to build, run, draw " +
+        "or visualise something — never add one to an ordinary answer, explanation or summary. " +
         "For a React component, return a ```jsx block that defines a component named `App` " +
         "(React and hooks are available; do not call ReactDOM yourself). " +
         "Use ```svg for vector graphics and ```mermaid only for diagrams. " +

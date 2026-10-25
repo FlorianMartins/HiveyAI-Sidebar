@@ -10,6 +10,13 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+### Pas de diagramme ni d'artefact sans le demander
+
+- Avec « Artifacts » activé, la consigne disait au modèle de **préférer un artefact dès que le
+  résultat est « quelque chose à voir »** — Claude Opus (Hivey) ajoutait des diagrammes non demandés.
+  Il n'en fait plus que si vous le demandez, ou demandez de construire, lancer, dessiner ou
+  visualiser quelque chose. Banc (30 tâches, Qwen) : 29/30 avant, 29/30 après.
+
 ### Hivey Smart et Pro revus, le web assumé, la suggestion dans la bonne langue
 
 - **Hivey Smart** — le modèle moyen, le plus précis pour le moins cher : **Sonnet 5.5** partout,
