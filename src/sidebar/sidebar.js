@@ -16,7 +16,7 @@ import { runChatTurn, replyLanguageOf } from "../lib/conversation.js";
 import { Vault, privacyClass } from "../lib/privacy.js";
 import { newTurnId, tagTurn, setTurnState, removeTurn } from "../lib/context-control.js";
 import { compactHistory, contextWindowFor, modelContextWindow, ctxSizeKey, contextBudget, estimateTokens, catalogWindow } from "../lib/conversation.js";
-import { costOf, formatUsd, formatTokens } from "../lib/cost.js";
+import { costOf, formatUsd, formatTokens, priceOf } from "../lib/cost.js";
 import { vendorSlug, vendorIcon } from "../lib/vendor-icon.js";
 import { nextStepMessages, parseNextStep } from "../lib/next-step.js";
 import { webNeedRule, webNeedMessages, parseWebNeed } from "../lib/web-need.js";
@@ -1017,10 +1017,16 @@ function orMetricFields(m, cat) {
   const score = modelScore(m.id, cat);
   return combineBadge(score, orCost(m), priceTier(m).color);
 }
-// Same for a non-OpenRouter model id (no live pricing → only the accuracy part shows).
-function plainMetricFields(modelId, cat) {
+// Same for a model reached directly (Mistral, Anthropic, OpenAI…): no live pricing, so the
+// catalogue's list price (cost.js) — the price used to be missing for every such model.
+function catalogPriceModel(providerId, modelId) {
+  const p = priceOf(providerId, modelId);
+  return p ? { prompt: p[0] / 1e6, completion: p[1] / 1e6 } : null;
+}
+function plainMetricFields(modelId, cat, providerId) {
   const score = modelScore(modelId, cat);
-  return combineBadge(score, "", null);
+  const pm = providerId ? catalogPriceModel(providerId, modelId) : null;
+  return pm ? combineBadge(score, orCost(pm), priceTier(pm).color) : combineBadge(score, "", null);
 }
 // Sort comparator: best benchmark score first (unknown last), then name. Used to SUB-SORT
 // within each provider/vendor group so the best models for the tab surface at the top.
@@ -1131,9 +1137,10 @@ function chatComboItems() {
       continue;
     }
     const rows = modelsOf(pid).filter(([mid]) => !mid.startsWith("hivey/")).map(([mid, mlabel]) => {
-      const mf = plainMetricFields(mid, cat);
+      const mf = plainMetricFields(mid, cat, pid);
+      const pm = catalogPriceModel(pid, mid);
       return {
-        value: pid + "|" + mid, label: mlabel, provider: pid, subprovider: null, tier: null,
+        value: pid + "|" + mid, label: mlabel, provider: pid, subprovider: null, tier: pm ? priceTierName(pm) : null,
         color: null, badge: mf.badge, badgeColor: mf.badgeColor, parts: mf.parts, score: mf.score,
         group: PROVIDERS[pid].label,
       };
@@ -1373,6 +1380,7 @@ function setupImprovePicker() {
     menu.style.left = Math.max(8, Math.min(r.left, window.innerWidth - menu.offsetWidth - 8)) + "px";
     const mh = menu.offsetHeight, above = r.top - 6 - mh;
     menu.style.top = (above > 8 ? above : Math.min(r.bottom + 6, window.innerHeight - mh - 8)) + "px";
+    fitPopup(menu);
     const closer = (e) => { if (menu && !menu.contains(e.target) && !btn.contains(e.target)) { closeMenu(); document.removeEventListener("mousedown", closer); } };
     setTimeout(() => document.addEventListener("mousedown", closer), 0);
   };
@@ -1669,16 +1677,16 @@ async function autoListConnected() {
 
 // ----- Model picker: searchable combobox + price/provider filter -------------
 const ALL_TIERS = ["free", "green", "yellow", "orange", "red"];
-// Sentinel allow-list value meaning "nothing selected → hide all" (an empty [] keeps the
-// historical meaning "no filter → show all", so this disambiguates the all-unchecked case).
-const FILTER_NONE = "__filter_none__";
+// The filter keeps what the user HID (hiddenProviders / hiddenSubproviders): a provider connected
+// later, or a vendor the daily catalogue adds, shows and is ticked by default. It used to keep
+// what was allowed, so anything new arrived unticked and hidden.
 function filterState() {
-  return settings.modelFilter || { tiers: [...ALL_TIERS], providers: [], subproviders: [] };
+  const f = settings.modelFilter || {};
+  return { tiers: f.tiers || [...ALL_TIERS], hiddenProviders: f.hiddenProviders || [], hiddenSubproviders: f.hiddenSubproviders || [] };
 }
 function filterIsActive() {
   const f = filterState();
-  return (f.providers && f.providers.length > 0) || (f.subproviders && f.subproviders.length > 0) ||
-    (f.tiers && f.tiers.length < ALL_TIERS.length);
+  return f.hiddenProviders.length > 0 || f.hiddenSubproviders.length > 0 || f.tiers.length < ALL_TIERS.length;
 }
 // Does a combobox item pass the current price/provider filter + the typed query?
 function comboPasses(it, q) {
@@ -1692,8 +1700,8 @@ function comboPasses(it, q) {
   if (it.subprovider === "hivey") return true;
   const f = filterState();
   if (it.tier && f.tiers && f.tiers.length && !f.tiers.includes(it.tier)) return false;
-  if (f.providers && f.providers.length && !f.providers.includes(it.provider)) return false;
-  if (it.provider === "openrouter" && it.subprovider && f.subproviders && f.subproviders.length && !f.subproviders.includes(it.subprovider)) return false;
+  if (f.hiddenProviders.includes(it.provider)) return false;
+  if (it.provider === "openrouter" && it.subprovider && f.hiddenSubproviders.includes(it.subprovider)) return false;
   return true;
 }
 
@@ -1783,6 +1791,7 @@ function makeCombo({ input, menu, items, getValue, onPick, header, onSync }) {
     if (top + mh > window.innerHeight - 8) top = Math.max(8, r.top - mh - 4);
     menu.style.left = left + "px";
     menu.style.top = top + "px";
+    fitPopup(menu);
   }
   function open() { if (openState) return; openState = true; render(); position(); if (searchEl) searchEl.focus(); }
   function close() { openState = false; menu.classList.add("hidden"); syncLabel(); }
@@ -1807,17 +1816,17 @@ function makeCombo({ input, menu, items, getValue, onPick, header, onSync }) {
 function applyModelFilter() {
   const f = filterState();
   const tiers = new Set(f.tiers || []);
-  const provs = new Set(f.providers || []);
-  const subs = new Set(f.subproviders || []);
+  const hidProv = new Set(f.hiddenProviders);
+  const hidSub = new Set(f.hiddenSubproviders);
   for (const sel of document.querySelectorAll(".cmp-select")) {
     const current = sel.value;
     for (const o of sel.querySelectorAll("option")) {
       if (!o.value || o.value === current) { o.hidden = false; continue; }
       if (o.dataset.subprovider === "hivey") { o.hidden = false; continue; } // 🐝 Hivey rows always show
       let vis = true;
-      if (provs.size && o.dataset.provider && !provs.has(o.dataset.provider)) vis = false;
+      if (o.dataset.provider && hidProv.has(o.dataset.provider)) vis = false;
       if (vis && o.dataset.tier && tiers.size && !tiers.has(o.dataset.tier)) vis = false;
-      if (vis && o.dataset.provider === "openrouter" && o.dataset.subprovider && subs.size && !subs.has(o.dataset.subprovider)) vis = false;
+      if (vis && o.dataset.provider === "openrouter" && o.dataset.subprovider && hidSub.has(o.dataset.subprovider)) vis = false;
       o.hidden = !vis;
     }
     for (const g of sel.querySelectorAll("optgroup")) g.hidden = !Array.from(g.querySelectorAll("option")).some((o) => !o.hidden);
@@ -1828,13 +1837,13 @@ function buildFilterPanel() {
   const tiers = new Set(f.tiers || []);
   els.modelFilterPanel.querySelectorAll(".ftier-cb").forEach((cb) => { cb.checked = tiers.has(cb.value); });
   els.filterProviders.innerHTML = "";
-  const provs = new Set(f.providers || []);
-  const subs = new Set(f.subproviders || []);
+  const hidProv = new Set(f.hiddenProviders);
+  const hidSub = new Set(f.hiddenSubproviders);
   const connected = connectedProviders(settings);
   for (const pid of connected) {
     const lab = document.createElement("label");
     const cb = document.createElement("input");
-    cb.type = "checkbox"; cb.value = pid; cb.checked = provs.size ? provs.has(pid) : true; cb.dataset.kind = "provider";
+    cb.type = "checkbox"; cb.value = pid; cb.checked = !hidProv.has(pid); cb.dataset.kind = "provider";
     cb.addEventListener("change", onProviderFilterChange);
     const sp = document.createElement("span");
     sp.textContent = PROVIDERS[pid] ? PROVIDERS[pid].label : pid;
@@ -1847,7 +1856,7 @@ function buildFilterPanel() {
       for (const v of vendors) {
         const l2 = document.createElement("label"); l2.className = "subprov";
         const c2 = document.createElement("input");
-        c2.type = "checkbox"; c2.value = v; c2.checked = subs.size ? subs.has(v) : true; c2.dataset.kind = "subprovider";
+        c2.type = "checkbox"; c2.value = v; c2.checked = !hidSub.has(v) && !hidProv.has("openrouter"); c2.dataset.kind = "subprovider";
         c2.addEventListener("change", onSubproviderFilterChange);
         const s2 = document.createElement("span"); s2.textContent = prettifyVendor(v);
         l2.appendChild(c2); l2.appendChild(s2);
@@ -1889,38 +1898,26 @@ function onTierFilterChange() {
   persistFilter(); afterFilterChange();
 }
 function onProviderFilterChange(e) {
-  // Toggling a provider mirrors onto its OpenRouter vendor checkboxes, so unchecking
-  // OpenRouter visibly unchecks (and hides) ALL of its models — even when it's the only
-  // connected provider (where an empty allow-list used to wrongly mean "show everything").
+  // Toggling OpenRouter mirrors onto its vendor checkboxes.
   if (e && e.target && e.target.value === "openrouter") {
     const on = e.target.checked;
     els.filterProviders.querySelectorAll('input[data-kind="subprovider"]').forEach((cb) => { cb.checked = on; });
   }
-  const provs = [];
-  els.filterProviders.querySelectorAll('input[data-kind="provider"]').forEach((cb) => { if (cb.checked) provs.push(cb.value); });
-  const connected = connectedProviders(settings);
-  let providers;
-  if (provs.length === connected.length) providers = [];          // all checked → no filter
-  else if (provs.length === 0) providers = [FILTER_NONE];         // none checked → hide everything
-  else providers = provs;                                         // explicit allow-list
-  // Recompute the vendor allow-list from the (possibly mirrored) checkboxes.
-  const subBoxes = els.filterProviders.querySelectorAll('input[data-kind="subprovider"]');
-  const subs = [];
-  subBoxes.forEach((cb) => { if (cb.checked) subs.push(cb.value); });
-  const subproviders = subBoxes.length === 0 ? [] : (subs.length === subBoxes.length ? [] : (subs.length === 0 ? [FILTER_NONE] : subs));
-  settings.modelFilter = { ...filterState(), providers, subproviders };
+  const hiddenProviders = [];
+  els.filterProviders.querySelectorAll('input[data-kind="provider"]').forEach((cb) => { if (!cb.checked) hiddenProviders.push(cb.value); });
+  const hiddenSubproviders = [];
+  els.filterProviders.querySelectorAll('input[data-kind="subprovider"]').forEach((cb) => { if (!cb.checked) hiddenSubproviders.push(cb.value); });
+  settings.modelFilter = { ...filterState(), hiddenProviders, hiddenSubproviders };
   persistFilter(); afterFilterChange();
 }
 function onSubproviderFilterChange() {
-  const all = els.filterProviders.querySelectorAll('input[data-kind="subprovider"]');
-  const subs = [];
-  all.forEach((cb) => { if (cb.checked) subs.push(cb.value); });
-  const subproviders = subs.length === all.length ? [] : (subs.length === 0 ? [FILTER_NONE] : subs);
-  settings.modelFilter = { ...filterState(), subproviders };
+  const hiddenSubproviders = [];
+  els.filterProviders.querySelectorAll('input[data-kind="subprovider"]').forEach((cb) => { if (!cb.checked) hiddenSubproviders.push(cb.value); });
+  settings.modelFilter = { ...filterState(), hiddenSubproviders };
   persistFilter(); afterFilterChange();
 }
 function resetFilter() {
-  settings.modelFilter = { tiers: [...ALL_TIERS], providers: [], subproviders: [] };
+  settings.modelFilter = { tiers: [...ALL_TIERS], hiddenProviders: [], hiddenSubproviders: [] };
   persistFilter();
   buildFilterPanel();
   afterFilterChange();
@@ -2445,13 +2442,17 @@ function reglowOnLoad(tabId, info) {
 // overwrites the tab the user is on. Every tool targets that pinned id (not the live active tab),
 // so the user can keep browsing their own tabs while it runs; the glow stays on the work tab. The
 // work tab is seeded with the user's current page so "act on this page" tasks keep their context.
+// One tab per agent conversation: a follow-up in the same conversation goes on in the tab its run
+// left open (the tab used to be forgotten at the end of every run, so each message started over in
+// a new blank tab). Kept per conversation id, for the life of the sidebar.
+const agentTabByConv = new Map();
 async function ensureAgentTab() {
-  // Reuse the dedicated tab if it's still open (this runs on EVERY agent message — we must NOT
-  // spawn a new tab each turn).
+  const conv = getSession("agent").convId;
+  // Reuse this conversation's tab if it's still open.
   try {
-    const existing = getAgentTab();
+    const existing = agentTabByConv.get(conv) ?? getAgentTab();
     if (existing != null) {
-      try { const t = await browser.tabs.get(existing); if (t) return; } catch (_) {} // closed → recreate below
+      try { const t = await browser.tabs.get(existing); if (t) { setAgentTab(existing); agentTabByConv.set(conv, existing); return; } } catch (_) {} // closed → recreate below
     }
   } catch (_) {}
   // Open a DEDICATED, BLANK new tab for the agent to work in, and focus it — so it never overwrites
@@ -2463,6 +2464,7 @@ async function ensureAgentTab() {
     const created = await browser.tabs.create({ active: true }); // blank tab (about:newtab/blank)
     if (created && created.id != null) {
       setAgentTab(created.id);
+      agentTabByConv.set(conv, created.id);
       // Wait briefly for the tab to be ready (bounded so we never hang the run).
       for (let i = 0; i < 40; i++) {
         let st = null;
@@ -5438,6 +5440,25 @@ async function analyzePageHeaders() {
 // change handlers — keeps working; picking in the themed menu just sets the value + fires "change".
 /** No translation language chosen yet: the interface's own. */
 function uiLanguageName() { return { fr: "French", es: "Spanish", de: "German", it: "Italian", pt: "Portuguese" }[getLang()] || "English"; }
+/**
+ * Keep a floating menu inside the work area: never over the pinned tab rail or the top bar, never
+ * wider or taller than the room (on a small sidebar they opened over the rail and the header).
+ */
+function fitPopup(el) {
+  if (!el) return;
+  const wa = document.getElementById("workArea");
+  const cs = wa ? getComputedStyle(wa) : null;
+  const r = wa ? wa.getBoundingClientRect() : { left: 0, right: innerWidth, top: 0 };
+  const minL = r.left + (cs ? parseFloat(cs.paddingLeft) || 0 : 0) + 6;
+  const maxR = r.right - (cs ? parseFloat(cs.paddingRight) || 0 : 0) - 6;
+  const top = Math.max(r.top + 4, 8);
+  if (el.offsetWidth > maxR - minL) { el.style.minWidth = "0"; el.style.width = (maxR - minL) + "px"; }
+  const b = el.getBoundingClientRect();
+  if (b.left < minL) el.style.left = minL + "px";
+  else if (b.right > maxR) el.style.left = Math.max(minL, maxR - b.width) + "px";
+  const b2 = el.getBoundingClientRect();
+  if (b2.top < top) { el.style.top = top + "px"; el.style.maxHeight = (innerHeight - top - 8) + "px"; el.style.overflowY = "auto"; }
+}
 /** Lower-case, accents off — « fr » finds « Français », « e » finds « Él… ». */
 const foldText = (s) => String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 function themeNativeSelect(sel) {
@@ -5478,6 +5499,7 @@ function themeNativeSelect(sel) {
     menuEl.classList.remove("hidden");
     const mh = menuEl.offsetHeight, above = r.top - 6 - mh;
     menuEl.style.top = (above > 8 ? above : Math.min(r.bottom + 6, window.innerHeight - mh - 8)) + "px";
+    fitPopup(menuEl);
     const closer = (e) => { if (menuEl && !menuEl.contains(e.target) && !btn.contains(e.target)) { closeMenu(); document.removeEventListener("mousedown", closer); } };
     setTimeout(() => document.addEventListener("mousedown", closer), 0);
     // The keyboard finds an item: typing « fr » lands on Français, arrows move, Escape closes.
@@ -8311,8 +8333,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   const tools = activeTools({ agentMode });
   if (hstep) hstep.set(t("step.generate"));
   const pending = addPendingIndicator(sessMode);
-  // Agent: no reasoning block — its actions already say what it does and decides (user, 2026-10-24).
-  const sink = makeSink(badge, !agentMode, pending, sessMode);
+  const sink = makeSink(badge, true, pending, sessMode);
   // Agent mode: collapse the agent's tool calls into ONE foldable "Actions" block for
   // a cleaner, more immersive run — the steps are hidden but consultable on click.
   const agentActs = agentMode ? makeAgentActions() : null;

@@ -10,6 +10,25 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+### Liste des modèles, petits écrans et agent
+
+- **Filtre des modèles** : un fournisseur connecté plus tard, ou un fabricant ajouté au catalogue,
+  arrivait **décoché et masqué** (le filtre retenait ce qui était autorisé). Il retient maintenant ce
+  que vous masquez : tout ce qui est nouveau est coché. Les anciens filtres sont remis à « tout
+  afficher » (les tranches de prix sont gardées).
+- **Prix des modèles en accès direct** (Mistral, Anthropic, OpenAI…) : ils n'en avaient aucun dans
+  la liste ; ils prennent le prix public du catalogue (Mistral Large et Small compris). Un modèle
+  absent du catalogue reste sans prix plutôt qu'avec un prix inventé.
+- **Petits écrans** : la barre des onglets épinglée recouvrait la zone de saisie (le « + » n'était
+  plus cliquable) et les menus s'ouvraient par-dessus — bibliothèque de prompts, liste des modèles,
+  listes de Traduire, Améliorer, Image… Toute la zone de travail commence maintenant après la barre,
+  et chaque menu reste dans la place disponible.
+- **Agent** :
+  - **un onglet par conversation** : un message de suite reprend l'onglet où l'agent travaillait au
+    lieu de tout recommencer dans un nouvel onglet ; une nouvelle conversation a le sien ;
+  - **sa réflexion est de nouveau affichée**.
+- **Le bouton Stop** est rouge.
+
 - **Chrome / Brave / Edge** : plus d'avertissement « Optional permission '<all_urls>' is redundant » à
   l'installation — la permission était déclarée deux fois dans le manifeste Chromium (Firefox garde
   la sienne : il permet de la refuser puis de la redemander).
