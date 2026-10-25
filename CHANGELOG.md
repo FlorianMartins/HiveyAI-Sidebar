@@ -18,6 +18,8 @@ Version de développement, toujours à jour :
   du préréglage : **1 000 k pour Hivey Smart et Hybrid, 262 k pour Hivey Free**. La taille du contexte
   se règle aussi pour eux, et s'applique au modèle choisi à chaque requête.
 - **Un modèle gratuit** affiche « Gratuit » au lieu de « 0,00 $ ».
+- **Les mots en gras de l'accueil de chaque onglet** (« Posez vos questions », « agit dans le
+  navigateur »…) passent au même blanc adouci en thème sombre.
 
 - **« Choisir un élément » donne un seul élément de contexte** : une sélection (un ou plusieurs
   éléments de la page) devenait une capture **et** un texte par élément (« <div> », « <div> »…). C'est
