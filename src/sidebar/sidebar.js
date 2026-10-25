@@ -15,7 +15,7 @@ import { reasoningMenu, isSelfHostedProvider } from "../lib/reasoning.js";
 import { runChatTurn, replyLanguageOf } from "../lib/conversation.js";
 import { Vault, privacyClass } from "../lib/privacy.js";
 import { newTurnId, tagTurn, setTurnState, removeTurn } from "../lib/context-control.js";
-import { compactHistory, contextWindowFor, modelContextWindow, ctxSizeKey, contextBudget, estimateTokens } from "../lib/conversation.js";
+import { compactHistory, contextWindowFor, modelContextWindow, ctxSizeKey, contextBudget, estimateTokens, catalogWindow } from "../lib/conversation.js";
 import { costOf, formatUsd, formatTokens } from "../lib/cost.js";
 import { vendorSlug, vendorIcon } from "../lib/vendor-icon.js";
 import { nextStepMessages, parseNextStep } from "../lib/next-step.js";
@@ -6910,7 +6910,7 @@ function answerMeta(el, usage, cost) {
   // Just the tokens and the price; the split (sent / received) is in the tooltip.
   const inT = usage.promptTokens || 0, outT = usage.completionTokens || 0;
   const parts = [t("cost.tokensTotal", { n: formatTokens(inT + outT, lang) })];
-  if (cost && cost.free) parts.push(t("cost.free"));
+  if (cost && (cost.free || cost.usd === 0)) parts.push(t("cost.free")); // a free model billed 0 $
   else if (cost) parts.push(formatUsd(cost.usd, { exact: cost.exact, lang }));
   line.textContent = parts.join(" · ");
   line.title = t("cost.tokens", { in: formatTokens(inT, lang), out: formatTokens(outT, lang) }) +
@@ -6938,7 +6938,7 @@ async function updateCtxGauge() {
   if (!sess) { g.classList.add("hidden"); return; }
   const sel = currentSelection();
   let win = 0;
-  try { win = sel && sel.providerId && !isHivey(sel.modelId) ? await contextWindowFor(settings, sel.providerId, sel.modelId) : 0; } catch (_) { win = 0; }
+  try { win = (await windowsFor(sel)).win; } catch (_) { win = 0; }
   if (seq !== gaugeSeq) return;
   const used = estimateTokens(hist) + (hist.length ? sess.ctxOverhead || 0 : 0);
   // Shown against the window itself — the size the menu names (200 k), not the budget it keeps
@@ -6953,10 +6953,36 @@ async function updateCtxGauge() {
   const lang = getLang();
   g.querySelector(".cg-tokens").textContent = `${formatTokens(used, lang)} / ${formatTokens(budget, lang)}`;
   const spent = conversationCost(sess);
-  g.querySelector(".cg-cost").textContent = spent.any ? formatUsd(spent.usd, { exact: spent.exact, lang }) : "";
+  g.querySelector(".cg-cost").textContent = spent.any && spent.usd > 0 ? formatUsd(spent.usd, { exact: spent.exact, lang }) : "";
   g.title = t("ctx.gauge", { pct, used: used.toLocaleString(), budget: budget.toLocaleString(), model: (sel && sel.modelId) || "?" }) + (win ? "" : " " + t("ctx.gaugeUnknown"));
 }
 // ----- The context popover: how full, the size the model works with, summarize now -----------
+// A Hivey preset routes each request to one of its models: the conversation must fit the smallest
+// of the ones a conversation turn can reach (« pourquoi mes modèles Hivey sont limités à 8k » —
+// they were not: the gauge, not knowing which model, fell back to the 8 000-token floor).
+const HIVEY_TALK_TIERS = ["light", "chat", "code", "reasoning", "math", "creative", "vision", "agent", "search"];
+function hiveyWindow(hid) {
+  const T = hiveyTiers(hid) || {};
+  // Tiers are selections, "provider|model".
+  const wins = HIVEY_TALK_TIERS.map((k) => T[k]).filter(Boolean).map((v) => {
+    const i = v.indexOf("|");
+    return i > 0 ? catalogWindow(v.slice(0, i), v.slice(i + 1)) : catalogWindow("openrouter", v);
+  }).filter((n) => n > 0);
+  return wins.length ? Math.min(...wins) : 0;
+}
+/** The window a selection works with, and its maximum: `{ native, win }` (Hivey presets included). */
+async function windowsFor(sel) {
+  if (!sel || !sel.providerId) return { native: 0, win: 0 };
+  if (isHivey(sel.modelId)) {
+    const native = hiveyWindow(sel.modelId);
+    const chosen = Number((settings.ctxSizes || {})[ctxSizeKey(sel.providerId, sel.modelId)]) || 0;
+    return { native, win: chosen ? (native ? Math.min(chosen, native) : chosen) : native };
+  }
+  let native = 0, win = 0;
+  try { native = await modelContextWindow(settings, sel.providerId, sel.modelId); } catch (_) { native = 0; }
+  try { win = await contextWindowFor(settings, sel.providerId, sel.modelId); } catch (_) { win = native; }
+  return { native, win };
+}
 const CTX_SIZES = [8000, 16000, 32000, 64000, 128000, 256000, 512000];
 function closeCtxPop() { if (els.ctxPop) els.ctxPop.classList.add("hidden"); }
 async function toggleCtxPop() {
@@ -6975,12 +7001,8 @@ async function renderCtxPop() {
   const sel = currentSelection();
   const lang = getLang();
   // A Hivey preset picks its model per request: the size is the model's, not the preset's.
-  const sizable = !!(sel && sel.providerId && !isHivey(sel.modelId));
-  let native = 0, win = 0;
-  if (sizable) {
-    try { native = await modelContextWindow(settings, sel.providerId, sel.modelId); } catch (_) { native = 0; }
-    try { win = await contextWindowFor(settings, sel.providerId, sel.modelId); } catch (_) { win = native; }
-  }
+  const sizable = !!(sel && sel.providerId);
+  const { native, win } = sizable ? await windowsFor(sel) : { native: 0, win: 0 };
   const used = estimateTokens((sess && sess.history) || []) + ((sess && sess.history && sess.history.length && sess.ctxOverhead) || 0);
   const budget = win > 0 ? win : contextBudget(win);
   els.ctxPopUsed.textContent = t("ctx.popUsed", { used: formatTokens(used, lang), budget: formatTokens(budget, lang), pct: Math.min(100, Math.round((used / budget) * 100)) });
@@ -8437,8 +8459,11 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
     // Through lib/conversation.js: compacted by the model's real window when it nears it, summarized
     // and asked again when the server says it no longer fits, continued when the stream was cut.
     if (agentMode) steerQueue = [];
+    // A size chosen for a Hivey preset caps whichever of its models this turn is routed to.
+    const hiveyChosen = hid ? Number((settings.ctxSizes || {})[ctxSizeKey(sel.providerId, hid)]) || 0 : 0;
+    const hiveyWin = hiveyChosen ? Math.min(hiveyChosen, (await contextWindowFor(settings, turnSel.providerId, turnSel.modelId)) || hiveyChosen) : undefined;
     const runOnce = () => runChatTurn({
-      provider, providerId: turnSel.providerId, modelId: turnSel.modelId, settings, turnStart,
+      provider, providerId: turnSel.providerId, modelId: turnSel.modelId, settings, turnStart, window: hiveyWin,
       replyLanguage: replyLanguageOf(displayText || modelContent, settings),
       steer: agentMode ? () => (steerQueue ? steerQueue.splice(0) : []) : null,
       onNotice: (what) => addMessage("tool", t("agent.notice." + what), sessMode),
