@@ -514,7 +514,7 @@ npm run vendor:check  # les bibliothèques tierces sont-elles les originaux amon
 npm run bench -- --url http://127.0.0.1:8080/v1 --model qwen-27b   # le banc chat + agent
 ```
 
-**459 tests** (node:test) couvrent le noyau de raisonnement et le tour d'agent de bout en bout, les
+**460 tests** (node:test) couvrent le noyau de raisonnement et le tour d'agent de bout en bout, les
 niveaux de réflexion de chaque fournisseur (le corps exact de chaque requête), l'anonymisation
 (détecteurs, faux positifs, restitution, fenêtre des données sensibles), la gestion du contexte, les
 freins de l'agent, le routage Hivey, et **la complétude des six langues**. Les tests des niveaux de

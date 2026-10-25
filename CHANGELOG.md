@@ -10,6 +10,15 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Image : chaque modèle propose les tailles qu'il respecte vraiment** (mesuré sur OpenRouter) :
+  - tous les modèles **Gemini** ont les 6 formats ; en plus, la **2K** pour Gemini 3 Pro Image et
+    la **4K** pour Gemini 3.1 Flash Image et Nano Banana 2.1 (Gemini 2.5 Flash Image et 3.1 Flash
+    Lite Image : formats en 1K, la 2K y est refusée) ;
+  - **OpenAI (clé directe)** : seulement les tailles que son API accepte, par modèle (gpt-image,
+    DALL·E 3, DALL·E 2) — la liste en proposait d'invalides ;
+  - **les modèles OpenAI via OpenRouter** ignorent toute taille (tout revient en 1024×1024) : plus de
+    liste trompeuse, la puce « Taille » disparaît pour eux.
+
 - **Image** : les tailles 1K / 2K / 4K n'apparaissaient pas tant que le modèle d'image n'était pas changé à la main (la liste était construite au démarrage pour le modèle par défaut). Elle suit maintenant le modèle réellement utilisé — Nano Banana 2.1 compris.
 
 - **Image, sous Chrome/Brave/Edge** : « Utiliser comme référence » était écrit en blanc sur un bouton blanc (le bouton n'avait pas de style propre et Chromium lui donnait son fond par défaut). Il a maintenant un contour fin et un texte lisible, comme les autres boutons.
