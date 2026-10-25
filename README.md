@@ -243,7 +243,7 @@ manifest dédié (`side_panel` + service worker au lieu de `sidebar_action`).
 2. Ouvrir `chrome://extensions`, activer le **Mode développeur**
 3. **« Charger l'extension non empaquetée »** → sélectionner le dossier `.build-chrome/`
    (ou le contenu décompressé du zip)
-4. Cliquer l'icône de la barre d'outils pour ouvrir le **panneau latéral**
+4. Cliquer l'icône de la barre d'outils (ou `Ctrl+Shift+Y`) pour ouvrir le **panneau latéral**
 
 > Note : Chrome ne permet pas la distribution d'un `.crx` permanent hors
 > **Chrome Web Store** (compte développeur payant). Le chargement « non empaqueté »
@@ -514,7 +514,7 @@ npm run vendor:check  # les bibliothèques tierces sont-elles les originaux amon
 npm run bench -- --url http://127.0.0.1:8080/v1 --model qwen-27b   # le banc chat + agent
 ```
 
-**460 tests** (node:test) couvrent le noyau de raisonnement et le tour d'agent de bout en bout, les
+**466 tests** (node:test) couvrent le noyau de raisonnement et le tour d'agent de bout en bout, les
 niveaux de réflexion de chaque fournisseur (le corps exact de chaque requête), l'anonymisation
 (détecteurs, faux positifs, restitution, fenêtre des données sensibles), la gestion du contexte, les
 freins de l'agent, le routage Hivey, et **la complétude des six langues**. Les tests des niveaux de

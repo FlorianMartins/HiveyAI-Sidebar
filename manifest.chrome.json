@@ -154,5 +154,12 @@
       "all_frames": true,
       "world": "MAIN"
     }
-  ]
+  ],
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Y"
+      }
+    }
+  }
 }

@@ -38,6 +38,32 @@ Version de développement, toujours à jour :
   vraiment. Mesuré : Gemini 3.1 Flash Image en 4K 16:9 → **5504×3072** (environ 0,15 $ et 2 min) ;
   en 2K 16:9 → 2752×1536. Le format et la résolution sont envoyés comme paramètres au lieu d'une
   simple phrase dans la demande. Les autres modèles gardent leurs tailles en pixels.
+### Chrome, Brave et Edge : comme sous Firefox
+
+Chaque fonction a été refaite dans Chromium (vrai panneau latéral, menus clic droit, bulle sur la
+page, agent, capture, réglages…) puis comparée à Firefox. Ce qui différait :
+
+- **`Ctrl+Shift+Y` ouvre le panneau latéral**, comme la barre latérale sous Firefox (aucun raccourci
+  n'existait sous Chromium).
+- **Bulle de la sélection** (clic droit → Traduire / Améliorer…) : changer la langue ou le style dans
+  la bulle ne faisait plus rien si l'on avait attendu une demi-minute — le navigateur avait mis
+  l'arrière-plan en veille et oublié la demande. Elle est maintenant gardée : la bulle se relance.
+- **Surveillance de page** : la vérification toutes les 15 minutes était repoussée à chaque page
+  chargée (le minuteur repartait de zéro au réveil de l'arrière-plan) et n'avait presque jamais lieu.
+  Elle tourne maintenant à l'heure prévue (Firefox en profite aussi).
+- **Retour du plein onglet (⤢)** : revenir au panneau fermait l'onglet sans rouvrir le panneau —
+  plus de Hivey à l'écran. Le panneau se rouvre maintenant. Dans l'autre sens, Chrome 141 et plus
+  récents ferment le panneau en ouvrant le plein onglet, comme Firefox.
+- **Dictée 🎙** : dans le panneau latéral, le micro répondait « accès bloqué, autorisez-le dans la
+  barre d'adresse » — un panneau n'en a pas. Il ouvre maintenant l'onglet d'autorisation du micro,
+  comme sous Firefox, puis la dictée marche dans le panneau. Un micro que la reconnaissance du
+  navigateur n'arrive pas à ouvrir passe par l'enregistrement + transcription au lieu d'un simple
+  « échec ».
+- **Barres de défilement** fines et arrondies comme sous Firefox (Chromium affichait une barre grise
+  avec des flèches), et plus de barre dans la zone de saisie vide quand le texte d'aide tient sur
+  deux lignes.
+- Sous Chromium, l'extension ne se recharge plus d'elle-même juste après l'installation (un
+  correctif propre à Firefox s'y appliquait aussi).
 
 - **Le logo Hivey** (en haut à gauche) n'affiche plus de fond quand la souris passe dessus ou vers la barre des onglets.
 - **Onglet Web sous Chrome, Brave et Edge** : les outils de page (page, élément, capture, onglets)

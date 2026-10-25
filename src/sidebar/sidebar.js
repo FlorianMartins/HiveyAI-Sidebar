@@ -2282,6 +2282,15 @@ function toggleRail() {
   setSettings({ railHidden: settings.railHidden });
 }
 
+// Chromium's side panel (no sidebarAction there). Its open()/close() take the window, and open()
+// must run inside the click with no await before it — so the window id is looked up once, ahead.
+// Bracket access: this file is shared with the Firefox build, whose validator doesn't know sidePanel.
+let ownWindowId = null;
+try { if (browser.windows && browser.windows.getCurrent) browser.windows.getCurrent().then((w) => { ownWindowId = w ? w.id : null; }).catch(() => {}); } catch (_) {}
+function chromeSidePanel() {
+  try { const cr = typeof chrome !== "undefined" ? chrome : null; return (cr && cr["sidePanel"]) || null; } catch (_) { return null; }
+}
+
 // ----- Open in a full-screen tab --------------------------------------------
 // Open the sidebar full-screen ON the conversation/workspace the user is currently
 // looking at (the tab loads it from storage via ?mode= & ?conv=), and CLOSE the docked
@@ -2295,7 +2304,14 @@ function openInTab() {
   // (fire-and-forget so we never lose the click gesture before close()).
   try { saveCurrent(); } catch (_) {}
   try { browser.tabs.create({ url }); } catch (_) { window.open(url, "_blank", "noopener"); }
-  try { if (browser.sidebarAction && browser.sidebarAction.close) browser.sidebarAction.close(); } catch (_) {}
+  try {
+    if (browser.sidebarAction && browser.sidebarAction.close) browser.sidebarAction.close();
+    else {
+      // Chromium 141+ can close its side panel too; older builds keep it open beside the tab.
+      const sp = chromeSidePanel();
+      if (sp && sp.close && ownWindowId != null) sp.close({ windowId: ownWindowId }).catch(() => {});
+    }
+  } catch (_) {}
 }
 // Reverse of openInTab: re-open the docked sidebar and close this full-screen tab, so the
 // same "Agrandir" button toggles back. sidebarAction.open() MUST be called synchronously
@@ -2305,10 +2321,11 @@ function exitTab() {
   let opened = false;
   try { if (browser.sidebarAction && browser.sidebarAction.open) { browser.sidebarAction.open(); opened = true; } } catch (_) {}
   if (!opened) {
+    // Chromium: open() needs the window (an empty object was refused, so the panel never came back
+    // and closing this tab left the user with no Hivey at all).
     try {
-      const cr = (typeof chrome !== "undefined") ? chrome : null;
-      const sp = cr && cr["sidePanel"];
-      if (sp && sp.open) { sp.open({}).catch(() => {}); }
+      const sp = chromeSidePanel();
+      if (sp && sp.open && ownWindowId != null) { sp.open({ windowId: ownWindowId }).catch(() => {}); opened = true; }
     } catch (_) {}
   }
   // Hand the reopened sidebar the conversation we were on, so it lands back on it.
@@ -7858,6 +7875,18 @@ function toggleDictation() {
   // Whisper-capable key (Groq is free) or OpenRouter; with none connected, a banner says what to do.
   startMediaDictation();
 }
+// The microphone was refused. The sidebar / side panel can't show the browser's permission prompt
+// (Chromium's on-device recognition answers "not-allowed" at once, and a side panel has no address
+// bar to allow it from), but a normal extension tab can — and the grant then holds for the sidebar
+// too. So open that tab, unless the permission is already granted (then the refusal comes from
+// elsewhere, and the banner says so).
+async function onMicRefused() {
+  let state = "";
+  try { state = (await navigator.permissions.query({ name: "microphone" })).state; } catch (_) {}
+  if (state === "granted") { flashTopBanner(t("dictate.micDenied")); return; }
+  try { browser.tabs.create({ url: browser.runtime.getURL("src/permission/mic.html") }); } catch (_) {}
+  flashTopBanner(t("dictate.micGrant"));
+}
 // Recording fallback: capture the mic, then transcribe it (see transcriptionMethod).
 async function startMediaDictation() {
   const tMethod = transcriptionMethod();
@@ -7872,10 +7901,7 @@ async function startMediaDictation() {
     if (/NotFound|Devices|Overconstrained/i.test(nm)) {
       flashTopBanner(t("dictate.micNone"));
     } else {
-      // The mic prompt doesn't appear in the sidebar/side panel → open a normal tab that DOES prompt;
-      // once granted (with "remember"), getUserMedia works from the sidebar too.
-      try { browser.tabs.create({ url: browser.runtime.getURL("src/permission/mic.html") }); } catch (_) {}
-      flashTopBanner(t("dictate.micGrant"));
+      onMicRefused();
     }
     return;
   }
@@ -7943,10 +7969,12 @@ function startSrDictation(SR) {
     };
     _recog.onerror = (e) => {
       const err = e && e.error;
-      if (err === "not-allowed") { flashTopBanner(t("dictate.micDenied")); stopDictationUI(); return; }
+      if (err === "not-allowed") { stopDictationUI(); onMicRefused(); return; }
       // On-device recognition unavailable (needs Google servers / blocked / offline) → fall back to
       // RECORDING the mic and transcribing via the user's own AI, so the mic works cross-platform.
-      if ((err === "network" || err === "service-not-allowed") && transcriptionMethod()) {
+      // "audio-capture": recognition could not open the mic itself — recording through getUserMedia
+      // either works or says precisely why (no microphone found…), instead of a bare "failed".
+      if ((err === "network" || err === "service-not-allowed" || err === "audio-capture") && transcriptionMethod()) {
         stopDictationUI();
         startMediaDictation();
         return;

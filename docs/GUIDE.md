@@ -28,7 +28,7 @@ modification après les vérifications de la CI) :
 | Chrome / Edge / Brave | [hivey-ai-sidebar-chrome.zip](https://github.com/FlorianMartins/HiveyAI-Sidebar/releases/download/dev/hivey-ai-sidebar-chrome.zip) | décompresser → `chrome://extensions` → **Mode développeur** → **Charger l'extension non empaquetée** |
 
 **Étape 2 — ouvrir la sidebar** : icône de la barre latérale dans Firefox (ou `Ctrl+Shift+Y`),
-icône de la barre d'outils dans Chromium (panneau latéral).
+icône de la barre d'outils dans Chromium (panneau latéral, ou `Ctrl+Shift+Y` aussi).
 
 **Étape 3 — brancher un modèle.** Au premier lancement, quatre boutons :
 
