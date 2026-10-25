@@ -8694,11 +8694,17 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   }
   let tools = activeTools({ agentMode });
   let mcpExecute = null;
+  // « Refuser » ENDS the run: the model used to read the refusal as an error to work around and did
+  // the same thing another way (« mon ami a mis refusé mais il l'a quand même fait »). From the first
+  // refusal, no other action of this run is executed and the model is not called again.
+  let refused = false;
+  const askUser = (fn) => async (name, input) => { if (refused) return false; const ok = await fn(name, input); if (!ok) refused = true; return ok; };
+  const REFUSED = { error: "The user REFUSED this action. The run is stopped: do nothing else." };
   if (mcpMode) {
     const turn = await mcp().forTurn();
     tools = turn.tools;
     system += turn.system;
-    mcpExecute = (name, input) => mcp().execute(name, input);
+    mcpExecute = (name, input) => (refused ? Promise.resolve(REFUSED) : mcp().execute(name, input).then((r) => { if (r && r.refused) refused = true; return r; }));
   }
   if (hstep) hstep.set(t("step.generate"));
   const pending = addPendingIndicator(sessMode);
@@ -8732,7 +8738,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
         compactNote = null;
       },
       system, history: turnHistory, tools,
-      ...(mcpExecute ? { execute: mcpExecute } : {}),
+      ...(mcpExecute ? { execute: mcpExecute } : agentMode ? { execute: (name, input, opts) => (refused ? Promise.resolve(REFUSED) : executeTool(name, input, opts)) } : {}),
       onText: sink.onText, onThink: sink.onThink,
       onToolStart: (call) => {
         sink.finalize();
@@ -8750,12 +8756,14 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
       // delete, sign-up, install…). confirmFn is therefore available in BOTH modes; the
       // anti-purchase guard applies in both too.
       confirmActions: settings.agentPermission !== "auto",
-      confirmFn: agentMode ? confirmAction : null,
+      confirmFn: agentMode ? askUser(confirmAction) : null,
       guard: { blockPayments: settings.blockPayments },
       // Refuse the whole turn — before the model is called — when the agent is pinned to one of
       // the signed-in AI chat tabs. Letting the model run and refusing each tool afterwards would
       // pay for an answer we already know we will not act on.
-      preStep: agentMode ? async () => {
+      preStep: agentMode || mcpMode ? async () => {
+        if (refused) return t("agent.refusedStop");
+        if (mcpMode) return null;
         try {
           const id = getAgentTab();
           const tab = id != null ? await browser.tabs.get(id) : (await browser.tabs.query({ active: true, currentWindow: true }))[0];
@@ -8814,6 +8822,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
       }
     }
     sink.finalize();
+    if (refused) addMessage("tool", t("agent.refusedStop"), sessMode);
     markTabDone(sessMode, boundConvId); // dot on the workspace icon if the user has switched away
     if (sink.getRaw()) {
       maybePlayDone(); // optional "answer ready" chime (Settings → Appearance toggle)

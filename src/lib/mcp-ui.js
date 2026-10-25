@@ -165,7 +165,7 @@ export function initMcp({ t, getSettings, setSettings, confirm, onChange = () =>
     if (!info) return { error: `Unknown tool: ${name}` };
     const s = servers().find((x) => x.id === info.serverId);
     if (!s) return { error: "This service was disconnected." };
-    if (!info.readOnly && !(await confirm(s.name, info.tool, input))) return { error: "The user refused this action. Do not retry it; tell the user it was not done." };
+    if (!info.readOnly && !(await confirm(s.name, info.tool, input))) return { error: "The user REFUSED this action. The run is stopped: do nothing else.", refused: true };
     try {
       return resultForModel(await client(s).callTool(info.tool, input));
     } catch (e) {

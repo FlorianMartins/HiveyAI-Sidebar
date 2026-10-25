@@ -3,6 +3,7 @@
 // back to English. Placeholders {name}, HTML tags and emojis are kept verbatim.
 
 export const ES = {
+  "agent.refusedStop": "⛔ Acción rechazada: el agente se detuvo y no hizo nada más.",
   "privOff.title": "¿Desactivar la anonimización?",
   "privOff.now": "Ahora: antes de que una solicitud salga hacia {provider}, los correos, teléfonos, IBAN, nombres de empresas, claves y contraseñas se sustituyen por marcadores como ⟨EMAIL_1⟩ y se restauran en la respuesta. {provider} nunca los ve.",
   "privOff.then": "Desactivada, tus mensajes, páginas y archivos llegan a {provider} tal cual. Elige cómo:",
@@ -1105,6 +1106,7 @@ export const ES = {
 };
 
 export const DE = {
+  "agent.refusedStop": "⛔ Aktion abgelehnt: der Agent hat angehalten und nichts weiter getan.",
   "privOff.title": "Anonymisierung ausschalten?",
   "privOff.now": "Jetzt: Bevor eine Anfrage an {provider} geht, werden E-Mail-Adressen, Telefonnummern, IBANs, Firmennamen, Schlüssel und Passwörter durch Markierungen wie ⟨EMAIL_1⟩ ersetzt und in der Antwort wiederhergestellt. {provider} sieht sie nie.",
   "privOff.then": "Ausgeschaltet erreichen Ihre Nachrichten, Seiten und Dateien {provider} unverändert. Wählen Sie, wie:",
@@ -2207,6 +2209,7 @@ export const DE = {
 };
 
 export const IT = {
+  "agent.refusedStop": "⛔ Azione rifiutata: l'agente si è fermato e non ha fatto altro.",
   "privOff.title": "Disattivare l'anonimizzazione?",
   "privOff.now": "Ora: prima che una richiesta parta verso {provider}, indirizzi e-mail, telefoni, IBAN, nomi di aziende, chiavi e password sono sostituiti da marcatori come ⟨EMAIL_1⟩ e ripristinati nella risposta. {provider} non li vede mai.",
   "privOff.then": "Disattivata, i tuoi messaggi, pagine e file arrivano a {provider} così come sono. Scegli come:",
@@ -3309,6 +3312,7 @@ export const IT = {
 };
 
 export const PT = {
+  "agent.refusedStop": "⛔ Ação recusada: o agente parou e não fez mais nada.",
   "privOff.title": "Desativar a anonimização?",
   "privOff.now": "Agora: antes de um pedido sair para {provider}, endereços de e-mail, telefones, IBAN, nomes de empresas, chaves e palavras-passe são substituídos por marcadores como ⟨EMAIL_1⟩ e repostos na resposta. {provider} nunca os vê.",
   "privOff.then": "Desativada, as suas mensagens, páginas e ficheiros chegam a {provider} tal como estão. Escolha como:",
