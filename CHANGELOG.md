@@ -16,9 +16,6 @@ Version de développement, toujours à jour :
 - **La réponse garde la langue de la conversation** : une demande courte ou pleine de liens (« Maintenant
   ouvre <url> et dis-moi son titre ») passait en anglais ; en cas de doute, c'est la langue de
   l'interface qui est prise.
-- **L'animation du cadre est fluide** pendant que l'IA répond ou agit : la lumière tourne par une
-  simple rotation que le navigateur anime à part (elle était recalculée à chaque image et saccadait
-  pendant l'affichage de la réponse).
 
 - **Hivey Free ne tombe plus en erreur** (« has no usable endpoint on OpenRouter… Initial Endpoints ») : l'extension n'accepte, pour les modèles ouverts, que les serveurs en haute précision ; or le modèle gratuit de Hivey Free n'est servi que par NVIDIA dans son propre format (nvfp4). Quand cette exigence ne laisse aucun serveur, la question est reposée sans elle. Vérifié avec l'agent : erreur avant, réponse après (gratuite).
 

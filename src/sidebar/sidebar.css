@@ -1802,6 +1802,9 @@ mark.search-hit.current { background: #f6c945; color: #1a1408; }
 
 /* ── 2026 premium polish — glass + animated neon (matches Hivey Code) ───────── */
 .composer-box { position: relative; background: color-mix(in srgb, var(--accent) 7%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+/* Angle animated by the frame's fallback (.cb-ring, engines without offset-path: border-box). */
+@property --hvAngle { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@keyframes hvSpin { to { --hvAngle: 360deg; } }
 
 /* full-width glassy model bar + airier surfaces */
 .composer { background: rgba(255,255,255,.012); backdrop-filter: blur(12px); }
@@ -2481,8 +2484,8 @@ body.theme-light .model-chip .combo-input { border: 0 !important; background: tr
 /* ── The frame, as in Hivey Code (hivey-vscode media/style.css, « composer-ring / comet ») ─────────
    Hover and focus: the border takes the accent — nothing moves. Only while the model answers or
    acts: a 1.5 px line in the theme's two accents, dimmed and still, and ONE light that runs round it
-   (a turning conic gradient seen through the line) — no dashes, no glow outside, nothing over the
-   text. */
+   along the frame's own edge (offset-path: border-box) at a constant speed — no dashes, no glow
+   outside, nothing over the text. */
 .composer-box:hover, .composer-box:focus-within {
   border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 12%, transparent);
 }
@@ -2495,18 +2498,17 @@ body.theme-light .model-chip .combo-input { border: 0 !important; background: tr
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite: exclude; }
 .composer-box.is-busy .cb-ring { display: block; }
-/* The light: a bright arc of a conic gradient on a large square turned by `transform` — the
-   compositor animates it on its own thread, so it stays smooth while the answer streams in (the
-   offset-path comet was laid out on the main thread and stuttered then). Seen only through the
-   1.5 px line (the ring's mask). */
-.cb-comet { position: absolute; left: 50%; top: 50%; width: max(160%, 640px); aspect-ratio: 1; will-change: transform;
-  background: conic-gradient(from 0deg, transparent 0deg 250deg,
-    color-mix(in srgb, var(--accent) 35%, transparent) 290deg,
-    color-mix(in srgb, var(--accent) 55%, white) 330deg,
-    color-mix(in srgb, var(--accent) 35%, transparent) 345deg, transparent 360deg);
-  transform: translate(-50%, -50%) rotate(0deg);
-  animation: cbTurn 3.2s linear infinite; }
-@keyframes cbTurn { to { transform: translate(-50%, -50%) rotate(360deg); } }
+.cb-comet { position: absolute; top: 0; left: 0; width: 220px; height: 220px;
+  offset-path: border-box; offset-rotate: 0deg;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 45%, white), var(--accent) 30%,
+    color-mix(in srgb, var(--accent) 45%, transparent) 65%, transparent);
+  animation: cbComet 3.5s linear infinite; }
+@keyframes cbComet { from { offset-distance: 0%; } to { offset-distance: 100%; } }
+/* No offset-path on the border box (older engines): the line's colours turn slowly instead. */
+@supports not (offset-path: border-box) {
+  .cb-comet { display: none; }
+  .cb-ring { background: conic-gradient(from var(--hvAngle), var(--accent), var(--accent-2), var(--accent)); animation: hvSpin 6s linear infinite; }
+}
 @media (prefers-reduced-motion: reduce) { .cb-comet { animation: none; display: none; } }
 
 /* No carets after the model and the thinking level: the chips open their menus as they are. */
