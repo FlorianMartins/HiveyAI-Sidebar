@@ -40,7 +40,7 @@ import {
   listConversations, getConversation, saveConversation, deleteConversation,
   newConversationId, titleFrom, togglePinned, conversationMatches,
 } from "../lib/history.js";
-import { setHTML, prependHTML } from "../lib/dom.js";
+import { setHTML } from "../lib/dom.js";
 import { initMcp } from "../lib/mcp-ui.js";
 import { startIconizer, stripEmoji } from "../lib/icons.js";
 
@@ -593,7 +593,7 @@ async function init() {
   // Wisebase's two side buttons become the last lines of the collection list (one button in the row).
   els.wbScope._extras = ["wbManageBtn", "wbAddPageBtn"].map((id) => {
     const b = document.getElementById(id), ic = b && b.querySelector("svg");
-    return { label: () => b.getAttribute("title") || "", icon: ic ? ic.outerHTML : "", onPick: () => b.click() };
+    return { label: () => b.getAttribute("title") || "", icon: ic || null, onPick: () => b.click() };
   });
   els.wbScope._menuWidth = 240;
   themeNativeSelect(els.wbScope);
@@ -604,14 +604,15 @@ async function init() {
     const place = (group, mode) => {
       if (!slot || !group) return;
       const ic = document.querySelector(`#rail .railtab[data-mode="${mode}"] svg`);
-      group._optIcon = ic ? ic.outerHTML.replace("<svg ", '<svg class="sz-ic" ') : "";
+      // The rail's own icon, copied as a node (never through an HTML string).
+      group._optIcon = ic || null;
       slot.appendChild(group);
-      group.querySelectorAll(".themed-sel-btn, .improve-pick-btn").forEach((b) => prependHTML(b, group._optIcon));
+      group.querySelectorAll(".themed-sel-btn, .improve-pick-btn").forEach((b) => b.prepend(optIcon(group._optIcon)));
     };
     place(document.getElementById("translateControls"), "translate");
     place(document.getElementById("improveControls"), "improve");
     place(document.getElementById("wisebaseControls"), "wisebase");
-    if (els.secRecipes) { els.secRecipes._optIcon = (document.querySelector('#rail .railtab[data-mode="security"] svg') || {}).outerHTML || ""; slot && slot.appendChild(els.secRecipes); }
+    if (els.secRecipes) { els.secRecipes._optIcon = document.querySelector('#rail .railtab[data-mode="security"] svg'); slot && slot.appendChild(els.secRecipes); }
   }
   syncToggleVisibility();
   updateImageNote();
@@ -5565,7 +5566,7 @@ function renderSecRecipes(next) {
   btn.type = "button"; btn.className = "sec-analysis-btn";
   btn.innerHTML = '<span class="sa-label"></span><span class="sa-caret" aria-hidden="true"><svg viewBox="0 0 10 10" width="10" height="10"><path d="M1 3l4 4 4-4" stroke="currentColor" fill="none" stroke-width="1.6"/></svg></span>';
   btn.querySelector(".sa-label").textContent = t("an.btn");
-  if (els.secRecipes._optIcon) prependHTML(btn, els.secRecipes._optIcon.replace("<svg ", '<svg class="sz-ic" '));
+  if (els.secRecipes._optIcon) btn.prepend(optIcon(els.secRecipes._optIcon));
   btn.addEventListener("click", (e) => { e.stopPropagation(); openAnalysisMenu(btn); });
   els.secRecipes.appendChild(btn);
   els.secRecipes.classList.remove("hidden");
@@ -5694,6 +5695,12 @@ function fitPopup(el) {
 }
 /** Lower-case, accents off — « fr » finds « Français », « e » finds « Él… ». */
 const foldText = (s) => String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+/** A copy of an icon from the page (a tab's SVG) for a selector button, with the button-icon class. */
+function optIcon(svg) {
+  const c = svg.cloneNode(true);
+  c.classList.add("sz-ic");
+  return c;
+}
 function themeNativeSelect(sel) {
   if (!sel || sel._themed) return;
   sel._themed = true;
@@ -5733,7 +5740,7 @@ function themeNativeSelect(sel) {
       for (const x of sel._extras) {
         const item = document.createElement("button");
         item.type = "button"; item.className = "sa-item sa-extra";
-        if (x.icon) prependHTML(item, x.icon);
+        if (x.icon) item.prepend(x.icon.cloneNode(true));
         const s = document.createElement("span"); s.textContent = x.label(); item.appendChild(s);
         const run = () => { closeMenu(); x.onPick(); };
         item.addEventListener("mousedown", (e) => { e.preventDefault(); run(); });

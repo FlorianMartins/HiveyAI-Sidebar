@@ -32,11 +32,6 @@ export function setHTML(el, html) {
   el.replaceChildren(...parse(html));
 }
 
-/** Insert trusted/sanitized HTML (an icon, typically) at the start of an element. */
-export function prependHTML(el, html) {
-  if (el) el.prepend(...parse(html));
-}
-
 // Parsed in an inert document (no script runs, nothing loads) and moved in as nodes: the page never
 // receives an HTML string. Same result as innerHTML for the content we insert (no table rows or
 // <option> fragments — those are built with createElement).
