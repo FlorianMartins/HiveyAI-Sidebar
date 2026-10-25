@@ -10,6 +10,19 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+### La recherche web, seulement quand elle sert
+
+- **« Web » activé ne cherche plus à chaque message** : une règle gratuite tranche les cas clairs —
+  un lien, « cherche sur le web », l'actualité, les prix, la météo, les horaires → recherche ;
+  écrire, traduire, coder, calculer, reformuler, résumer un texte fourni → pas de recherche — et
+  seuls les cas douteux posent une question oui/non d'un mot à un modèle économique. Mesuré :
+  « Écris un haïku » et « capitale de l'Australie » ne cherchent plus ; « prix du bitcoin
+  aujourd'hui » et « horaires du Louvre ce dimanche » cherchent.
+- **Correctif** : avec un modèle autre que Hivey, la recherche partait vers « hivey/free », qu'
+  OpenRouter refuse (« not a valid model ID ») — la question échouait. Le modèle choisi cherche
+  maintenant lui-même quand son fournisseur le permet (OpenRouter, Anthropic), et répond avec ses
+  sources.
+
 ### Vérifier quand on le demande, le web par défaut dans le Chat
 
 - **« Vérifier » ne se lance plus tout seul** : les modèles Hivey payants (Pro, Smart) vérifiaient

@@ -19,6 +19,7 @@ import { compactHistory, contextWindowFor, modelContextWindow, ctxSizeKey, conte
 import { costOf, formatUsd, formatTokens } from "../lib/cost.js";
 import { vendorSlug, vendorIcon } from "../lib/vendor-icon.js";
 import { nextStepMessages, parseNextStep } from "../lib/next-step.js";
+import { webNeedRule, webNeedMessages, parseWebNeed } from "../lib/web-need.js";
 import { detectUserLanguage } from "../lib/user-language.js";
 import { SKILLS, GOAL_SYSTEM, ENHANCE_SYSTEM, skillById } from "../lib/skills.js";
 import { executeTool, setAgentTab, clearAgentTab, getAgentTab } from "../lib/tools.js";
@@ -6919,6 +6920,26 @@ async function suggestNextAfter(question, answer, sess, m, sel) {
   } catch (_) { /* no suggestion: nothing to say about it */ }
 }
 
+/**
+ * Should this request search the web? `{ search, by }` — by "rule" (free) or "model" (one short
+ * yes/no question to a cheap model: the Hivey preset's utility tier, else the model in use with
+ * thinking off). If that question fails, the search runs: the user asked for the web.
+ */
+async function decideWeb(text, sel) {
+  const rule = webNeedRule(typeof text === "string" ? text : JSON.stringify(text || ""));
+  if (rule !== "maybe") return { search: rule === "yes", by: "rule" };
+  try {
+    const hid = isHivey(sel.modelId) ? sel.modelId : null;
+    const use = hid ? ensureUsable(parseSel(hiveyTiers(hid).utility || hiveyTiers(hid).chat), hid) : sel;
+    const provider = makeProvider({ ...settings, provider: use.providerId, models: { ...settings.models, [use.providerId]: use.modelId } }, {});
+    const { system, history } = webNeedMessages(text);
+    const r = await Promise.race([
+      provider.runTurn({ system, history, tools: [], chore: true }),
+      new Promise((_, no) => setTimeout(() => no(new Error("timeout")), 8000)),
+    ]);
+    return { search: parseWebNeed(r && r.text), by: "model" };
+  } catch (_) { return { search: true, by: "model" }; }
+}
 /** What the conversation has cost so far, from its answers: `{ usd, exact, any }`. */
 function conversationCost(sess) {
   let usd = 0, exact = true, any = false;
@@ -8330,8 +8351,11 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   lastForceWeb = forceWeb;
   startBusy();
 
-  const wantWeb = els.webSearch.checked || forceWeb;
   const agentMode = agentActive();
+  // « Web » on means: search WHEN it helps — a free rule for the clear cases, one cheap yes/no
+  // question for the rest (every request used to pay for a search).
+  const webDecision = !forceWeb && els.webSearch.checked && !agentMode ? await decideWeb(displayText || modelContent, sel) : null;
+  const wantWeb = forceWeb || (agentMode ? els.webSearch.checked : !!(webDecision && webDecision.search));
 
   // Web-search routing: send the turn to a dedicated web-capable model (Perplexity
   // Sonar, or a free OpenRouter model with the "web" plugin) instead of e.g. Claude.
@@ -8362,9 +8386,14 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
     badge = "🐝 " + prettifyORName({ id: turnSel.modelId }) + " 👁";
   }
 
-  // Web search for NON-Hivey models: send the turn to a dedicated web-capable model.
-  if (wantWeb && !agentMode && !hid) {
-    const ss = parseSel(settings.searchModel || defaultSearchModel(settings));
+  // Web search for NON-Hivey models: a model whose provider searches itself (OpenRouter's web
+  // plugin works with any model, Anthropic has its search tool) searches itself — the answer stays
+  // the user's model's; only a provider that can't search hands the turn to a dedicated model.
+  if (wantWeb && !agentMode && !hid && !(PROVIDERS[turnSel.providerId] && PROVIDERS[turnSel.providerId].supportsWebSearch)) {
+    let ss = parseSel(settings.searchModel || defaultSearchModel(settings));
+    // A Hivey preset as the search model (the default is « hivey/free ») is not a model OpenRouter
+    // knows (« hivey/free is not a valid model ID »): use the preset's own search tier.
+    if (isHivey(ss.modelId)) ss = ensureUsable(parseSel(hiveyTiers(ss.modelId).search || hiveyTiers(ss.modelId).chat), ss.modelId);
     if (ss.providerId && !currentKeyMissing(ss.providerId) &&
         (ss.providerId !== turnSel.providerId || ss.modelId !== turnSel.modelId)) {
       turnSel = ss;
