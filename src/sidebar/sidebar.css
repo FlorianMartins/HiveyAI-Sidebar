@@ -502,7 +502,7 @@ body.rail-right .railtab.active::before { left: auto; right: -6px; border-radius
 /* Per-tab icon (cloned from the rail) shown as the centre logo — slightly smaller than the
    brand mark and painted with the brand gradient (url(#histg), defined persistently in the
    HTML) so it matches the rest of the UI; `color` is the solid fallback if the def is absent. */
-.empty-logo svg.tab-ic { width: 74px; height: 74px; color: var(--accent); stroke: url(#histg); stroke-width: 1.7; }
+.empty-logo svg.tab-ic { width: 74px; height: 74px; color: var(--accent); stroke: url(#emptyg); stroke-width: 1.7; }
 .empty-features { font-size: 13px; line-height: 1.55; margin: 2px 0 0; color: var(--muted); max-width: 272px; }
 .empty-title { font-size: 16px; font-weight: 700; margin: 4px 0 0;
   background: var(--grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
@@ -1243,7 +1243,7 @@ body.mode-code #confirmBar { display: none !important; }
 /* Match the Chat empty-state design (same logo size & title type) across tabs. */
 .code-launch .cl-logo img, .code-launch .cl-logo svg { width: 92px; height: 92px; display: block; }
 /* Per-tab line icon (matches the other tabs' empty state) instead of the brand block logo. */
-.code-launch .cl-logo svg.tab-ic { width: 74px; height: 74px; color: var(--accent); stroke: url(#histg); }
+.code-launch .cl-logo svg.tab-ic { width: 74px; height: 74px; color: var(--accent); stroke: url(#emptyg); }
 .code-launch .cl-feats li { display: flex; align-items: center; gap: 9px; }
 .code-launch .clf-ic { flex: 0 0 18px; display: inline-flex; color: var(--accent); }
 .code-launch .clf-ic svg { width: 18px; height: 18px; }
@@ -2655,3 +2655,7 @@ body:not(.theme-light) .msg.user > .umsg-text { color: color-mix(in srgb, var(--
    onboarding: the soft white too on dark themes, not the glaring one. */
 body:not(.theme-light) .empty-features strong, body:not(.theme-light) .empty-features b,
 body:not(.theme-light) #emptyOnboard b, body:not(.theme-light) #emptyOnboard strong { color: var(--soft-text); }
+/* A filled tab icon (the Code workshop's bars) takes the same half-and-half gradient. */
+.empty-logo svg.tab-ic[fill="currentColor"], .code-launch .cl-logo svg.tab-ic[fill="currentColor"] { fill: url(#emptyg); stroke: none; }
+/* The item reached with the keyboard in a themed list (type « fr » → French). */
+.sa-item.kb, .sa-item:focus-visible { background: color-mix(in srgb, var(--accent) 22%, transparent); outline: none; }

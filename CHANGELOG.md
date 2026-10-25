@@ -12,6 +12,12 @@ Version de développement, toujours à jour :
 
 ### Jetons et contexte : un seul chiffre, le même partout
 
+- **Les icônes d'accueil des onglets** (au-dessus de « Comment puis-je vous aider ? »…) ont un
+  dégradé à parts égales entre les deux couleurs du thème — elles restaient presque unies sur
+  certains thèmes.
+- **Taper au clavier dans une liste ouverte** (langues de Traduire…) met en évidence l'élément trouvé
+  (« fr » → Français), même si le focus est resté ailleurs ; Entrée le choisit. Vérifié dans Firefox.
+
 - **Changer de modèle marche du premier clic** : seul le nom du modèle réagissait ; un clic sur
   l'icône du fournisseur ou à côté du nom ne faisait rien. Toute la puce ouvre maintenant la liste.
 - **Les modèles Hivey** portent le logo Hivey à la couleur du thème au lieu de l'emoji 🐝.
