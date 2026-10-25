@@ -10,6 +10,11 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Correctif** : depuis la version précédente, la barre des onglets ouverte décalait toute la zone
+  vers la droite, et la zone de saisie ne prenait plus toute la largeur. Elle reprend toute la
+  largeur ; la barre des onglets s'arrête **au-dessus** de la zone de saisie (sur un petit écran,
+  elle ne la recouvre plus) et les menus s'ouvrent à côté d'elle. Vérifié dans Firefox et Chromium.
+
 - **Image : plus de résolutions, jusqu'à la vraie 4K** — avec un modèle d'image Gemini (via
   OpenRouter), la liste propose 6 formats (carré, paysage 16:9, portrait 9:16, photo 4:3, portrait
   3:4, panoramique 21:9) en **1K, 2K et 4K** ; la 4K n'est proposée qu'aux modèles qui la produisent
