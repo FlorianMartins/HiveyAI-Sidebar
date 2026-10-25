@@ -8,7 +8,7 @@ import { t, setLang, applyDom } from "../lib/i18n.js";
 import { SHORTCUT_ACTIONS, defaultShortcuts, comboFromEvent, isBindable, normalizeCombo, comboKeys, isMacPlatform, isReservedCombo, findConflicts } from "../lib/shortcuts.js";
 import { encryptSettings, decryptSettings } from "../lib/syncCrypto.js";
 import { setHTML } from "../lib/dom.js";
-import { memoryModelChoices, MEMORY_ROLES } from "../lib/memory-models.js";
+import { memoryModelChoices } from "../lib/memory-models.js";
 import { QUICK_TOGGLES, QUICK_CATS, quickState, quickPatch } from "../lib/quick-toggles.js";
 
 const $ = (id) => document.getElementById(id);

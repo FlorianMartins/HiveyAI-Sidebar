@@ -287,11 +287,6 @@ export async function setSettings(patch) {
 
 // Update a single entry of a nested object (keys / models / baseUrls) without
 // clobbering its siblings.
-export async function setNested(field, key, value) {
-  const cur = (await browser.storage.local.get(field))[field] || {};
-  cur[key] = value;
-  await browser.storage.local.set({ [field]: cur });
-}
 
 export function onSettingsChanged(callback) {
   browser.storage.onChanged.addListener((changes, area) => {

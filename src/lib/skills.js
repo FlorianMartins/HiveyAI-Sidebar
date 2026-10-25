@@ -95,10 +95,6 @@ export const SKILLS = [
   },
 ];
 
-export function skillById(id) {
-  return SKILLS.find((s) => s.id === id) || null;
-}
-
 // Goal mode: turn one request into an autonomously pursued, multi-step goal.
 export const GOAL_SYSTEM =
   "GOAL MODE. Treat the user's message as a GOAL to accomplish, not just a question. First, restate the " +

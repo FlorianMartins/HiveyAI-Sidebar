@@ -173,10 +173,6 @@ export async function addSource(collectionId, { type, title, text, meta }, { onP
   await touchCollection(collectionId);
   return source;
 }
-export async function getSource(id) {
-  const store = await tx("sources", "readonly");
-  return reqP(store.get(id));
-}
 export async function renameSource(id, title) {
   const store = await tx("sources", "readwrite");
   const s = await reqP(store.get(id));

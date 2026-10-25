@@ -1,13 +1,13 @@
 // 🐝 Hivey model assignments — the OpenRouter model behind each tier/role.
 //
-// Hivey now has a SINGLE variant: "hivey/free". It maps each capability role to a strong
-// FREE OpenRouter model, and the sidebar auto-rotates to another free model when one hits a
-// rate-limit / runs out of free credits. The paid composite variants (low-cost/balanced/pro)
-// were removed: routing one request across several paid APIs cost more for a worse result,
-// and all the good "technologies" (artifacts, Thinking, web, verify) now work on ANY model.
+// Hivey has three presets, each mapping every capability role to an OpenRouter model:
+//   • Free  ("hivey/free")   — strong FREE models; the sidebar auto-rotates to another free model
+//                              when one hits a rate-limit / runs out of free credits;
+//   • Smart ("hivey/hybrid") — the most precise for the least money;
+//   • Pro   ("hivey/smart")  — the most powerful (both described below, brief of 2026-10-25).
 //
-// AUTO-CURATED by scripts/update-models.mjs (daily): each role is bumped to a newer free
-// model of the same family when one ships. Every id is validated against the live catalogue.
+// AUTO-CURATED by scripts/update-models.mjs (daily): each role is bumped to a newer model (free
+// stays free, paid stays paid) of the same family when one ships. Every id is validated against the live catalogue.
 //
 // MEASURED, 2026-08-19/20 (`node scripts/bench-hivey.mjs --candidates=… --repeat=4`, the answers
 // EXTRACTED and EXECUTED against assertions rather than eyeballed). A single run ranked noise:

@@ -28,9 +28,6 @@
         window.postMessage({ source: "hivey-bridge", type: "keys", keys: allKeys || {} }, location.origin);
       } catch (_) {}
     }
-    function pushKeyToApp(k) {
-      pushKeysToApp({ ...(store && store.keys), openrouter: k });
-    }
 
     if (store && store.keys && Object.keys(store.keys).length) {
       pushKeysToApp(store.keys); // sidebar → app (all providers)

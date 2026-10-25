@@ -11,7 +11,7 @@ import { getSettings, setSettings, onSettingsChanged, DEFAULTS } from "../lib/st
 import { parsePcap } from "../lib/pcap.js";
 import { makeProvider, listModels, listOpenRouterRich, generateImage, transcribeAudio, transcribeAudioViaChat } from "../lib/providers.js";
 import { buildSystemPrompt, activeTools, runConversation } from "../lib/agent.js";
-import { reasoningMenu, isSelfHostedProvider } from "../lib/reasoning.js";
+import { reasoningMenu } from "../lib/reasoning.js";
 import { runChatTurn, replyLanguageOf } from "../lib/conversation.js";
 import { Vault, privacyClass } from "../lib/privacy.js";
 import { newTurnId, tagTurn, setTurnState, removeTurn } from "../lib/context-control.js";
@@ -21,13 +21,13 @@ import { vendorSlug, vendorIcon } from "../lib/vendor-icon.js";
 import { nextStepMessages, parseNextStep } from "../lib/next-step.js";
 import { webNeedRule, webNeedMessages, parseWebNeed } from "../lib/web-need.js";
 import { detectUserLanguage } from "../lib/user-language.js";
-import { SKILLS, GOAL_SYSTEM, ENHANCE_SYSTEM, skillById } from "../lib/skills.js";
+import { SKILLS, GOAL_SYSTEM, ENHANCE_SYSTEM } from "../lib/skills.js";
 import { executeTool, setAgentTab, clearAgentTab, getAgentTab } from "../lib/tools.js";
 import { initBenchmarkView } from "../lib/benchmarkView.js";
 import { buildTurn } from "../lib/untrusted.js";
 import { isWebChatUrl } from "../lib/memory-policy.js";
 import { configureMarkdown, renderMarkdown, enhanceArtifacts, setArtifactsLive, setJudge0Config } from "../lib/markdown.js";
-import { PROVIDERS, PROVIDER_ORDER, modelFor, keyFor, connectedProviders, defaultSearchModel, IMAGE_SIZES, WRITING_PRESETS, WRITING_TONES, WRITING_LENGTHS, NO_LENGTH_PRESETS, HIVEY_AUTO, HIVEY_VARIANTS, hiveyTiers, hiveyTierFor, hiveyHeuristicKey, hiveyLabelKey, hiveyRouterModel, HIVEY_ROUTER_SYSTEM, isHivey } from "../lib/models.js";
+import { PROVIDERS, PROVIDER_ORDER, modelFor, keyFor, connectedProviders, defaultSearchModel, IMAGE_SIZES, WRITING_PRESETS, WRITING_TONES, HIVEY_VARIANTS, hiveyTiers, hiveyTierFor, hiveyHeuristicKey, hiveyLabelKey, hiveyRouterModel, HIVEY_ROUTER_SYSTEM, isHivey } from "../lib/models.js";
 import { categoryForMode, categoryLabel, modelScore } from "../lib/benchmarks.js";
 import { connectOpenRouter } from "../lib/auth.js";
 import { applyTheme, effectivePalette, applyFont, withOpacity } from "../lib/theme.js";
@@ -102,7 +102,6 @@ const els = {
   historyBtn: $("historyBtn"),
   newChat: $("newChat"),
   openOptions: $("openOptions"),
-  webChatsChip: $("webChatsChip"),
   webHeadCtl: $("webHeadCtl"),
   webHistory: $("webHistory"),
   webBlocked: $("webBlocked"),
@@ -141,8 +140,6 @@ const els = {
   deleteSelected: $("deleteSelected"),
   closeHistory: $("closeHistory"),
   pageBar: $("pageBar"),
-  pageToggle: $("pageToggle"),
-  selPageToggle: $("selPageToggle"),
   pageTitle: $("pageTitle"),
   watchBtn: $("watchBtn"),
   secHeadersBtn: $("secHeadersBtn"),
@@ -210,7 +207,6 @@ const els = {
   attachFileItem: $("attachFileItem"),
   attachFileLabel: $("attachFileLabel"),
   plusPageSep: $("plusPageSep"),
-  sendBtn: $("sendBtn"),
   modelIcon: $("modelIcon"),
   privacyText: $("privacyText"),
   privacyList: $("privacyList"),
@@ -1181,8 +1177,7 @@ function populateModelSelector() {
 }
 
 // Empty-screen content: onboarding when no provider is connected, a friendly
-// greeting ("Comment puis-je vous aider ?") once one is — terminal-flavoured in
-// the Terminal tab.
+// greeting ("Comment puis-je vous aider ?") once one is — worded for each tab.
 function updateEmptyState() {
   const connected = connectedProviders(settings).length > 0;
   els.emptyOnboard.classList.toggle("hidden", connected);
@@ -2353,14 +2348,6 @@ function isRestrictedUrl(url) {
 //
 // This MUST run synchronously inside the click gesture (request() needs a user gesture), so it's
 // called FIRST in each tool's click handler. Returns true only once we genuinely hold the grant.
-async function hasAllUrls() {
-  try {
-    if (browser.permissions && browser.permissions.contains) {
-      return !!(await browser.permissions.contains({ origins: ["<all_urls>"] }));
-    }
-  } catch (_) {}
-  return false;
-}
 async function ensurePagePermission() {
   // The proven config (restored from v1.22.3, which fixed exactly this): `<all_urls>` is declared in
   // BOTH host_permissions AND optional_host_permissions, so permissions.request() is allowed and will
@@ -2492,16 +2479,6 @@ async function ensureAgentTab() {
 function loadImage(src) {
   return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
 }
-// Screenshot a tab. Prefers Firefox's captureTab(tabId), which is satisfied by the <all_urls> host
-// permission alone and does NOT demand `activeTab` the way captureVisibleTab does from a sidebar
-// context — so the sidebar tools capture without the right-click. Falls back to captureVisibleTab
-// (Chrome / older Firefox). Returns a data: URL or throws with a readable message.
-async function captureVisible(tabId, winId) {
-  if (browser.tabs.captureTab && tabId != null) {
-    try { return await browser.tabs.captureTab(tabId, { format: "png" }); } catch (_) {}
-  }
-  return await browser.tabs.captureVisibleTab(winId, { format: "png" });
-}
 function cropFromShot(img, rect, dpr) {
   const sx = Math.max(0, rect.x * dpr), sy = Math.max(0, rect.y * dpr);
   const sw = Math.min(img.width - sx, rect.w * dpr), sh = Math.min(img.height - sy, rect.h * dpr);
@@ -2510,39 +2487,6 @@ function cropFromShot(img, rect, dpr) {
   canvas.width = Math.round(sw); canvas.height = Math.round(sh);
   canvas.getContext("2d").drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
   return canvas.toDataURL("image/png");
-}
-// Crop a rect (given in CSS px) from an image using independent X/Y scale factors — used for the
-// getDisplayMedia frame, whose pixel size differs from the page's CSS viewport.
-function cropScaled(img, rect, scaleX, scaleY) {
-  const sx = Math.max(0, rect.x * scaleX), sy = Math.max(0, rect.y * scaleY);
-  const sw = Math.min(img.width - sx, rect.w * scaleX), sh = Math.min(img.height - sy, rect.h * scaleY);
-  if (sw <= 4 || sh <= 4) return null;
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(sw); canvas.height = Math.round(sh);
-  canvas.getContext("2d").drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
-  return canvas.toDataURL("image/png");
-}
-// Grab a single still frame (data URL) from a MediaStream (getDisplayMedia).
-function frameFromStream(stream) {
-  return new Promise((resolve, reject) => {
-    const video = document.createElement("video");
-    video.muted = true; video.playsInline = true; video.srcObject = stream;
-    const grab = () => {
-      // A short delay so the first real frame is painted before we read it.
-      setTimeout(() => {
-        try {
-          const w = video.videoWidth, h = video.videoHeight;
-          if (!w || !h) return reject(new Error("empty video frame"));
-          const canvas = document.createElement("canvas");
-          canvas.width = w; canvas.height = h;
-          canvas.getContext("2d").drawImage(video, 0, 0, w, h);
-          resolve(canvas.toDataURL("image/png"));
-        } catch (e) { reject(e); }
-      }, 140);
-    };
-    video.onloadedmetadata = () => { video.play().then(grab).catch(reject); };
-    video.onerror = () => reject(new Error("video error"));
-  });
 }
 // A confirmation banner pinned at the TOP of the response area (more readable than a corner
 // toast) — e.g. after a quick-connect. Auto-dismisses; replaced on repeat.
@@ -3160,22 +3104,17 @@ async function toggleWatchCurrentPage() {
   } catch (_) {}
 }
 
-// The Page bar (page seen by the AI + element/region tools + 📑 tab picker) is a
-// CHAT-ONLY feature. Show it only on the Chat tab when the Page toggle is on; hide it
-// — and close its tab-picker popup — everywhere else (that's the "Page popup stays open
-// after switching workspace" fix).
+// The page tools (capture a region, pick an element, open tabs…, watch this page) are items of the
+// composer's "+" menu, offered on the tabs that can take page context; the bar above the conversation
+// only says « N tabs in context ». Elsewhere (and on the Web panel) they are hidden and the tab
+// picker is closed.
 function updatePageBar() {
   const webOpen = els.webPanel && !els.webPanel.classList.contains("hidden");
-  // Chat: the bar appears when the "Page" context chip is on. The selector workspaces
-  // (translate/improve/image/pdf) get a POPUP — toggled by the page icon on the controls row —
-  // that holds the page reading + capture tools (element pick + region capture), like Chat.
   const selectorModes = ["translate", "improve", "image", "pdf"];
   const onSelector = selectorModes.includes(mode);
   // Security also gets the page tools (pick element / capture region / tab picker) to bring evidence in.
   const pageCapable = mode === "chat" || onSelector || mode === "security" || mode === "wisebase";
-  // Chat AND the selector tabs (translate/improve/image/pdf) all show the SAME permanent tools bar
-  // (pick element + capture region + 📑 tab picker). No page reading anywhere — the "Page" option is
-  // gone; context comes only from what the user explicitly picks/captures/selects.
+  // No automatic page reading: context comes only from what the user picks, captures or selects.
   const show = !webOpen && pageCapable;
   // The tools themselves are items of the composer's "+" menu; the bar above the conversation only
   // says how many tabs are in the context (see updateTabsIndicator).
@@ -3184,11 +3123,6 @@ function updatePageBar() {
   if (els.plusPageSep) els.plusPageSep.classList.toggle("hidden", !plusMenuHasPageTools());
   pageBarAllowed = show;
   els.pageBar.classList.toggle("selectors-only", pageCapable);
-  els.pageBar.classList.remove("page-off");
-  // The inline 👁 eye inside the bar is always hidden (no page reading here).
-  if (els.pageToggle) els.pageToggle.classList.add("hidden");
-  // The controls-row "launch page popup" icon is removed — the bar is permanently open instead.
-  if (els.selPageToggle) els.selPageToggle.classList.add("hidden");
   if (!show || !pageCapable) els.tabsPanel.classList.add("hidden");
   updateTabsIndicator();
 }
@@ -3212,14 +3146,6 @@ function updateTabsIndicator() {
     els.pageTitle.textContent = t("tabs.inContext", { n });
     els.pageTitle.title = t("tabs.inContextTitle");
   }
-}
-// Per-tab open/closed state of the selector page-tools popup (in-memory; closed by default).
-const selectorPagePopup = {};
-function toggleSelectorPagePopup() {
-  if (!["translate", "improve", "image", "pdf"].includes(mode)) return;
-  selectorPagePopup[mode] = !selectorPagePopup[mode];
-  if (selectorPagePopup[mode]) { updatePageBar(); refreshCurrentPage(); } // opening → show + read the current page
-  else { cancelPicking(); cancelCapture(); updatePageBar(); }              // closing → stop any active tool
 }
 // Apply the user's reply-bubble outline preference (Settings → Appearance): show/hide it,
 // a custom colour, and an optional "neon" glow. Colours flow through CSS variables so it
@@ -3270,16 +3196,6 @@ function applyTopIcons() {
   if (!grad) r.setProperty("--top-icon-2", c1 || "var(--accent)"); // gradient off → solid colour 1
   else if (c2) r.setProperty("--top-icon-2", c2);
   else r.removeProperty("--top-icon-2"); // fall back to the theme's accent-2
-}
-function pageModeOff(m) { return !!(settings.selectorOff && settings.selectorOff[m]); }
-function togglePageMode() {
-  const m = mode;
-  if (!["translate", "improve", "image", "pdf"].includes(m)) return;
-  settings.selectorOff = { ...(settings.selectorOff || {}), [m]: !pageModeOff(m) };
-  setSettings({ selectorOff: settings.selectorOff });
-  // Turning it off mid-pick cancels any active selection.
-  if (pageModeOff(m)) { cancelPicking(); cancelCapture(); }
-  updatePageBar();
 }
 
 // ----- Multi-tab context ----------------------------------------------------
@@ -4646,8 +4562,6 @@ function wire() {
     e.stopPropagation();
     toggleTabsPanel();
   });
-  if (els.pageToggle) els.pageToggle.addEventListener("click", (e) => { e.stopPropagation(); togglePageMode(); });
-  if (els.selPageToggle) els.selPageToggle.addEventListener("click", (e) => { e.stopPropagation(); toggleSelectorPagePopup(); });
   // NOTE: no ensurePagePermission()/permissions.request() here — on purpose. The web-tab capture &
   // element tools DON'T request a permission and work fine; the chat region/pick tools DID, and that
   // request() call (inside the click gesture, while <all_urls> is already granted) is exactly what
@@ -4764,7 +4678,6 @@ function wire() {
   els.stop.addEventListener("click", () => abortController && abortController.abort());
   if (els.ctxGauge) els.ctxGauge.addEventListener("click", (e) => { e.stopPropagation(); toggleCtxPop(); });
   if (els.ctxPopCompact) els.ctxPopCompact.addEventListener("click", () => { closeCtxPop(); compactNow(); });
-  if (els.sendBtn) els.sendBtn.addEventListener("click", () => onSend());
   if (els.thinkChip) els.thinkChip.addEventListener("click", (e) => { e.stopPropagation(); toggleThinkPop(); });
   if (els.privBadge) els.privBadge.addEventListener("click", () => onPrivBadge());
   document.addEventListener("mousedown", (e) => {
@@ -4865,12 +4778,6 @@ function wire() {
     document.body.classList.remove("web-active");
     els.rail.querySelectorAll(".railtab").forEach((b) => b.classList.toggle("active", b.dataset.mode === mode));
     updatePageBar();
-  }
-  if (els.webChatsChip) {
-    els.webChatsChip.addEventListener("click", () => {
-      if (els.webPanel.classList.contains("hidden")) openWebPanel();
-      else closeWebPanel();
-    });
   }
   if (els.closeWeb) els.closeWeb.addEventListener("click", closeWebPanel);
   if (els.webOpenTab) els.webOpenTab.addEventListener("click", () => browser.tabs.create({ url: webCurUrl }));
@@ -6044,53 +5951,6 @@ async function onWisebaseSend() {
   }
 }
 
-// ----- 📝 Universal summary (page / article / YouTube) -----------------------
-// One-tap "Summarize" of the current tab. For a YouTube video it pulls the caption transcript and
-// asks for a timestamped, clickable summary; for any other page it summarizes the extracted main text.
-function ytIdFromUrl(url) {
-  try {
-    const u = new URL(url);
-    if (/(^|\.)youtu\.be$/.test(u.hostname)) return u.pathname.slice(1) || null;
-    if (/(^|\.)youtube\.com$/.test(u.hostname)) return u.searchParams.get("v") || (u.pathname.startsWith("/shorts/") ? (u.pathname.split("/")[2] || null) : null);
-    return null;
-  } catch (_) { return null; }
-}
-async function summarizeCurrentPage() {
-  if (busy) return;
-  await refreshCurrentPage();
-  if (!currentPage || !currentPage.url) { flashTopBanner(t("sum.noPage")); return; }
-  const lang = effLang();
-  const vid = ytIdFromUrl(currentPage.url);
-
-  if (vid) {
-    const status = addMessage("tool", t("sum.fetchingTranscript"));
-    let tr = null;
-    try { const tab = await getActiveTab(); if (tab) tr = await sendToTab(tab.id, { type: "read_transcript" }); } catch (_) {}
-    // Content script stale (SPA nav) or failed → fetch the transcript fresh in the background by id.
-    if (!tr || !tr.ok || (tr.videoId && tr.videoId !== vid)) {
-      try { const bg = await browser.runtime.sendMessage({ type: "yt:transcript", videoId: vid }); if (bg && bg.ok) tr = bg; } catch (_) {}
-    }
-    status.remove();
-    if (tr && tr.ok && tr.segments && tr.segments.length) {
-      let body = "", total = 0;
-      for (const s of tr.segments) {
-        const line = `[${s.start}] ${s.text}\n`;
-        if (total + line.length > 40000) break;
-        body += line; total += line.length;
-      }
-      const title = tr.title || currentPage.title || "";
-      const content = `${t("sum.videoPrompt", { lang, vid })}\n\n[Title]\n${title}\n\n[Transcript — each line begins with its timestamp in seconds]\n${body}`;
-      return sendToModel("📺 " + t("sum.videoDisplay", { title }), content, { runMode: "chat" });
-    }
-    flashTopBanner(t("sum.noTranscript"));
-  }
-
-  const text = (currentPage.text || "").trim();
-  if (!text) { flashTopBanner(t("sum.noText")); return; }
-  const title = currentPage.title || currentPage.url;
-  const content = `${t("sum.pagePrompt", { lang })}\n\n[Title]\n${title}\n[URL]\n${currentPage.url}\n\n[Page content]\n${text.slice(0, 40000)}`;
-  return sendToModel("📄 " + t("sum.pageDisplay", { title }), content, { runMode: "chat" });
-}
 
 // ----- 🔎 DeepSearch (multi-step cited web research) -------------------------
 // The same proven deep-research loop, implemented client-side on the sidebar's own web + LLM
@@ -6649,7 +6509,6 @@ function fillComposer(text) {
   try { els.input.setSelectionRange(els.input.value.length, els.input.value.length); } catch (_) {}
 }
 function resendPrompt(text) { if (busy) return; fillComposer(text); onSend(); }
-function editPrompt(text) { fillComposer(text); }
 // Best-effort user region (browser locale + timezone) so the agent recommends/open streaming that
 // is actually available where the user is, with region-appropriate links.
 function userRegion() {
@@ -7759,29 +7618,6 @@ function cleanText(s) {
   }
   return out.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
-// The cheap "housekeeping" model used for summaries / compaction / auto-titles when
-// smartRouting is on, so the premium model the user picked is spent only on answers.
-// settings.utilityModel pins one; "" = auto-pick the cheapest FREE connected model
-// (a free OpenRouter model, else the current selection as a last resort).
-function utilitySelection() {
-  // 🐝 Hivey routes housekeeping (titles, summaries, compaction) to its cheap utility tier.
-  if (activeHiveyId() && !currentKeyMissing("openrouter")) {
-    return ensureUsable(parseSel(hiveyTiers(activeHiveyId()).utility), activeHiveyId());
-  }
-  if (settings.utilityModel) {
-    const u = parseSel(settings.utilityModel);
-    if (u.providerId && !currentKeyMissing(u.providerId)) return u;
-  }
-  if (isConnectedFree("openrouter") && settings.orModels && settings.orModels.length) {
-    const free = settings.orModels
-      .filter((m) => !m.prompt && !m.completion && !orUnavailable.has(m.id))
-      .sort((a, b) => a.id.length - b.id.length); // shortest id ≈ smallest/fastest free model
-    if (free.length) return { providerId: "openrouter", modelId: free[0].id };
-  }
-  return currentSelection();
-}
-function isConnectedFree(pid) { return !currentKeyMissing(pid) && providersToShow().includes(pid); }
-
 // One-shot, non-streaming-ish completion on a given model. Returns plain text.
 async function runUtilityCompletion(sel, system, userText, signal) {
   const provider = makeProvider(
@@ -7926,24 +7762,23 @@ async function getSelection() {
 }
 function startBusy() {
   busy = true;
-  els.stop.classList.remove("hidden"); // Stop replaces Send while the model works
-  if (els.sendBtn) els.sendBtn.classList.add("hidden");
+  els.stop.classList.remove("hidden"); // ■ shows while the model works (Enter sends)
   const cb = document.querySelector(".composer-box");
   if (cb) cb.classList.add("is-busy"); // AI working → coloured frame (animation only when focused)
   abortController = new AbortController();
 }
 function endBusy() {
   els.stop.classList.add("hidden");
-  if (els.sendBtn) els.sendBtn.classList.remove("hidden");
   const cb = document.querySelector(".composer-box");
   if (cb) cb.classList.remove("is-busy");
   abortController = null;
   busy = false;
 }
-// ── 🎙 Voice input — 100% FREE, no API credits. Uses the browser's built-in SpeechRecognition
-// when available (Chrome/Edge), otherwise the OS's NATIVE voice typing (Windows Win+H, macOS
-// Dictation, Linux desktop dictation), which types straight into the focused composer. We never
-// call a paid transcription API.
+// ── 🎙 Voice input. Uses the browser's built-in SpeechRecognition when available (Chrome/Edge);
+// otherwise (Firefox, or when on-device recognition is refused) it RECORDS the mic and has the
+// recording transcribed by Whisper (Groq, then OpenAI — the user's own key) or by an audio-capable
+// model through OpenRouter. With none of those connected, a banner says which key to connect and
+// points to the system's own voice typing (Win + H…).
 let _recog = null, _dictating = false, _mediaRec = null, _mediaStream = null;
 function dictationLang() { return { fr: "fr-FR", es: "es-ES", de: "de-DE", it: "it-IT", pt: "pt-PT" }[getLang()] || "en-US"; }
 // How to transcribe the recording: Whisper (Groq free / OpenAI) when connected, otherwise via an
@@ -7964,10 +7799,10 @@ function toggleDictation() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (SR) { startSrDictation(SR); return; }   // free on-device recognition (Chrome/Edge)
   // No in-browser recognition (e.g. Firefox) → record the mic and transcribe via the user's own
-  // Whisper-capable key (Groq is free). Falls back to the OS voice-typing hint if none is connected.
+  // Whisper-capable key (Groq is free) or OpenRouter; with none connected, a banner says what to do.
   startMediaDictation();
 }
-// Recording fallback: capture the mic, then transcribe with the connected Whisper provider.
+// Recording fallback: capture the mic, then transcribe it (see transcriptionMethod).
 async function startMediaDictation() {
   const tMethod = transcriptionMethod();
   if (!tMethod) { flashTopBanner(t("dictate.needKey")); els.input.focus(); return; }
@@ -8030,14 +7865,6 @@ async function startMediaDictation() {
   _dictating = true;
   if (els.dictateBtn) { els.dictateBtn.classList.add("active"); els.dictateBtn.setAttribute("aria-pressed", "true"); }
   flashTopBanner(t("dictate.listening"));
-}
-// Native OS dictation hint (free, built into Windows/macOS/Linux — types into the focused field).
-function osDictationHint() {
-  const p = (navigator.platform || navigator.userAgent || "").toLowerCase();
-  if (p.includes("win")) return t("dictate.osWin");
-  if (p.includes("mac") || p.includes("iphone") || p.includes("ipad")) return t("dictate.osMac");
-  if (p.includes("linux") || p.includes("x11")) return t("dictate.osLinux");
-  return t("dictate.osGeneric");
 }
 // On-device path (browsers that ship SpeechRecognition).
 function startSrDictation(SR) {
@@ -8136,47 +7963,6 @@ function saveCompareModel(v) {
   map[mode] = v;
   settings.compareModels = map;
   setSettings({ compareModels: map });
-}
-// 👍/👎 per-answer rating → a per-model NET score (likes − dislikes) kept locally. It feeds the
-// "auto" picker (🏆 best-rated). Clicking the same thumb again UNDOES it (fix a mis-click); clicking
-// the opposite thumb switches the vote. Zero scores are dropped so the tally stays clean.
-function applyVote(modelSel, delta) {
-  if (!modelSel || !delta) return;
-  const votes = { ...(settings.modelVotes || {}) };
-  votes[modelSel] = (votes[modelSel] || 0) + delta;
-  if (votes[modelSel] === 0) delete votes[modelSel];
-  settings.modelVotes = votes;
-  setSettings({ modelVotes: votes });
-}
-const THUMB_UP_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 10v11"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>';
-const THUMB_DOWN_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 14V3"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg>';
-function voteButtons(el) {
-  const wrap = document.createElement("span");
-  wrap.className = "cmp-rate";
-  const up = document.createElement("button");
-  up.type = "button"; up.className = "cmp-vote cmp-like"; setHTML(up, THUMB_UP_SVG); up.title = t("vote.like");
-  const down = document.createElement("button");
-  down.type = "button"; down.className = "cmp-vote cmp-dislike"; setHTML(down, THUMB_DOWN_SVG); down.title = t("vote.dislike");
-  const sync = () => {
-    up.classList.toggle("on", el._vote === "up");
-    down.classList.toggle("on", el._vote === "down");
-    up.disabled = down.disabled = !el._modelSel;
-  };
-  const vote = (dir) => {
-    const sel = el._modelSel; if (!sel) return;
-    const cur = el._vote || null;
-    if (cur === dir) { applyVote(sel, dir === "up" ? -1 : +1); el._vote = null; }       // undo
-    else {
-      if (cur === "up") applyVote(sel, -1); else if (cur === "down") applyVote(sel, +1); // clear old
-      applyVote(sel, dir === "up" ? +1 : -1); el._vote = dir;                            // apply new
-    }
-    sync();
-  };
-  up.addEventListener("click", () => vote("up"));
-  down.addEventListener("click", () => vote("down"));
-  sync();
-  wrap.appendChild(up); wrap.appendChild(down);
-  return wrap;
 }
 
 // A searchable model dropdown for the compare bar — same combobox as the main picker, so the SEARCH
