@@ -21,6 +21,14 @@ Version de développement, toujours à jour :
 - **Le cadre de saisie garde la même couleur** pendant que le modèle répond ou agit qu'au clic ; la
   lumière continue d'en faire le tour.
 
+### Les diagrammes suivent le thème et se zooment
+
+- Un diagramme (Mermaid) s'affichait sur un **fond blanc**, illisible en thème sombre : il prend
+  maintenant les couleurs du thème (fond, cases, textes, flèches).
+- **Zoom** : boutons − ⟲ +, Ctrl + molette (ou pincement), glisser pour se déplacer, double-clic
+  pour revenir à 100 %. « Ouvrir » l'affiche en grand dans un onglet — il était passé comme une page
+  HTML et ne s'affichait pas.
+
 ### Sécurité : vos chats de l'onglet Web ne peuvent plus être intégrés par un autre site
 
 - Pour afficher Claude, ChatGPT, Gemini… dans l'onglet Web, l'extension retire leur protection

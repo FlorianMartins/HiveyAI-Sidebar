@@ -295,23 +295,60 @@ function makeOpenCard(code, lang) {
 }
 function RUN_HINT() { return isFr() ? "L'aperçu intégré n'a pas pu démarrer — ouvre l'artifact jouable dans un onglet." : "The inline preview couldn't start — open the playable artifact in a tab."; }
 
+// The theme's own colours, read where the sidebar draws (a diagram used to sit on a white page, unreadable
+// on a dark theme). Mermaid needs plain colours, so the CSS variables are resolved here.
+function themeColors() {
+  const cs = getComputedStyle(document.documentElement);
+  const v = (n, d) => (cs.getPropertyValue(n) || "").trim() || d;
+  const light = !!(document.body && document.body.classList.contains("theme-light"));
+  return {
+    light,
+    bg: v("--bg", light ? "#f6f7fb" : "#0f111a"), panel: v("--panel-2", light ? "#eef0f6" : "#262a40"),
+    text: v("--text", light ? "#18181b" : "#f8fafc"), muted: v("--muted", "#9aa0b4"),
+    accent: v("--accent", "#8b5cf6"), accent2: v("--accent-2", "#6366f1"), border: v("--border", "#3a3f5a"),
+  };
+}
+// A diagram, drawn in the theme's colours, that zooms (− / + / ⟲, Ctrl+wheel or pinch) and pans
+// (drag) — inline and when opened in a tab.
+function mermaidDoc(code, lib, id, c) {
+  const vars = JSON.stringify({
+    darkMode: !c.light, background: c.bg, fontFamily: "system-ui, sans-serif",
+    primaryColor: c.panel, primaryTextColor: c.text, primaryBorderColor: c.accent,
+    secondaryColor: c.panel, secondaryTextColor: c.text, secondaryBorderColor: c.accent2,
+    tertiaryColor: c.bg, tertiaryTextColor: c.text, tertiaryBorderColor: c.border,
+    lineColor: c.muted, textColor: c.text, mainBkg: c.panel, nodeBorder: c.accent, clusterBkg: c.bg,
+    clusterBorder: c.border, titleColor: c.text, edgeLabelBackground: c.bg, noteBkgColor: c.panel, noteTextColor: c.text,
+  });
+  return `<!DOCTYPE html><html><head><meta charset="utf-8">` +
+    `<style>html,body{margin:0;background:${c.bg};color:${c.text};font-family:system-ui,sans-serif}` +
+    `#vp{position:relative;overflow:hidden;min-height:120px;cursor:grab;touch-action:none}#vp.drag{cursor:grabbing}` +
+    `#st{transform-origin:0 0;padding:12px;display:inline-block}` +
+    `#zm{position:absolute;top:6px;right:6px;display:flex;gap:4px;z-index:2}` +
+    `#zm button{width:26px;height:26px;border-radius:7px;border:1px solid ${c.border};background:${c.panel};color:${c.text};font:600 14px system-ui;cursor:pointer;padding:0}` +
+    `#zm button:hover{border-color:${c.accent}}.err{color:#e5484d;font-size:13px;padding:10px}</style>` +
+    `<script>${lib}<\/script></head><body><div id="vp"><div id="zm"><button id="zo" title="−">−</button>` +
+    `<button id="zr" title="100 %">⟲</button><button id="zi" title="+">+</button></div>` +
+    `<div id="st"><pre class="mermaid">${escapeHtml(code)}</pre></div></div>` +
+    `<script>mermaid.initialize({startOnLoad:false,securityLevel:'strict',theme:'base',themeVariables:${vars}});` +
+    `mermaid.run().then(function(){var vp=document.getElementById('vp'),st=document.getElementById('st'),s=1,x=0,y=0,d=null;` +
+    `function ap(){st.style.transform='translate('+x+'px,'+y+'px) scale('+s+')';}` +
+    `function z(f,cx,cy){var n=Math.min(6,Math.max(0.25,s*f));cx=cx==null?vp.clientWidth/2:cx;cy=cy==null?vp.clientHeight/2:cy;x=cx-(cx-x)*n/s;y=cy-(cy-y)*n/s;s=n;ap();}` +
+    `document.getElementById('zi').onclick=function(){z(1.25);};document.getElementById('zo').onclick=function(){z(0.8);};` +
+    `document.getElementById('zr').onclick=function(){s=1;x=0;y=0;ap();};` +
+    `vp.addEventListener('wheel',function(e){if(!e.ctrlKey&&!e.metaKey)return;e.preventDefault();var r=vp.getBoundingClientRect();z(e.deltaY<0?1.12:0.89,e.clientX-r.left,e.clientY-r.top);},{passive:false});` +
+    `vp.addEventListener('pointerdown',function(e){if(e.target.closest('#zm'))return;d={px:e.clientX,py:e.clientY,x:x,y:y};vp.classList.add('drag');vp.setPointerCapture(e.pointerId);});` +
+    `vp.addEventListener('pointermove',function(e){if(!d)return;x=d.x+e.clientX-d.px;y=d.y+e.clientY-d.py;ap();});` +
+    `vp.addEventListener('pointerup',function(){d=null;vp.classList.remove('drag');});` +
+    `vp.addEventListener('dblclick',function(){s=1;x=0;y=0;ap();});})` +
+    `.catch(function(e){document.body.innerHTML='<div class=err>Mermaid : '+(e&&e.message?e.message:e)+'</div>';});<\/script>` +
+    REPORTER(id) + `</body></html>`;
+}
 async function renderMermaid(slot, code) {
-  slot.textContent = "Rendu du diagramme…";
+  slot.textContent = isFr() ? "Rendu du diagramme…" : "Drawing the diagram…";
   const lib = await getMermaidLib();
   // makeFrame will bump afCounter to this id; the reporter uses the same one.
   const id = "af" + (afCounter + 1);
-  const srcdoc =
-    `<!DOCTYPE html><html><head><meta charset="utf-8">` +
-    `<style>body{margin:0;padding:10px;font-family:system-ui;background:#fff;color:#111}` +
-    `.err{color:#b00;font-size:13px}</style>` +
-    `<script>${lib}<\/script></head><body>` +
-    `<pre class="mermaid">${escapeHtml(code)}</pre>` +
-    `<script>mermaid.initialize({startOnLoad:false,securityLevel:'strict'});` +
-    `mermaid.run().catch(function(e){document.body.innerHTML='<div class=err>Erreur Mermaid : '+` +
-    `(e&&e.message?e.message:e)+'</div>';});<\/script>` +
-    REPORTER(id) +
-    `</body></html>`;
-  const f = makeFrame(srcdoc, { sandbox: "allow-scripts", initialHeight: 200 });
+  const f = makeFrame(mermaidDoc(code, lib, id, themeColors()), { sandbox: "allow-scripts", initialHeight: 200 });
   slot.textContent = "";
   slot.appendChild(f);
 }
@@ -330,7 +367,11 @@ function toolbarButton(label, onClick) {
 // document inherits the strict extension CSP. tabs.create is the reliable path for an
 // extension (content-initiated top-level data: navigations are blocked, ours are not).
 function openArtifact(code, lang) {
-  const doc = buildArtifactDoc(code, lang, "open");
+  // A diagram opens as a diagram (it used to be handed over as an HTML page).
+  if (lang === "mermaid") { getMermaidLib().then((lib) => openArtifactDoc(mermaidDoc(code, lib, "open", themeColors()))); return; }
+  openArtifactDoc(buildArtifactDoc(code, lang, "open"));
+}
+function openArtifactDoc(doc) {
   // Open the runner in a new tab (real https origin → scripts run). The artifact rides
   // in the URL fragment, so it never hits the server. We can't navigate a tab to
   // data:/blob: (Firefox blocks top-level data:; blob:moz-extension keeps the strict CSP).
