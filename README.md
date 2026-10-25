@@ -213,4 +213,4 @@ MIT — voir [LICENSE](./LICENSE).
 
 ## Building
 
-The extension ships hand-written, non-minified source (only `vendor/` holds unmodified third-party libraries). To reproduce the exact packages: `bash scripts/build.sh`. Verify the third-party libs with `bash scripts/fetch-vendor.sh --check`.
+The extension ships hand-written, non-minified source (only `vendor/` holds unmodified third-party libraries). Step-by-step instructions, requirements and versions: **[BUILD.md](BUILD.md)** — in short, `bash scripts/setup-build.sh` then `bash scripts/build.sh` (deterministic: the same source gives the same package).

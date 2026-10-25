@@ -14,13 +14,13 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-for bin in node rsync python3; do
+for bin in rsync python3; do
   command -v "$bin" >/dev/null 2>&1 || { echo "ERROR: '$bin' is required but not installed."; exit 1; }
 done
 
-VER="$(node -p "require('./manifest.json').version")"
+VER="$(python3 -c "import json;print(json.load(open('manifest.json'))['version'])")"
 echo "Building AI Sidebar v$VER"
-echo "  node $(node --version) · npm $(npm --version 2>/dev/null || echo n/a)"
+echo "  python $(python3 -c 'import platform;print(platform.python_version())') · $(rsync --version | head -1)"
 
 # ----- Firefox package ------------------------------------------------------
 # .build is a clean, curated copy of exactly what ships (no node_modules, no dev files).
@@ -30,18 +30,8 @@ rsync -a --delete src icons vendor rules .build/
 cp LICENSE README.md CHANGELOG.md manifest.json .build/
 
 FX_ZIP="ai-sidebar-${VER}-firefox.zip"
-python3 - .build "$FX_ZIP" <<'PY'
-import os, sys, zipfile
-src, out = sys.argv[1], sys.argv[2]
-with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
-    for root, _, files in sorted(os.walk(src)):
-        for f in sorted(files):
-            if f == ".DS_Store":
-                continue
-            full = os.path.join(root, f)
-            z.write(full, os.path.relpath(full, src))
-PY
-echo "  -> $FX_ZIP"
+# Deterministic zip (sorted entries, fixed dates): the same source gives the same package.
+python3 scripts/zip-dir.py .build "$FX_ZIP"
 
 # ----- Chromium package -----------------------------------------------------
 bash scripts/build-chrome.sh

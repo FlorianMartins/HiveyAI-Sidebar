@@ -10,6 +10,11 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Publication Firefox — code source vérifiable** : `BUILD.md` donne les étapes, le système et les
+  versions des outils ; `scripts/setup-build.sh` installe les prérequis et télécharge/vérifie les
+  bibliothèques tierces ; la construction est déterministe (même source → même paquet) et
+  `scripts/compare-packages.py` le prouve. Chaque build de développement publie aussi
+  `hivey-ai-sidebar-source.zip`, l'archive source à joindre sur addons.mozilla.org.
 - **Firefox — nouvel identifiant d'extension** (`hivey-ai-sidebar@hivey.be`) : l'ancien était encore
   réservé par une fiche supprimée sur addons.mozilla.org (« un identifiant identique a été trouvé »).
   Une installation Firefox existante sera vue comme une autre extension : votre clé et vos réglages

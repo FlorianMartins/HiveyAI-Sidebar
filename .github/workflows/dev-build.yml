@@ -68,6 +68,10 @@ jobs:
           bash scripts/build.sh
           mv "ai-sidebar-${VERSION}-firefox.zip" hivey-ai-sidebar-firefox.zip
           mv "ai-sidebar-chrome-${VERSION}.zip" hivey-ai-sidebar-chrome.zip
+          # The source code addons.mozilla.org asks for, with this build's version number: unpacked and
+          # built per BUILD.md, it gives this exact Firefox package.
+          bash scripts/source-zip.sh
+          mv "hivey-ai-sidebar-${VERSION}-source.zip" hivey-ai-sidebar-source.zip
 
       - name: Publish to the dev release
         env:
@@ -84,6 +88,7 @@ jobs:
 
           Firefox: about:debugging#/runtime/this-firefox → Load Temporary Add-on… → pick hivey-ai-sidebar-firefox.zip.
           Chrome / Edge / Brave: unzip hivey-ai-sidebar-chrome.zip, then chrome://extensions → Developer mode → Load unpacked.
+          addons.mozilla.org: submit hivey-ai-sidebar-firefox.zip, and hivey-ai-sidebar-source.zip as its source code (BUILD.md inside).
 
           Built $(date -u +%Y-%m-%dT%H:%MZ). Not a release: a testing channel replaced on every push."
 
@@ -98,4 +103,4 @@ jobs:
           else
             gh release create dev --repo "$REPO" --prerelease --verify-tag --title "Dev build ${VERSION} (${short})" --notes "$notes"
           fi
-          gh release upload dev hivey-ai-sidebar-firefox.zip hivey-ai-sidebar-chrome.zip --repo "$REPO" --clobber
+          gh release upload dev hivey-ai-sidebar-firefox.zip hivey-ai-sidebar-chrome.zip hivey-ai-sidebar-source.zip --repo "$REPO" --clobber

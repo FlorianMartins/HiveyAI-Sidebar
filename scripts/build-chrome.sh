@@ -19,16 +19,5 @@ mkdir -p "$OUT"
 cp -r LICENSE README.md CHANGELOG.md icons src vendor rules "$OUT/"
 cp manifest.chrome.json "$OUT/manifest.json"
 
-# Zip with Python (no dependency on the `zip` binary).
-python3 - "$OUT" "$ZIP" <<'PY'
-import os, sys, zipfile
-src, out = sys.argv[1], sys.argv[2]
-with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
-    for root, _, files in os.walk(src):
-        for f in files:
-            if f == ".DS_Store":
-                continue
-            full = os.path.join(root, f)
-            z.write(full, os.path.relpath(full, src))
-PY
-echo "Built $ZIP ($(stat -c%s "$ZIP") bytes)"
+# Deterministic zip (sorted entries, fixed dates) with Python — no dependency on the `zip` binary.
+python3 scripts/zip-dir.py "$OUT" "$ZIP"

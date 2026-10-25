@@ -47,7 +47,7 @@ for f in "${!SRC[@]}"; do
     mkdir -p "$(dirname "$f")"
     curl -fsSL "${SRC[$f]}" -o "$f"
   fi
-  got="$(sha256sum "$f" | cut -d' ' -f1)"
+  got="$( (command -v sha256sum >/dev/null && sha256sum "$f" || shasum -a 256 "$f") | cut -d' ' -f1)"
   if [[ "$got" == "${SHA[$f]}" ]]; then
     echo "  OK   $f"
   else
