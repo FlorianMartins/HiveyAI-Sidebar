@@ -2703,9 +2703,5 @@ body.rail-pinned.rail-right .top-banner { right: calc(var(--rail-w, 56px) + 8px)
 #confirmBar, #privacyBar { position: relative; z-index: 65; }
 .priv-dlg-opt.keep { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .priv-dlg-opt.keep b { color: var(--accent); }
-/* The three protection modes have their colour, in the window and on the badge: keys masked green,
-   not anonymised red, anonymised the theme's accent. */
-.priv-dlg-opt.keys b { color: #34d399; }
-.priv-dlg-opt.keys:hover { border-color: #34d399; background: color-mix(in srgb, #34d399 10%, transparent); }
+/* « Cloud · clés masquées » under the composer reads in green. */
 .cf-priv.anon-keys { color: #34d399; }
-.cf-priv.anon-none { color: #f87171; }
