@@ -100,7 +100,7 @@ body.web-active #searchBtn, body.web-active #historyBtn { display: none; }
   background: transparent; color: var(--muted); transition: 0.15s; cursor: pointer;
 }
 .menu-btn svg { display: block; filter: drop-shadow(1.5px 1.5px 1.5px rgba(0, 0, 0, 0.5)); }
-.menu-btn:hover { background: var(--panel-2); color: var(--text); border-color: var(--border); }
+.menu-btn:hover, .menu-btn:focus, .menu-btn:active { background: transparent; border-color: transparent; outline: none; } /* no tile behind the logo */
 body:not(.rail-collapsed) .menu-btn { color: var(--accent); }
 /* Brand wordmark next to the logo — modern, premium, white. Hover peeks the menu, click locks it. */
 .brand-word {
@@ -2598,3 +2598,4 @@ body.rail-pinned.rail-right #tabsPanel:not(.hidden), body.rail-pinned.rail-right
   background-color: var(--bg) !important; background-image: linear-gradient(var(--panel), var(--panel)) !important;
   box-shadow: 0 12px 32px rgba(0,0,0,.4);
 }
+.menu-btn:focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent); outline-offset: 2px; }

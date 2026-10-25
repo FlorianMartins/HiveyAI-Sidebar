@@ -10,6 +10,13 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Le logo Hivey** (en haut à gauche) n'affiche plus de fond quand la souris passe dessus ou vers la barre des onglets.
+- **Onglet Web sous Chrome, Brave et Edge** : les outils de page (page, élément, capture, onglets)
+  n'inséraient rien dans le chat du site — le navigateur bloquait le script injecté (« Executing
+  inline event handler violates the following Content Security Policy directive »). Il est
+  maintenant déclaré dans l'extension et s'exécute normalement. Vérifié avec ChatGPT dans Chromium
+  (rien avant, le texte arrive après) et dans Firefox (inchangé).
+
 ### Liste des modèles, petits écrans et agent
 
 - **Filtre des modèles** : un fournisseur connecté plus tard, ou un fabricant ajouté au catalogue,
