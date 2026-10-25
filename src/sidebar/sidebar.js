@@ -7848,9 +7848,14 @@ function privacyOpts(sess, convId, m) {
     conversation: convId || "",
     ask: askPrivacy,
     t,
+    // Said once per value and conversation: each step of an agent turn is a new request carrying
+    // the same values, and the note was repeated under every one of them.
     onRedacted: (found) => {
-      const n = new Set(found.map((f) => f.value)).size;
-      if (n) addMessage("tool", t("priv.redacted", { n }), m || mode);
+      if (sess && sess.privNotedConv !== convId) { sess.privNoted = new Set(); sess.privNotedConv = convId; }
+      const noted = sess ? sess.privNoted : new Set();
+      const fresh = new Set(found.map((f) => f.value).filter((v) => !noted.has(v)));
+      fresh.forEach((v) => noted.add(v));
+      if (fresh.size) addMessage("tool", t("priv.redacted", { n: fresh.size }), m || mode);
     },
   };
 }

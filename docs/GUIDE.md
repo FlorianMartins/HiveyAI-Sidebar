@@ -267,9 +267,10 @@ génération suivante.
 - **Les pages web publiques** gardent leurs prix (le modèle doit pouvoir les comparer) ; leurs
   e-mails, téléphones et identifiants sont masqués. Ce que **vous** écrivez, joignez ou analysez est
   entièrement couvert.
-- **La fenêtre des données sensibles** : avant d'envoyer au cloud un identifiant secret, ou une
-  donnée personnelle ou d'entreprise que vous n'avez pas tapée vous-même, la sidebar montre **où**
-  elle se trouve (`clients.csv:12`, la page, un résultat de l'agent) et vous choisissez :
+- **La fenêtre des données sensibles** : en mode anonymisé, tout part en marqueurs, sans question —
+  une seule note « 🔒 N valeurs anonymisées » par valeur et par conversation. **Anonymisation
+  désactivée**, avant d'envoyer au cloud un identifiant secret (clé, mot de passe), la sidebar montre
+  **où** il se trouve (`config.env:12`, la page, un résultat de l'agent) et vous choisissez :
   **Envoyer (marqueurs en place)**, **Toujours envoyer (cette conversation)** ou **Annuler** — rien
   n'est envoyé.
 - **Le badge « ☁️ Cloud · anonymisé »** sous la zone de saisie : un clic **désactive
@@ -386,8 +387,9 @@ tenir dans la fenêtre du modèle. Épinglez (📌) les échanges qui doivent re
 **Je ne vois pas certains niveaux de réflexion.** Le modèle choisi ne les possède pas ; le menu ne
 propose que les niveaux qui changent réellement la requête.
 
-**La fenêtre des données sensibles apparaît souvent.** Choisissez « Toujours envoyer (cette
-conversation) », ou passez par un modèle local ou votre passerelle, qui ne la déclenchent jamais.
+**La fenêtre des données sensibles apparaît souvent.** Elle n'apparaît qu'avec l'anonymisation
+désactivée : réactivez-la (badge « Cloud » sous la zone de saisie), choisissez « Toujours envoyer
+(cette conversation) », ou passez par un modèle local ou votre passerelle.
 
 **Un message tapé pendant une réponse.** Dans le Chat, il reste dans le champ jusqu'à la fin de la
 réponse (un avis le rappelle) ; dans l'onglet Agent, il est transmis à l'agent et corrige le travail
