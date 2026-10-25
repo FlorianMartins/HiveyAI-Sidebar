@@ -14,6 +14,13 @@ import { setHTML } from "./dom.js";
 let lang = "en";
 
 const EN = {
+  "size.shapeRes": "{shape} · {res}",
+  "size.shape.1x1": "Square 1:1",
+  "size.shape.16x9": "Landscape 16:9",
+  "size.shape.9x16": "Portrait 9:16",
+  "size.shape.4x3": "Photo 4:3",
+  "size.shape.3x4": "Portrait 3:4",
+  "size.shape.21x9": "Panoramic 21:9",
   "pick.groupName": "Page selection ({n} elements)",
   "cost.tokensTotal": "{n} tokens",
   "improve.pick": "Choose a style",
@@ -593,7 +600,7 @@ const EN = {
   "improve.styleTitle": "Choose the writing style",
   "improve.style": "Writing style",
   "image.customSize": "Custom size",
-  "image.sizeTitle": "Sizes depend on the model. Native 4K/1440p doesn't exist on current image models — upscale the image afterwards.",
+  "image.sizeTitle": "Sizes depend on the model: Gemini image models offer formats in 1K, 2K and — when the model really can — 4K.",
   "model.connect": "🔌 Connect a provider",
   "composer.ph": "Write a message…",
   "stop.title": "Stop",
@@ -1115,6 +1122,13 @@ const EN = {
 };
 
 const FR = {
+  "size.shapeRes": "{shape} · {res}",
+  "size.shape.1x1": "Carré 1:1",
+  "size.shape.16x9": "Paysage 16:9",
+  "size.shape.9x16": "Portrait 9:16",
+  "size.shape.4x3": "Photo 4:3",
+  "size.shape.3x4": "Portrait 3:4",
+  "size.shape.21x9": "Panoramique 21:9",
   "pick.groupName": "Sélection de la page ({n} éléments)",
   "cost.tokensTotal": "{n} jetons",
   "improve.pick": "Choisissez un style",
@@ -1689,7 +1703,7 @@ const FR = {
   "improve.styleTitle": "Choisir le style d'écriture",
   "improve.style": "Style d'écriture",
   "image.customSize": "Taille personnalisée",
-  "image.sizeTitle": "Tailles supportées selon le modèle. Le 4K/1440p natif n'existe pas sur les modèles d'image actuels — agrandissez l'image après coup.",
+  "image.sizeTitle": "Les tailles dépendent du modèle : les modèles d'image Gemini proposent des formats en 1K, 2K et — quand le modèle le peut vraiment — 4K.",
   "model.connect": "🔌 Se connecter à un fournisseur",
   "composer.ph": "Écrivez un message…",
   "stop.title": "Stop",

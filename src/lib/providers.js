@@ -11,6 +11,7 @@
 // `onThink(delta)` receives reasoning text (Anthropic extended thinking,
 // DeepSeek/o-series reasoning_content) so the UI can show it separately.
 
+import { imageConfigOf, imageResolutions } from "./image-sizes.js";
 import { PROVIDERS, baseUrlFor, modelFor, keyFor } from "./models.js";
 import { anthropicThinking, wireReasoning, selfHostedThinkingBudget, isSelfHostedProvider } from "./reasoning.js";
 import { privateProvider, redactsFor } from "./privacy.js";
@@ -926,7 +927,7 @@ async function generateImageViaChat({ baseUrl, apiKey, providerId, model, prompt
     headers["HTTP-Referer"] = "https://github.com/FlorianMartins/firefox-ai-sidebar";
     headers["X-Title"] = "Hivey AI";
   }
-  const sizeHint = size ? ` Target size/aspect: ${size} pixels.` : "";
+  const sizeHint = !size ? "" : /@/.test(size) ? ` Target aspect ratio: ${size.split("@")[0]}.` : ` Target size/aspect: ${size} pixels.`;
   const imgs = initImages || [];
   // With input image(s), send a multimodal message so the model EDITS/MIXES them (img2img).
   const text = imgs.length > 1
@@ -942,6 +943,13 @@ async function generateImageViaChat({ baseUrl, apiKey, providerId, model, prompt
     modalities: ["image", "text"],
     messages: [{ role: "user", content }],
   };
+  // The format and resolution, as parameters where the model takes them (Gemini via OpenRouter,
+  // up to real 4K); otherwise the hint in the prompt is all there is.
+  const cfg = providerId === "openrouter" ? imageConfigOf(size) : null;
+  if (cfg) {
+    if (cfg.image_size && !imageResolutions(model).includes(cfg.image_size)) delete cfg.image_size;
+    body.image_config = cfg;
+  }
   const res = await fetch(url, { method: "POST", signal, headers, body: JSON.stringify(body) });
   await ensureOk(res);
   const json = await res.json();

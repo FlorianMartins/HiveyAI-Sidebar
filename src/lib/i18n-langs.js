@@ -3,6 +3,13 @@
 // back to English. Placeholders {name}, HTML tags and emojis are kept verbatim.
 
 export const ES = {
+  "size.shapeRes": "{shape} · {res}",
+  "size.shape.1x1": "Cuadrado 1:1",
+  "size.shape.16x9": "Horizontal 16:9",
+  "size.shape.9x16": "Vertical 9:16",
+  "size.shape.4x3": "Foto 4:3",
+  "size.shape.3x4": "Vertical 3:4",
+  "size.shape.21x9": "Panorámico 21:9",
   "pick.groupName": "Selección de la página ({n} elementos)",
   "cost.tokensTotal": "{n} tokens",
   "improve.pick": "Elige un estilo",
@@ -741,7 +748,7 @@ export const ES = {
   "chip.pageTitle": "La IA ve la página actual",
   "translate.to": "Traducir a",
   "improve.style": "Estilo de redacción",
-  "image.sizeTitle": "Los tamaños dependen del modelo. El 4K/1440p nativo no existe en los modelos de imagen actuales — amplía la imagen después.",
+  "image.sizeTitle": "Los tamaños dependen del modelo: los modelos de imagen Gemini ofrecen formatos en 1K, 2K y — cuando el modelo puede — 4K.",
   "model.connect": "🔌 Conectar un proveedor",
   "composer.ph": "Escribe un mensaje…",
   "stop.title": "Detener",
@@ -1029,6 +1036,13 @@ export const ES = {
 };
 
 export const DE = {
+  "size.shapeRes": "{shape} · {res}",
+  "size.shape.1x1": "Quadrat 1:1",
+  "size.shape.16x9": "Querformat 16:9",
+  "size.shape.9x16": "Hochformat 9:16",
+  "size.shape.4x3": "Foto 4:3",
+  "size.shape.3x4": "Hochformat 3:4",
+  "size.shape.21x9": "Panorama 21:9",
   "pick.groupName": "Seitenauswahl ({n} Elemente)",
   "cost.tokensTotal": "{n} Tokens",
   "improve.pick": "Stil wählen",
@@ -1767,7 +1781,7 @@ export const DE = {
   "chip.pageTitle": "Die KI sieht die aktuelle Seite",
   "translate.to": "Übersetzen nach",
   "improve.style": "Schreibstil",
-  "image.sizeTitle": "Größen hängen vom Modell ab. Natives 4K/1440p gibt es bei aktuellen Bildmodellen nicht — skaliere das Bild danach hoch.",
+  "image.sizeTitle": "Die Größen hängen vom Modell ab: Gemini-Bildmodelle bieten Formate in 1K, 2K und — wenn das Modell es kann — 4K.",
   "model.connect": "🔌 Einen Anbieter verbinden",
   "composer.ph": "Schreibe eine Nachricht…",
   "stop.title": "Stopp",
@@ -2055,6 +2069,13 @@ export const DE = {
 };
 
 export const IT = {
+  "size.shapeRes": "{shape} · {res}",
+  "size.shape.1x1": "Quadrato 1:1",
+  "size.shape.16x9": "Orizzontale 16:9",
+  "size.shape.9x16": "Verticale 9:16",
+  "size.shape.4x3": "Foto 4:3",
+  "size.shape.3x4": "Verticale 3:4",
+  "size.shape.21x9": "Panoramico 21:9",
   "pick.groupName": "Selezione della pagina ({n} elementi)",
   "cost.tokensTotal": "{n} token",
   "improve.pick": "Scegli uno stile",
@@ -2793,7 +2814,7 @@ export const IT = {
   "chip.pageTitle": "L'IA vede la pagina corrente",
   "translate.to": "Traduci in",
   "improve.style": "Stile di scrittura",
-  "image.sizeTitle": "Le dimensioni dipendono dal modello. Il 4K/1440p nativo non esiste sui modelli di immagini attuali — ingrandisci l'immagine dopo.",
+  "image.sizeTitle": "Le dimensioni dipendono dal modello: i modelli Gemini offrono formati in 1K, 2K e — quando il modello può — 4K.",
   "model.connect": "🔌 Collega un provider",
   "composer.ph": "Scrivi un messaggio…",
   "stop.title": "Ferma",
@@ -3081,6 +3102,13 @@ export const IT = {
 };
 
 export const PT = {
+  "size.shapeRes": "{shape} · {res}",
+  "size.shape.1x1": "Quadrado 1:1",
+  "size.shape.16x9": "Paisagem 16:9",
+  "size.shape.9x16": "Retrato 9:16",
+  "size.shape.4x3": "Foto 4:3",
+  "size.shape.3x4": "Retrato 3:4",
+  "size.shape.21x9": "Panorâmico 21:9",
   "pick.groupName": "Seleção da página ({n} elementos)",
   "cost.tokensTotal": "{n} tokens",
   "improve.pick": "Escolha um estilo",
@@ -3819,7 +3847,7 @@ export const PT = {
   "chip.pageTitle": "A IA vê a página atual",
   "translate.to": "Traduzir para",
   "improve.style": "Estilo de escrita",
-  "image.sizeTitle": "Os tamanhos dependem do modelo. O 4K/1440p nativo não existe nos modelos de imagem atuais — amplie a imagem depois.",
+  "image.sizeTitle": "Os tamanhos dependem do modelo: os modelos de imagem Gemini oferecem formatos em 1K, 2K e — quando o modelo pode — 4K.",
   "model.connect": "🔌 Conectar um provedor",
   "composer.ph": "Escreva uma mensagem…",
   "stop.title": "Parar",
