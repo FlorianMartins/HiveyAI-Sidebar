@@ -2592,3 +2592,9 @@ body.rail-pinned.rail-right #tabsPanel:not(.hidden), body.rail-pinned.rail-right
 /* Stop: a red square — the one red control, so stopping is found at a glance. */
 .composer-tools .ctool.stop { color: #ef4444 !important; }
 .composer-tools .ctool.stop:hover { color: #f87171 !important; background: color-mix(in srgb, #ef4444 12%, transparent) !important; }
+/* The Web tab's menus (provider, Hivey menu, page tools) were see-through: --panel is translucent
+   and they had no blur. Opaque now, like the other tabs' lists. */
+.webprov-menu, .webhivey-menu, .web-ov-menu {
+  background-color: var(--bg) !important; background-image: linear-gradient(var(--panel), var(--panel)) !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,.4);
+}
