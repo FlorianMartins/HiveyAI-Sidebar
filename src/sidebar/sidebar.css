@@ -2574,19 +2574,12 @@ body:not(.theme-light) #emptyOnboard b, body:not(.theme-light) #emptyOnboard str
 body:not(.web-active) .topbar .row #webHistorySlot > * { display: none; }
 .img-size .themed-sel-btn .sz-ic { flex: 0 0 auto; color: var(--accent); }
 
-/* ── A pinned tab rail is a column of its own ─────────────────────────────────────────────────
-   It used to float over the whole left edge: on a short or narrow sidebar it covered the composer
-   (the « + » could not be clicked) and every menu opened over it (prompt library, model list,
-   Translate / Improve / Image lists…). Pinned, the whole work area now starts after it — the
-   composer, its menus and the messages included; peeking (hover) still floats over. The rules that
-   offset single elements are reset so nothing is offset twice. */
-body.rail-pinned:not(.rail-right) #workArea { padding-left: var(--rail-w, 56px); }
-body.rail-pinned.rail-right #workArea { padding-right: var(--rail-w, 56px); }
-body.rail-pinned #messages, body.rail-pinned #messages:has(> #empty.hidden),
-body.rail-pinned .benchview { padding-left: 12px !important; padding-right: 12px !important; }
-body.rail-pinned #searchBar:not(.hidden), body.rail-pinned #pageBar:not(.hidden) { margin-left: 0 !important; margin-right: 0 !important; }
-body.rail-pinned #tabsPanel:not(.hidden), body.rail-pinned #historyPanel:not(.hidden) { left: var(--rail-w, 56px) !important; right: 0 !important; }
-body.rail-pinned.rail-right #tabsPanel:not(.hidden), body.rail-pinned.rail-right #historyPanel:not(.hidden) { left: 0 !important; right: var(--rail-w, 56px) !important; }
+/* ── The pinned tab rail floats over the left edge, as before, but STOPS above the composer
+   (--composer-h, measured): on a short sidebar it covered the composer and its « + ». The composer
+   keeps the full width. The prompt library opens beside the rail. */
+#rail { max-height: calc(100% - var(--composer-h, 0px) - 12px) !important; }
+body.rail-pinned:not(.rail-right) .plib-panel { left: calc(var(--rail-w, 56px) + 8px); }
+body.rail-pinned.rail-right .plib-panel { right: calc(var(--rail-w, 56px) + 8px); }
 /* Popups never taller than the room above the composer, nor wider than the work area. */
 .plib-panel { max-height: min(440px, calc(100vh - 220px)); }
 /* Stop: a red square — the one red control, so stopping is found at a glance. */

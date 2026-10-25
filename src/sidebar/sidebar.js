@@ -218,6 +218,13 @@ const els = {
   confirmAllow: $("confirmAllow"),
   confirmDeny: $("confirmDeny"),
 };
+// The composer's height, for the rail to stop above it (CSS --composer-h).
+(() => {
+  const c = document.querySelector("footer.composer");
+  if (!c || typeof ResizeObserver === "undefined") return;
+  const set = () => document.documentElement.style.setProperty("--composer-h", (c.hidden || c.offsetParent === null ? 0 : c.offsetHeight) + "px");
+  new ResizeObserver(set).observe(c); set();
+})();
 // Whether the current tab offers page tools (the "N tabs in context" bar shows only there).
 let pageBarAllowed = false;
 
@@ -5401,6 +5408,7 @@ function openAnalysisMenu(anchor) {
   const mh = analysisMenuEl.offsetHeight;
   const above = r.top - 6 - mh;
   analysisMenuEl.style.top = `${above > 8 ? above : Math.min(r.bottom + 6, window.innerHeight - mh - 8)}px`;
+  fitPopup(analysisMenuEl);
   const closer = (e) => { if (analysisMenuEl && !analysisMenuEl.contains(e.target) && e.target !== anchor && !anchor.contains(e.target)) { closeAnalysisMenu(); document.removeEventListener("mousedown", closer); } };
   setTimeout(() => document.addEventListener("mousedown", closer), 0);
 }
@@ -5464,10 +5472,13 @@ function uiLanguageName() { return { fr: "French", es: "Spanish", de: "German", 
 function fitPopup(el) {
   if (!el) return;
   const wa = document.getElementById("workArea");
-  const cs = wa ? getComputedStyle(wa) : null;
   const r = wa ? wa.getBoundingClientRect() : { left: 0, right: innerWidth, top: 0 };
-  const minL = r.left + (cs ? parseFloat(cs.paddingLeft) || 0 : 0) + 6;
-  const maxR = r.right - (cs ? parseFloat(cs.paddingRight) || 0 : 0) - 6;
+  // A pinned rail floats over the left (or right) edge: menus open beside it, not over it.
+  const pinned = document.body.classList.contains("rail-pinned");
+  const right = document.body.classList.contains("rail-right");
+  const railW = pinned && els.rail ? els.rail.getBoundingClientRect().width : 0;
+  const minL = r.left + (right ? 0 : railW) + 6;
+  const maxR = r.right - (right ? railW : 0) - 6;
   const top = Math.max(r.top + 4, 8);
   if (el.offsetWidth > maxR - minL) { el.style.minWidth = "0"; el.style.width = (maxR - minL) + "px"; }
   const b = el.getBoundingClientRect();
@@ -6781,6 +6792,7 @@ function togglePlusMenu() {
   const r = els.attachBtn.getBoundingClientRect();
   p.style.left = Math.max(8, Math.min(r.left, window.innerWidth - p.offsetWidth - 8)) + "px";
   p.style.top = Math.max(8, r.top - p.offsetHeight - 6) + "px";
+  fitPopup(p);
 }
 function closePlusMenu() {
   if (!els.plusMenu) return;
