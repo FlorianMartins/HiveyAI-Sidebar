@@ -10,6 +10,11 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+### La suggestion reste avec sa conversation
+
+- Une **nouvelle conversation** n'affiche plus la suggestion de la précédente ; **rouvrir une
+  conversation** depuis l'historique remet la sienne (elle est enregistrée avec la conversation).
+
 ### Pas de diagramme ni d'artefact sans le demander
 
 - Avec « Artifacts » activé, la consigne disait au modèle de **préférer un artefact dès que le
