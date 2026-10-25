@@ -10,6 +10,8 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Image** : les tailles 1K / 2K / 4K n'apparaissaient pas tant que le modèle d'image n'était pas changé à la main (la liste était construite au démarrage pour le modèle par défaut). Elle suit maintenant le modèle réellement utilisé — Nano Banana 2.1 compris.
+
 - **Image, sous Chrome/Brave/Edge** : « Utiliser comme référence » était écrit en blanc sur un bouton blanc (le bouton n'avait pas de style propre et Chromium lui donnait son fond par défaut). Il a maintenant un contour fin et un texte lisible, comme les autres boutons.
 
 - **Correctif** : depuis la version précédente, la barre des onglets ouverte décalait toute la zone
