@@ -10,6 +10,12 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Agent : la réflexion se lit pendant qu'elle se fait.** Dans l'onglet Agent, le bloc
+  « Réflexion » s'ouvre pendant que l'IA réfléchit et se replie dès qu'elle agit ou répond (et se
+  rouvre à l'étape suivante si elle réfléchit encore). Ailleurs, il reste replié comme avant. Le
+  libellé « Réflexion » n'a plus d'icône.
+- **Fenêtre de protection des données** : les modes s'affichent du plus protégé au moins protégé —
+  Rester anonymisé, Clés masquées, Non anonymisé.
 - **Trois modes de protection, nommés pareil partout** (badge, fenêtre, réglages) : **Anonymisé**
   (toutes les données sensibles en marqueurs), **Clés masquées** (seuls clés et mots de passe cachés,
   demandé avant envoi) et **Non anonymisé** (rien n'est caché). Dans la fenêtre, « Rester anonymisé »
