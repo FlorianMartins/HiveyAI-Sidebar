@@ -2605,12 +2605,12 @@ body.theme-light .model-chip .combo-input { border: 0 !important; background: tr
 
 /* No carets after the model and the thinking level: the chips open their menus as they are. */
 .composer-tools .model-chip .combo-caret, .composer-tools .cchip .tc-caret { display: none !important; }
-/* The Benchmark and Code views start after the pinned (or peeking) tab rail, like the messages. */
-body.rail-pinned .benchview, body.rail-peek .benchview, body.rail-pinned .codeview, body.rail-peek .codeview {
+/* The Benchmark view starts after the pinned (or peeking) tab rail; the Code launcher stays centred
+   on the whole width, like every tab's welcome screen. */
+body.rail-pinned .benchview, body.rail-peek .benchview {
   padding-left: calc(var(--rail-w, 56px) + 12px); transition: padding-left .3s cubic-bezier(.16,1,.3,1);
 }
-body.rail-right.rail-pinned .benchview, body.rail-right.rail-peek .benchview,
-body.rail-right.rail-pinned .codeview, body.rail-right.rail-peek .codeview {
+body.rail-right.rail-pinned .benchview, body.rail-right.rail-peek .benchview {
   padding-left: 12px; padding-right: calc(var(--rail-w, 56px) + 12px);
 }
 /* The provisional "summarizing…" note: a soft pulse until the summary is in. */

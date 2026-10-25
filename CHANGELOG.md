@@ -17,6 +17,7 @@ Version de développement, toujours à jour :
   certains thèmes.
 - **Taper au clavier dans une liste ouverte** (langues de Traduire…) met en évidence l'élément trouvé
   (« fr » → Français), même si le focus est resté ailleurs ; Entrée le choisit. Vérifié dans Firefox.
+- **Hivey Code** est de nouveau centré, comme l'accueil des autres onglets.
 
 - **Changer de modèle marche du premier clic** : seul le nom du modèle réagissait ; un clic sur
   l'icône du fournisseur ou à côté du nom ne faisait rien. Toute la puce ouvre maintenant la liste.
