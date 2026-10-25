@@ -10,6 +10,8 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- Les cartes de code et de diagramme (« Copier », « Diagramme », « Artifact interactif ») suivent la
+  langue de l'interface : elles restaient en français quelle que soit la langue choisie.
 - **Publication Firefox — code source vérifiable** : `BUILD.md` donne les étapes, le système et les
   versions des outils ; `scripts/setup-build.sh` installe les prérequis et télécharge/vérifie les
   bibliothèques tierces ; la construction est déterministe (même source → même paquet) et

@@ -14,6 +14,10 @@ import { setHTML } from "./dom.js";
 let lang = "en";
 
 const EN = {
+  "code.copy": "Copy",
+  "code.copied": "Copied ✓",
+  "code.diagram": "Diagram",
+  "code.interactive": "Interactive artifact",
   "privOff.keepDesc": "Recommended. Nothing changes: sensitive values keep leaving as markers.",
   "priv.never": "Never mask (this conversation)",
   "agent.refusedStop": "⛔ Action refused: the agent stopped and did nothing else.",
@@ -1194,6 +1198,10 @@ const EN = {
 };
 
 const FR = {
+  "code.copy": "Copier",
+  "code.copied": "Copié ✓",
+  "code.diagram": "Diagramme",
+  "code.interactive": "Artifact interactif",
   "privOff.keepDesc": "Recommandé. Rien ne change : les données sensibles continuent de partir en marqueurs.",
   "priv.never": "Ne jamais masquer (cette conversation)",
   "agent.refusedStop": "⛔ Action refusée : l'agent s'est arrêté et n'a rien fait d'autre.",

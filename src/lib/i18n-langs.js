@@ -3,6 +3,10 @@
 // back to English. Placeholders {name}, HTML tags and emojis are kept verbatim.
 
 export const ES = {
+  "code.copy": "Copiar",
+  "code.copied": "Copiado ✓",
+  "code.diagram": "Diagrama",
+  "code.interactive": "Artifact interactivo",
   "privOff.keepDesc": "Recomendado. No cambia nada: los datos sensibles siguen saliendo como marcadores.",
   "priv.never": "No ocultar nunca (esta conversación)",
   "agent.refusedStop": "⛔ Acción rechazada: el agente se detuvo y no hizo nada más.",
@@ -1108,6 +1112,10 @@ export const ES = {
 };
 
 export const DE = {
+  "code.copy": "Kopieren",
+  "code.copied": "Kopiert ✓",
+  "code.diagram": "Diagramm",
+  "code.interactive": "Interaktives Artifact",
   "privOff.keepDesc": "Empfohlen. Nichts ändert sich: sensible Daten gehen weiter als Markierungen hinaus.",
   "priv.never": "Nie maskieren (dieses Gespräch)",
   "agent.refusedStop": "⛔ Aktion abgelehnt: der Agent hat angehalten und nichts weiter getan.",
@@ -2213,6 +2221,10 @@ export const DE = {
 };
 
 export const IT = {
+  "code.copy": "Copia",
+  "code.copied": "Copiato ✓",
+  "code.diagram": "Diagramma",
+  "code.interactive": "Artifact interattivo",
   "privOff.keepDesc": "Consigliato. Non cambia nulla: i dati sensibili continuano a partire come marcatori.",
   "priv.never": "Non mascherare mai (questa conversazione)",
   "agent.refusedStop": "⛔ Azione rifiutata: l'agente si è fermato e non ha fatto altro.",
@@ -3318,6 +3330,10 @@ export const IT = {
 };
 
 export const PT = {
+  "code.copy": "Copiar",
+  "code.copied": "Copiado ✓",
+  "code.diagram": "Diagrama",
+  "code.interactive": "Artifact interativo",
   "privOff.keepDesc": "Recomendado. Nada muda: os dados sensíveis continuam a sair como marcadores.",
   "priv.never": "Nunca ocultar (esta conversa)",
   "agent.refusedStop": "⛔ Ação recusada: o agente parou e não fez mais nada.",
