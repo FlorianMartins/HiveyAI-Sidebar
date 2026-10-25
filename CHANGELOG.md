@@ -10,6 +10,8 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Suggestion de la prochaine demande** : elle commence par l'icône de la touche Tab (⇥), pour
+  montrer d'un coup d'œil que Tab la reprend. L'icône disparaît dès que vous tapez.
 - **MCP : plus de 70 services**, classés par catégorie, avec une recherche. Gmail, Google Agenda et
   Google Drive via les serveurs officiels de Google (avec votre propre client OAuth Google Cloud :
   l'adresse de retour à déclarer est affichée, avec un lien vers le guide), Slack, HubSpot, Asana,
