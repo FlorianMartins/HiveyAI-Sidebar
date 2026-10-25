@@ -910,6 +910,9 @@ function populateImageModelSelector() {
   }
   if (mainCombo) mainCombo.refresh();
   els.modelFilterBtn.classList.toggle("active", filterIsActive());
+  // The sizes depend on the image model, which may only be known now (the list was built at start
+  // for the default model, so a Gemini model kept the pixel sizes instead of 1K / 2K / 4K).
+  populateImageSizes();
   updateEmptyState();
 }
 
