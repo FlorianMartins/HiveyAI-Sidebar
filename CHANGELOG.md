@@ -10,6 +10,8 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Agent : « lance une autre musique » lance bien la nouvelle**, au lieu de relancer celle restée en
+  pause dans l'onglet. La vidéo déjà ouverte n'est reprise que si c'est celle de la même demande.
 - **La lumière autour de la zone de saisie reste fluide pendant les longues réponses** (même
   animation) : elle est désormais déplacée par le compositeur graphique, plus par la page. Sur une
   réponse de 20 000 caractères, elle se figeait jusqu'à 0,5 s dans Firefox ; page gelée 2,2 s,
