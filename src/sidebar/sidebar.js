@@ -1790,7 +1790,10 @@ function makeCombo({ input, menu, items, getValue, onPick, header, onSync }) {
   function pick(it) { openState = false; menu.classList.add("hidden"); onPick(it.value); syncLabel(); }
   // The trigger just OPENS the popup (search/filter happens inside it) — never a text field.
   input.readOnly = true;
-  input.addEventListener("mousedown", (e) => { e.preventDefault(); if (openState) close(); else open(); });
+  // The whole chip opens it — its icon and padding too, not only the name (a click on the maker's
+  // mark did nothing; the next one, on the name, worked).
+  const trigger = (input.closest && input.closest(".combo")) || input;
+  trigger.addEventListener("mousedown", (e) => { if (menu.contains(e.target)) return; e.preventDefault(); if (openState) close(); else open(); });
   return {
     refresh: () => { syncLabel(); if (openState) buildList(); },
     render: () => { if (openState) { render(); position(); } },
@@ -2758,7 +2761,7 @@ function benchmarkView() {
       onPick: (v) => _benchView.add(v),
     });
     document.addEventListener("mousedown", (e) => {
-      if (benchCombo.isOpen() && e.target !== els.bvModelInput && !els.bvModelMenu.contains(e.target)) benchCombo.close();
+      if (benchCombo.isOpen() && !(els.bvModelInput.closest(".combo") || els.bvModelInput).contains(e.target) && !els.bvModelMenu.contains(e.target)) benchCombo.close();
     });
   }
   return _benchView;
@@ -4265,7 +4268,7 @@ function wire() {
   // Close the combo menu when clicking outside it; also cancel element-pick mode when
   // the user clicks back in the sidebar (anywhere but the pick button).
   document.addEventListener("mousedown", (e) => {
-    if (mainCombo.isOpen() && e.target !== els.modelInput && !els.modelMenu.contains(e.target) && !els.modelFilterPanel.contains(e.target)) mainCombo.close();
+    if (mainCombo.isOpen() && !els.modelWrap.contains(e.target) && !els.modelMenu.contains(e.target) && !els.modelFilterPanel.contains(e.target)) mainCombo.close();
     if (picking && !els.pickEl.contains(e.target)) cancelPicking();
     if (capturing && !els.captureRegion.contains(e.target)) cancelCapture();
   });
