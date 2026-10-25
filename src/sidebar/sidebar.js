@@ -6991,16 +6991,18 @@ function askPrivacyOff(provider) {
       b.addEventListener("click", () => close(value));
       return b;
     };
-    // Three modes, named the same everywhere (badge, settings): « Clés masquées » (only keys and
-    // passwords hidden), « Non anonymisé » (nothing hidden), and staying « Anonymisé », last.
+    // Three modes, named the same everywhere (badge, settings), from the most protected to the
+    // least: staying « Anonymisé », « Clés masquées » (only keys and passwords hidden), « Non
+    // anonymisé » (nothing hidden).
     const stay = opt(null, t("privOff.keep"), t("privOff.keepDesc"), "keep");
     opts.append(
+      stay,
       opt("off", t("privOff.keys"), t("privOff.keysDesc")),
       opt("none", t("privOff.none"), t("privOff.noneDesc"), "danger"),
-      stay,
     );
     const cancel = stay;
-    box.append(h, p1, p2, opts);
+    box.append(h, p1, opts);
+    opts.insertBefore(p2, opts.children[1]); // « Or one of two lighter modes » sits between staying and the other two
     ov.append(box);
     const onKey = (e) => { if (e.key === "Escape") close(null); };
     function close(v) { document.removeEventListener("keydown", onKey, true); ov.remove(); resolve(v); }
@@ -7557,7 +7559,8 @@ function addThinkBlock(m) {
   // Folded, as in hivey-vscode: the reasoning is there for whoever opens it, and does not push the
   // answer out of view. The summary pulses while the model is still thinking (see makeSink).
   d.className = "think live";
-  d.open = false;
+  // The Agent tab shows its reasoning while it happens, then folds it (makeSink `foldThink`).
+  d.open = m === "agent";
   const s = document.createElement("summary");
   s.textContent = t("chip.thinking");
   const body = document.createElement("div");
@@ -7689,8 +7692,18 @@ function makeSink(badgeLabel, showThink = true, pendingEl = null, m = null) {
     const txt = nativeThink + promptThink;
     if (!txt) return;
     if (!think) think = addThinkBlock(m);
+    // Thinking again after an action (next agent step): live and open again, until it is done.
+    const d = think.parentElement;
+    if (d && !d.classList.contains("live")) { d.classList.add("live"); if (m === "agent") d.open = true; }
     think.textContent = txt;
     scrollMessages();
+  };
+  // The reasoning is over (the answer starts, or an action): no more pulse, and folded in the Agent tab.
+  const foldThink = () => {
+    const d = think && think.parentElement;
+    if (!d || !d.classList.contains("live")) return;
+    d.classList.remove("live");
+    if (m === "agent") d.open = false;
   };
   return {
     onText(delta) {
@@ -7703,6 +7716,7 @@ function makeSink(badgeLabel, showThink = true, pendingEl = null, m = null) {
       // Still streaming the reasoning (no answer yet): show the 💭 block, but don't create
       // the answer bubble yet — so reasoning renders ABOVE the answer, not below it.
       if (!raw) { scrollMessages(); return; }
+      foldThink();
       ensure();
       if (!coding && raw.indexOf("```") !== -1) coding = true;
       if (coding) {
@@ -7725,7 +7739,7 @@ function makeSink(badgeLabel, showThink = true, pendingEl = null, m = null) {
       renderThink();
     },
     finalize() {
-      if (think && think.parentElement) think.parentElement.classList.remove("live");
+      foldThink();
       dropPending();
       stopRaf();                  // stop the typewriter and show the COMPLETE answer at once
       // Safety net: if the model opened a <think> block but never closed it (so the answer
