@@ -3670,6 +3670,8 @@ async function saveSession(sess, m, sel) {
     id: sess.convId, title, customTitle: sess.customTitle || "", updatedAt: Date.now(), mode: m,
     providerId: sel.providerId, model: sel.modelId, transcript: sess.transcript, nativeHistory: sess.history,
     importedSources: sess.importedSources || [],
+    // The next-request suggestion belongs to its conversation: shown again when it is reopened.
+    suggestion: sess.suggestion || "",
   });
 }
 async function saveCurrent() {
@@ -3737,7 +3739,9 @@ async function loadConversation(id) {
   getSession(mode).pageCtxKeys = new Set(); // re-attach page context once for this thread
   getSession(mode).customTitle = c.customTitle || ""; // keep a manual rename
   getSession(mode).importedSources = c.importedSources || []; // keep dedup of imports
+  getSession(mode).suggestion = c.suggestion || null; // its own suggestion, not the previous one's
   syncSessionFromGlobals(mode); // these new arrays become this tab's live session
+  if (!els.input.value) showSuggestion(getSession(mode).suggestion);
   let lastAssistantEl = null;
   for (const item of transcript) {
     const el = renderTranscriptItem(item);
@@ -3762,6 +3766,8 @@ function startFreshChat() {
   getSession(mode).pageCtxKeys = new Set();
   getSession(mode).customTitle = "";
   getSession(mode).importedSources = [];
+  getSession(mode).suggestion = null; // a new conversation has no suggestion yet
+  showSuggestion(null);
   syncSessionFromGlobals(mode); // the fresh arrays are this tab's live session
   // A new conversation starts with NO tab held in context — otherwise a tab the user
   // ticked for a previous discussion would silently leak into the fresh one.
@@ -6920,7 +6926,8 @@ async function suggestNextAfter(question, answer, sess, m, sel) {
     const next = parseNextStep(r && r.text);
     if (!next || sess.convId !== convAt || sess.transcript.length !== lenAt) return;
     sess.suggestion = next;
-    if (mode === m && !busy && !els.input.value) showSuggestion(next);
+    saveSession(sess, m, sel).catch(() => {}); // kept with the conversation, for when it is reopened
+    if (mode === m && !busy && !els.input.value && getSession(m) === sess) showSuggestion(next);
   } catch (_) { /* no suggestion: nothing to say about it */ }
 }
 
