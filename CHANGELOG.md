@@ -10,6 +10,12 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Image : la Taille se choisit en deux colonnes, Format et Qualité**, comme le style et le ton
+  d'Improve. Plus de liste où chaque format revenait pour chaque résolution. Chaque colonne a
+  « Par défaut du modèle », et la qualité indique la taille approximative (1K ≈ 1024 px, 2K ≈ 2048 px,
+  4K ≈ 4096 px). Recliquer sur un choix le retire.
+- **Correctif** : avec un nom de modèle long, la rangée de boutons de la zone de saisie débordait et
+  la sidebar défilait sur le côté (régression de la version précédente).
 - **Zone de saisie : bordure régulière** au survol et pendant une réponse. Les coins arrondis ne
   paraissent plus plus fins que les côtés.
 - **Options des onglets dans la zone de saisie** : sur Traduction, Improve, Cybersécurité et

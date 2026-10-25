@@ -39,11 +39,15 @@ export function pixelSizes(providerId, modelId) {
   return ["512x512", "1024x1024", "1536x1024", "1024x1536", "1792x1024", "1024x1792"]; // FLUX, Grok…: free sizes
 }
 
-/** "16:9@4K" → { aspect_ratio: "16:9", image_size: "4K" }; a pixel size "1792x1024" → its ratio; null otherwise. */
+/**
+ * "16:9@4K" → { aspect_ratio: "16:9", image_size: "4K" }; the format or the quality alone ("16:9",
+ * "@2K") → that one only, the model choosing the other; a pixel size "1792x1024" → its ratio;
+ * null otherwise.
+ */
 export function imageConfigOf(size) {
   const s = String(size || "");
-  const m = /^(\d+:\d+)@(1K|2K|4K)$/.exec(s);
-  if (m) return { aspect_ratio: m[1], image_size: m[2] };
+  const m = /^(\d+:\d+)?(?:@(1K|2K|4K))?$/.exec(s);
+  if (s && m) return { ...(m[1] ? { aspect_ratio: m[1] } : {}), ...(m[2] ? { image_size: m[2] } : {}) };
   const px = /^(\d+)x(\d+)$/.exec(s);
   if (px) {
     const w = +px[1], h = +px[2], r = w / h;
