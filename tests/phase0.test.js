@@ -111,7 +111,7 @@ test("an undeclared space grants nothing", () => {
 test("spaces that process CONTENT never write", () => {
   // The rule under the table: a space writes only if it receives the user talking about
   // themselves. A .pcap summary describes an infrastructure; a PDF was written by someone else.
-  for (const s of ["security", "pdf", "code", "wisebase"]) {
+  for (const s of ["security", "pdf", "mcp", "wisebase"]) {
     assert.equal(canRead(s), true, `${s} should still read`);
     for (const kind of ["fact", "preference", "decision", "event", "affect"]) {
       assert.equal(canWrite(s, kind), false, `${s} must never write (${kind})`);

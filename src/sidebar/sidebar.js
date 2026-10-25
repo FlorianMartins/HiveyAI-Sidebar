@@ -41,6 +41,7 @@ import {
   newConversationId, titleFrom, togglePinned, conversationMatches,
 } from "../lib/history.js";
 import { setHTML } from "../lib/dom.js";
+import { initMcp } from "../lib/mcp-ui.js";
 
 const $ = (id) => document.getElementById(id);
 // Are we running as a standalone full-screen TAB (vs the docked sidebar)? The
@@ -163,9 +164,10 @@ const els = {
   rail: $("rail"),
   railAddBtn: $("railAddBtn"),
   railAddMenu: $("railAddMenu"),
-  codeView: $("codeView"),
-  openCodeApp: $("openCodeApp"),
-  codeAppUrlLabel: $("codeAppUrlLabel"),
+  codeLink: $("codeLink"),
+  mcpControls: $("mcpControls"),
+  mcpBtn: $("mcpBtn"),
+  mcpBtnLabel: $("mcpBtnLabel"),
   controls: $("controls"),
   chatControls: $("chatControls"),
   translateControls: $("translateControls"),
@@ -302,7 +304,7 @@ let filterPersistTimer = null;
 // are distinct). Terminal and Code have dedicated panes and are not chat-area
 // modes. We swap the live globals (history/transcript/convId/…) in and out of a
 // per-mode session whenever the workspace changes.
-const CHAT_MODES = ["chat", "agent", "translate", "improve", "image", "pdf", "security", "wisebase"];
+const CHAT_MODES = ["chat", "agent", "translate", "improve", "image", "pdf", "security", "wisebase", "mcp"];
 const sessions = {}; // mode -> { history, transcript, convId, lastUserContent, lastRunMode, lastForceWeb, toggles }
 // The composer toggles (Thinking / Artifacts / Web / Page) are PER-TAB: each workspace
 // keeps its own. We seed every new tab from the startup defaults (captured once, before
@@ -615,7 +617,8 @@ async function init() {
   const _params = new URLSearchParams(location.search);
   const _urlMode = _params.get("mode");
   const _urlConv = _params.get("conv");
-  setMode(IS_TAB && CHAT_MODES.includes(_urlMode) ? _urlMode : (settings.mode || "chat"));
+  // « code » was a tab until Hivey Code became a link: a sidebar last left on it opens on Chat.
+  setMode(IS_TAB && CHAT_MODES.includes(_urlMode) ? _urlMode : (settings.mode && settings.mode !== "code" ? settings.mode : "chat"));
   if (IS_TAB && _urlConv) { try { await loadConversation(_urlConv); } catch (_) {} }
   // Coming back from the full-screen tab (exitTab): land on the conversation we left.
   if (!IS_TAB) {
@@ -1201,7 +1204,7 @@ function chatComboItems() {
 // settings.provider/models at that mode's last-used selection (if its provider is still
 // connected) so the picker shows it. The Image tab has its own image model already.
 function applyModeModel(m) {
-  if (m === "image" || m === "code") return;
+  if (m === "image") return;
   const v = settings.modeSel && settings.modeSel[m];
   if (!v) return; // first visit → inherit the current model (sensible default)
   const ps = parseSel(v);
@@ -1249,9 +1252,18 @@ function updateEmptyState() {
       mode === "image" ? t("greeting.image") :
       mode === "security" ? t("greeting.security") :
       mode === "wisebase" ? t("greeting.wisebase") :
+      mode === "mcp" ? t("greeting.mcp") :
       t("greeting");
     const feat = t("feat." + mode);
     if (els.emptyFeatures) setHTML(els.emptyFeatures, feat && feat !== "feat." + mode ? feat : ""); // feat.* may contain <strong> emphasis
+    // MCP: the way in is connecting a service — one button under the summary.
+    if (mode === "mcp" && els.emptyFeatures) {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "btn-grad mcp-empty-btn";
+      b.textContent = t(mcp().connectedCount() ? "mcp.manageBtn" : "mcp.emptyBtn");
+      b.addEventListener("click", (e) => { e.stopPropagation(); openMcpPanel(els.mcpBtn); });
+      els.emptyFeatures.append(document.createElement("br"), b);
+    }
   }
 }
 // Swap the big centred logo for the active tab's icon (cloned from the rail), or restore the
@@ -2817,6 +2829,35 @@ async function captureRegion() {
 // read for a workspace they never visit.
 let _benchView = null;
 let benchCombo = null;
+// 🔌 MCP tab — services connected over the Model Context Protocol (lib/mcp-ui.js).
+let _mcp = null;
+function mcp() {
+  if (_mcp) return _mcp;
+  _mcp = initMcp({
+    t,
+    getSettings: () => settings,
+    setSettings: async (patch) => { Object.assign(settings, patch); await setSettings(patch); },
+    confirm: confirmMcp,
+    onChange: () => { updateMcpButton(); if (mode === "mcp") updateEmptyState(); },
+  });
+  return _mcp;
+}
+function openMcpPanel(anchor) {
+  const p = mcp().openPanel(anchor);
+  if (!p || p.classList.contains("hidden")) return;
+  const r = (anchor && anchor.offsetParent ? anchor : els.input).getBoundingClientRect();
+  placeAbove(p, r);
+}
+/** « Services » on the button, then how many are on. */
+function updateMcpButton() {
+  if (!els.mcpBtnLabel) return;
+  const n = _mcp ? _mcp.connectedCount() : (settings.mcpServers || []).filter((s) => s.enabled !== false).length;
+  els.mcpBtnLabel.textContent = n ? t("mcp.btnCount", { n: String(n) }) : t("mcp.btn");
+}
+/** A tool that sends, creates, changes or deletes: shown, and run only once the user allows it. */
+function confirmMcp(server, tool, input) {
+  return confirmAction(tool, { mcp: true, label: t("mcp.confirm", { server, tool, input: JSON.stringify(input || {}).slice(0, 160) }) });
+}
 function benchmarkView() {
   if (_benchView) return _benchView;
   _benchView = initBenchmarkView({
@@ -2894,9 +2935,9 @@ function benchmarkView() {
 // ----- Workspace modes ------------------------------------------------------
 // ── Rail layout: user-defined ORDER (drag to reorder) + per-tab VISIBILITY (Settings). The
 // rail markup is static, so we reorder/hide the buttons from settings at runtime. `web` and
-// `code` can be hidden like any other; if the active tab gets hidden we fall back to Chat.
-const RAIL_MODES = ["chat", "web", "agent", "translate", "improve", "image", "pdf", "security", "wisebase", "benchmark", "code"];
-function railTabEls() { return Array.from(els.rail.querySelectorAll(".railtab:not(.rail-add)")); }
+// `mcp` can be hidden like any other; if the active tab gets hidden we fall back to Chat.
+const RAIL_MODES = ["chat", "web", "agent", "translate", "improve", "image", "pdf", "security", "wisebase", "benchmark", "mcp"];
+function railTabEls() { return Array.from(els.rail.querySelectorAll(".railtab:not(.rail-add):not(.rail-ext)")); }
 function applyRailLayout() {
   if (!els.rail) return;
   const byMode = {};
@@ -2925,6 +2966,7 @@ function applyRailLayout() {
 // tabs are hidden). Clicking it opens a little menu of the hidden workspaces.
 function updateRailAddBtn() {
   if (!els.railAddBtn) return;
+  if (els.codeLink) els.rail.appendChild(els.codeLink); // the Hivey Code link, below the tabs
   els.rail.appendChild(els.railAddBtn); // keep it pinned at the very bottom after re-ordering
   const hidden = Array.isArray(settings.railTabsHidden) ? settings.railTabsHidden : [];
   els.railAddBtn.classList.toggle("rail-add-show", hidden.length > 0); // show ONLY when something is hidden
@@ -3059,21 +3101,23 @@ function setMode(next) {
   els.imageControls.classList.toggle("hidden", next !== "image");
   els.pdfControls.classList.toggle("hidden", next !== "pdf");
   els.wisebaseControls.classList.toggle("hidden", next !== "wisebase");
+  if (els.mcpControls) els.mcpControls.classList.toggle("hidden", next !== "mcp");
+  if (next !== "mcp" && _mcp) _mcp.closePanel();
+  if (next === "mcp") { updateMcpButton(); mcp().warm().then(updateMcpButton); }
   // The per-mode controls row is only useful for translate/improve/image/pdf/wisebase; hide it
   // entirely on Chat/Agent/Code so there's no empty bar.
   els.controls.hidden = next !== "pdf" || pdfs.length === 0; // PDF tab: no empty bar — it appears once a PDF is added via "+"
   // Attach (+) is offered on Chat/Agent/Translate/Improve/Image + Security (for .pcap/logs) + PDF
   // (the "+" replaces the old "Load PDF" button — a PDF-only picker in the composer).
-  const composeExtras = ["chat", "agent", "translate", "improve", "image", "security", "wisebase", "pdf"].includes(next);
+  const composeExtras = ["chat", "agent", "translate", "improve", "image", "security", "wisebase", "pdf", "mcp"].includes(next);
   els.attachBtn.hidden = !composeExtras;
   if (!composeExtras && attachments.length) clearAttachments();
   // The composer is the same on every tab (attach, dictate, model, thinking — then options and
   // send/stop); only the thinking chip depends on whether the tab talks to a chat model.
-  els.thinkChip.classList.toggle("tab-off", !["chat", "agent", "translate", "improve", "security", "wisebase", "pdf"].includes(next));
+  els.thinkChip.classList.toggle("tab-off", !["chat", "agent", "translate", "improve", "security", "wisebase", "pdf", "mcp"].includes(next));
   closeThinkPop(); closePlusMenu(); closeCtxPop();
   els.modelFilterPanel.classList.add("hidden");
   if (mainCombo) mainCombo.close();
-  document.body.classList.toggle("mode-code", next === "code");
   document.body.classList.toggle("mode-wisebase", next === "wisebase");
   document.body.classList.toggle("mode-chat", next === "chat"); // options ⚙ + first-line text are chat-only
   if (next === "wisebase" && typeof onEnterWisebase === "function") onEnterWisebase();
@@ -3085,7 +3129,6 @@ function setMode(next) {
   // 🛡 Cyber recipes → Security tab only.
   renderSecRecipes(next);
   if (els.secHeadersBtn) els.secHeadersBtn.classList.toggle("hidden", next !== "security");
-  els.codeView.classList.toggle("hidden", next !== "code");
   els.benchmarkView.classList.toggle("hidden", next !== "benchmark");
   document.body.classList.toggle("mode-benchmark", next === "benchmark");
   if (next === "benchmark") benchmarkView().open();
@@ -3094,7 +3137,6 @@ function setMode(next) {
   applyModeModel(next); // each tab keeps its own model — restore it before the picker refreshes
   refreshModelUI(); // Image tab lists image models; others list chat models.
   if (CHAT_MODES.includes(next)) restoreMode(next); // re-attach this tab's own message nodes
-  if (next === "code") updateCodeLauncher();
   updatePageBar(); // Page bar is Chat-only — hide it (and its popup) on other tabs
   updateEmptyState();
   // Re-evaluate the ↓ scroll-to-bottom button for the NEW tab's content (it was staying visible after
@@ -3150,18 +3192,6 @@ function refreshBrandDone() {
 // The builder (Bolt.diy / Hivey Code) runs WebContainers, which require cross-origin
 // isolation (COOP/COEP) and therefore cannot live inside an extension iframe — we
 // open it in a dedicated browser tab where preview / terminal / Expo Go all work.
-function updateCodeLauncher() {
-  const url = (settings.codeAppUrl || "").trim();
-  if (url) {
-    els.openCodeApp.disabled = false;
-    els.openCodeApp.textContent = t("code.open");
-    els.codeAppUrlLabel.textContent = url;
-  } else {
-    els.openCodeApp.disabled = true;
-    els.openCodeApp.textContent = t("code.notConfigured");
-    els.codeAppUrlLabel.textContent = t("code.setUrl");
-  }
-}
 // Hivey Code and the sidebar are ONE service: hand the builder this sidebar's
 // OpenRouter key via the URL fragment (#sk=). The fragment is never sent to the
 // server; Hivey Code's bridge copies it into its own cookie then strips it.
@@ -3193,9 +3223,6 @@ async function openCodeApp() {
   if (!(settings.codeAppUrl || "").trim()) return browser.runtime.openOptionsPage();
   const url = codeAppLaunchUrl();
   try { await browser.tabs.create({ url }); } catch (_) { window.open(url, "_blank", "noopener"); }
-  // The workshop now lives in its own tab — bring the sidebar back to Chat so the user
-  // isn't left staring at the launcher screen.
-  setMode("chat");
 }
 
 // ----- Page awareness -------------------------------------------------------
@@ -4469,7 +4496,6 @@ function wire() {
     }
     if (!files.length) return; // nothing but text — let the browser paste it
     e.preventDefault();
-    if (mode === "code") setMode("chat"); // Image keeps the attachment (used as img2img source)
     await addAttachmentFiles(files);
     els.input.focus();
   });
@@ -4486,7 +4512,6 @@ function wire() {
     e.preventDefault(); dragDepth = 0; showDrop(false);
     const files = e.dataTransfer.files;
     if (!files || !files.length) return;
-    if (mode === "code") setMode("chat");          // Code has no attachment context
     if (mode === "pdf" && Array.from(files).some((f) => /\.pdf$/i.test(f.name))) { loadPdfFiles(files); return; }
     // Image keeps the dropped picture (used as the img2img source) — no switch to Chat.
     await addAttachmentFiles(files);
@@ -4622,7 +4647,8 @@ function wire() {
     if (hideConfirmEl && !hideConfirmEl.contains(e.target)) closeHideConfirm();
   });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeHideConfirm(); if (els.railAddMenu) els.railAddMenu.classList.add("hidden"); } });
-  els.openCodeApp.addEventListener("click", openCodeApp);
+  if (els.codeLink) els.codeLink.addEventListener("click", (e) => { e.stopPropagation(); openCodeApp(); });
+  if (els.mcpBtn) els.mcpBtn.addEventListener("click", (e) => { e.stopPropagation(); openMcpPanel(els.mcpBtn); });
 
   // ── Resizable activity rail ──────────────────────────────────────────────
   // Apply the saved width, and let the user drag the divider (clamped 48–110px, persisted).
@@ -5284,7 +5310,6 @@ function wire() {
     settings = await getSettings();
     updateImageNote();
     refreshModelUI();
-    if (changes.codeAppUrl) updateCodeLauncher();
     if (j0Changed) setJudge0Config({ endpoint: settings.judge0Endpoint, key: settings.judge0Key });
     if (connChanged) autoListConnected();
   });
@@ -7369,7 +7394,15 @@ function describeAgentAction(call) {
         : "▶️ " + t("agent.act.play") + (inp.query ? ` « ${clip(inp.query, 30)} »` : "");
     case "screenshot": return "📸 " + t("agent.act.screenshot");
     case "web_search": case "search": return "🔍 " + t("agent.act.search") + (inp.query ? ` « ${clip(inp.query, 30)} »` : "");
-    default: return "⚙️ " + (name || t("agent.act.run"));
+    default: {
+      // An MCP tool (« zapier__gmail_find_email »): the service, then the tool in readable words.
+      const m = /^(.+?)__(.+)$/.exec(name || "");
+      if (m) {
+        const srv = (settings.mcpServers || []).find((s) => s.id.slice(0, 20).replace(/[^a-z0-9_-]+/gi, "_").toLowerCase() === m[1]);
+        return `🔌 ${srv ? srv.name : m[1]} · ${m[2].replace(/_/g, " ")}`;
+      }
+      return "⚙️ " + (name || t("agent.act.run"));
+    }
   }
 }
 function makeAgentActions() {
@@ -7758,7 +7791,9 @@ function confirmAction(name, input) {
   return new Promise((resolve) => {
     // A sensitive action (download / reserve / delete / sign-up…) gets a clear warning
     // and shows what it's about to do; ordinary (manual-mode) actions use the generic text.
-    if (input && input.sensitive) {
+    if (input && input.mcp) {
+      els.confirmText.textContent = input.label;
+    } else if (input && input.sensitive) {
       const what = input.label || input.url || "";
       els.confirmText.textContent = t("confirm.sensitive", { action: input.sensitive, what: String(what).slice(0, 80) });
     } else {
@@ -8439,9 +8474,11 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   startBusy();
 
   const agentMode = agentActive();
+  // The MCP tab: a chat whose tools are the user's connected services (lib/mcp-ui.js).
+  const mcpMode = sessMode === "mcp";
   // « Web » on means: search WHEN it helps — a free rule for the clear cases, one cheap yes/no
   // question for the rest (every request used to pay for a search).
-  const webDecision = !forceWeb && els.webSearch.checked && !agentMode ? await decideWeb(displayText || modelContent, sel) : null;
+  const webDecision = !forceWeb && els.webSearch.checked && !agentMode && !mcpMode ? await decideWeb(displayText || modelContent, sel) : null;
   const wantWeb = forceWeb || (agentMode ? els.webSearch.checked : !!(webDecision && webDecision.search));
 
   // Web-search routing: send the turn to a dedicated web-capable model (Perplexity
@@ -8453,7 +8490,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   // premium for hard reasoning, an affordable strong model for the agent, etc.).
   // Effective mode for Hivey: the agent flag wins, then the per-call runMode
   // (translate/improve route deterministically; chat goes through the LLM router).
-  const hiveyMode = agentMode ? "agent" : runMode;
+  const hiveyMode = agentMode || mcpMode ? "agent" : runMode; // tools → a tool-capable tier
   const hid = isHivey(sel.modelId) ? sel.modelId : null;
   // 🐝 Evolving workflow status (Analyse → Search/Plan → Generate → Check → Fix).
   const hstep = hid ? makeStepStatus(sessMode) : null;
@@ -8492,7 +8529,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
 
   // 🐝 Hivey ORCHESTRATION — combine several models in ONE request: a cheap model does
   // the grunt work, the smart routed model does the thinking. Pure chat turns only.
-  if (hid && !agentMode && tierKey !== "vision" && runMode !== "translate" && runMode !== "improve") {
+  if (hid && !agentMode && !mcpMode && tierKey !== "vision" && runMode !== "translate" && runMode !== "improve") {
     const T = hiveyTiers(hid);
     if (wantWeb) {
       // (a) Web: a small fast model gathers facts + sources, the routed model analyses.
@@ -8590,18 +8627,25 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   let system = buildSystemPrompt({ agentMode, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: runMode, blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked, thinkLevel: effThink, skill: activeSkill ? activeSkill.system : "", goal: goalMode ? GOAL_SYSTEM : "", interactive: agentMode && !!settings.agentInteractive, region: userRegion(), replyLanguage: replyLanguageOf(displayText || modelContent, settings) });
   // « il me dit "Je ne peux pas consulter le web" alors que le mode web est activé »: the model was
   // never told the app searches for it. With Web on (and nothing about it otherwise sent), it is.
-  if (!agentMode && els.webSearch.checked) {
+  if (!agentMode && !mcpMode && els.webSearch.checked) {
     system += wantWeb
       ? "\n\nWEB: this app searched the web for this request — the results are part of what you received. Use them and cite their sources; never say you cannot access the internet."
       : "\n\nWEB: this app can search the web for the user, and judged it unnecessary for this request. Answer from your knowledge; never say you cannot access the internet — if up-to-date facts would change the answer, say so in one line and offer to search.";
   }
-  const tools = activeTools({ agentMode });
+  let tools = activeTools({ agentMode });
+  let mcpExecute = null;
+  if (mcpMode) {
+    const turn = await mcp().forTurn();
+    tools = turn.tools;
+    system += turn.system;
+    mcpExecute = (name, input) => mcp().execute(name, input);
+  }
   if (hstep) hstep.set(t("step.generate"));
   const pending = addPendingIndicator(sessMode);
   const sink = makeSink(badge, true, pending, sessMode);
   // Agent mode: collapse the agent's tool calls into ONE foldable "Actions" block for
   // a cleaner, more immersive run — the steps are hidden but consultable on click.
-  const agentActs = agentMode ? makeAgentActions() : null;
+  const agentActs = agentMode || mcpMode ? makeAgentActions() : null;
   if (agentMode) {
     await ensureAgentTab(); // 🔒 dedicate ONE background tab to THIS conversation (created/reused)
     agentGlowActiveTab();   // glow the page border while the agent works
@@ -8628,6 +8672,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
         compactNote = null;
       },
       system, history: turnHistory, tools,
+      ...(mcpExecute ? { execute: mcpExecute } : {}),
       onText: sink.onText, onThink: sink.onThink,
       onToolStart: (call) => {
         sink.finalize();
@@ -8818,7 +8863,6 @@ async function onSend() {
   if (mode === "image") return runImageFromInput();
   if (mode === "wisebase") return onWisebaseSend();
   if (mode === "pdf") return onPdfSend();
-  if (mode === "code") return; // Code workspace has no composer — use the launcher button.
   return onChatSend(); // chat + agent
 }
 // What the user types while the agent works: handed to the running turn at its next step

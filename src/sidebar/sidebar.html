@@ -53,7 +53,9 @@
         <button class="railtab" data-mode="security" data-i18n-title="rail.securityTitle" title="Defensive security assistant"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></button>
         <button class="railtab" data-mode="wisebase" data-i18n-title="rail.wisebaseTitle" title="Wisebase — your local knowledge base (RAG)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h7"/><path d="M9 11h5"/></svg></button>
         <button class="railtab" data-mode="benchmark" data-i18n-title="rail.benchmarkTitle" title="Benchmark — published leaderboards + a live test on your own key"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6" rx="1"/><rect x="12" y="8" width="3" height="10" rx="1"/><rect x="17" y="4" width="3" height="14" rx="1"/></svg></button>
-        <button class="railtab" data-mode="code" data-i18n-title="rail.codeTitle" title="AI code workshop (preview, terminal, Expo Go…)"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><rect x="4.25" y="2.25" width="15.5" height="3.5" rx="1.75"/><rect x="2" y="7.5" width="20" height="3.5" rx="1.75"/><rect x="3" y="12.75" width="18" height="3.5" rx="1.75"/><rect x="5.75" y="18" width="12.5" height="3.5" rx="1.75"/></svg></button>
+        <button class="railtab" data-mode="mcp" data-i18n-title="rail.mcpTitle" title="MCP — your connected services (Gmail, Notion…)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2v6"/><path d="M15 2v6"/><path d="M6 8h12v3a6 6 0 0 1-12 0z"/><path d="M12 17v5"/></svg></button>
+        <!-- Hivey Code is no longer a tab: the workshop opens in its own browser tab from here. -->
+        <button class="railtab rail-ext" id="codeLink" type="button" data-i18n-title="rail.codeLinkTitle" title="Open the Hivey Code workshop (new tab)"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><rect x="4.25" y="2.25" width="15.5" height="3.5" rx="1.75"/><rect x="2" y="7.5" width="20" height="3.5" rx="1.75"/><rect x="3" y="12.75" width="18" height="3.5" rx="1.75"/><rect x="5.75" y="18" width="12.5" height="3.5" rx="1.75"/></svg><span class="rail-ext-arrow" aria-hidden="true">↗</span></button>
         <button class="railtab rail-add" id="railAddBtn" type="button" data-i18n-title="rail.add" title="Show hidden tabs"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
       </nav>
       <div class="rail-resize" id="railResize" title="Drag to resize the menu bar"></div>
@@ -196,30 +198,6 @@
         </div>
         <ol class="bv-publist" id="bvBody"></ol>
       </details>
-    </section>
-    <section id="codeView" class="codeview hidden">
-      <div class="code-launch">
-        <div class="cl-logo"><svg class="tab-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg></div>
-        <h2 class="cl-title" data-i18n="code.title">Hivey Code</h2>
-        <p class="cl-sub muted" data-i18n-html="code.sub">
-          Build web &amp; mobile apps with AI: code generation, <b>live preview</b>,
-          a built-in terminal and <b>Expo Go</b> to test on mobile. Self-hosted,
-          and it shares this sidebar's OpenRouter key — one and the same service.
-        </p>
-        <button id="openCodeApp" class="btn-grad"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg><span data-i18n="code.open">Open the workshop in a new tab</span></button>
-        <p class="cl-url muted" id="codeAppUrlLabel"></p>
-        <ul class="cl-feats">
-          <li><span class="clf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg></span><span data-i18n="code.feat1">AI code generation &amp; editing</span></li>
-          <li><span class="clf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></span><span data-i18n="code.feat3">Expo Go to test on your phone</span></li>
-          <li><span class="clf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span><span data-i18n="code.feat2">Live preview (web) in the browser</span></li>
-          <li><span class="clf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3"/><path d="M13 15h4"/></svg></span><span data-i18n="code.feat4">Built-in terminal &amp; file management</span></li>
-        </ul>
-        <p class="cl-sec muted" data-i18n-html="code.sec">
-          🔒 The workshop opens in an isolated tab. It uses the same providers as
-          the sidebar — your OpenRouter key is handed over for you, so you never
-          re-enter it. URL configurable in <b>Settings → Code workshop</b>.
-        </p>
-      </div>
     </section>
 
     <div id="confirmBar" class="confirm hidden">
@@ -416,7 +394,9 @@
               <label class="ctoggle" data-i18n-title="chip.artifactTitle" title="Artifacts — build runnable apps, games & diagrams"><input type="checkbox" id="artifactMode" /><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 12l8-4.5"/><path d="M12 12v9"/><path d="M12 12L4 7.5"/></svg><span class="ct-name" data-i18n="ct.artifacts">Artifacts</span></label>
               <label class="ctoggle" data-i18n-title="chip.pageTitle" title="Page — the AI sees the current page"><input type="checkbox" id="pageCtx" /><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h6"/></svg><span class="ct-name" data-i18n="ct.page">Page</span></label>
             </div>
-            <div class="tab-opts" id="tabOpts"></div>
+            <div class="tab-opts" id="tabOpts">
+              <div class="ctl-group hidden" id="mcpControls"><button type="button" class="sec-analysis-btn" id="mcpBtn" data-i18n-title="mcp.btnTitle" title="Connected services"><svg viewBox="0 0 24 24" width="17" height="17" class="sz-ic" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2v6"/><path d="M15 2v6"/><path d="M6 8h12v3a6 6 0 0 1-12 0z"/><path d="M12 17v5"/></svg><span class="sa-label" id="mcpBtnLabel">Services</span><span class="sa-caret" aria-hidden="true"><svg viewBox="0 0 10 10" width="10" height="10"><path d="M1 3l4 4 4-4" stroke="currentColor" fill="none" stroke-width="1.6"/></svg></span></button></div>
+            </div>
             <div class="img-size hidden" id="imageControls">
               <select id="imageSize" class="ctl-select" data-i18n-title="image.sizeTitle" title="Sizes depend on the model. Native 4K/1440p doesn't exist on current image models — upscale the image afterwards."></select>
             </div>

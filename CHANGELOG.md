@@ -10,6 +10,15 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Nouvel onglet MCP : vos services dans la conversation.** Connectez Gmail, Google Agenda ou Drive
+  (via Zapier), Notion, Jira et Confluence, Linear, Todoist, monday, Canva, Figma, Sentry, Vercel,
+  Stripe, Hugging Face, GitHub… ou n'importe quel serveur MCP par son adresse, puis demandez
+  simplement : « retrouve la dernière facture et envoie son montant à la compta ». La connexion se
+  fait dans la fenêtre de connexion du service ; les jetons restent dans votre navigateur. La lecture
+  se fait seule ; **tout ce qui envoie, crée, modifie ou supprime vous est demandé d'abord**, avec le
+  détail de l'action. Le contenu renvoyé (un e-mail, une page) n'est jamais pris pour des ordres.
+- **Hivey Code** n'est plus un onglet : l'icône ↗ en bas de la barre des onglets ouvre l'atelier dans
+  un nouvel onglet.
 - **Benchmark : classements publics à jour chaque jour.** Le tri « Code » s'appuie maintenant sur
   LMArena WebDev (votes sur de vraies applications web, publié quotidiennement) au lieu d'Aider, qui
   s'arrêtait aux modèles de 2025. Les modèles Claude y figurent enfin : Claude Opus 5.5 est premier.
