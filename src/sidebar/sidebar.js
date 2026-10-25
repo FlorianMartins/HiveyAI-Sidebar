@@ -40,7 +40,7 @@ import {
   listConversations, getConversation, saveConversation, deleteConversation,
   newConversationId, titleFrom, togglePinned, conversationMatches,
 } from "../lib/history.js";
-import { setHTML } from "../lib/dom.js";
+import { setHTML, prependHTML } from "../lib/dom.js";
 import { initMcp } from "../lib/mcp-ui.js";
 import { startIconizer, stripEmoji } from "../lib/icons.js";
 
@@ -606,7 +606,7 @@ async function init() {
       const ic = document.querySelector(`#rail .railtab[data-mode="${mode}"] svg`);
       group._optIcon = ic ? ic.outerHTML.replace("<svg ", '<svg class="sz-ic" ') : "";
       slot.appendChild(group);
-      group.querySelectorAll(".themed-sel-btn, .improve-pick-btn").forEach((b) => b.insertAdjacentHTML("afterbegin", group._optIcon));
+      group.querySelectorAll(".themed-sel-btn, .improve-pick-btn").forEach((b) => prependHTML(b, group._optIcon));
     };
     place(document.getElementById("translateControls"), "translate");
     place(document.getElementById("improveControls"), "improve");
@@ -5565,7 +5565,7 @@ function renderSecRecipes(next) {
   btn.type = "button"; btn.className = "sec-analysis-btn";
   btn.innerHTML = '<span class="sa-label"></span><span class="sa-caret" aria-hidden="true"><svg viewBox="0 0 10 10" width="10" height="10"><path d="M1 3l4 4 4-4" stroke="currentColor" fill="none" stroke-width="1.6"/></svg></span>';
   btn.querySelector(".sa-label").textContent = t("an.btn");
-  if (els.secRecipes._optIcon) btn.insertAdjacentHTML("afterbegin", els.secRecipes._optIcon.replace("<svg ", '<svg class="sz-ic" '));
+  if (els.secRecipes._optIcon) prependHTML(btn, els.secRecipes._optIcon.replace("<svg ", '<svg class="sz-ic" '));
   btn.addEventListener("click", (e) => { e.stopPropagation(); openAnalysisMenu(btn); });
   els.secRecipes.appendChild(btn);
   els.secRecipes.classList.remove("hidden");
@@ -5733,7 +5733,7 @@ function themeNativeSelect(sel) {
       for (const x of sel._extras) {
         const item = document.createElement("button");
         item.type = "button"; item.className = "sa-item sa-extra";
-        if (x.icon) item.insertAdjacentHTML("afterbegin", x.icon);
+        if (x.icon) prependHTML(item, x.icon);
         const s = document.createElement("span"); s.textContent = x.label(); item.appendChild(s);
         const run = () => { closeMenu(); x.onPick(); };
         item.addEventListener("mousedown", (e) => { e.preventDefault(); run(); });

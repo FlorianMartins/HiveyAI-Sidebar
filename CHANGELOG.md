@@ -10,6 +10,10 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Publication Firefox** : la description de l'extension tient dans les 250 caractères demandés par
+  addons.mozilla.org (elle en faisait 436 et bloquait la soumission). Le code de l'extension ne
+  déclenche plus aucun avertissement du vérificateur de Mozilla (le HTML est construit par un
+  analyseur inerte au lieu d'`innerHTML`, avec un rendu identique).
 - **Écran d'accueil plus simple** : deux boutons, « 🎁 Connecter (OpenRouter — gratuit) » et « Autres
   fournisseurs / clé API » (icône de clé), qui ouvre directement les réglages sur « Fournisseurs
   d'IA » (modèle local et passerelle s'y configurent aussi).

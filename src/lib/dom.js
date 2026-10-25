@@ -8,7 +8,7 @@
 // each one an independent thing a reviewer (or we) must re-verify — every
 // insertion goes through `setHTML()` below.
 //
-// The result: exactly ONE place in our own code writes HTML into the DOM. It is
+// The result: exactly ONE place in our own code turns HTML into DOM nodes. It is
 // trivially auditable, and any future sanitization change applies everywhere at
 // once.
 //
@@ -29,7 +29,21 @@
  */
 export function setHTML(el, html) {
   if (!el) return;
-  el.innerHTML = html == null ? "" : html; // eslint-disable-line no-unsanitized/property
+  el.replaceChildren(...parse(html));
+}
+
+/** Insert trusted/sanitized HTML (an icon, typically) at the start of an element. */
+export function prependHTML(el, html) {
+  if (el) el.prepend(...parse(html));
+}
+
+// Parsed in an inert document (no script runs, nothing loads) and moved in as nodes: the page never
+// receives an HTML string. Same result as innerHTML for the content we insert (no table rows or
+// <option> fragments — those are built with createElement).
+let parser = null;
+function parse(html) {
+  parser = parser || new DOMParser();
+  return [...parser.parseFromString(`<body>${html == null ? "" : html}</body>`, "text/html").body.childNodes];
 }
 
 /** Empty an element without touching innerHTML at all. */
