@@ -10,6 +10,10 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **La lumière autour de la zone de saisie reste fluide pendant les longues réponses** (même
+  animation) : elle est désormais déplacée par le compositeur graphique, plus par la page. Sur une
+  réponse de 20 000 caractères, elle se figeait jusqu'à 0,5 s dans Firefox ; page gelée 2,2 s,
+  elle avance maintenant sur toutes les images, dans Firefox comme dans Chromium.
 - **Agent : le même onglet pour toute la conversation**, même après avoir fermé et rouvert la
   sidebar ou repris la conversation depuis l'historique (l'onglet était oublié à la fermeture de la
   sidebar). Vérifié : la 2ᵉ demande ouvre sa page dans l'onglet de la 1ʳᵉ.

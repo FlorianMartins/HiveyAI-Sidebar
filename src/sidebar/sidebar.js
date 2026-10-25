@@ -7849,17 +7849,70 @@ async function getSelection() {
     return (sel && sel.selection) || "";
   } catch (_) { return ""; }
 }
+// The busy frame's light: one comet running round the frame's rounded edge at a constant speed.
+// Built as a transform animation (not offset-path) so the compositor moves it — a long answer
+// re-rendering on the main thread no longer freezes it. Rebuilt, at the same point of its run,
+// when the frame changes size.
+const FRAME_LIGHT_MS = 3500, FRAME_RADIUS = 18, COMET_HALF = 110;
+let frameLight = null, frameLightObs = null;
+function frameLightKeyframes(w, h) {
+  const r = Math.min(FRAME_RADIUS, w / 2, h / 2), pts = [];
+  const arc = (cx, cy, from) => { for (let i = 1; i <= 6; i++) { const a = from + (i / 6) * Math.PI / 2; pts.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); } };
+  pts.push([r, 0], [w - r, 0]); arc(w - r, r, -Math.PI / 2);
+  pts.push([w, h - r]); arc(w - r, h - r, 0);
+  pts.push([r, h]); arc(r, h - r, Math.PI / 2);
+  pts.push([0, r]); arc(r, r, Math.PI);
+  const len = [0];
+  for (let i = 1; i < pts.length; i++) len.push(len[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+  const total = len[len.length - 1] || 1;
+  return pts.map(([x, y], i) => ({ offset: len[i] / total, transform: `translate(${(x - COMET_HALF).toFixed(2)}px, ${(y - COMET_HALF).toFixed(2)}px)` }));
+}
+// What shows through the box: the colours of the elements behind it, down to the page's own
+// background, as fixed-attachment layers — so .cb-cover looks exactly like the inside of the frame.
+// null when something behind carries an image the copy could not place (the light is masked then).
+function surfaceBehind(cb) {
+  const layers = [];
+  for (let el = cb; el; el = el.parentElement) {
+    const cs = getComputedStyle(el), root = el === document.body || el === document.documentElement;
+    if (cs.backgroundImage !== "none") { if (!root) return null; layers.push(cs.backgroundImage); }
+    const col = cs.backgroundColor, m = col.match(/rgba?\(([^)]+)\)/), alpha = m ? (m[1].split(/[ ,/]+/)[3] ?? "1") : "1";
+    if (parseFloat(alpha) > 0) { layers.push(`linear-gradient(${col}, ${col})`); if (parseFloat(alpha) >= 1) break; }
+  }
+  return layers.length ? layers.join(", ") : null;
+}
+function startFrameLight(cb) {
+  const run = cb.querySelector(".cb-run"), comet = cb.querySelector(".cb-comet"), cover = cb.querySelector(".cb-cover");
+  if (!run || !comet || typeof comet.animate !== "function" || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const surface = surfaceBehind(cb);
+  run.classList.toggle("masked", !surface);
+  if (surface && cover) { cover.style.backgroundImage = surface; cover.style.backgroundAttachment = "fixed"; }
+  const build = () => {
+    const w = run.offsetWidth, h = run.offsetHeight;
+    if (!w || !h) return;
+    const frames = frameLightKeyframes(w, h);
+    if (frameLight) frameLight.effect.setKeyframes(frames);
+    else frameLight = comet.animate(frames, { duration: FRAME_LIGHT_MS, iterations: Infinity });
+  };
+  build();
+  if (typeof ResizeObserver !== "undefined") { frameLightObs = new ResizeObserver(build); frameLightObs.observe(run); }
+}
+function stopFrameLight() {
+  if (frameLightObs) frameLightObs.disconnect();
+  if (frameLight) frameLight.cancel();
+  frameLight = frameLightObs = null;
+}
 function startBusy() {
   busy = true;
   els.stop.classList.remove("hidden"); // ■ shows while the model works (Enter sends)
   const cb = document.querySelector(".composer-box");
-  if (cb) cb.classList.add("is-busy"); // AI working → coloured frame (animation only when focused)
+  if (cb) { cb.classList.add("is-busy"); stopFrameLight(); startFrameLight(cb); } // AI working → coloured frame and its light
   abortController = new AbortController();
 }
 function endBusy() {
   els.stop.classList.add("hidden");
   const cb = document.querySelector(".composer-box");
   if (cb) cb.classList.remove("is-busy");
+  stopFrameLight();
   abortController = null;
   busy = false;
 }
