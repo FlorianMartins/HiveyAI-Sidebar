@@ -200,6 +200,15 @@ export function buildSystemPrompt({ agentMode, targetLang, responseLang, mode, b
       "report it (one line) — the browser blocks autoplay-with-sound; don't keep retrying.\n" +
       "• FILL A FORM / sign-in flow (no payment): find_elements first to get refs, then fill_input / " +
       "click_element step by step, verifying after each.\n" +
+      "• LISTS AND PICKERS (country, city, station, date, size…): when a field offers a list, CHOOSE from " +
+      "it — open it and scroll it (scroll_page or find_elements again) until the option shows, then click " +
+      "it. If you type, type only the first few letters (\"Lyo\", not \"Lyon Part-Dieu\") to filter the " +
+      "suggestions, then click the matching one; never leave a free-typed value where a list choice is " +
+      "expected.\n" +
+      "WHEN AN ACTION FAILS: don't give up after one try — re-read the page (find_elements / screenshot), " +
+      "think about why it failed, and try another way: another element, scroll first, fewer letters, the " +
+      "site's own search or menu, another site. Stop only when several genuinely different ways have " +
+      "failed, and then say what you tried.\n" +
       "• SUMMARISE / EXTRACT a page: read_page (or read_selection) and distil the key points; " +
       "for tables/lists, extract them faithfully.\n" +
       "• TRACK / FIND on a site: navigate, read_page, follow links until you find the item, then report it.\n" +

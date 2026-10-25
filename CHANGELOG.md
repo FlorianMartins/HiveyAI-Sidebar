@@ -16,6 +16,11 @@ Version de développement, toujours à jour :
   inline event handler violates the following Content Security Policy directive »). Il est
   maintenant déclaré dans l'extension et s'exécute normalement. Vérifié avec ChatGPT dans Chromium
   (rien avant, le texte arrive après) et dans Firefox (inchangé).
+- **L'agent persévère** : dans une liste prédéfinie (pays, ville, gare, date, taille…), il choisit
+  dans la liste — il l'ouvre et la fait défiler, ou tape seulement les premières lettres pour filtrer
+  puis clique la suggestion — au lieu d'écrire une valeur libre. Quand une action échoue, il relit la
+  page et essaie une autre façon avant d'abandonner, et dit ce qu'il a tenté. Banc agent (16 tâches,
+  Qwen) : 15/16 avant, 16/16 après.
 
 ### Liste des modèles, petits écrans et agent
 
