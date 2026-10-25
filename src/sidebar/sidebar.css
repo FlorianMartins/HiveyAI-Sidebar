@@ -2701,3 +2701,5 @@ body.rail-pinned.rail-right .top-banner { right: calc(var(--rail-w, 56px) + 8px)
 /* The action confirmation and the sensitive-data window sit ABOVE the pinned rail (z-index 60):
    its icons were drawn over the start of their lines. */
 #confirmBar, #privacyBar { position: relative; z-index: 65; }
+.priv-dlg-opt.keep { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.priv-dlg-opt.keep b { color: var(--accent); }

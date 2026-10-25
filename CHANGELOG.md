@@ -10,6 +10,10 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Fenêtre « Passer en non anonymisé »** : les choix ne prêtent plus à confusion. « Rester
+  anonymisé » vient en premier, mis en avant ; les deux autres disent clairement qu'ils passent en non
+  anonymisé (« seuls les clés et mots de passe restent cachés » / « rien n'est caché »). L'ancien
+  libellé « Désactiver, en gardant clés et mots de passe masqués » se lisait comme « rester masqué ».
 - **Fenêtre des données sensibles (mode non anonymisé)** : ses boutons disent ce qu'ils font —
   **Masquer**, **Toujours masquer** ou **Ne jamais masquer (cette conversation)**, ou **Annuler**.
   « Ne jamais masquer » envoie cette demande et la suite de la conversation telles quelles, sans
