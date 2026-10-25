@@ -3225,6 +3225,16 @@ function codeAppLaunchUrl() {
 }
 // The rail's Hivey Code icon TOGGLES the workshop, like the Settings gear: a first click opens it,
 // a second click closes the workshop tab(s) again — found by the workshop's address.
+/** The settings, opened on one section (« AI providers »…) — the tab already open is reused. */
+async function openOptionsAt(section) {
+  const base = browser.runtime.getURL("src/options/options.html");
+  const url = base + "#" + section;
+  try {
+    const [open] = (await browser.tabs.query({})).filter((tb) => (tb.url || "").split(/[?#]/)[0] === base);
+    if (open) { await browser.tabs.update(open.id, { url, active: true }); return; }
+    await browser.tabs.create({ url });
+  } catch (_) { browser.runtime.openOptionsPage(); }
+}
 async function openCodeApp() {
   if (!(settings.codeAppUrl || "").trim()) return browser.runtime.openOptionsPage();
   try {
@@ -4924,7 +4934,7 @@ function wire() {
     browser.runtime.openOptionsPage();
   });
   els.modelConnect.addEventListener("click", () => browser.runtime.openOptionsPage());
-  if (els.emptyOptions) els.emptyOptions.addEventListener("click", () => browser.runtime.openOptionsPage());
+  if (els.emptyOptions) els.emptyOptions.addEventListener("click", () => openOptionsAt("sec-providers"));
   if (els.onbLocal) els.onbLocal.addEventListener("click", () => doLocalConnect());
   if (els.onbGateway) els.onbGateway.addEventListener("click", () => { els.onbGatewayForm.classList.toggle("hidden"); if (!els.onbGatewayForm.classList.contains("hidden")) els.onbGwUrl.focus(); });
   if (els.onbGatewayForm) els.onbGatewayForm.addEventListener("submit", doGatewayConnect);

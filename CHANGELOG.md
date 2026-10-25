@@ -10,6 +10,9 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Écran d'accueil plus simple** : deux boutons, « 🎁 Connecter (OpenRouter — gratuit) » et « Autres
+  fournisseurs / clé API » (icône de clé), qui ouvre directement les réglages sur « Fournisseurs
+  d'IA » (modèle local et passerelle s'y configurent aussi).
 - Le bouton « 🎁 Connecter (OpenRouter — gratuit) » retrouve son emoji.
 - **Le badge « Cloud · clés masquées »** sous la zone de saisie s'affiche en vert.
 - **Agent : la réflexion se lit pendant qu'elle se fait.** Dans l'onglet Agent, le bloc
