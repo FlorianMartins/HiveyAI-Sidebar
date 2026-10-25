@@ -14,6 +14,7 @@ import { setHTML } from "./dom.js";
 let lang = "en";
 
 const EN = {
+  "pick.groupName": "Page selection ({n} elements)",
   "cost.tokensTotal": "{n} tokens",
   "improve.pick": "Choose a style",
   "ctx.sizeAutoLabel": "Auto",
@@ -379,7 +380,6 @@ const EN = {
   "pick.error": "Couldn't pick on this page (open a normal website first).",
   "pick.restricted": "Firefox blocks every extension on this protected page (about:…, addons.mozilla.org, accounts.firefox.com…). Capture works on any other site — including your intranet / internal web services.",
   "pick.attName": "Selected element <{tag}>",
-  "pick.imgName": "Element screenshot <{tag}>",
   "pick.added": "✓ Captured a <{tag}> element — ask your question below.",
   "pick.addedN": "✓ Captured {n} elements — ask your question below.",
 
@@ -1233,6 +1233,7 @@ const EN = {
 };
 
 const FR = {
+  "pick.groupName": "Sélection de la page ({n} éléments)",
   "cost.tokensTotal": "{n} jetons",
   "improve.pick": "Choisissez un style",
   "ctx.sizeAutoLabel": "Auto",
@@ -1598,7 +1599,6 @@ const FR = {
   "pick.error": "Impossible de sélectionner sur cette page (ouvrez d'abord un site web normal).",
   "pick.restricted": "Firefox bloque toutes les extensions sur cette page protégée (about:…, addons.mozilla.org, accounts.firefox.com…). La capture fonctionne sur tout autre site — y compris votre intranet / vos web services internes.",
   "pick.attName": "Élément sélectionné <{tag}>",
-  "pick.imgName": "Capture de l'élément <{tag}>",
   "pick.added": "✓ Élément <{tag}> capturé — posez votre question ci-dessous.",
   "pick.addedN": "✓ {n} éléments capturés — posez votre question ci-dessous.",
 
