@@ -12,6 +12,15 @@ Version de développement, toujours à jour :
 
 ### Jetons et contexte : un seul chiffre, le même partout
 
+- **Les modèles Hivey ne sont plus « limités à 8 k »** : ils ne l'étaient pas — chaque requête part
+  vers un vrai modèle, dont la fenêtre était bien utilisée — mais la jauge, ne sachant pas lequel,
+  affichait le minimum par défaut de 8 k. Elle affiche maintenant la plus petite fenêtre des modèles
+  du préréglage : **1 000 k pour Hivey Smart et Hybrid, 262 k pour Hivey Free**. La taille du contexte
+  se règle aussi pour eux, et s'applique au modèle choisi à chaque requête.
+- **Un modèle gratuit** affiche « Gratuit » au lieu de « 0,00 $ ».
+- **Les mots en gras de l'accueil de chaque onglet** (« Posez vos questions », « agit dans le
+  navigateur »…) passent au même blanc adouci en thème sombre.
+
 - **« Choisir un élément » donne un seul élément de contexte** : une sélection (un ou plusieurs
   éléments de la page) devenait une capture **et** un texte par élément (« <div> », « <div> »…). C'est
   maintenant une seule pièce jointe : une capture de la zone couverte et le texte des éléments réunis.

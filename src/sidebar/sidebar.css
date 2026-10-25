@@ -2651,3 +2651,7 @@ body:not(.theme-light) .msg.user > .umsg-text { color: color-mix(in srgb, var(--
 /* Answers sit on the page, not in a card: no frame, shadow or panel behind them — on the light
    theme they read as a bordered box. */
 .msg.assistant, body.theme-light .msg.assistant { background: transparent !important; box-shadow: none !important; border: 0 !important; }
+/* The bold words of each tab's welcome line (« Ask anything », « current page »…) and of the
+   onboarding: the soft white too on dark themes, not the glaring one. */
+body:not(.theme-light) .empty-features strong, body:not(.theme-light) .empty-features b,
+body:not(.theme-light) #emptyOnboard b, body:not(.theme-light) #emptyOnboard strong { color: var(--soft-text); }
