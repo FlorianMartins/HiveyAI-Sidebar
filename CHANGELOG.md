@@ -10,6 +10,17 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+### Un rendu plus doux, et le cadre qui s'anime comme dans Hivey Code
+
+- **Le cadre de saisie** : au survol et au clic, seule sa bordure prend la couleur du thème. **Pendant
+  que le modèle répond ou agit**, une fine ligne aux couleurs du thème et **une seule lumière** qui en
+  fait le tour en suivant exactement le bord — comme dans l'extension Hivey Code, sans dégradé haché.
+- **Plus de blanc éclatant** : le nom du modèle, le niveau de réflexion, « Choisissez une langue »,
+  « Choisissez un style », la taille d'image, « Choisissez une analyse… » et la collection Wisebase
+  prennent le même ton doux (plus vif au survol). **Les questions et les réponses** passent aussi à
+  un blanc adouci en thème sombre, plus reposant à lire.
+- **Modèle et réflexion côte à côte**, sans espace entre les deux.
+
 ### Un échange en veille, ça se voit
 
 - La question perd sa couleur (gris, contour en pointillés), la réponse et sa réflexion passent en
