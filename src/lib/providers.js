@@ -535,6 +535,16 @@ function openaiProvider({ apiKey, model, baseUrl, webSearch, providerId, thinkLe
       let response;
       for (let tries = 0; ; tries++) {
         response = await fetchWithRetry(url, { method: "POST", signal, headers, body: JSON.stringify(attempt) });
+        // The precision preference left no host (Hivey Free's Nemotron is served only by NVIDIA,
+        // in its own nvfp4): the model's own hosts are better than no answer — asked again without it.
+        if (response.status === 404 && attempt.provider && attempt.provider.quantizations && tries < 2) {
+          const said = await response.clone().text().catch(() => "");
+          if (/no endpoints found[^"]*quantization/i.test(said)) {
+            const { provider: _drop, ...rest } = attempt;
+            attempt = rest;
+            continue;
+          }
+        }
         if (response.ok || (response.status !== 400 && response.status !== 402 && response.status !== 422) || tries >= 2) break;
         const said = await response.text().catch(() => "");
         const fixed = adaptRequest(attempt, said);

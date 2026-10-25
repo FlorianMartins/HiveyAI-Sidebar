@@ -10,6 +10,8 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Hivey Free ne tombe plus en erreur** (« has no usable endpoint on OpenRouter… Initial Endpoints ») : l'extension n'accepte, pour les modèles ouverts, que les serveurs en haute précision ; or le modèle gratuit de Hivey Free n'est servi que par NVIDIA dans son propre format (nvfp4). Quand cette exigence ne laisse aucun serveur, la question est reposée sans elle. Vérifié avec l'agent : erreur avant, réponse après (gratuite).
+
 - **Bandeau de confirmation** (« Connecté à OpenRouter »…) : il occupe toute la largeur à droite de la barre des onglets, et son texte passe à la ligne au lieu d'être coupé par « … » ou de passer sous la barre.
 
 - **Image : chaque modèle propose les tailles qu'il respecte vraiment** (mesuré sur OpenRouter) :
