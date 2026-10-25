@@ -14,6 +14,10 @@ test("a size becomes the request's image_config", () => {
   assert.deepEqual(imageConfigOf("16:9@4K"), { aspect_ratio: "16:9", image_size: "4K" });
   assert.deepEqual(imageConfigOf("1792x1024"), { aspect_ratio: "16:9" });
   assert.equal(imageConfigOf(""), null);
+  // The format or the quality alone (Size menu: Format | Quality, each may stay « model's default »).
+  assert.deepEqual(imageConfigOf("9:16"), { aspect_ratio: "9:16" });
+  assert.deepEqual(imageConfigOf("@2K"), { image_size: "2K" });
+  assert.equal(imageConfigOf("@8K"), null);
 });
 
 test("every Gemini image model takes formats; OpenAI direct keeps only the sizes its API accepts", () => {

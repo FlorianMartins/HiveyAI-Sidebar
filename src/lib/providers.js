@@ -937,7 +937,9 @@ async function generateImageViaChat({ baseUrl, apiKey, providerId, model, prompt
     headers["HTTP-Referer"] = "https://github.com/FlorianMartins/firefox-ai-sidebar";
     headers["X-Title"] = "Hivey AI";
   }
-  const sizeHint = !size ? "" : /@/.test(size) ? ` Target aspect ratio: ${size.split("@")[0]}.` : ` Target size/aspect: ${size} pixels.`;
+  // A format (alone or with a quality) → its ratio; a quality alone says nothing in words; pixels → pixels.
+  const fmt = /^(\d+:\d+)?(?:@\dK)?$/.exec(size || "");
+  const sizeHint = !size ? "" : fmt ? (fmt[1] ? ` Target aspect ratio: ${fmt[1]}.` : "") : ` Target size/aspect: ${size} pixels.`;
   const imgs = initImages || [];
   // With input image(s), send a multimodal message so the model EDITS/MIXES them (img2img).
   const text = imgs.length > 1
@@ -958,7 +960,7 @@ async function generateImageViaChat({ baseUrl, apiKey, providerId, model, prompt
   const cfg = providerId === "openrouter" ? imageConfigOf(size) : null;
   if (cfg) {
     if (cfg.image_size && !imageResolutions(model).includes(cfg.image_size)) delete cfg.image_size;
-    body.image_config = cfg;
+    if (Object.keys(cfg).length) body.image_config = cfg;
   }
   const res = await fetch(url, { method: "POST", signal, headers, body: JSON.stringify(body) });
   await ensureOk(res);

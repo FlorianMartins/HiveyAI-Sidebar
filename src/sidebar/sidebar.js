@@ -576,7 +576,8 @@ async function init() {
   themeNativeSelect(els.translateLang);
   setupImprovePicker();               // Improve = one button → a 2-list (Action | Tone) popup
   // Beside Send, the size is a short chip: "Size" until one is chosen, then its dimensions.
-  els.imageSize._labelFor = (o) => (o.value ? o.value.replace("@", " · ").replace(/^(\d+)x(\d+)$/, "$1×$2") : t("image.sizeBtn"));
+  els.imageSize._labelFor = (o) => (o.value ? o.value.replace(/^@/, "").replace("@", " · ").replace(/^(\d+)x(\d+)$/, "$1×$2") : t("image.sizeBtn"));
+  els.imageSize._openCustom = (btn) => (els.imageSize._grid ? (openSizeGrid(btn), true) : false);
   els.imageSize._menuWidth = 360;
   els.imageSize._menuClass = "img-size-menu";
   themeNativeSelect(els.imageSize);
@@ -1441,6 +1442,52 @@ function improveInstruction(presetId, tone) {
   if (tone && tone !== "auto") parts.push(t("tonePrompt." + tone));
   return parts.join(" ");
 }
+// Image « Size » for the models with a resolution setting: Format | Quality side by side, as
+// Improve's Style | Tone — the single list repeated each format for every resolution. Clicking
+// the chosen entry again leaves that half to the model.
+let sizeGridMenu = null;
+function openSizeGrid(btn) {
+  if (sizeGridMenu && !sizeGridMenu.classList.contains("hidden")) { sizeGridMenu.classList.add("hidden"); return; }
+  if (!sizeGridMenu) { sizeGridMenu = document.createElement("div"); sizeGridMenu.className = "improve-pick-menu size-grid-menu hidden"; document.body.appendChild(sizeGridMenu); }
+  const { shapes, res } = els.imageSize._grid;
+  const PX = { "1K": "≈ 1024 px", "2K": "≈ 2048 px", "4K": "≈ 4096 px" };
+  const build = () => {
+    const m = /^(\d+:\d+)?(?:@(\dK))?$/.exec(els.imageSize.value || "") || [];
+    const cur = { shape: m[1] || "", res: m[2] || "" };
+    const set = (next) => {
+      const v = (next.shape || "") + (next.res ? "@" + next.res : "");
+      els.imageSize.value = v;
+      els.imageSize.dispatchEvent(new Event("change", { bubbles: true }));
+      build();
+    };
+    const col = (head, entries, curVal, onPick) => {
+      const c = document.createElement("div"); c.className = "imp-col";
+      const h = document.createElement("div"); h.className = "imp-col-head"; h.textContent = t(head); c.appendChild(h);
+      const list = document.createElement("div"); list.className = "imp-col-list";
+      for (const [val, txt, hint] of entries) {
+        const it = document.createElement("button"); it.type = "button";
+        it.className = "imp-item" + (val === curVal ? " sel" : "");
+        it.textContent = txt;
+        if (hint) { const s = document.createElement("span"); s.className = "imp-hint"; s.textContent = hint; it.appendChild(s); }
+        it.addEventListener("click", (e) => { e.stopPropagation(); onPick(val === curVal ? "" : val); });
+        list.appendChild(it);
+      }
+      c.appendChild(list); return c;
+    };
+    sizeGridMenu.innerHTML = "";
+    const cols = document.createElement("div"); cols.className = "imp-cols";
+    cols.appendChild(col("size.colFormat", [["", t("size.auto")], ...shapes.map((s) => [s, t("size.shape." + s.replace(":", "x"))])], cur.shape, (v) => set({ ...cur, shape: v })));
+    if (res.length > 1) cols.appendChild(col("size.colQuality", [["", t("size.auto")], ...res.map((r) => [r, r, PX[r]])], cur.res, (v) => set({ ...cur, res: v })));
+    sizeGridMenu.appendChild(cols);
+  };
+  build();
+  sizeGridMenu.classList.remove("hidden");
+  const r = btn.getBoundingClientRect();
+  sizeGridMenu.style.left = Math.max(8, Math.min(r.left, window.innerWidth - sizeGridMenu.offsetWidth - 8)) + "px";
+  placeAbove(sizeGridMenu, r);
+  const closer = (e) => { if (!sizeGridMenu.contains(e.target) && !btn.contains(e.target)) { sizeGridMenu.classList.add("hidden"); document.removeEventListener("mousedown", closer); } };
+  setTimeout(() => document.addEventListener("mousedown", closer), 0);
+}
 function populateImageSizes() {
   els.imageSize.innerHTML = "";
   // Placeholder + default = the "Size" label (empty value): no fixed size — the model uses the
@@ -1454,12 +1501,16 @@ function populateImageSizes() {
   // A model with a resolution setting (Gemini through OpenRouter) gets formats × resolutions,
   // up to real 4K where it has it; the others keep their pixel sizes.
   const res = (settings.imageProvider || "") === "openrouter" ? imageResolutions(settings.imageModel) : [];
+  // The format and the quality are chosen apart (a 2-column menu, openSizeGrid): the list holds
+  // every pair, and each one alone (the model then picks the other).
+  els.imageSize._grid = res.length ? { shapes: IMAGE_SHAPES, res } : null;
   if (res.length) {
-    for (const r of res) for (const shape of IMAGE_SHAPES) {
-      const o = document.createElement("option");
-      o.value = `${shape}@${r}`;
-      o.textContent = t("size.shapeRes", { shape: t("size.shape." + shape.replace(":", "x")), res: r });
-      els.imageSize.appendChild(o);
+    const add = (value, text) => { const o = document.createElement("option"); o.value = value; o.textContent = text; els.imageSize.appendChild(o); };
+    const shapeName = (shape) => t("size.shape." + shape.replace(":", "x"));
+    for (const shape of IMAGE_SHAPES) add(shape, shapeName(shape));
+    if (res.length > 1) for (const r of res) {
+      add("@" + r, r);
+      for (const shape of IMAGE_SHAPES) add(`${shape}@${r}`, t("size.shapeRes", { shape: shapeName(shape), res: r }));
     }
   } else {
     for (const value of pixelSizes(settings.imageProvider || "openai", settings.imageModel)) {
@@ -5588,6 +5639,7 @@ function themeNativeSelect(sel) {
   let menuEl = null;
   const closeMenu = () => { if (menuEl) menuEl.classList.add("hidden"); };
   const openMenu = () => {
+    if (sel._openCustom && sel._openCustom(btn)) return; // a menu of its own (Image: format | quality)
     if (menuEl && !menuEl.classList.contains("hidden")) { closeMenu(); return; }
     if (!menuEl) { menuEl = document.createElement("div"); menuEl.className = "sec-analysis-menu themed-sel-menu hidden" + (sel._menuClass ? " " + sel._menuClass : ""); document.body.appendChild(menuEl); }
     menuEl.innerHTML = "";

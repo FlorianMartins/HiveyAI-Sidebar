@@ -3,6 +3,9 @@
 // back to English. Placeholders {name}, HTML tags and emojis are kept verbatim.
 
 export const ES = {
+  "size.colFormat": "Formato",
+  "size.colQuality": "Calidad",
+  "size.auto": "Predeterminado del modelo",
   "size.shapeRes": "{shape} · {res}",
   "size.shape.1x1": "Cuadrado 1:1",
   "size.shape.16x9": "Horizontal 16:9",
@@ -1036,6 +1039,9 @@ export const ES = {
 };
 
 export const DE = {
+  "size.colFormat": "Format",
+  "size.colQuality": "Qualität",
+  "size.auto": "Standard des Modells",
   "size.shapeRes": "{shape} · {res}",
   "size.shape.1x1": "Quadrat 1:1",
   "size.shape.16x9": "Querformat 16:9",
@@ -2069,6 +2075,9 @@ export const DE = {
 };
 
 export const IT = {
+  "size.colFormat": "Formato",
+  "size.colQuality": "Qualità",
+  "size.auto": "Predefinito del modello",
   "size.shapeRes": "{shape} · {res}",
   "size.shape.1x1": "Quadrato 1:1",
   "size.shape.16x9": "Orizzontale 16:9",
@@ -3102,6 +3111,9 @@ export const IT = {
 };
 
 export const PT = {
+  "size.colFormat": "Formato",
+  "size.colQuality": "Qualidade",
+  "size.auto": "Padrão do modelo",
   "size.shapeRes": "{shape} · {res}",
   "size.shape.1x1": "Quadrado 1:1",
   "size.shape.16x9": "Paisagem 16:9",

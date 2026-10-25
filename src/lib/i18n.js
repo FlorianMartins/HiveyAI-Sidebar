@@ -14,6 +14,9 @@ import { setHTML } from "./dom.js";
 let lang = "en";
 
 const EN = {
+  "size.colFormat": "Format",
+  "size.colQuality": "Quality",
+  "size.auto": "Model's default",
   "size.shapeRes": "{shape} · {res}",
   "size.shape.1x1": "Square 1:1",
   "size.shape.16x9": "Landscape 16:9",
@@ -1122,6 +1125,9 @@ const EN = {
 };
 
 const FR = {
+  "size.colFormat": "Format",
+  "size.colQuality": "Qualité",
+  "size.auto": "Par défaut du modèle",
   "size.shapeRes": "{shape} · {res}",
   "size.shape.1x1": "Carré 1:1",
   "size.shape.16x9": "Paysage 16:9",

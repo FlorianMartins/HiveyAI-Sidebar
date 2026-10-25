@@ -2643,8 +2643,18 @@ body.rail-pinned.rail-right .top-banner { right: calc(var(--rail-w, 56px) + 8px)
 .themed-sel-menu .sa-sep { height: 1px; margin: 4px 6px; background: var(--border); }
 .themed-sel-menu .sa-item.sa-extra { display: flex; align-items: center; gap: 8px; }
 .themed-sel-menu .sa-item.sa-extra svg { flex: 0 0 auto; color: var(--accent); }
-/* Short of room, the tab's button gives way before the model's name. */
+/* Short of room, both halves of the row shrink (never past the frame — a long model name pushed
+   the row out and the panel scrolled sideways), the tab's button and the size first. */
+.composer-tools { min-width: 0; }
+.composer-tools .tools-left { flex: 0 1 auto; min-width: 0; }
 .composer-tools .tools-right { flex: 0 1 auto; min-width: 0; }
-.composer-tools .tools-left { flex-shrink: 0; }
-.tab-opts { flex: 0 1 auto; }
+.composer-tools .tools-right > :not(.tab-opts):not(.img-size), .tab-opts .sz-ic, .tab-opts .sa-caret,
+.img-size .sz-ic, .img-size .sa-caret { flex-shrink: 0; }
+.tab-opts { flex: 0 1 auto; min-width: 0; }
+.img-size { flex: 0 0 auto; } /* « 16:9 · 4K » is short and worth reading whole: the model's name gives way */
+.composer-tools .tools-right:has(.img-size:not(.hidden):not(.no-sizes)) { flex-shrink: 0; }
+.img-size .themed-sel-btn { max-width: 100%; min-width: 0; }
+.img-size .themed-sel-btn .sa-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .themed-sel-menu .sa-item.sa-extra span { white-space: normal; overflow: visible; text-overflow: clip; }
+/* Image « Size »: Format | Quality — the pixel hint under each quality, in the muted tone. */
+.size-grid-menu .imp-hint { display: block; font-size: 11px; font-weight: 500; color: var(--muted); }
