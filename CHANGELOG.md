@@ -28,6 +28,7 @@ Version de développement, toujours à jour :
     lieu de tout recommencer dans un nouvel onglet ; une nouvelle conversation a le sien ;
   - **sa réflexion est de nouveau affichée**.
 - **Le bouton Stop** est rouge.
+- **Onglet Web** : le choix du fournisseur et les menus ne sont plus transparents (le texte du site derrière gênait la lecture).
 
 - **Chrome / Brave / Edge** : plus d'avertissement « Optional permission '<all_urls>' is redundant » à
   l'installation — la permission était déclarée deux fois dans le manifeste Chromium (Firefox garde
