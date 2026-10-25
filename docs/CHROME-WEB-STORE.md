@@ -12,8 +12,8 @@ onglets** — et tant que le brouillon n'est pas **enregistré**. En haut de la 
   l'extension est gratuite et sans activité commerciale.
 
 **Fiche du Chrome Web Store** :
-- description détaillée (texte ci-dessous), catégorie (**Productivité** → « Outils »), langue
-  (**Français**) ;
+- description détaillée (textes ci-dessous, anglais ou français), catégorie (**Productivité** →
+  « Outils »), langue (**English** si les captures sont en anglais) ;
 - icône 128×128 : `icons/icon-128.png` ;
 - au moins une capture d'écran **1280×800** : `docs/store/screenshot-1-1280x800.png` à
   `screenshot-5-1280x800.png` ;
@@ -24,6 +24,24 @@ onglets** — et tant que le brouillon n'est pas **enregistré**. En haut de la 
 brouillon**.
 
 **Distribution** : visibilité (Public ou Non répertorié), régions (toutes), et « gratuit ».
+
+## Description détaillée (fiche, en anglais)
+
+```
+Hivey AI puts the AI of your choice in Chrome's side panel, next to every page.
+
+• Your providers, your keys: Claude, OpenAI, Gemini, Mistral, Groq, DeepSeek, OpenRouter (with free models), a local model (Ollama, LM Studio) or your own server.
+• The page in context: ask about the page, a selection, several tabs or a PDF.
+• Translate, summarise, explain, improve a text — from a right-click.
+• An agent that acts in the browser on request (open, click, fill in); every sensitive action waits for your approval, and a refusal stops it.
+• MCP services: connect Notion, Jira, Linear, Gmail via Zapier… and talk to them in plain words.
+• Wisebase: your own knowledge base, indexed in the browser, with answers that cite their sources.
+• Images, interactive artifacts, diagrams, model comparison, benchmark.
+
+Privacy first: no server, no telemetry. Your keys and history stay in your browser; your messages only go to the AI service you choose, and sensitive data is anonymised before the cloud.
+
+Open source: https://github.com/FlorianMartins/HiveyAI-Sidebar
+```
 
 ## Description détaillée (fiche, en français)
 
