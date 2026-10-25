@@ -49,3 +49,17 @@ test("every bridged host is also unblocked — a bridge in a frame the browser r
     }
   }
 });
+
+test("the frame rule only serves this add-on's pages (and a provider frame navigating itself), never a third-party page", async () => {
+  const { frameUnblockRule } = await import("../src/lib/frame-unblock.js");
+  const base = json("rules/frame-unblock.json")[0];
+  const rule = frameUnblockRule(base, "11111111-2222-3333-4444-555555555555");
+  assert.deepEqual(rule.condition.requestDomains, base.condition.requestDomains);
+  assert.equal(rule.condition.initiatorDomains[0], "11111111-2222-3333-4444-555555555555");
+  assert.deepEqual(rule.condition.initiatorDomains.slice(1), base.condition.requestDomains, "a provider's own frame may navigate (sign-in, links)");
+  assert.deepEqual(rule.condition.resourceTypes, ["sub_frame"]);
+  for (const m of ["manifest.json", "manifest.chrome.json"]) {
+    const rs = json(m).declarative_net_request.rule_resources.find((r) => r.id === "frame_unblock");
+    assert.equal(rs.enabled, false, `${m}: the unconditional static ruleset stays off — it let any site frame the user's chats`);
+  }
+});

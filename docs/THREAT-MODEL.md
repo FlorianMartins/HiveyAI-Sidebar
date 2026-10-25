@@ -173,6 +173,22 @@ the values is logged.
 
 ---
 
+## 7. Framing the user's signed-in chats (Web tab)
+
+**Threat.** The Web tab shows provider sites (Claude, ChatGPT, Gemini…) in a frame, and those sites
+refuse to be framed (`X-Frame-Options`, CSP `frame-ancestors`). The add-on removes those headers.
+Until 2026-10-25 it removed them for every frame of those sites, whoever framed them: any web page
+could then load the user's signed-in chats in a hidden frame and trick clicks into it
+(clickjacking).
+
+**Mitigation.** The headers are removed only for frames loaded by the add-on's own pages, or by a
+provider frame navigating itself (signing in, following a link): a session `declarativeNetRequest`
+rule whose `initiatorDomains` is this install's host plus the providers' domains
+(`src/lib/frame-unblock.js`, set again at every start; the unconditional static ruleset is
+disabled). A third-party page framing a provider gets the site's own refusal. Measured in Firefox
+ESR and Chromium: before, a local page framing chatgpt.com received the page's hello; after, it does
+not, while the sidebar still loads Claude, ChatGPT and Mistral.
+
 ## What is deliberately out of scope
 
 - **Proactivity.** An assistant that decides on its own when to speak, using memory, is a

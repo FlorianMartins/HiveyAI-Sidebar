@@ -17,6 +17,14 @@ import { makeProvider } from "../lib/providers.js";
 import { keyFor, WRITING_PRESETS, isHivey, hiveyTierFor } from "../lib/models.js";
 import { buildSystemPrompt, runConversation } from "../lib/agent.js";
 import { effectivePalette } from "../lib/theme.js";
+import { registerFrameUnblock } from "../lib/frame-unblock.js";
+
+// The Web tab's frames: anti-framing headers removed for this add-on's own pages only (see
+// lib/frame-unblock.js). Session rules do not survive a browser restart — set again at each start.
+const frameUnblock = () => registerFrameUnblock(browser).catch((e) => console.warn("[hivey] frame rule:", e && e.message));
+frameUnblock();
+browser.runtime.onStartup && browser.runtime.onStartup.addListener(frameUnblock);
+browser.runtime.onInstalled.addListener(frameUnblock);
 
 // Context-menu items. Contexts are fixed; titles are localised (English default,
 // French when the user picks uiLang="fr" in Settings).

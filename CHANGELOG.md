@@ -10,6 +10,19 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+### Sécurité : vos chats de l'onglet Web ne peuvent plus être intégrés par un autre site
+
+- Pour afficher Claude, ChatGPT, Gemini… dans l'onglet Web, l'extension retire leur protection
+  contre l'intégration. Elle le faisait **pour tout le monde** : n'importe quel site pouvait alors
+  afficher vos conversations connectées dans un cadre caché et piéger vos clics. La protection n'est
+  maintenant retirée **que pour les pages de l'extension** (et pour la navigation du site dans son
+  propre cadre : connexion, liens). Vérifié dans Firefox et Chromium : avant, une page tierce
+  chargeait ChatGPT dans son cadre ; maintenant elle est refusée, et la sidebar charge toujours
+  Claude, ChatGPT et Mistral.
+- **La barre du haut** : sur l'onglet Web, les icônes sont dans l'ordre outils de page, historique,
+  `+`, agrandir, réglages, et elles ont toutes la même taille (l'icône des outils de page était plus
+  petite).
+
 ### Jetons et contexte : un seul chiffre, le même partout
 
 - **Les icônes d'accueil des onglets** (au-dessus de « Comment puis-je vous aider ? »…) ont un

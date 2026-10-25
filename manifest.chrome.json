@@ -30,7 +30,7 @@
     "rule_resources": [
       {
         "id": "frame_unblock",
-        "enabled": true,
+        "enabled": false,
         "path": "rules/frame-unblock.json"
       }
     ]
