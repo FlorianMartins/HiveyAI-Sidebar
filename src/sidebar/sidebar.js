@@ -6949,6 +6949,9 @@ function updatePrivBadge() {
   b.classList.remove("hidden");
   b.dataset.kind = cls;
   b.classList.toggle("anon-off", cls === "cloud" && !anon);
+  // Each mode its colour: keys masked in green, nothing masked in red (anonymised: the theme's).
+  b.classList.toggle("anon-keys", cls === "cloud" && level === "off");
+  b.classList.toggle("anon-none", cls === "cloud" && level === "none");
   if (cls !== "cloud") { b.textContent = t("priv.badge." + cls); b.title = t("priv.badgeTitle." + cls); return; }
   const state = anon ? "anon" : level === "none" ? "anonNone" : "anonOff";
   b.textContent = t("priv.badge.cloud") + " · " + t("priv.badge." + state);
@@ -6997,7 +7000,7 @@ function askPrivacyOff(provider) {
     const stay = opt(null, t("privOff.keep"), t("privOff.keepDesc"), "keep");
     opts.append(
       stay,
-      opt("off", t("privOff.keys"), t("privOff.keysDesc")),
+      opt("off", t("privOff.keys"), t("privOff.keysDesc"), "keys"),
       opt("none", t("privOff.none"), t("privOff.noneDesc"), "danger"),
     );
     const cancel = stay;
