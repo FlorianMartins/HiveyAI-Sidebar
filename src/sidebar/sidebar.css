@@ -2581,7 +2581,7 @@ body.theme-light .model-chip .combo-input { border: 0 !important; background: tr
 .composer-box:hover, .composer-box:focus-within {
   border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 12%, transparent);
 }
-.composer-box.is-busy { border-color: color-mix(in srgb, var(--accent) 20%, transparent); box-shadow: none; }
+.composer-box.is-busy { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 12%, transparent); } /* the colour of the focused frame */
 .cb-ring { display: none; position: absolute; inset: -1px; border-radius: 18px; pointer-events: none; z-index: 1; overflow: hidden;
   padding: 1.5px;
   background: conic-gradient(from 200deg,

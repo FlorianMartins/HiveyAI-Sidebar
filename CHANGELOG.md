@@ -10,6 +10,17 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+### Vérifier quand on le demande, le web par défaut dans le Chat
+
+- **« Vérifier » ne se lance plus tout seul** : les modèles Hivey payants (Pro, Smart) vérifiaient
+  chaque réponse même avec l'option désactivée (des appels et un délai en plus). Seule l'option
+  « Vérifier » la déclenche maintenant.
+- **Le Chat cherche sur le web par défaut** (activé une fois pour tous ; le désactiver dans les
+  options est retenu ensuite).
+- **Options dans l'ordre** : Vérifier, DeepSearch, Web, Artifacts.
+- **Le cadre de saisie garde la même couleur** pendant que le modèle répond ou agit qu'au clic ; la
+  lumière continue d'en faire le tour.
+
 ### Sécurité : vos chats de l'onglet Web ne peuvent plus être intégrés par un autre site
 
 - Pour afficher Claude, ChatGPT, Gemini… dans l'onglet Web, l'extension retire leur protection
