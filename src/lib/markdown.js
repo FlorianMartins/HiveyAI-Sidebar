@@ -1,4 +1,5 @@
 import { setHTML } from "./dom.js";
+import { t } from "./i18n.js";
 // Markdown rendering (marked + DOMPurify) and "artifacts" (HTML/SVG preview,
 // Mermaid diagrams). Artifacts run inside sandboxed iframes (opaque origin): the
 // model-generated code can reach neither the extension, the pages, nor the API
@@ -395,9 +396,9 @@ function openArtifactDoc(doc) {
 }
 
 function artifactLabel(lang) {
-  if (lang === "mermaid") return "✨ Diagramme";
+  if (lang === "mermaid") return "✨ " + t("code.diagram");
   if (lang === "svg") return "✨ SVG";
-  if (INTERACTIVE.includes(lang)) return "✨ Artifact interactif";
+  if (INTERACTIVE.includes(lang)) return "✨ " + t("code.interactive");
   return lang || "code";
 }
 
@@ -463,10 +464,11 @@ export function enhanceArtifacts(container) {
       bar.appendChild(runBtn);
     }
 
-    const copy = toolbarButton("Copier", () => {
+    // In the interface's language (it was French whatever the language).
+    const copy = toolbarButton(t("code.copy"), () => {
       navigator.clipboard.writeText(code.textContent).then(() => {
-        copy.textContent = "Copié ✓";
-        setTimeout(() => (copy.textContent = "Copier"), 1500);
+        copy.textContent = t("code.copied");
+        setTimeout(() => (copy.textContent = t("code.copy")), 1500);
       });
     });
     bar.appendChild(copy);
