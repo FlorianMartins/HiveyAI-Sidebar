@@ -1218,7 +1218,7 @@ function setEmptyLogo(m) {
     setHTML(els.emptyLogo, HIVEY_LOGO_SVG);
   }
 }
-const HIVEY_LOGO_SVG = '<svg viewBox="0 0 96 96" role="img" aria-label="Hivey AI"><defs><linearGradient id="hiveLogoA" x1="12" y1="10" x2="84" y2="86" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color:var(--accent)"/><stop offset="0.55" style="stop-color:var(--accent)"/><stop offset="1" style="stop-color:var(--accent-2)"/></linearGradient></defs><g fill="url(#hiveLogoA)"><rect x="17" y="9" width="62" height="14" rx="7"/><rect x="8" y="30" width="80" height="14" rx="7"/><rect x="12" y="51" width="72" height="14" rx="7"/><rect x="23" y="72" width="50" height="14" rx="7"/></g></svg>';
+const HIVEY_LOGO_SVG = '<svg viewBox="0 0 96 96" role="img" aria-label="Hivey AI"><defs><linearGradient id="hiveLogoA" x1="12" y1="10" x2="84" y2="86" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color:var(--accent)"/><stop offset="1" style="stop-color:var(--accent-2)"/></linearGradient></defs><g fill="url(#hiveLogoA)"><rect x="17" y="9" width="62" height="14" rx="7"/><rect x="8" y="30" width="80" height="14" rx="7"/><rect x="12" y="51" width="72" height="14" rx="7"/><rect x="23" y="72" width="50" height="14" rx="7"/></g></svg>';
 
 function parseSel(value) {
   const i = (value || "").indexOf("|");
@@ -5568,23 +5568,34 @@ function themeNativeSelect(sel) {
     const start = menuEl.querySelector(".sa-item.sel") || items[0];
     if (start) { start.focus({ preventScroll: true }); start.scrollIntoView({ block: "nearest" }); }
     let typed = "", typedAt = 0;
-    menuEl.onkeydown = (e) => {
-      const i = items.indexOf(document.activeElement);
-      if (e.key === "Escape") { e.preventDefault(); closeMenu(); btn.focus(); return; }
-      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); if (i >= 0) items[i].click(); return; }
+    // The keys are read on the whole page while the list is open — focus may stay on the button (or
+    // nowhere) depending on the browser — and the item reached is marked, not only focused.
+    let cur = Math.max(0, items.indexOf(start));
+    const mark = (k) => {
+      if (!items[k]) return;
+      items.forEach((it) => it.classList.remove("kb"));
+      cur = k; items[k].classList.add("kb");
+      items[k].focus({ preventScroll: true }); items[k].scrollIntoView({ block: "nearest" });
+    };
+    const onKey = (e) => {
+      if (!menuEl || menuEl.classList.contains("hidden")) { document.removeEventListener("keydown", onKey, true); return; }
+      const i = cur;
+      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); closeMenu(); btn.focus(); return; }
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); if (items[i]) items[i].click(); return; }
       if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-        e.preventDefault();
-        const next = items[Math.max(0, Math.min(items.length - 1, i + (e.key === "ArrowDown" ? 1 : -1)))];
-        if (next) { next.focus({ preventScroll: true }); next.scrollIntoView({ block: "nearest" }); }
+        e.preventDefault(); e.stopPropagation();
+        mark(Math.max(0, Math.min(items.length - 1, i + (e.key === "ArrowDown" ? 1 : -1))));
         return;
       }
       if (e.key.length !== 1 || e.ctrlKey || e.metaKey || e.altKey) return;
-      e.preventDefault();
+      e.preventDefault(); e.stopPropagation();
       typed = (Date.now() - typedAt > 900 ? "" : typed) + foldText(e.key);
       typedAt = Date.now();
-      const hit = items.find((it) => foldText(it.textContent).split(" — ").some((part) => part.startsWith(typed)));
-      if (hit) { hit.focus({ preventScroll: true }); hit.scrollIntoView({ block: "nearest" }); }
+      const k = items.findIndex((it) => foldText(it.textContent).split(" — ").some((part) => part.trim().startsWith(typed)));
+      if (k >= 0) mark(k);
     };
+    document.addEventListener("keydown", onKey, true);
+    mark(cur);
   };
   btn.addEventListener("click", (e) => { e.stopPropagation(); openMenu(); });
   sel.parentNode.insertBefore(btn, sel.nextSibling);
