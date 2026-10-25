@@ -42,9 +42,10 @@ masque, et le choix est gardé), donne accès à :
   privé au moins privé. Avant toute requête vers un modèle **cloud**, identifiants secrets, e-mails,
   téléphones, IBAN, cartes, numéros d'entreprise, noms de sociétés et vos propres termes deviennent
   des marqueurs (`⟨EMAIL_1⟩`…), constants dans la conversation, **remis en clair** dans la réponse,
-  la réflexion et les actions de l'agent. Une **fenêtre des données sensibles** montre où se trouve
-  chaque donnée (fichier et ligne, page) avant l'envoi : *Envoyer* / *Toujours envoyer (cette
-  conversation)* / *Annuler*. Votre machine et votre passerelle reçoivent vos données telles quelles.
+  la réflexion et les actions de l'agent — automatiquement, sans rien demander. **Anonymisation
+  désactivée**, une **fenêtre des données sensibles** montre où se trouve chaque clé ou mot de passe
+  (fichier et ligne, page) avant l'envoi : *Envoyer* / *Toujours envoyer (cette conversation)* /
+  *Annuler*. Votre machine et votre passerelle reçoivent vos données telles quelles.
 - 🧠 **Les vrais niveaux de réflexion de chaque modèle** : Direct, Bref, Standard, Approfondi,
   Extrême, Maximum — seulement ceux que le modèle choisi possède, chacun envoyé comme son fournisseur
   le documente (table reprise de [Hivey Code](https://github.com/FlorianMartins/hivey-vscode)).

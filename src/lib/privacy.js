@@ -148,7 +148,8 @@ export function forgetConversation(id) { accepted.delete(id); always.delete(id);
 /**
  * Wrap a provider so that its requests are pseudonymized and its answers restored.
  *
- * `ask(lines, count)` → "once" | "always" | "no" is the sidebar's dialog; without one (a side task
+ * `ask(lines, count)` → "once" | "always" | "no" is the sidebar's dialog, used with anonymisation off
+ * (level "secrets") — anonymised, a value is replaced and nobody is asked; without one (a side task
  * nobody is watching), a request that would have to ask is not sent — "nobody could be asked" must
  * not mean "send it anyway". `onRedacted(findings)` reports what was replaced, counts only.
  */
@@ -167,7 +168,11 @@ export function privateProvider(inner, { level, customTerms = [], vault = new Va
       for (const f of findings) if (f.from === "typed" && f.kind !== "secret") seen.add(f.value);
       if (conversation) accepted.set(conversation, seen);
       const fresh = toAsk.filter((f) => !seen.has(f.value));
-      if (fresh.length && !(conversation && always.has(conversation))) {
+      // Anonymised (« balanced », « strict »): every value already leaves as a marker, so there is
+      // nothing left to approve — the window opened on each agent step for nothing. It is asked only
+      // with anonymisation OFF (level « secrets »), where the credentials are the one thing masked.
+      const asks = level === "secrets";
+      if (asks && fresh.length && !(conversation && always.has(conversation))) {
         if (!ask) throw Object.assign(new Error(t("priv.notSent")), { name: "PrivacyRefused" });
         const lines = fresh.slice(0, 12).map((f) => describeFinding(f, t));
         if (fresh.length > 12) lines.push(t("priv.more", { n: fresh.length - 12 }));

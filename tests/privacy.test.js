@@ -88,32 +88,47 @@ test("a public page keeps its prices — a model cannot add up markers — but n
   assert.deepEqual(findingsToAsk(findings).map((f) => f.from), ["web page"], "asked about the page's address, not about what the user typed");
 });
 
-test("the sensitive-data window: asked once per value with where it is; Cancel sends nothing; Always covers the conversation", async () => {
+test("anonymised: values leave as markers and nobody is asked — not on every agent step", async () => {
   forgetConversation("c6");
-  const history = [buildTurn({ userText: "", untrusted: [{ kind: "attached document", source: "a file you attached", text: "[Attached file: clients.csv]\nnom;email\nDurand;paul.durand@acme-corp.fr\n" }] }).messages[0], { role: "user", content: "Résume" }];
+  const history = [buildTurn({ userText: "", untrusted: [{ kind: "attached document", source: "a file you attached", text: "[Attached file: clients.csv]\nnom;email\nDurand;paul.durand@acme-corp.fr\n" }] }).messages[0], { role: "user", content: "Résume, ma clé sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" }];
+  let asked = 0;
+  for (const level of ["balanced", "strict"]) {
+    const { body } = await turn("openrouter", { history, settings: { privacyLevel: level }, privacy: { conversation: "c6", ask: async () => { asked++; return "once"; } } });
+    assert.doesNotMatch(sent(body), /paul\.durand@acme-corp\.fr|sk-ant-api03/, `${level}: replaced`);
+  }
+  assert.equal(asked, 0, "« anonymisé » means automatic: no window");
+  // A side task nobody watches is sent too: nothing would have been asked.
+  await turn("openrouter", { history: [{ role: "user", content: "voici ma clé sk-ant-api03-BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB" }] });
+});
+
+test("not anonymised: the window asks about a key, once per value, with where it is; Cancel sends nothing; Always covers the conversation", async () => {
+  const off = { privacyLevel: "off" };
+  forgetConversation("c7");
+  const history = [buildTurn({ userText: "", untrusted: [{ kind: "attached document", source: "a file you attached", text: "[Attached file: config.env]\nTOKEN=x\nKEY=sk-ant-api03-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC\n" }] }).messages[0], { role: "user", content: "Résume" }];
   const asked = [];
   const ask = async (lines) => { asked.push(lines); return "once"; };
-  await turn("openrouter", { history, privacy: { conversation: "c6", ask } });
+  const first = await turn("openrouter", { history, settings: off, privacy: { conversation: "c7", ask } });
   assert.equal(asked.length, 1);
-  assert.match(asked[0][0], /^clients\.csv:2 — /, "the file and the line, so it can be corrected");
-  assert.doesNotMatch(asked[0][0], /paul\.durand@acme-corp\.fr/, "the value is shown masked");
-  await turn("openrouter", { history, privacy: { conversation: "c6", ask } });
+  assert.match(asked[0][0], /^config\.env:2 — /, "the file and the line, so it can be corrected");
+  assert.doesNotMatch(asked[0][0], /CCCCCCCCCCCCCCCC/, "the value is shown masked");
+  assert.doesNotMatch(sent(first.body), /sk-ant-api03-C/, "the key itself never leaves");
+  await turn("openrouter", { history, settings: off, privacy: { conversation: "c7", ask } });
   assert.equal(asked.length, 1, "an accepted value is not asked about again in the same conversation");
 
-  forgetConversation("c7");
-  await assert.rejects(turn("openrouter", { history, privacy: { conversation: "c7", ask: async () => "no" } }), (e) => e.name === "AbortError");
-
   forgetConversation("c8");
+  await assert.rejects(turn("openrouter", { history, settings: off, privacy: { conversation: "c8", ask: async () => "no" } }), (e) => e.name === "AbortError");
+
+  forgetConversation("c9");
   let n = 0;
   const always = async () => { n++; return "always"; };
-  await turn("openrouter", { history, privacy: { conversation: "c8", ask: always } });
-  await turn("openrouter", { history: [{ role: "user", content: "et sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA ?" }], privacy: { conversation: "c8", ask: always } });
+  await turn("openrouter", { history, settings: off, privacy: { conversation: "c9", ask: always } });
+  await turn("openrouter", { history: [{ role: "user", content: "et sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA ?" }], settings: off, privacy: { conversation: "c9", ask: always } });
   assert.equal(n, 1, "« Toujours envoyer » covers the rest of the conversation");
 });
 
-test("a side task nobody watches is not sent when it would have to ask", async () => {
+test("not anonymised, a side task nobody watches is not sent when it would have to ask", async () => {
   await assert.rejects(
-    turn("openrouter", { history: [{ role: "user", content: "voici ma clé sk-ant-api03-BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB" }] }),
+    turn("openrouter", { history: [{ role: "user", content: "voici ma clé sk-ant-api03-BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB" }], settings: { privacyLevel: "off" } }),
     (e) => e.name === "PrivacyRefused",
   );
 });

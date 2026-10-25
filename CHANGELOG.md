@@ -10,6 +10,11 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Anonymisation sans interruption** : en mode « Cloud · anonymisé », la fenêtre « ce que vous allez
+  envoyer contient N donnée(s) sensible(s) » ne s'ouvre plus (les valeurs partent déjà en marqueurs,
+  et elle revenait à chaque étape de l'agent). Elle ne s'affiche plus qu'avec l'anonymisation
+  désactivée, pour les clés et mots de passe. La note « 🔒 N valeur(s) anonymisée(s) » n'apparaît
+  plus qu'une fois par valeur dans la conversation, au lieu de sous chaque étape.
 - **Nouvel onglet MCP : vos services dans la conversation.** Connectez Gmail, Google Agenda ou Drive
   (via Zapier), Notion, Jira et Confluence, Linear, Todoist, monday, Canva, Figma, Sentry, Vercel,
   Stripe, Hugging Face, GitHub… ou n'importe quel serveur MCP par son adresse, puis demandez
