@@ -1790,7 +1790,10 @@ function makeCombo({ input, menu, items, getValue, onPick, header, onSync }) {
   function pick(it) { openState = false; menu.classList.add("hidden"); onPick(it.value); syncLabel(); }
   // The trigger just OPENS the popup (search/filter happens inside it) — never a text field.
   input.readOnly = true;
-  input.addEventListener("mousedown", (e) => { e.preventDefault(); if (openState) close(); else open(); });
+  // The whole chip opens it — its icon and padding too, not only the name (a click on the maker's
+  // mark did nothing; the next one, on the name, worked).
+  const trigger = (input.closest && input.closest(".combo")) || input;
+  trigger.addEventListener("mousedown", (e) => { if (menu.contains(e.target)) return; e.preventDefault(); if (openState) close(); else open(); });
   return {
     refresh: () => { syncLabel(); if (openState) buildList(); },
     render: () => { if (openState) { render(); position(); } },
@@ -2758,7 +2761,7 @@ function benchmarkView() {
       onPick: (v) => _benchView.add(v),
     });
     document.addEventListener("mousedown", (e) => {
-      if (benchCombo.isOpen() && e.target !== els.bvModelInput && !els.bvModelMenu.contains(e.target)) benchCombo.close();
+      if (benchCombo.isOpen() && !(els.bvModelInput.closest(".combo") || els.bvModelInput).contains(e.target) && !els.bvModelMenu.contains(e.target)) benchCombo.close();
     });
   }
   return _benchView;
@@ -4265,7 +4268,7 @@ function wire() {
   // Close the combo menu when clicking outside it; also cancel element-pick mode when
   // the user clicks back in the sidebar (anywhere but the pick button).
   document.addEventListener("mousedown", (e) => {
-    if (mainCombo.isOpen() && e.target !== els.modelInput && !els.modelMenu.contains(e.target) && !els.modelFilterPanel.contains(e.target)) mainCombo.close();
+    if (mainCombo.isOpen() && !els.modelWrap.contains(e.target) && !els.modelMenu.contains(e.target) && !els.modelFilterPanel.contains(e.target)) mainCombo.close();
     if (picking && !els.pickEl.contains(e.target)) cancelPicking();
     if (capturing && !els.captureRegion.contains(e.target)) cancelCapture();
   });
@@ -6762,13 +6765,28 @@ function updateModelChip() {
   const sel = mode === "image" ? parseSel(mainValue || "") : currentSelection();
   const slug = sel && sel.providerId ? vendorSlug(sel.providerId, sel.modelId) : undefined;
   const svg = isHivey(sel && sel.modelId) ? null : vendorIcon(slug, 14);
-  els.modelIcon.replaceChildren(svg || document.createTextNode(isHivey(sel && sel.modelId) ? "🐝" : "◆"));
+  els.modelIcon.replaceChildren(svg || (isHivey(sel && sel.modelId) ? hiveyMark(18) : document.createTextNode("◆")));
   // On a narrow sidebar only the mark shows: the name stays in the tooltip.
   els.modelWrap.title = t("model.chipTitle") + (els.modelInput && els.modelInput.value ? " — " + els.modelInput.value : "");
   // As wide as its name, no wider — then the row shrinks it if it must (an <input> has no
   // content-sized width of its own in every engine).
   if (els.modelInput) els.modelInput.style.width = textWidth(els.modelInput, els.modelInput.value || els.modelInput.placeholder || "") + "px";
   updatePrivBadge();
+}
+// Hivey's own mark (the four bars of the logo), in the theme's colour — not the 🐝 emoji, which
+// looked foreign among the providers' monochrome marks.
+function hiveyMark(size) {
+  const NS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", "0 0 24 24"); svg.setAttribute("width", String(size)); svg.setAttribute("height", String(size));
+  svg.setAttribute("fill", "currentColor"); svg.setAttribute("aria-hidden", "true");
+  for (const [x, y, w] of [[4.25, 2.25, 15.5], [2, 7.5, 20], [3, 12.75, 18], [5.75, 18, 12.5]]) {
+    const r = document.createElementNS(NS, "rect");
+    r.setAttribute("x", String(x)); r.setAttribute("y", String(y)); r.setAttribute("width", String(w));
+    r.setAttribute("height", "3.5"); r.setAttribute("rx", "1.75");
+    svg.append(r);
+  }
+  return svg;
 }
 // The width of a text in an input's own font — "ch" units over-reserved, leaving a gap after the
 // model's name in the chip.

@@ -12,6 +12,10 @@ Version de développement, toujours à jour :
 
 ### Jetons et contexte : un seul chiffre, le même partout
 
+- **Changer de modèle marche du premier clic** : seul le nom du modèle réagissait ; un clic sur
+  l'icône du fournisseur ou à côté du nom ne faisait rien. Toute la puce ouvre maintenant la liste.
+- **Les modèles Hivey** portent le logo Hivey à la couleur du thème au lieu de l'emoji 🐝.
+
 - **Les modèles Hivey ne sont plus « limités à 8 k »** : ils ne l'étaient pas — chaque requête part
   vers un vrai modèle, dont la fenêtre était bien utilisée — mais la jauge, ne sachant pas lequel,
   affichait le minimum par défaut de 8 k. Elle affiche maintenant la plus petite fenêtre des modèles
