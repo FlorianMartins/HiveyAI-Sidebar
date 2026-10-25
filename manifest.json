@@ -24,7 +24,11 @@
   },
   "action": {
     "default_title": "Hivey — 📸 Capturer une zone (screenshot)",
-    "default_icon": { "16": "icons/icon-16.png", "32": "icons/icon-32.png", "48": "icons/icon-48.png" }
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png"
+    }
   },
   "permissions": [
     "storage",
@@ -142,6 +146,29 @@
         "src/content/webchat-top.js"
       ],
       "run_at": "document_start",
+      "all_frames": true,
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://gemini.google.com/*",
+        "https://claude.ai/*",
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*",
+        "https://copilot.microsoft.com/*",
+        "https://copilot.com/*",
+        "https://*.copilot.com/*",
+        "https://chat.mistral.ai/*",
+        "https://chat.deepseek.com/*",
+        "https://chat.qwen.ai/*",
+        "https://www.kimi.com/*",
+        "https://chat.z.ai/*",
+        "https://huggingface.co/*"
+      ],
+      "js": [
+        "src/content/webchat-pw.js"
+      ],
+      "run_at": "document_idle",
       "all_frames": true,
       "world": "MAIN"
     }
