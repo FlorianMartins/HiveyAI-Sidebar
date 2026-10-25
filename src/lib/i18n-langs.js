@@ -3,6 +3,7 @@
 // back to English. Placeholders {name}, HTML tags and emojis are kept verbatim.
 
 export const ES = {
+  "an.btn": "Análisis",
   "size.colFormat": "Formato",
   "size.colQuality": "Calidad",
   "size.auto": "Predeterminado del modelo",
@@ -1039,6 +1040,7 @@ export const ES = {
 };
 
 export const DE = {
+  "an.btn": "Analyse",
   "size.colFormat": "Format",
   "size.colQuality": "Qualität",
   "size.auto": "Standard des Modells",
@@ -2075,6 +2077,7 @@ export const DE = {
 };
 
 export const IT = {
+  "an.btn": "Analisi",
   "size.colFormat": "Formato",
   "size.colQuality": "Qualità",
   "size.auto": "Predefinito del modello",
@@ -3111,6 +3114,7 @@ export const IT = {
 };
 
 export const PT = {
+  "an.btn": "Análise",
   "size.colFormat": "Formato",
   "size.colQuality": "Qualidade",
   "size.auto": "Padrão do modelo",

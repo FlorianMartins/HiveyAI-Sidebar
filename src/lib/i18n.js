@@ -14,6 +14,7 @@ import { setHTML } from "./dom.js";
 let lang = "en";
 
 const EN = {
+  "an.btn": "Analysis",
   "size.colFormat": "Format",
   "size.colQuality": "Quality",
   "size.auto": "Model's default",
@@ -1125,6 +1126,7 @@ const EN = {
 };
 
 const FR = {
+  "an.btn": "Analyse",
   "size.colFormat": "Format",
   "size.colQuality": "Qualité",
   "size.auto": "Par défaut du modèle",

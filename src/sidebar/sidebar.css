@@ -2658,3 +2658,8 @@ body.rail-pinned.rail-right .top-banner { right: calc(var(--rail-w, 56px) + 8px)
 .themed-sel-menu .sa-item.sa-extra span { white-space: normal; overflow: visible; text-overflow: clip; }
 /* Image « Size »: Format | Quality — the pixel hint under each quality, in the muted tone. */
 .size-grid-menu .imp-hint { display: block; font-size: 11px; font-weight: 500; color: var(--muted); }
+/* The full text of a selector whose label is cut, in a bubble above it (sidebar.js). */
+.sel-tip { position: fixed; z-index: 1200; max-width: min(320px, calc(100vw - 16px)); padding: 5px 9px; border-radius: 8px;
+  background: var(--panel-2); color: var(--text); border: 1px solid var(--border); box-shadow: 0 6px 18px rgba(0,0,0,.35);
+  font-size: 12px; font-weight: 600; line-height: 1.35; pointer-events: none; white-space: normal; }
+.sel-tip.hidden { display: none; }

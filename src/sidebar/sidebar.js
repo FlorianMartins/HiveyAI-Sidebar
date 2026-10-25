@@ -1442,6 +1442,30 @@ function improveInstruction(presetId, tone) {
   if (tone && tone !== "auto") parts.push(t("tonePrompt." + tone));
   return parts.join(" ");
 }
+// The whole choice above a selector button whose label is cut (« Academic · Profess… ») or hidden
+// (icon only, narrow sidebar): Improve's style · tone, the language, the analysis, the collection,
+// the image size. One bubble on <body>, so no frame clips it.
+(() => {
+  let tip = null, on = null;
+  const hide = () => { if (tip) tip.classList.add("hidden"); on = null; };
+  document.addEventListener("pointerover", (e) => {
+    const btn = e.target.closest && e.target.closest(".sec-analysis-btn");
+    if (btn === on) return;
+    hide();
+    const label = btn && btn.querySelector(".sa-label");
+    const text = label && label.textContent.trim();
+    if (!text || (label.offsetWidth && label.scrollWidth <= label.clientWidth)) return; // fully shown already
+    if (!tip) { tip = document.createElement("div"); tip.className = "sel-tip hidden"; tip.setAttribute("role", "tooltip"); document.body.appendChild(tip); }
+    tip.textContent = text;
+    tip.classList.remove("hidden");
+    const r = btn.getBoundingClientRect(), w = tip.offsetWidth;
+    tip.style.left = Math.max(8, Math.min(r.left + r.width / 2 - w / 2, innerWidth - w - 8)) + "px";
+    tip.style.top = Math.max(8, r.top - tip.offsetHeight - 6) + "px";
+    on = btn;
+  });
+  document.addEventListener("pointerout", (e) => { if (on && !on.contains(e.relatedTarget)) hide(); });
+  document.addEventListener("pointerdown", hide, true);
+})();
 // Image « Size » for the models with a resolution setting: Format | Quality side by side, as
 // Improve's Style | Tone — the single list repeated each format for every resolution. Clicking
 // the chosen entry again leaves that half to the model.
@@ -5494,7 +5518,7 @@ function renderSecRecipes(next) {
   const btn = document.createElement("button");
   btn.type = "button"; btn.className = "sec-analysis-btn";
   btn.innerHTML = '<span class="sa-label"></span><span class="sa-caret" aria-hidden="true"><svg viewBox="0 0 10 10" width="10" height="10"><path d="M1 3l4 4 4-4" stroke="currentColor" fill="none" stroke-width="1.6"/></svg></span>';
-  btn.querySelector(".sa-label").textContent = t("an.custom");
+  btn.querySelector(".sa-label").textContent = t("an.btn");
   if (els.secRecipes._optIcon) btn.insertAdjacentHTML("afterbegin", els.secRecipes._optIcon.replace("<svg ", '<svg class="sz-ic" '));
   btn.addEventListener("click", (e) => { e.stopPropagation(); openAnalysisMenu(btn); });
   els.secRecipes.appendChild(btn);
