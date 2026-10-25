@@ -18,6 +18,7 @@ import { keyFor, WRITING_PRESETS, isHivey, hiveyTierFor } from "../lib/models.js
 import { buildSystemPrompt, runConversation } from "../lib/agent.js";
 import { effectivePalette } from "../lib/theme.js";
 import { registerFrameUnblock } from "../lib/frame-unblock.js";
+import { ensurePeriodicAlarm, bubbleMemory } from "../lib/bg-lifetime.js";
 
 // The Web tab's frames: anti-framing headers removed for this add-on's own pages only (see
 // lib/frame-unblock.js). Session rules do not survive a browser restart — set again at each start.
@@ -157,8 +158,11 @@ function openSidebar(tab) {
 // grant on a fresh load (Mozilla Discourse thread 122965). We do that reload ONCE, PROACTIVELY (at
 // startup or the moment the grant lands) — never mid-capture — so it can't reset the user's chat or
 // interrupt a selection. A persistent flag makes it happen exactly once per grant.
+// Firefox only (runtime.getBrowserInfo exists only there): Chromium grants host permissions at
+// install and has no such quirk — there the reload only restarted the add-on right after install.
 async function reloadOnceForHostGrant(trigger) {
   try {
+    if (!browser.runtime || typeof browser.runtime.getBrowserInfo !== "function") return;
     if (!browser.permissions || !browser.permissions.contains || !browser.runtime || !browser.runtime.reload) return;
     const has = await browser.permissions.contains({ origins: ["<all_urls>"] });
     if (!has) return;
@@ -196,15 +200,14 @@ function fallbackToSidebar(tab, action, text) {
   browser.storage.local.set({ pendingAction: { action, text: text || "", ts: Date.now() } });
 }
 
-browser.runtime.onInstalled.addListener(() => {
-  buildMenus();
-  // Chromium: make the toolbar action open the side panel.
-  try {
-    const cr = (typeof chrome !== "undefined") ? chrome : null;
-    const sp = cr && cr["sidePanel"];
-    if (sp && sp.setPanelBehavior) sp.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
-  } catch (_) {}
-});
+browser.runtime.onInstalled.addListener(() => buildMenus());
+// Chromium: the toolbar action — and its keyboard command (_execute_action, Ctrl+Shift+Y) — opens
+// the side panel. Set at every start, not only at install: it costs nothing and never goes stale.
+try {
+  const cr = (typeof chrome !== "undefined") ? chrome : null;
+  const sp = cr && cr["sidePanel"];
+  if (sp && sp.setPanelBehavior) sp.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
+} catch (_) {}
 // Rebuild context menus also on browser startup and whenever the UI language changes.
 if (browser.runtime.onStartup) browser.runtime.onStartup.addListener(() => buildMenus());
 browser.storage.onChanged.addListener((changes, area) => {
@@ -257,8 +260,9 @@ browser.contextMenus.onClicked.addListener((info, tab) => {
 
 // --- On-page bubble pipeline ------------------------------------------------
 // We hold a single "current bubble" context so the page can ask for a re-run
-// (different language / writing preset) via a `bubble_rerun` message.
-let lastBubble = null; // { tabId, action, text }
+// (different language / writing preset) via a `bubble_rerun` message. Kept in storage.session, not
+// only in memory: the worker is usually stopped between the answer and the user's change of language.
+const bubbles = bubbleMemory(browser.storage); // { tabId, action, text }
 let bubbleAbort = null;
 
 function isRestrictedUrl(url) {
@@ -330,7 +334,7 @@ async function runBubble(tab, action, text) {
   if (!(await ensureHostPermission())) { fallbackToSidebar(tab, action, text); return; }
   if (!(await ensureContent(tab.id))) { fallbackToSidebar(tab, action, text); return; }
 
-  lastBubble = { tabId: tab.id, action, text };
+  await bubbles.save({ tabId: tab.id, action, text });
   const settings = await getSettings();
   setLang(settings.uiLang || "en");
   const pal = effectivePalette(settings.theme || "dark", settings.themeColors);
@@ -357,8 +361,9 @@ async function runBubble(tab, action, text) {
 }
 
 async function runBubbleModel() {
-  if (!lastBubble) return;
-  const { tabId, action, text } = lastBubble;
+  const last = await bubbles.load();
+  if (!last) return;
+  const { tabId, action, text } = last;
   const send = (m) => { browser.tabs.sendMessage(tabId, m).catch(() => {}); };
   const settings = await getSettings();
   setLang(settings.uiLang || "en");
@@ -442,8 +447,9 @@ async function runBubbleModel() {
 
 // The on-page bubble asks for a re-run when the user changes its language / style.
 browser.runtime.onMessage.addListener((msg) => {
-  if (!msg || msg.type !== "bubble_rerun" || !lastBubble) return;
+  if (!msg || msg.type !== "bubble_rerun") return;
   (async () => {
+    if (!(await bubbles.load())) return;
     if (msg.lang) await setSettings({ targetLang: msg.lang });
     if (msg.preset) await setSettings({ improvePreset: msg.preset });
     runBubbleModel();
@@ -514,7 +520,8 @@ async function checkWatches() {
 
 try {
   if (browser.alarms) {
-    browser.alarms.create("hiveyPageWatch", { periodInMinutes: 15 });
+    // Created once, not at every start of the worker (that restarted its 15-minute countdown).
+    ensurePeriodicAlarm(browser.alarms, "hiveyPageWatch", 15).catch(() => {});
     browser.alarms.onAlarm.addListener((a) => { if (a && a.name === "hiveyPageWatch") checkWatches(); });
   }
 } catch (_) {}

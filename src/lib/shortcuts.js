@@ -96,7 +96,7 @@ export function actionForCombo(map, combo) {
 const RESERVED = new Set([
   "W", "Shift+W", "T", "Shift+T", "N", "Shift+N", "Q", "Shift+Q", "Shift+P", "Tab", "Shift+Tab",
 ].flatMap((k) => [`Ctrl+${k}`, `Meta+${k}`]).concat(["Alt+F4", "Ctrl+F4",
-  "Ctrl+Shift+Y", // Firefox: opens and closes this very sidebar (manifest command _execute_sidebar_action)
+  "Ctrl+Shift+Y", // opens this very sidebar (manifest command: _execute_sidebar_action on Firefox, _execute_action on Chromium)
 ]));
 export function isReservedCombo(combo) {
   return RESERVED.has(normalizeCombo(combo));

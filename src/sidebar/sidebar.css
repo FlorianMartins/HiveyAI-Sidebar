@@ -57,9 +57,15 @@ html, body {
 }
 body { display: flex; flex-direction: column; height: 100vh; }
 /* Modern, theme-aware scrollbars everywhere. Firefox (thin + no arrow buttons) via scrollbar-*,
-   Chromium via ::-webkit-scrollbar. Thumb tinted from the text colour so it works in dark & light. */
-html { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--text) 22%, transparent) transparent; }
-* { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--text) 22%, transparent) transparent; }
+   Chromium via ::-webkit-scrollbar. Thumb tinted from the text colour so it works in dark & light.
+   The standard properties are kept away from Chromium: since Chrome 121 they win over
+   ::-webkit-scrollbar, which gave it a grey bar with arrow buttons instead of the slim pill.
+   (-moz-orient is Firefox-only; `selector(::-webkit-scrollbar)` can't tell them apart, Firefox
+   accepts any ::-webkit- pseudo-element.) */
+@supports (-moz-orient: inline) {
+  html { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--text) 22%, transparent) transparent; }
+  * { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--text) 22%, transparent) transparent; }
+}
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--text) 20%, transparent); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
 ::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--text) 34%, transparent); background-clip: padding-box; }
@@ -728,6 +734,9 @@ button[aria-expanded="true"], .combo-input:focus {
   align-content: start;
 }
 .composer textarea:focus { outline: none; }
+/* An empty box never scrolls: a placeholder on two lines (narrow panel) overflowed the bottom
+   padding and drew a scrollbar beside it. */
+.composer textarea:placeholder-shown { overflow-y: hidden; }
 /* Discreet grey placeholder. */
 .composer textarea::placeholder { color: color-mix(in srgb, var(--muted) 72%, transparent); opacity: 1; }
 /* Second row: an optional left slot (the "+" on the Chat tab) and the chat toggles +
