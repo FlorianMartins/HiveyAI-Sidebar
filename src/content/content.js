@@ -760,6 +760,21 @@ function setHTML(el, html) { if (el) el.innerHTML = html == null ? "" : html; }
   // A soft pulsing border around the viewport (à la Perplexity) shown while the agent
   // is acting on this page. pointer-events:none so it never blocks the page.
   let glowEl = null;
+  // The pulse fades a brighter glow in and out over a dimmer, still one: an OPACITY animation, which
+  // the compositor runs by itself. (Animating the box-shadow repainted the whole viewport on the
+  // page's main thread every frame — on a busy page like YouTube, the frame stuttered.)
+  // The full-viewport element is CLIPPED to a ~52px border frame so its centre is empty. Otherwise
+  // it counts as covering the page for IntersectionObserver v2 (trackVisibility) — which is how
+  // YouTube decides a player is "obscured" and refuses to autoplay. With the centre clipped out,
+  // the video is no longer considered covered and autoplay works during an agent run.
+  // Same drawing as agent-frame.js (document_start).
+  function glowCss(id, a, a2) {
+    return `@keyframes aiAgentGlow{0%,100%{opacity:0}50%{opacity:1}}` +
+      `#${id}{position:fixed;inset:0;z-index:2147483646;pointer-events:none;` +
+      "clip-path:polygon(0 0,0 100%,52px 100%,52px 52px,calc(100% - 52px) 52px,calc(100% - 52px) calc(100% - 52px),52px calc(100% - 52px),52px 100%,100% 100%,100% 0)}" +
+      `#${id}>ai-glow-layer{all:initial;display:block;position:absolute;inset:0;border-radius:2px;pointer-events:none;box-shadow:inset 0 0 16px 3px ${rgba(a, 0.55)},inset 0 0 4px 1px ${rgba(a2, 0.85)}}` +
+      `#${id}>ai-glow-layer+ai-glow-layer{box-shadow:inset 0 0 36px 9px ${rgba(a, 0.85)},inset 0 0 9px 2px ${rgba(a2, 1)};opacity:0;will-change:opacity;animation:aiAgentGlow 1.8s ease-in-out infinite}`;
+  }
   function setAgentGlow(on) {
     if (on) {
       // The document_start frame script (agent-frame.js) may have already drawn the frame for an
@@ -770,17 +785,10 @@ function setHTML(el, html) { if (el) el.innerHTML = html == null ? "" : html; }
       // Rebuild the style each time so the glow tracks the current theme accent.
       let st = document.getElementById("__ai_agent_glow_style");
       if (!st) { st = document.createElement("style"); st.id = "__ai_agent_glow_style"; (document.head || document.documentElement).appendChild(st); }
-      st.textContent =
-        `@keyframes aiAgentGlow{0%,100%{box-shadow:inset 0 0 16px 3px ${rgba(ACCENT, 0.55)},inset 0 0 4px 1px ${rgba(ACCENT2, 0.85)}}50%{box-shadow:inset 0 0 36px 9px ${rgba(ACCENT, 0.85)},inset 0 0 9px 2px ${rgba(ACCENT2, 1)}}}` +
-        // The glow is a full-viewport element, but we CLIP it to a ~52px border frame so
-        // its centre is empty. Otherwise it counts as covering the page for
-        // IntersectionObserver v2 (trackVisibility) — which is how YouTube decides a
-        // player is "obscured" and refuses to autoplay. With the centre clipped out, the
-        // video is no longer considered covered and autoplay works during an agent run.
-        "#__ai_agent_glow{position:fixed;inset:0;z-index:2147483646;pointer-events:none;border-radius:2px;animation:aiAgentGlow 1.8s ease-in-out infinite;" +
-        "clip-path:polygon(0 0,0 100%,52px 100%,52px 52px,calc(100% - 52px) 52px,calc(100% - 52px) calc(100% - 52px),52px calc(100% - 52px),52px 100%,100% 100%,100% 0)}";
+      st.textContent = glowCss("__ai_agent_glow", ACCENT, ACCENT2);
       glowEl = document.createElement("div");
       glowEl.id = "__ai_agent_glow";
+      glowEl.append(document.createElement("ai-glow-layer"), document.createElement("ai-glow-layer"));
       document.documentElement.appendChild(glowEl);
     } else if (glowEl) {
       glowEl.remove();
