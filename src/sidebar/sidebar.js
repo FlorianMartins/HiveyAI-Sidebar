@@ -19,6 +19,7 @@ import { compactHistory, contextWindowFor, modelContextWindow, ctxSizeKey, conte
 import { costOf, formatUsd, formatTokens, priceOf } from "../lib/cost.js";
 import { vendorSlug, vendorIcon } from "../lib/vendor-icon.js";
 import { nextStepMessages, parseNextStep } from "../lib/next-step.js";
+import { IMAGE_SHAPES, imageResolutions } from "../lib/image-sizes.js";
 import { webNeedRule, webNeedMessages, parseWebNeed } from "../lib/web-need.js";
 import { detectUserLanguage } from "../lib/user-language.js";
 import { SKILLS, GOAL_SYSTEM, ENHANCE_SYSTEM } from "../lib/skills.js";
@@ -555,7 +556,7 @@ async function init() {
   themeNativeSelect(els.translateLang);
   setupImprovePicker();               // Improve = one button → a 2-list (Action | Tone) popup
   // Beside Send, the size is a short chip: "Size" until one is chosen, then its dimensions.
-  els.imageSize._labelFor = (o) => (o.value ? o.value.replace("x", "×") : t("image.sizeBtn"));
+  els.imageSize._labelFor = (o) => (o.value ? o.value.replace("@", " · ").replace(/^(\d+)x(\d+)$/, "$1×$2") : t("image.sizeBtn"));
   els.imageSize._menuWidth = 360;
   els.imageSize._menuClass = "img-size-menu";
   themeNativeSelect(els.imageSize);
@@ -1407,12 +1408,27 @@ function populateImageSizes() {
   none.textContent = t("image.customSize");
   none.title = t("size.none");
   els.imageSize.appendChild(none);
-  for (const [value] of IMAGE_SIZES) {
-    const o = document.createElement("option");
-    o.value = value;
-    o.textContent = t("size." + value);
-    els.imageSize.appendChild(o);
+  // A model with a resolution setting (Gemini through OpenRouter) gets formats × resolutions,
+  // up to real 4K where it has it; the others keep their pixel sizes.
+  const res = (settings.imageProvider || "") === "openrouter" ? imageResolutions(settings.imageModel) : [];
+  if (res.length) {
+    for (const r of res) for (const shape of IMAGE_SHAPES) {
+      const o = document.createElement("option");
+      o.value = `${shape}@${r}`;
+      o.textContent = t("size.shapeRes", { shape: t("size.shape." + shape.replace(":", "x")), res: r });
+      els.imageSize.appendChild(o);
+    }
+  } else {
+    for (const [value] of IMAGE_SIZES) {
+      const o = document.createElement("option");
+      o.value = value;
+      o.textContent = t("size." + value);
+      els.imageSize.appendChild(o);
+    }
   }
+  // A size the new model doesn't offer falls back to « Size » (the model's default).
+  if (![...els.imageSize.options].some((o) => o.value === (settings.imageSize || ""))) els.imageSize.value = "";
+  else els.imageSize.value = settings.imageSize || "";
   if (els.imageSize._syncThemed) els.imageSize._syncThemed();
 }
 
@@ -1487,6 +1503,7 @@ async function onMainPick(value) {
       settings.imageProvider = sel.providerId;
       settings.imageModel = sel.modelId;
       await setSettings({ imageProvider: sel.providerId, imageModel: sel.modelId });
+      populateImageSizes(); // the sizes depend on the model
       updateImageNote();
     }
     return;

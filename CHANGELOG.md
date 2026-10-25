@@ -10,6 +10,13 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Image : plus de résolutions, jusqu'à la vraie 4K** — avec un modèle d'image Gemini (via
+  OpenRouter), la liste propose 6 formats (carré, paysage 16:9, portrait 9:16, photo 4:3, portrait
+  3:4, panoramique 21:9) en **1K, 2K et 4K** ; la 4K n'est proposée qu'aux modèles qui la produisent
+  vraiment. Mesuré : Gemini 3.1 Flash Image en 4K 16:9 → **5504×3072** (environ 0,15 $ et 2 min) ;
+  en 2K 16:9 → 2752×1536. Le format et la résolution sont envoyés comme paramètres au lieu d'une
+  simple phrase dans la demande. Les autres modèles gardent leurs tailles en pixels.
+
 - **Le logo Hivey** (en haut à gauche) n'affiche plus de fond quand la souris passe dessus ou vers la barre des onglets.
 - **Onglet Web sous Chrome, Brave et Edge** : les outils de page (page, élément, capture, onglets)
   n'inséraient rien dans le chat du site — le navigateur bloquait le script injecté (« Executing
