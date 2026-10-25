@@ -2475,13 +2475,29 @@ function reglowOnLoad(tabId, info) {
 // left open (the tab used to be forgotten at the end of every run, so each message started over in
 // a new blank tab). Kept per conversation id, for the life of the sidebar.
 const agentTabByConv = new Map();
+// Kept in session storage too, so closing and reopening the sidebar (or reopening the
+// conversation from the history) finds the same tab again; forgotten when the browser closes.
+const AGENT_TABS_KEY = "agentTabByConv";
+async function rememberAgentTab(conv, tabId) {
+  agentTabByConv.set(conv, tabId);
+  try { const st = browser.storage.session || browser.storage.local; await st.set({ [AGENT_TABS_KEY]: Object.fromEntries(agentTabByConv) }); } catch (_) {}
+}
+async function storedAgentTab(conv) {
+  if (agentTabByConv.has(conv)) return agentTabByConv.get(conv);
+  try {
+    const st = browser.storage.session || browser.storage.local;
+    const all = (await st.get(AGENT_TABS_KEY))[AGENT_TABS_KEY] || {};
+    for (const [k, v] of Object.entries(all)) if (!agentTabByConv.has(k)) agentTabByConv.set(k, v);
+  } catch (_) {}
+  return agentTabByConv.get(conv);
+}
 async function ensureAgentTab() {
   const conv = getSession("agent").convId;
   // Reuse this conversation's tab if it's still open.
   try {
-    const existing = agentTabByConv.get(conv) ?? getAgentTab();
+    const existing = (await storedAgentTab(conv)) ?? getAgentTab();
     if (existing != null) {
-      try { const t = await browser.tabs.get(existing); if (t) { setAgentTab(existing); agentTabByConv.set(conv, existing); return; } } catch (_) {} // closed → recreate below
+      try { const t = await browser.tabs.get(existing); if (t) { setAgentTab(existing); await rememberAgentTab(conv, existing); return; } } catch (_) {} // closed → recreate below
     }
   } catch (_) {}
   // Open a DEDICATED, BLANK new tab for the agent to work in, and focus it — so it never overwrites
@@ -2493,7 +2509,7 @@ async function ensureAgentTab() {
     const created = await browser.tabs.create({ active: true }); // blank tab (about:newtab/blank)
     if (created && created.id != null) {
       setAgentTab(created.id);
-      agentTabByConv.set(conv, created.id);
+      await rememberAgentTab(conv, created.id);
       // Wait briefly for the tab to be ready (bounded so we never hang the run).
       for (let i = 0; i < 40; i++) {
         let st = null;

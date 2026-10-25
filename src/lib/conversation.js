@@ -22,7 +22,7 @@ import { baseUrlFor, keyFor } from "./models.js";
 import { isSelfHostedProvider } from "./reasoning.js";
 import { makeProvider } from "./providers.js";
 import { detectUserLanguage } from "./user-language.js";
-import { t } from "./i18n.js";
+import { t, getLang } from "./i18n.js";
 import { activeMessages } from "./context-control.js";
 
 // ── The window ────────────────────────────────────────────────────────────────────────────────
@@ -307,7 +307,9 @@ const stripThink = (s) => String(s || "").replace(/<think>[\s\S]*?<\/think>/g, "
 /** The language a turn's answer must be in: the user's own, whatever they write in. */
 export function replyLanguageOf(text, settings) {
   if (settings && settings.responseLang && settings.responseLang !== "Auto") return undefined;
-  return detectUserLanguage(String(text || ""), "en");
+  // Too short or too technical to tell (« Maintenant ouvre <url> et dis-moi son titre »): the
+  // interface's language, not English — an answer switched to English mid-conversation.
+  return detectUserLanguage(String(text || ""), getLang() || "en");
 }
 
 /**

@@ -10,6 +10,13 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Agent : le même onglet pour toute la conversation**, même après avoir fermé et rouvert la
+  sidebar ou repris la conversation depuis l'historique (l'onglet était oublié à la fermeture de la
+  sidebar). Vérifié : la 2ᵉ demande ouvre sa page dans l'onglet de la 1ʳᵉ.
+- **La réponse garde la langue de la conversation** : une demande courte ou pleine de liens (« Maintenant
+  ouvre <url> et dis-moi son titre ») passait en anglais ; en cas de doute, c'est la langue de
+  l'interface qui est prise.
+
 - **Hivey Free ne tombe plus en erreur** (« has no usable endpoint on OpenRouter… Initial Endpoints ») : l'extension n'accepte, pour les modèles ouverts, que les serveurs en haute précision ; or le modèle gratuit de Hivey Free n'est servi que par NVIDIA dans son propre format (nvfp4). Quand cette exigence ne laisse aucun serveur, la question est reposée sans elle. Vérifié avec l'agent : erreur avant, réponse après (gratuite).
 
 - **Bandeau de confirmation** (« Connecté à OpenRouter »…) : il occupe toute la largeur à droite de la barre des onglets, et son texte passe à la ligne au lieu d'être coupé par « … » ou de passer sous la barre.
