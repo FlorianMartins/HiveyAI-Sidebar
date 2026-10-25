@@ -1982,8 +1982,8 @@ body:not(.mode-chat):not(.mode-wisebase).opts-open #chatControls { display: none
   cursor: pointer; color: var(--accent); font-weight: 600;
 }
 .pagebar.selectors-only.has-tabsel .page-title:hover { text-decoration: underline; }
-/* The "Page" option (auto page reading) is removed from the options popup — the page TOOLS bar
-   (pick element / capture region / tab picker) is always available at the top instead. */
+/* The "Page" option (auto page reading) is not in the options popup: the page comes in with « @ »
+   (Current page) or the « The AI sees the current page » setting; the page tools are in the « + » menu. */
 #chatControls .ctoggle:has(#pageCtx) { display: none !important; }
 
 /* When the tabs rail is deployed (hover peek or pinned), shift the AI response list to the right so

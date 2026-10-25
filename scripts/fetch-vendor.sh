@@ -25,6 +25,7 @@ declare -A SRC=(
   [pdf.worker.min.js]="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/pdf.worker.min.js"
   [transformers/transformers.min.js]="https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/transformers.min.js"
   [transformers/ort-wasm-simd.wasm]="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/ort-wasm-simd.wasm"
+  [jszip.min.js]="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"
 )
 # expected SHA-256 of each file
 declare -A SHA=(
@@ -36,6 +37,7 @@ declare -A SHA=(
   [pdf.worker.min.js]="38cde5311957b86bc3669f93e7d2566de333a90055ed6635bef60d9bf00e96f2"
   [transformers/transformers.min.js]="bcf7cf304e51f470ed59409622b9d6ffbad80dfcf5baf6a40c919e4b9c4ff812"
   [transformers/ort-wasm-simd.wasm]="9bd07bababc65f53d061f457233eeae501be7ceb8a2adb9eef52d87fe776d865"
+  [jszip.min.js]="acc7e41455a80765b5fd9c7ee1b8078a6d160bbbca455aeae854de65c947d59e"
 )
 
 fail=0

@@ -285,9 +285,6 @@ export async function setSettings(patch) {
   await browser.storage.local.set(patch);
 }
 
-// Update a single entry of a nested object (keys / models / baseUrls) without
-// clobbering its siblings.
-
 export function onSettingsChanged(callback) {
   browser.storage.onChanged.addListener((changes, area) => {
     if (area === "local") callback(changes);
