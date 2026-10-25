@@ -755,7 +755,6 @@ button[aria-expanded="true"], .combo-input:focus {
 .ctool:hover { border-color: var(--accent); color: var(--accent); }
 .ctool:active { transform: scale(0.94); }
 .ctool[hidden] { display: none !important; }
-.ctool.stop { font-size: 12px; }
 
 /* Attach (+) — no background, large and centered (Gemini-style), bright off-white glyph. */
 .attach-btn {
