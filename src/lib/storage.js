@@ -114,7 +114,7 @@ const DEFAULTS = {
   // Persisted state of the model-filter popover shared by every workspace's picker.
   // `tiers` = price tiers to SHOW; `providers` empty = all; `subproviders` empty = all
   // (used to filter OpenRouter models by their vendor: google / openai / anthropic…).
-  modelFilter: { tiers: ["free", "green", "yellow", "orange", "red"], providers: [], subproviders: [] },
+  modelFilter: { tiers: ["free", "green", "yellow", "orange", "red"], hiddenProviders: [], hiddenSubproviders: [] },
 
   // ----- Code workspace ------------------------------------------------------
   // The "Code" tab launches a self-hosted AI app builder ("Hivey Code",
@@ -234,6 +234,13 @@ export async function getSettings() {
     if (!s.searchModel) s.searchModel = "openrouter|hivey/free";
     s.webOffDefaultMigrated = true;
     try { await browser.storage.local.set({ webSearch: false, searchModel: s.searchModel, webOffDefaultMigrated: true }); } catch (_) {}
+  }
+  // One-time: the model filter kept what was ALLOWED, so providers and vendors added since arrived
+  // unticked and hidden. It now keeps what is hidden; the old allow-lists are dropped (all shown,
+  // the price tiers kept).
+  if (s.modelFilter && (s.modelFilter.providers || s.modelFilter.subproviders) && !s.modelFilter.hiddenProviders) {
+    s.modelFilter = { tiers: s.modelFilter.tiers || ["free", "green", "yellow", "orange", "red"], hiddenProviders: [], hiddenSubproviders: [] };
+    try { await browser.storage.local.set({ modelFilter: s.modelFilter }); } catch (_) {}
   }
   // One-time: web search is ON by default in the Chat again (user, 2026-10-25) — once for everyone;
   // turning it off in Options is kept afterwards.
