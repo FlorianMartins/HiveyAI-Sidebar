@@ -10,6 +10,19 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+### Jetons et contexte : un seul chiffre, le même partout
+
+- **Sous chaque réponse** : seulement le nombre de jetons et le prix (« 820 jetons · 0,0083 $ ») ; le
+  détail envoyés → reçus est au survol.
+- **La jauge et la réponse disent la même chose** : la jauge n'estimait que la conversation, alors
+  que le fournisseur compte aussi les consignes système et les outils (une réponse affichait 510
+  jetons pour une jauge à 395). Elle reprend maintenant le compte réel du fournisseur ; pour l'agent,
+  celui de sa dernière requête (le cumul de ses allers-retours reste le prix).
+- **La taille affichée est celle du modèle** : la jauge montrait la fenêtre moins la part gardée pour
+  la réponse (190 k pour un modèle à 200 k) ; elle affiche maintenant 200 k, comme le menu.
+- **Textes toujours lisibles** : le modèle, la réflexion et les choix des onglets sont d'un blanc
+  adouci, plus clair que le gris des jetons et des prix.
+
 ### Un rendu plus doux, et le cadre qui s'anime comme dans Hivey Code
 
 - **Le cadre de saisie** : au survol et au clic, seule sa bordure prend la couleur du thème. **Pendant

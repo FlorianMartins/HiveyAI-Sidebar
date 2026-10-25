@@ -14,6 +14,7 @@ import { setHTML } from "./dom.js";
 let lang = "en";
 
 const EN = {
+  "cost.tokensTotal": "{n} tokens",
   "improve.pick": "Choose a style",
   "ctx.sizeAutoLabel": "Auto",
   "ctx.sizeAutoTitle": "Auto — the largest window of the model in use ({n})",
@@ -44,7 +45,7 @@ const EN = {
   "priv.badge.anon": "anonymised",
   "priv.badgeTitle.local": "The model runs on your machine or local network: nothing leaves it. Click for the settings.",
   "priv.badgeTitle.gateway": "The model runs on your own server: your data stays with you. Click for the settings.",
-  "cost.tokens": "{in} → {out} tokens",
+  "cost.tokens": "{in} sent → {out} received",
   "cost.exactTitle": "Exact cost, as the provider reported it",
   "cost.estimateTitle": "Estimated from the provider's list prices",
   "opt.behavior.suggestNext": "<b>Suggest the next request</b> in the composer after each answer (Tab to use it)",
@@ -1232,6 +1233,7 @@ const EN = {
 };
 
 const FR = {
+  "cost.tokensTotal": "{n} jetons",
   "improve.pick": "Choisissez un style",
   "ctx.sizeAutoLabel": "Auto",
   "ctx.sizeAutoTitle": "Auto — la plus grande fenêtre du modèle choisi ({n})",
@@ -1262,7 +1264,7 @@ const FR = {
   "priv.badge.anon": "anonymisé",
   "priv.badgeTitle.local": "Le modèle tourne sur votre machine ou votre réseau local : rien n'en sort. Cliquer pour les réglages.",
   "priv.badgeTitle.gateway": "Le modèle tourne sur votre propre serveur : vos données restent chez vous. Cliquer pour les réglages.",
-  "cost.tokens": "{in} → {out} jetons",
+  "cost.tokens": "{in} envoyés → {out} reçus",
   "cost.exactTitle": "Coût exact, tel que le fournisseur l'a indiqué",
   "cost.estimateTitle": "Estimé d'après les prix publics du fournisseur",
   "opt.behavior.suggestNext": "<b>Suggérer la prochaine demande</b> dans la zone de saisie après chaque réponse (Tab pour l'utiliser)",

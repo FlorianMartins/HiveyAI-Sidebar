@@ -486,6 +486,10 @@ export async function runConversation({
     if (e.type !== "assistant/message" || !e.usage) continue;
     usage.promptTokens += e.usage.promptTokens || 0;
     usage.completionTokens += e.usage.completionTokens || 0;
+    // What the LAST request held: the context's real size (the sums above are what was billed over
+    // every round of the loop).
+    usage.lastPromptTokens = e.usage.promptTokens || 0;
+    usage.lastCompletionTokens = e.usage.completionTokens || 0;
     usage.cachedTokens += e.usage.cachedTokens || 0;
     if (typeof e.usage.costUsd === "number") usage.costUsd = (usage.costUsd || 0) + e.usage.costUsd;
   }

@@ -5982,6 +5982,7 @@ async function onWisebaseSend() {
     sess.transcript.push({ role: "assistant", text: answer, turnId, ...(turn && turn.usage ? { usage: turn.usage } : {}), ...(wbCost ? { cost: wbCost } : {}) });
     const aEl = sink.getEl();
     if (aEl) answerMeta(aEl, turn && turn.usage, wbCost);
+    noteContextUsage(sess, turn && turn.usage);
     suggestNextAfter(q, answer, sess, "wisebase", sel);
     if (aEl) { aEl._raw = answer; aEl._ctxTurn = turnId; attachAssistantActions(aEl, () => answer); }
     try { await saveSession(sess, "wisebase", sel); } catch (_) {}
@@ -6892,11 +6893,25 @@ function answerMeta(el, usage, cost) {
   let line = el.querySelector(":scope > .answer-meta");
   if (!line) { line = document.createElement("div"); line.className = "answer-meta"; el.appendChild(line); }
   const lang = getLang();
-  const parts = [t("cost.tokens", { in: formatTokens(usage.promptTokens || 0, lang), out: formatTokens(usage.completionTokens || 0, lang) })];
+  // Just the tokens and the price; the split (sent / received) is in the tooltip.
+  const inT = usage.promptTokens || 0, outT = usage.completionTokens || 0;
+  const parts = [t("cost.tokensTotal", { n: formatTokens(inT + outT, lang) })];
   if (cost && cost.free) parts.push(t("cost.free"));
   else if (cost) parts.push(formatUsd(cost.usd, { exact: cost.exact, lang }));
   line.textContent = parts.join(" · ");
-  line.title = cost && !cost.free ? (cost.exact ? t("cost.exactTitle") : t("cost.estimateTitle")) : "";
+  line.title = t("cost.tokens", { in: formatTokens(inT, lang), out: formatTokens(outT, lang) }) +
+    (cost && !cost.free ? " — " + (cost.exact ? t("cost.exactTitle") : t("cost.estimateTitle")) : "");
+}
+/**
+ * The provider counts what the request really held — the system prompt and the tools included —
+ * which an estimate of the conversation alone misses (an answer said 510 tokens while the gauge
+ * said 395). What it adds is kept per tab and added to the estimate, so the gauge and the answer
+ * agree right after it, and the gauge still follows standby / summaries afterwards.
+ */
+function noteContextUsage(sess, usage) {
+  if (!sess || !usage || !(usage.promptTokens || usage.completionTokens)) return;
+  const real = (usage.lastPromptTokens ?? usage.promptTokens ?? 0) + (usage.lastCompletionTokens ?? usage.completionTokens ?? 0);
+  sess.ctxOverhead = Math.max(0, real - estimateTokens(sess.history || []));
 }
 
 let gaugeSeq = 0;
@@ -6911,8 +6926,10 @@ async function updateCtxGauge() {
   let win = 0;
   try { win = sel && sel.providerId && !isHivey(sel.modelId) ? await contextWindowFor(settings, sel.providerId, sel.modelId) : 0; } catch (_) { win = 0; }
   if (seq !== gaugeSeq) return;
-  const used = estimateTokens(hist);
-  const budget = contextBudget(win);
+  const used = estimateTokens(hist) + (hist.length ? sess.ctxOverhead || 0 : 0);
+  // Shown against the window itself — the size the menu names (200 k), not the budget it keeps
+  // for the answer (190 k).
+  const budget = win > 0 ? win : contextBudget(win);
   const pct = Math.min(100, Math.round((used / budget) * 100));
   g.classList.remove("hidden");
   g.style.setProperty("--fill", pct + "%");
@@ -6950,8 +6967,8 @@ async function renderCtxPop() {
     try { native = await modelContextWindow(settings, sel.providerId, sel.modelId); } catch (_) { native = 0; }
     try { win = await contextWindowFor(settings, sel.providerId, sel.modelId); } catch (_) { win = native; }
   }
-  const used = estimateTokens((sess && sess.history) || []);
-  const budget = contextBudget(win);
+  const used = estimateTokens((sess && sess.history) || []) + ((sess && sess.history && sess.history.length && sess.ctxOverhead) || 0);
+  const budget = win > 0 ? win : contextBudget(win);
   els.ctxPopUsed.textContent = t("ctx.popUsed", { used: formatTokens(used, lang), budget: formatTokens(budget, lang), pct: Math.min(100, Math.round((used / budget) * 100)) });
   els.ctxPopSizesWrap.hidden = !sizable;
   els.ctxPopCompact.disabled = !(sess && sess.history && sess.history.length);
@@ -8512,6 +8529,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
       const ansIdx = sess.transcript.length - 1; // slot to REPLACE if it gets corrected
       const aEl = sink.getEl();
       if (aEl) answerMeta(aEl, usage, cost);
+      noteContextUsage(sess, usage);
       if (!["translate", "improve"].includes(runMode)) suggestNextAfter(displayText || modelContent, sink.getRaw(), sess, sessMode, turnSel);
       if (aEl) { aEl._raw = sink.getRaw(); aEl._ctxTurn = turnId; aEl._modelSel = sel.providerId && sel.modelId ? `${sel.providerId}|${sel.modelId}` : ""; attachAssistantActions(aEl, sink.getRaw); }
       // Versioning: tie this answer to its user bubble (non-agent chat turns) so an in-place edit
