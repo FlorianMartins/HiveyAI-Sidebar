@@ -14,6 +14,7 @@ import { setHTML } from "./dom.js";
 let lang = "en";
 
 const EN = {
+  "agent.refusedStop": "⛔ Action refused: the agent stopped and did nothing else.",
   "privOff.title": "Turn off anonymisation?",
   "privOff.now": "Now: before a request leaves for {provider}, e-mail addresses, phone numbers, IBANs, names of companies, keys and passwords are replaced by markers such as ⟨EMAIL_1⟩, then put back in the answer. {provider} never sees them.",
   "privOff.then": "Turned off, your messages, pages and files reach {provider} as written. Choose how:",
@@ -1191,6 +1192,7 @@ const EN = {
 };
 
 const FR = {
+  "agent.refusedStop": "⛔ Action refusée : l'agent s'est arrêté et n'a rien fait d'autre.",
   "privOff.title": "Désactiver l'anonymisation ?",
   "privOff.now": "Actuellement : avant qu'une requête parte chez {provider}, adresses e-mail, téléphones, IBAN, noms de sociétés, clés et mots de passe sont remplacés par des marqueurs comme ⟨EMAIL_1⟩, puis remis en clair dans la réponse. {provider} ne les voit jamais.",
   "privOff.then": "Désactivée, vos messages, pages et fichiers arrivent chez {provider} tels quels. Choisissez comment :",

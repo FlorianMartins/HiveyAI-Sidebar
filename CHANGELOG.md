@@ -10,6 +10,10 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Agent : « Refuser » arrête vraiment l'agent.** Après un refus, plus aucune action de la tâche
+  n'est exécutée et l'IA n'est plus rappelée (elle pouvait tenter la même chose autrement, par
+  exemple par un clic à des coordonnées). Une ligne l'indique : « Action refusée : l'agent s'est
+  arrêté ». Même règle dans l'onglet MCP.
 - **Des icônes à la place des emojis** dans toute l'interface (badges des modèles Hivey, « Réflexion »,
   « Cloud · anonymisé », boutons d'accueil, paliers de prix, actions de l'agent, réglages…), dans le même
   trait que le reste : un rendu plus sobre et plus professionnel. Les réponses de l'IA ne sont pas

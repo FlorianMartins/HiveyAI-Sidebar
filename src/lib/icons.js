@@ -67,6 +67,7 @@ export const ICONS = {
   timer: P('<circle cx="12" cy="14" r="8"/>', "M10 2h4", "m12 14 3-3"),
   chart: P("M3 3v18h18", "M7 16v-3", "M12 16V8", "M17 16v-6"),
   users: P('<circle cx="9" cy="7" r="4"/>', "M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2", "M16 3.1a4 4 0 0 1 0 7.8", "M21 21v-2a4 4 0 0 0-3-3.9"),
+  ban: P('<circle cx="12" cy="12" r="10"/>', "m4.9 4.9 14.2 14.2"),
   dot: '<circle cx="12" cy="12" r="5.5" fill="currentColor" stroke="none"/>',
 };
 
@@ -81,7 +82,7 @@ export const EMOJI_ICON = {
   "🎙": ["mic"], "🗜": ["compress"], "⏳": ["hourglass"], "🔇": ["mute"], "🔊": ["volume"], "👆": ["pointer"],
   "🧭": ["compass"], "🧩": ["puzzle"], "⬇": ["download"], "🔑": ["key"], "⚠": ["alert"], "🤖": ["bot"],
   "💡": ["bulb"], "✉": ["mail"], "🔔": ["bell"], "📑": ["tabs"], "💰": ["coins"], "🏷": ["tag"],
-  "🔗": ["link"], "🏁": ["flag"], "⏱": ["timer"], "📊": ["chart"], "👥": ["users"],
+  "🔗": ["link"], "🏁": ["flag"], "⏱": ["timer"], "📊": ["chart"], "👥": ["users"], "⛔": ["ban"], "🚫": ["ban"],
   "🟢": ["dot", "#34d399"], "🟡": ["dot", "#fbbf24"], "🟠": ["dot", "#fb923c"], "🔴": ["dot", "#f87171"], "⚪": ["dot", "#9aa0b4"],
 };
 
