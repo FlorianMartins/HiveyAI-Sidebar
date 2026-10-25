@@ -4930,7 +4930,7 @@ function wire() {
   // global header (a web-only group), then drop the whole web sub-header. Result: a clean
   // iframe that fills the conversation area below ONE header — like the native chat view.
   const webProvEl = $("webProv"), webOverlayEl = $("webOverlay");
-  if (els.webHeadCtl && webProvEl) els.webHeadCtl.insertBefore(webProvEl, els.webHeadCtl.firstChild); // provider → LEFT (next to ☰), before its history button
+  if (els.webHeadCtl && webProvEl) els.webHeadCtl.insertBefore(webProvEl, els.webHeadCtl.firstChild); // provider → LEFT (next to ☰)
   if (els.webToolsSlot && webOverlayEl) els.webToolsSlot.appendChild(webOverlayEl); // 📄 tools → RIGHT row
   const subHead = els.webPanel && els.webPanel.querySelector(".webchats-head");
   if (subHead) subHead.remove();

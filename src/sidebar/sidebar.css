@@ -2659,3 +2659,8 @@ body:not(.theme-light) #emptyOnboard b, body:not(.theme-light) #emptyOnboard str
 .empty-logo svg.tab-ic[fill="currentColor"], .code-launch .cl-logo svg.tab-ic[fill="currentColor"] { fill: url(#emptyg); stroke: none; }
 /* The item reached with the keyboard in a themed list (type « fr » → French). */
 .sa-item.kb, .sa-item:focus-visible { background: color-mix(in srgb, var(--accent) 22%, transparent); outline: none; }
+/* The top bar's icons — page tools, history, +, expand, settings — all drawn at one size (the page
+   tools' icon was smaller than the others). */
+.topbar .row .icon svg, .topbar .row .web-ov-toggle svg { width: 20px !important; height: 20px !important; }
+.topbar .row #webHistorySlot { display: contents; }
+body:not(.web-active) .topbar .row #webHistorySlot > * { display: none; }
