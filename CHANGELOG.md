@@ -10,6 +10,8 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Bouton Stop** : même taille que les autres boutons de la zone de saisie, un carré rouge en
+  contour au lieu d'un carré plein.
 - **Le cadre lumineux de la page pilotée par l'agent pulse sans saccade** (même rendu) : la pulsation
   ne redessine plus toute la page à chaque image. Page gelée 2,2 s, elle continue de pulser, dans
   Firefox comme dans Chromium (avant : figée).
