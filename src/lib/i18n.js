@@ -14,6 +14,17 @@ import { setHTML } from "./dom.js";
 let lang = "en";
 
 const EN = {
+  "privOff.title": "Turn off anonymisation?",
+  "privOff.now": "Now: before a request leaves for {provider}, e-mail addresses, phone numbers, IBANs, names of companies, keys and passwords are replaced by markers such as ⟨EMAIL_1⟩, then put back in the answer. {provider} never sees them.",
+  "privOff.then": "Turned off, your messages, pages and files reach {provider} as written. Choose how:",
+  "privOff.keys": "Turn off, keep keys and passwords masked",
+  "privOff.keysDesc": "Everything else is sent as written. Before a key or a password leaves, a window shows where it is: Send (masked), Always send, or Cancel.",
+  "privOff.none": "Send everything as written — no masking",
+  "privOff.noneDesc": "Nothing is replaced and nothing is asked: keys and passwords included, everything goes to the provider. Only for data you are allowed to share with it.",
+  "privOff.keep": "Keep anonymisation",
+  "priv.badge.anonNone": "no masking",
+  "priv.badgeTitle.cloudNone": "Nothing is masked: your messages, keys and passwords included, leave as written. Click to turn anonymisation back on.",
+  "opt.priv.none": "Nothing — everything is sent as written (keys included)",
   "mcp.searchPh": "Search a service (Gmail, Jira, Stripe…)",
   "mcp.catg.google": "Google",
   "mcp.catg.comm": "Messages and meetings",
@@ -1180,6 +1191,17 @@ const EN = {
 };
 
 const FR = {
+  "privOff.title": "Désactiver l'anonymisation ?",
+  "privOff.now": "Actuellement : avant qu'une requête parte chez {provider}, adresses e-mail, téléphones, IBAN, noms de sociétés, clés et mots de passe sont remplacés par des marqueurs comme ⟨EMAIL_1⟩, puis remis en clair dans la réponse. {provider} ne les voit jamais.",
+  "privOff.then": "Désactivée, vos messages, pages et fichiers arrivent chez {provider} tels quels. Choisissez comment :",
+  "privOff.keys": "Désactiver, en gardant clés et mots de passe masqués",
+  "privOff.keysDesc": "Tout le reste part tel quel. Avant qu'une clé ou un mot de passe parte, une fenêtre montre où il se trouve : Envoyer (masqué), Toujours envoyer ou Annuler.",
+  "privOff.none": "Tout envoyer tel quel — aucun masquage",
+  "privOff.noneDesc": "Rien n'est remplacé et rien n'est demandé : clés et mots de passe compris, tout part chez le fournisseur. Seulement pour des données que vous pouvez lui confier.",
+  "privOff.keep": "Garder l'anonymisation",
+  "priv.badge.anonNone": "aucun masquage",
+  "priv.badgeTitle.cloudNone": "Rien n'est masqué : vos messages, clés et mots de passe compris, partent tels quels. Cliquer pour réactiver l'anonymisation.",
+  "opt.priv.none": "Rien — tout part tel quel (clés comprises)",
   "mcp.searchPh": "Chercher un service (Gmail, Jira, Stripe…)",
   "mcp.catg.google": "Google",
   "mcp.catg.comm": "Messages et réunions",

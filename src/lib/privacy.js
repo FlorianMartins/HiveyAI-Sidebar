@@ -43,6 +43,8 @@ export function privacyClass(providerId, settings) {
 /** Whether a request to this provider is pseudonymized: clouds, unless the user turned it off. */
 export function redactsFor(providerId, settings) {
   const level = (settings && settings.privacyLevel) || "balanced";
+  // « none »: the user chose to send everything as written — nothing masked, nothing asked.
+  if (level === "none") return false;
   if (level === "off") return privacyClass(providerId, settings) === "cloud" ? "secrets" : false;
   if (privacyClass(providerId, settings) !== "cloud") return settings && settings.privacyTrustOwn === false ? level : false;
   return level;

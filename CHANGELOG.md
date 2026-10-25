@@ -10,6 +10,15 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Des icônes à la place des emojis** dans toute l'interface (badges des modèles Hivey, « Réflexion »,
+  « Cloud · anonymisé », boutons d'accueil, paliers de prix, actions de l'agent, réglages…), dans le même
+  trait que le reste : un rendu plus sobre et plus professionnel. Les réponses de l'IA ne sont pas
+  touchées.
+- **Désactiver l'anonymisation s'explique d'abord** : un clic sur « Cloud · anonymisé » ouvre une
+  fenêtre qui dit ce qui est protégé et propose deux choix — garder clés et mots de passe masqués
+  (une fenêtre demande avant de les envoyer), ou **tout envoyer tel quel, sans aucun masquage ni
+  question**. Ce dernier niveau est aussi dans les réglages (« Rien »). Un clic sur le badge réactive
+  l'anonymisation.
 - **Suggestion de la prochaine demande** : elle commence par l'icône de la touche Tab (⇥), pour
   montrer d'un coup d'œil que Tab la reprend. L'icône disparaît dès que vous tapez.
 - **MCP : plus de 70 services**, classés par catégorie, avec une recherche. Gmail, Google Agenda et

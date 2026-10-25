@@ -88,6 +88,16 @@ test("a public page keeps its prices — a model cannot add up markers — but n
   assert.deepEqual(findingsToAsk(findings).map((f) => f.from), ["web page"], "asked about the page's address, not about what the user typed");
 });
 
+test("no masking at all (« none »): everything leaves as written and nobody is asked", async () => {
+  const history = [{ role: "user", content: "Écris à jeanne.dupont@acme-corp.fr, clé sk-ant-api03-DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD" }];
+  let asked = 0;
+  const { body } = await turn("openrouter", { history, settings: { privacyLevel: "none" }, privacy: { conversation: "c11", ask: async () => { asked++; return "once"; } } });
+  assert.match(sent(body), /jeanne\.dupont@acme-corp\.fr/);
+  assert.match(sent(body), /sk-ant-api03-D/);
+  assert.equal(asked, 0);
+  assert.doesNotMatch(body.messages[0].content, /PRIVACY MARKERS/);
+});
+
 test("anonymised: values leave as markers and nobody is asked — not on every agent step", async () => {
   forgetConversation("c6");
   const history = [buildTurn({ userText: "", untrusted: [{ kind: "attached document", source: "a file you attached", text: "[Attached file: clients.csv]\nnom;email\nDurand;paul.durand@acme-corp.fr\n" }] }).messages[0], { role: "user", content: "Résume, ma clé sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" }];

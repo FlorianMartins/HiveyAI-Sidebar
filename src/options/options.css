@@ -349,3 +349,5 @@ button.connect.connected { color: var(--ok); border-color: color-mix(in srgb, va
 /* Very narrow (a window squeezed to a sidebar width): drop the decorative tile icons. */
 @media (max-width: 300px) { .qa-ic { display: none; } .card { padding-left: 10px; padding-right: 10px; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+/* Emoji drawn as line icons (lib/icons.js), as in the sidebar. */
+.ui-ic { display: inline-block; width: 1.05em; height: 1.05em; vertical-align: -0.17em; flex: none; }

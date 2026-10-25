@@ -273,7 +273,9 @@ génération suivante.
   **où** il se trouve (`config.env:12`, la page, un résultat de l'agent) et vous choisissez :
   **Envoyer (marqueurs en place)**, **Toujours envoyer (cette conversation)** ou **Annuler** — rien
   n'est envoyé.
-- **Le badge « ☁️ Cloud · anonymisé »** sous la zone de saisie : un clic **désactive
+- **Le badge « Cloud · anonymisé »** sous la zone de saisie : un clic ouvre une fenêtre qui explique
+  ce qui change et propose de garder clés et mots de passe masqués, ou de **tout envoyer sans masquage** ;
+  sinon, un clic **désactive
   l'anonymisation** (il passe en orange, « non anonymisé ») ; un second clic la **réactive** au
   niveau choisi dans les réglages. Même désactivée, les **clés et mots de passe restent masqués**.
   Elle est active par défaut. L'interrupteur « Anonymisation (cloud) » des réglages fait la même
