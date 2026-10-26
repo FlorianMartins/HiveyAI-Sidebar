@@ -290,9 +290,9 @@ const MEMORY_TOOLS = new Set(["recall", "get_memory"]);
  * call to learn something the settings already knew — and teaches the model that its tools are
  * unreliable.
  */
-export function activeTools({ agentMode, memoryEnabled = false }) {
+export function activeTools({ agentMode, memoryEnabled = false, webSearch = false }) {
   if (!agentMode) return [];
-  return memoryEnabled ? TOOLS : TOOLS.filter((t) => !MEMORY_TOOLS.has(t.name));
+  return TOOLS.filter((t) => (memoryEnabled || !MEMORY_TOOLS.has(t.name)) && (webSearch || t.name !== "web_search"));
 }
 
 // ── The agent turn, on the reasoning kernel ──────────────────────────────────────────────────

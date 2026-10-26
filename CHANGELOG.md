@@ -10,6 +10,12 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Mode Agent avec « Web » : l'agent cherche quand il en a besoin**, au lieu de payer une
+  recherche web à chaque étape (OpenRouter). Il dispose d'un outil « recherche web » qu'il appelle
+  lui-même : ouvrir une page et en lire le titre coûtait 0,025 $, c'est maintenant 0,0008 $ ; une
+  vraie question d'actualité fait une seule recherche, comptée dans le coût affiché.
+- **Traduire et Améliorer ne cherchent plus sur le web** : un texte qui contenait une année ou
+  « aujourd'hui » déclenchait une recherche payante pour une simple traduction (86× plus cher).
 - **Recherche web déclenchée plus finement, et moins chère** : les questions de culture générale
   (« quelle est la différence entre… », « comment fonctionne… », « qu'est-ce qu'un… », une
   définition, une capitale) se passent du web sans requête supplémentaire ; une demande de lieu
