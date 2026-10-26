@@ -10,6 +10,11 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **OpenRouter moins cher sur les modèles ouverts** (DeepSeek, Qwen, GLM, Kimi…) : la sidebar
+  imposait des hébergeurs en précision fp8 ou mieux, ce qui écartait souvent les moins chers. Sur
+  DeepSeek V4.1 Flash, une réponse coûtait 5× ce que payait Hivey Code (VS Code) pour la même
+  question. OpenRouter choisit maintenant le meilleur prix parmi les hébergeurs disponibles, comme
+  dans Hivey Code.
 - Les cartes de code et de diagramme (« Copier », « Diagramme », « Artifact interactif ») suivent la
   langue de l'interface : elles restaient en français quelle que soit la langue choisie.
 - **Publication Firefox — code source vérifiable** : `BUILD.md` donne les étapes, le système et les

@@ -62,19 +62,10 @@ function levelOf(v) {
   return undefined;
 }
 
-// Open-weight model families (Llama, Qwen, DeepSeek, GLM, Mistral, Kimi, MiniMax, Nemotron,
-// Gemma…). OpenRouter spreads their traffic across many hosts that may serve degraded low-bit
-// quantizations (int4/int8) → quality varies host-to-host. For these we pin routing to
-// high-precision hosts. PROPRIETARY models (Claude/GPT/Gemini) have one official provider, so
-// they're already identical to the direct API and need no preference.
-const OPEN_WEIGHT_RE =
-  /^(z-ai|qwen|deepseek|meta-llama|mistralai|moonshotai|minimax|nvidia|nousresearch|cognitivecomputations|google\/gemma|microsoft\/phi)\b/i;
-function openWeightProviderPref(model) {
-  if (!OPEN_WEIGHT_RE.test(String(model || ""))) return undefined;
-  // fp8/fp16/bf16/fp32 are (near-)lossless for these models; "unknown" keeps untagged
-  // high-quality hosts available. Drops only the genuinely degraded int4/int8 hosts.
-  return { quantizations: ["fp8", "fp16", "bf16", "fp32", "unknown"] };
-}
+// No host preference on OpenRouter, as in hivey-vscode: OpenRouter routes to the best price among
+// the healthy hosts. The sidebar used to pin open-weight models (DeepSeek, Qwen, GLM, Kimi…) to
+// fp8-or-better hosts; that also excluded fp4, which it was never meant to, and on DeepSeek V4.1
+// Flash the answer cost 5× what hivey-vscode paid for the same request (measured 2026-10-26).
 
 // Generic SSE reader: yields the payloads of "data:" lines.
 async function* sseData(response) {
@@ -516,12 +507,7 @@ function openaiProvider({ apiKey, model, baseUrl, webSearch, providerId, thinkLe
       // when it is spent, so "Bref" really is brief (measured on Qwen3.8 in hivey-vscode: as precise,
       // 29 % faster). Not for a side task, whose thinking is off already; not for Ollama.
       if (selfHosted && !ollama && !chore) Object.assign(body, selfHostedThinkingBudget(level));
-      if (providerId === "openrouter") {
-        // Quality: pin open-weight models to high-precision hosts (drop int4/int8 hosts).
-        const provPref = openWeightProviderPref(model);
-        if (provPref) body.provider = provPref;
-        body.usage = { include: true };
-      }
+      if (providerId === "openrouter") body.usage = { include: true };
       // The accounting. A server that does not know the field ignores it, or names it and it goes.
       body.stream_options = { include_usage: true };
       if (tools && tools.length) {
@@ -535,16 +521,6 @@ function openaiProvider({ apiKey, model, baseUrl, webSearch, providerId, thinkLe
       let response;
       for (let tries = 0; ; tries++) {
         response = await fetchWithRetry(url, { method: "POST", signal, headers, body: JSON.stringify(attempt) });
-        // The precision preference left no host (Hivey Free's Nemotron is served only by NVIDIA,
-        // in its own nvfp4): the model's own hosts are better than no answer — asked again without it.
-        if (response.status === 404 && attempt.provider && attempt.provider.quantizations && tries < 2) {
-          const said = await response.clone().text().catch(() => "");
-          if (/no endpoints found[^"]*quantization/i.test(said)) {
-            const { provider: _drop, ...rest } = attempt;
-            attempt = rest;
-            continue;
-          }
-        }
         if (response.ok || (response.status !== 400 && response.status !== 402 && response.status !== 422) || tries >= 2) break;
         const said = await response.text().catch(() => "");
         const fixed = adaptRequest(attempt, said);
