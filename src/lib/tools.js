@@ -63,6 +63,18 @@ export const TOOLS = [
     },
   },
   {
+    name: "web_search",
+    description:
+      "Search the web and get back the key facts with their source URLs. Use it for up-to-date or outside " +
+      "information that the open pages do not give; each call is a paid search, so do not use it for what " +
+      "you can read on the page.",
+    input_schema: {
+      type: "object",
+      properties: { query: { type: "string", description: "What to look for, in a few words." } },
+      required: ["query"],
+    },
+  },
+  {
     name: "open_tab",
     description: "Open a new tab at the given URL.",
     write: true,
@@ -445,6 +457,10 @@ export async function executeTool(name, input, opts = {}) {
         if (!opts.getMemory) return { error: "Memory is turned off in Settings." };
         const e = await opts.getMemory(String((input && input.id) || ""));
         return e || { error: "No memory with that id (it may have been deleted)." };
+      }
+      case "web_search": {
+        if (!opts.webSearch) return { error: "Web search is turned off (the « Web » switch)." };
+        return await opts.webSearch(String((input && input.query) || ""));
       }
       case "read_page":
         return await sendToActiveTab({ type: "read_page" });

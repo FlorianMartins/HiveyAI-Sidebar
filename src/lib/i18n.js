@@ -14,7 +14,7 @@ import { setHTML } from "./dom.js";
 let lang = "en";
 
 const EN = {
-  "cost.sideTitle": "including {usd} for the side requests (does it need the web?, the suggested next request)",
+  "cost.sideTitle": "including {usd} for the side requests (web check and searches, suggested next request)",
   "code.copy": "Copy",
   "code.copied": "Copied ✓",
   "code.diagram": "Diagram",
@@ -1199,7 +1199,7 @@ const EN = {
 };
 
 const FR = {
-  "cost.sideTitle": "dont {usd} pour les requêtes annexes (faut-il le web ?, la suggestion de prochaine demande)",
+  "cost.sideTitle": "dont {usd} pour les requêtes annexes (vérification et recherches web, suggestion de prochaine demande)",
   "code.copy": "Copier",
   "code.copied": "Copié ✓",
   "code.diagram": "Diagramme",

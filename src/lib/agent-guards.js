@@ -21,7 +21,7 @@
 // Only Stop, these detectors and the server's real window bound a turn.
 
 /** Tools that only look: after one of these, the page is still what it was. */
-export const PURE_READS = new Set(["read_page", "read_selection", "list_tabs", "read_tab", "find_elements", "check_links", "screenshot", "recall", "get_memory"]);
+export const PURE_READS = new Set(["read_page", "read_selection", "list_tabs", "read_tab", "find_elements", "check_links", "screenshot", "recall", "get_memory", "web_search"]);
 
 /** See the header: a third identical read with nothing in between is not run; past two refusals the turn ends. */
 export const REPEAT_LIMIT = 3;

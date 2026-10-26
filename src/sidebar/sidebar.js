@@ -6199,11 +6199,12 @@ async function onWisebaseSend() {
     sink.finalize();
     const answer = (turn && turn.text) || sink.getRaw();
     const wbCost = costOf(sel.providerId, sel.modelId, turn && turn.usage, settings);
-    sess.transcript.push({ role: "assistant", text: answer, turnId, ...(turn && turn.usage ? { usage: turn.usage } : {}), ...(wbCost ? { cost: wbCost } : {}) });
+    const wbEntry = { role: "assistant", text: answer, turnId, ...(turn && turn.usage ? { usage: turn.usage } : {}), ...(wbCost ? { cost: wbCost } : {}) };
+    sess.transcript.push(wbEntry);
     const aEl = sink.getEl();
     if (aEl) answerMeta(aEl, turn && turn.usage, wbCost);
     noteContextUsage(sess, turn && turn.usage);
-    suggestNextAfter(q, answer, sess, "wisebase", sel);
+    suggestNextAfter(q, answer, sess, "wisebase", sel, wbEntry, aEl);
     if (aEl) { aEl._raw = answer; aEl._ctxTurn = turnId; attachAssistantActions(aEl, () => answer); }
     try { await saveSession(sess, "wisebase", sel); } catch (_) {}
     if (mode === "wisebase") updateCtxGauge();
@@ -8029,7 +8030,7 @@ async function runUtilityCompletion(sel, system, userText, signal) {
 // analyse and write. Returns the findings text, or "" on failure (caller falls back).
 // Run a fast web-research pass with a GIVEN search-capable model. `multi` asks for several
 // OPTIONS/ALTERNATIVES (used by the agent so it doesn't tunnel on the first obvious choice).
-async function webResearchWith(ss, query, signal, multi, outCitations) {
+async function webResearchWith(ss, query, signal, multi, outCitations, outCosts) {
   if (!ss || !ss.providerId || currentKeyMissing(ss.providerId)) return "";
   const q = (typeof query === "string" ? query : "").slice(0, 4000);
   if (!q.trim()) return "";
@@ -8051,6 +8052,7 @@ async function webResearchWith(ss, query, signal, multi, outCitations) {
     // Hand back the REAL source URLs (web-plugin citations) so callers can build resolvable links
     // instead of trusting the model's typed-out URLs (which 404).
     if (outCitations && turn && Array.isArray(turn.citations)) outCitations.push(...turn.citations);
+    if (outCosts && turn) outCosts.push(costOf(ss.providerId, ss.modelId, turn.usage, settings));
     return (turn && turn.text || "").trim();
   } catch (_) { return ""; }
 }
@@ -8612,7 +8614,10 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   const mcpMode = sessMode === "mcp";
   // « Web » on means: search WHEN it helps — a free rule for the clear cases, one cheap yes/no
   // question for the rest (every request used to pay for a search).
-  const webDecision = !forceWeb && els.webSearch.checked && !agentMode && !mcpMode ? await decideWeb(displayText || modelContent, sel) : null;
+  // Translating or improving a text works on that text only: « traduis "les élections de 2026" »
+  // paid a search because the text named a year.
+  const webDecision = !forceWeb && els.webSearch.checked && !agentMode && !mcpMode && runMode !== "translate" && runMode !== "improve"
+    ? await decideWeb(displayText || modelContent, sel) : null;
   const wantWeb = forceWeb || (agentMode ? els.webSearch.checked : !!(webDecision && webDecision.search));
 
   // Web-search routing: send the turn to a dedicated web-capable model (Perplexity
@@ -8754,6 +8759,19 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   // 🐝 Hivey auto-thinking: spend a reasoning budget ONLY on the reasoning tier (where it pays
   // off), never on cheap/utility turns. The user's manual Thinking choice still wins if higher.
   const effThink = hid ? hiveyThink(tierKey, getThink(els.thinking)) : getThink(els.thinking);
+  // The agent on OpenRouter searches when IT decides to, through a `web_search` tool. With the web
+  // plugin on the agent's model, every step of the run paid a search — three steps to read a page
+  // title cost 0.025 $ instead of 0.001 $ (measured 2026-10-26). Anthropic's own search is already a
+  // tool the model calls when it needs it.
+  const agentWebTool = agentMode && wantWeb && turnSel.providerId === "openrouter";
+  if (agentWebTool) webPlugin = false;
+  const sideCosts = [];
+  const agentWebSearch = async (query) => {
+    const ss = hid ? ensureUsable(parseSel(hiveyTiers(hid).search || hiveyTiers(hid).chat), hid) : turnSel;
+    const sources = [];
+    const found = await webResearchWith(ss, query, abortController && abortController.signal, false, sources, sideCosts);
+    return found ? { results: found, sources: sources.slice(0, 8) } : { error: "The search returned nothing; try other words or open a page." };
+  };
   let provider = makeProvider(
     { ...settings, provider: turnSel.providerId, models: { ...settings.models, [turnSel.providerId]: turnSel.modelId } },
     { thinkLevel: effThink, webSearch: webPlugin, privacy: privacyOpts(sess, boundConvId, sessMode) }
@@ -8761,12 +8779,12 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   let system = buildSystemPrompt({ agentMode, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: runMode, blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked, thinkLevel: effThink, skill: activeSkill ? activeSkill.system : "", goal: goalMode ? GOAL_SYSTEM : "", interactive: agentMode && !!settings.agentInteractive, region: userRegion(), replyLanguage: replyLanguageOf(displayText || modelContent, settings) });
   // « il me dit "Je ne peux pas consulter le web" alors que le mode web est activé »: the model was
   // never told the app searches for it. With Web on (and nothing about it otherwise sent), it is.
-  if (!agentMode && !mcpMode && els.webSearch.checked) {
+  if (!agentMode && !mcpMode && els.webSearch.checked && runMode !== "translate" && runMode !== "improve") {
     system += wantWeb
       ? "\n\nWEB: this app searched the web for this request — the results are part of what you received. Use them and cite their sources; never say you cannot access the internet."
       : "\n\nWEB: this app can search the web for the user, and judged it unnecessary for this request. Answer from your knowledge; never say you cannot access the internet — if up-to-date facts would change the answer, say so in one line and offer to search.";
   }
-  let tools = activeTools({ agentMode });
+  let tools = activeTools({ agentMode, webSearch: agentWebTool });
   let mcpExecute = null;
   // « Refuser » ENDS the run: the model used to read the refusal as an error to work around and did
   // the same thing another way (« mon ami a mis refusé mais il l'a quand même fait »). From the first
@@ -8812,7 +8830,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
         compactNote = null;
       },
       system, history: turnHistory, tools,
-      ...(mcpExecute ? { execute: mcpExecute } : agentMode ? { execute: (name, input, opts) => (refused ? Promise.resolve(REFUSED) : executeTool(name, input, opts)) } : {}),
+      ...(mcpExecute ? { execute: mcpExecute } : agentMode ? { execute: (name, input, opts) => (refused ? Promise.resolve(REFUSED) : executeTool(name, input, { ...opts, webSearch: agentWebTool ? agentWebSearch : null })) } : {}),
       onText: sink.onText, onThink: sink.onThink,
       onToolStart: (call) => {
         sink.finalize();
@@ -8906,6 +8924,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
       // The yes/no web question asked for this answer is part of what it cost.
       const entry = { role: "assistant", text: sink.getRaw(), badge: badge || undefined, turnId, ...(usage ? { usage } : {}), ...(cost ? { cost } : {}) };
       addSideCost(entry, webDecision && webDecision.cost);
+      for (const c of sideCosts) addSideCost(entry, c); // the agent's own web searches
       boundTranscript.push(entry);
       const ansIdx = sess.transcript.length - 1; // slot to REPLACE if it gets corrected
       const aEl = sink.getEl();

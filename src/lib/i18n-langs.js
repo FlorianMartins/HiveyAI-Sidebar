@@ -3,7 +3,7 @@
 // back to English. Placeholders {name}, HTML tags and emojis are kept verbatim.
 
 export const ES = {
-  "cost.sideTitle": "incluye {usd} de solicitudes auxiliares (¿hace falta la web?, la siguiente petición sugerida)",
+  "cost.sideTitle": "incluye {usd} de solicitudes auxiliares (comprobación y búsquedas web, siguiente petición sugerida)",
   "code.copy": "Copiar",
   "code.copied": "Copiado ✓",
   "code.diagram": "Diagrama",
@@ -1113,7 +1113,7 @@ export const ES = {
 };
 
 export const DE = {
-  "cost.sideTitle": "davon {usd} für Nebenanfragen (Web nötig?, vorgeschlagene nächste Anfrage)",
+  "cost.sideTitle": "davon {usd} für Nebenanfragen (Web-Prüfung und -Suchen, vorgeschlagene nächste Anfrage)",
   "code.copy": "Kopieren",
   "code.copied": "Kopiert ✓",
   "code.diagram": "Diagramm",
@@ -2223,7 +2223,7 @@ export const DE = {
 };
 
 export const IT = {
-  "cost.sideTitle": "di cui {usd} per le richieste accessorie (serve il web?, la prossima richiesta suggerita)",
+  "cost.sideTitle": "di cui {usd} per le richieste accessorie (verifica e ricerche web, prossima richiesta suggerita)",
   "code.copy": "Copia",
   "code.copied": "Copiato ✓",
   "code.diagram": "Diagramma",
@@ -3333,7 +3333,7 @@ export const IT = {
 };
 
 export const PT = {
-  "cost.sideTitle": "inclui {usd} de pedidos auxiliares (precisa da web?, o próximo pedido sugerido)",
+  "cost.sideTitle": "inclui {usd} de pedidos auxiliares (verificação e pesquisas web, próximo pedido sugerido)",
   "code.copy": "Copiar",
   "code.copied": "Copiado ✓",
   "code.diagram": "Diagrama",
