@@ -7097,12 +7097,11 @@ function showSuggestion(text) {
  * Hivey preset's cheap tier), pseudonymized for a cloud and never asking (a value that would need the
  * sensitive-data window simply means no suggestion). Dropped if the conversation moved on meanwhile.
  */
-async function suggestNextAfter(question, answer, sess, m, sel) {
+async function suggestNextAfter(question, answer, sess, m, sel, entry, el) {
   if (settings.suggestNext === false || !answer || !String(answer).trim() || !sess) return;
   const convAt = sess.convId, lenAt = sess.transcript.length;
   try {
-    const hid = isHivey(sel.modelId) ? sel.modelId : null;
-    const use = hid ? ensureUsable(parseSel(hiveyTiers(hid).utility || hiveyTiers(hid).chat), hid) : sel;
+    const use = sideTaskSel(sel);
     const provider = makeProvider({ ...settings, provider: use.providerId, models: { ...settings.models, [use.providerId]: use.modelId } }, {});
     // The conversation's language: the question AND the answer, code blocks left out — the question
     // alone (« explain TCP », a pasted error) often read as English in a French chat.
@@ -7110,6 +7109,11 @@ async function suggestNextAfter(question, answer, sess, m, sel) {
     const lang = detectUserLanguage(`${prose(question)}\n${prose(answer).slice(0, 3000)}`, getLang());
     const { system, history } = nextStepMessages(question, answer, lang);
     const r = await provider.runTurn({ system, history, tools: [], chore: true });
+    if (addSideCost(entry, costOf(use.providerId, use.modelId, r && r.usage, settings)) && sess.convId === convAt) {
+      if (el) answerMeta(el, entry.usage, entry.cost);
+      saveSession(sess, m, sel).catch(() => {});
+      if (getSession(mode) === sess) updateCtxGauge();
+    }
     const next = parseNextStep(r && r.text);
     if (!next || sess.convId !== convAt || sess.transcript.length !== lenAt) return;
     sess.suggestion = next;
@@ -7119,23 +7123,51 @@ async function suggestNextAfter(question, answer, sess, m, sel) {
 }
 
 /**
- * Should this request search the web? `{ search, by }` — by "rule" (free) or "model" (one short
- * yes/no question to a cheap model: the Hivey preset's utility tier, else the model in use with
- * thinking off). If that question fails, the search runs: the user asked for the web.
+ * The model for a side request (the yes/no web question, the suggested next request): the Hivey
+ * preset's utility tier; on OpenRouter, the Smart preset's utility model (Claude Haiku) when the
+ * model in use costs more; else the model in use. « Les prix de la sidebar sont supérieurs à ceux
+ * de l'extension VS Code » — on Claude Sonnet 5.5 these two requests added 43 % to every message
+ * (measured 2026-10-26); on Haiku they cost twenty times less.
+ */
+function sideTaskSel(sel) {
+  const hid = isHivey(sel.modelId) ? sel.modelId : null;
+  if (hid) return ensureUsable(parseSel(hiveyTiers(hid).utility || hiveyTiers(hid).chat), hid);
+  if (sel.providerId !== "openrouter" || /:free$/.test(sel.modelId || "")) return sel;
+  const cheap = parseSel(hiveyTiers("hivey/hybrid").utility || "");
+  if (cheap.providerId !== "openrouter" || cheap.modelId === sel.modelId) return sel;
+  const list = settings.orModels || [];
+  if ((list.length && !list.some((x) => x.id === cheap.modelId)) || orUnavailable.has(cheap.modelId) || isCooled(cheap.modelId)) return sel;
+  // A side request is mostly read: its price is the input price, the few words it writes count little.
+  const weight = (p) => (p ? p[0] * 10 + p[1] : 0);
+  const mine = weight(priceOf(sel.providerId, sel.modelId)), theirs = weight(priceOf(cheap.providerId, cheap.modelId));
+  return mine && theirs && theirs < mine ? cheap : sel;
+}
+/** Adds a side request's cost to the answer it served; true when the answer's cost changed. */
+function addSideCost(entry, c) {
+  if (!entry || !entry.cost || entry.cost.free || !c || c.free || !(c.usd > 0)) return false;
+  entry.cost.usd = (entry.cost.usd || 0) + c.usd;
+  entry.cost.side = (entry.cost.side || 0) + c.usd;
+  if (!c.exact) entry.cost.exact = false;
+  return true;
+}
+
+/**
+ * Should this request search the web? `{ search, by, cost }` — by "rule" (free) or "model" (one
+ * short yes/no question to a cheap model, `sideTaskSel`, thinking off). If that question fails,
+ * the search runs: the user asked for the web.
  */
 async function decideWeb(text, sel) {
   const rule = webNeedRule(typeof text === "string" ? text : JSON.stringify(text || ""));
   if (rule !== "maybe") return { search: rule === "yes", by: "rule" };
   try {
-    const hid = isHivey(sel.modelId) ? sel.modelId : null;
-    const use = hid ? ensureUsable(parseSel(hiveyTiers(hid).utility || hiveyTiers(hid).chat), hid) : sel;
+    const use = sideTaskSel(sel);
     const provider = makeProvider({ ...settings, provider: use.providerId, models: { ...settings.models, [use.providerId]: use.modelId } }, {});
     const { system, history } = webNeedMessages(text);
     const r = await Promise.race([
       provider.runTurn({ system, history, tools: [], chore: true }),
       new Promise((_, no) => setTimeout(() => no(new Error("timeout")), 8000)),
     ]);
-    return { search: parseWebNeed(r && r.text), by: "model" };
+    return { search: parseWebNeed(r && r.text), by: "model", cost: costOf(use.providerId, use.modelId, r && r.usage, settings) };
   } catch (_) { return { search: true, by: "model" }; }
 }
 /** What the conversation has cost so far, from its answers: `{ usd, exact, any }`. */
@@ -7162,7 +7194,8 @@ function answerMeta(el, usage, cost) {
   else if (cost) parts.push(formatUsd(cost.usd, { exact: cost.exact, lang }));
   line.textContent = parts.join(" · ");
   line.title = t("cost.tokens", { in: formatTokens(inT, lang), out: formatTokens(outT, lang) }) +
-    (cost && !cost.free ? " — " + (cost.exact ? t("cost.exactTitle") : t("cost.estimateTitle")) : "");
+    (cost && !cost.free ? " — " + (cost.exact ? t("cost.exactTitle") : t("cost.estimateTitle")) : "") +
+    (cost && cost.side > 0 ? " — " + t("cost.sideTitle", { usd: formatUsd(cost.side, { exact: cost.exact, lang }) }) : "");
 }
 /**
  * The provider counts what the request really held — the system prompt and the tools included —
@@ -8870,12 +8903,15 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
       // What this answer cost: OpenRouter's own figure, else priced from the catalogue (cost.js).
       const usage = turnResult && turnResult.usage;
       const cost = costOf(turnSel.providerId, turnSel.modelId, usage, settings);
-      boundTranscript.push({ role: "assistant", text: sink.getRaw(), badge: badge || undefined, turnId, ...(usage ? { usage } : {}), ...(cost ? { cost } : {}) });
+      // The yes/no web question asked for this answer is part of what it cost.
+      const entry = { role: "assistant", text: sink.getRaw(), badge: badge || undefined, turnId, ...(usage ? { usage } : {}), ...(cost ? { cost } : {}) };
+      addSideCost(entry, webDecision && webDecision.cost);
+      boundTranscript.push(entry);
       const ansIdx = sess.transcript.length - 1; // slot to REPLACE if it gets corrected
       const aEl = sink.getEl();
-      if (aEl) answerMeta(aEl, usage, cost);
+      if (aEl) answerMeta(aEl, usage, entry.cost);
       noteContextUsage(sess, usage);
-      if (!["translate", "improve"].includes(runMode)) suggestNextAfter(displayText || modelContent, sink.getRaw(), sess, sessMode, turnSel);
+      if (!["translate", "improve"].includes(runMode)) suggestNextAfter(displayText || modelContent, sink.getRaw(), sess, sessMode, turnSel, entry, aEl);
       if (aEl) { aEl._raw = sink.getRaw(); aEl._ctxTurn = turnId; aEl._modelSel = sel.providerId && sel.modelId ? `${sel.providerId}|${sel.modelId}` : ""; attachAssistantActions(aEl, sink.getRaw); }
       // Versioning: tie this answer to its user bubble (non-agent chat turns) so an in-place edit
       // keeps the previous answer switchable via ‹ k/n › arrows. Fresh sends create version 0;

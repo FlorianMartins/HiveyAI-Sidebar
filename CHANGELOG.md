@@ -10,6 +10,15 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Recherche web déclenchée plus finement, et moins chère** : les questions de culture générale
+  (« quelle est la différence entre… », « comment fonctionne… », « qu'est-ce qu'un… », une
+  définition, une capitale) se passent du web sans requête supplémentaire ; une demande de lieu
+  (« un bon restaurant à Lyon », « près de chez moi ») cherche toujours. Les petites requêtes
+  annexes (« faut-il le web ? » et la suggestion de prochaine demande) passent sur Claude Haiku
+  quand votre modèle OpenRouter coûte plus cher : sur Claude Sonnet 5.5, une conversation de deux
+  messages revient 31 % moins cher.
+- **Le coût affiché inclut ces requêtes annexes** : il ne comptait que la réponse, donc moins que
+  ce qu'OpenRouter facturait. L'infobulle sous chaque réponse indique la part des requêtes annexes.
 - **OpenRouter moins cher sur les modèles ouverts** (DeepSeek, Qwen, GLM, Kimi…) : la sidebar
   imposait des hébergeurs en précision fp8 ou mieux, ce qui écartait souvent les moins chers. Sur
   DeepSeek V4.1 Flash, une réponse coûtait 5× ce que payait Hivey Code (VS Code) pour la même
