@@ -15,8 +15,22 @@ test("work on what is given never searches: write, translate, code, compute, rep
 });
 
 test("the rest is asked to a cheap model, whose one word decides", () => {
-  assert.equal(webNeedRule("Quelle est la capitale de l'Australie ?"), "maybe");
+  for (const q of ["Qui est le PDG de Mistral AI ?", "Qu'est-ce que Hivey ?", "Give one real-world example for each of them"])
+    assert.equal(webNeedRule(q), "maybe", q);
   assert.equal(parseWebNeed("YES"), true);
   assert.equal(parseWebNeed("No."), false);
   assert.equal(parseWebNeed(""), false);
+});
+
+test("general knowledge that does not change is answered without the paid yes/no question", () => {
+  for (const q of ["What are the main differences between TCP and UDP?", "Quelle est la différence entre TCP et UDP ?",
+    "Comment fonctionne un moteur diesel ?", "How does HTTPS work?", "Qu'est-ce qu'un trou noir ?", "Qu'est-ce que la photosynthèse ?",
+    "What is a monad?", "Explique-moi comment marche la photosynthèse", "Quelle est la capitale de l'Australie ?",
+    "Wie funktioniert ein Kühlschrank?", "¿Cuál es la diferencia entre RAM y ROM?"]) assert.equal(webNeedRule(q), "no", q);
+});
+
+test("a time cue or a place to go still searches, even in a general-knowledge question", () => {
+  for (const q of ["Quelle est la différence entre l'iPhone 18 et le 17 sorti récemment ?", "What is the latest version of Python?",
+    "What is a good restaurant in Lyon?", "Un bon bar près de chez moi", "Comment fonctionne la bourse aujourd'hui ?"])
+    assert.equal(webNeedRule(q), "yes", q);
 });
