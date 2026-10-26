@@ -11,7 +11,8 @@ import vm from "node:vm";
 import { isHiveyEmbed, applyEmbedClass, modeFromHash, bindWorkspaceHash, EMBED_CLASS } from "../src/lib/embed.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const read = (f) => readFileSync(join(ROOT, f), "utf8");
+// LF everywhere: a Windows checkout has CRLF line ends.
+const read = (f) => readFileSync(join(ROOT, f), "utf8").replace(/\r\n/g, "\n");
 const HTML = read("src/sidebar/sidebar.html");
 const JS = read("src/sidebar/sidebar.js");
 const CSS = read("src/sidebar/sidebar.css");
