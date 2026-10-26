@@ -10,6 +10,12 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Intégration à Hivey Browser** : dans le panneau latéral du navigateur Hivey, la barre des
+  onglets de la sidebar disparaît et la zone de travail prend toute la largeur — c'est la barre
+  verticale du navigateur (« barre Hivey ») qui change d'onglet, sans recharger la page. Ailleurs
+  (Firefox, Chrome, Edge, Brave), rien ne change. Un lien qui se termine par `#mode=agent` (ou
+  `#mode=translate`, `#mode=pdf`…) ouvre directement cet onglet, même s'il est masqué de la barre ;
+  vos réglages de la barre (ordre, onglets masqués) restent tels quels.
 - **Mode Agent avec « Web » : l'agent cherche quand il en a besoin**, au lieu de payer une
   recherche web à chaque étape (OpenRouter). Il dispose d'un outil « recherche web » qu'il appelle
   lui-même : ouvrir une page et en lire le titre coûtait 0,025 $, c'est maintenant 0,0008 $ ; une

@@ -43,11 +43,16 @@ import {
 import { setHTML } from "../lib/dom.js";
 import { initMcp } from "../lib/mcp-ui.js";
 import { startIconizer, stripEmoji } from "../lib/icons.js";
+import { applyEmbedClass, bindWorkspaceHash } from "../lib/embed.js";
 
 const $ = (id) => document.getElementById(id);
 // Are we running as a standalone full-screen TAB (vs the docked sidebar)? The
 // "open in a tab" button appends ?tab=1; we hide that button when already in a tab.
 const IS_TAB = new URLSearchParams(location.search).get("tab") === "1";
+// Embedded in Hivey Browser's side panel (?embed=hivey): the browser's Hivey bar replaces the rail,
+// which is hidden (html.embed-hivey, set by embed-early.js — re-applied here, idempotent) and never
+// peeks or pins in. See src/lib/embed.js.
+const IS_EMBED = applyEmbedClass(document.documentElement, location.search);
 const els = {
   benchmarkView: $("benchmarkView"),
   bvSources: $("bvSources"),
@@ -636,6 +641,10 @@ async function init() {
       }
     } catch (_) {}
   }
+  // #mode=<id> (Hivey Browser's Hivey bar, or any link): select that workspace like a click on its
+  // rail tab — now and on every hashchange. Works for a tab hidden from the rail; the rail's saved
+  // order and visibility are not touched.
+  bindWorkspaceHash(window, RAIL_MODES, (m) => selectWorkspace(m));
   setupPageAwareness();
   autoListConnected();           // refresh available models in the background
   // Run a queued context-menu action whenever it appears — even if the sidebar was
@@ -2394,14 +2403,16 @@ function applyAura() {
 
 let railPeekTimer = null;
 function railPeek(on) {
+  if (IS_EMBED) return; // no rail to show
   if (on) { clearTimeout(railPeekTimer); document.body.classList.add("rail-peek"); }
   else { clearTimeout(railPeekTimer); railPeekTimer = setTimeout(() => document.body.classList.remove("rail-peek"), 220); }
 }
 function applyRailPinned() {
-  document.body.classList.toggle("rail-pinned", !settings.railHidden);
+  document.body.classList.toggle("rail-pinned", !IS_EMBED && !settings.railHidden);
 }
 // Clicking the ☰ menu pins / unpins the rail open.
 function toggleRail() {
+  if (IS_EMBED) return; // no rail — and the saved pin state stays as the user left it
   settings.railHidden = !settings.railHidden;
   applyRailPinned();
   setSettings({ railHidden: settings.railHidden });
@@ -2942,6 +2953,8 @@ function benchmarkView() {
 // rail markup is static, so we reorder/hide the buttons from settings at runtime. `web` and
 // `mcp` can be hidden like any other; if the active tab gets hidden we fall back to Chat.
 const RAIL_MODES = ["chat", "web", "agent", "translate", "improve", "image", "pdf", "security", "wisebase", "benchmark", "mcp"];
+// A rail tab's click path (set in wire(), where the Web panel lives); #mode=<id> selects through it.
+let selectWorkspace = null;
 function railTabEls() { return Array.from(els.rail.querySelectorAll(".railtab:not(.rail-add):not(.rail-ext)")); }
 function applyRailLayout() {
   if (!els.rail) return;
@@ -4625,12 +4638,14 @@ function wire() {
   document.addEventListener("keydown", unlockAudioOnce, true);
   if (els.dictateBtn) els.dictateBtn.addEventListener("click", toggleDictation);
 
+  // What a click on a rail tab does — and what Hivey Browser's #mode=<id> fragment does too.
+  selectWorkspace = (m) => {
+    if (m === "web") { openWebPanel(); return; } // Web is an embedded panel, not a chat workspace
+    closeWebPanel(); // leaving web → reveal the chosen workspace underneath
+    setMode(m);
+  };
   railTabEls().forEach((b) => { // excludes the "+" (.rail-add) — it can't be hidden/selected as a tab
-    b.addEventListener("click", () => {
-      if (b.dataset.mode === "web") { openWebPanel(); return; } // Web is an embedded panel, not a chat workspace
-      closeWebPanel(); // leaving web → reveal the chosen workspace underneath
-      setMode(b.dataset.mode);
-    });
+    b.addEventListener("click", () => selectWorkspace(b.dataset.mode));
     // Right-click a tab → confirm before hiding it (re-show via the rail "+" or Settings).
     b.addEventListener("contextmenu", (e) => {
       e.preventDefault();
