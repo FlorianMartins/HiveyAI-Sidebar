@@ -2705,3 +2705,10 @@ body.rail-pinned.rail-right .top-banner { right: calc(var(--rail-w, 56px) + 8px)
 .priv-dlg-opt.keep b { color: var(--accent); }
 /* « Cloud · clés masquées » under the composer reads in green. */
 .cf-priv.anon-keys { color: #34d399; }
+/* Embedded in Hivey Browser's side panel (?embed=hivey, html.embed-hivey set by embed-early.js): the
+   browser's own Hivey bar switches workspaces, so the rail and what only serves it are gone and the
+   work area keeps the full width (sidebar.js never sets rail-peek / rail-pinned there either). The
+   logo stays, without the pointer that promised a menu. */
+html.embed-hivey #rail, html.embed-hivey #railResize, html.embed-hivey #railAddMenu,
+html.embed-hivey .rail-confirm { display: none !important; }
+html.embed-hivey .menu-btn, html.embed-hivey .brand-word { cursor: default; }
