@@ -54,12 +54,12 @@ export const PROVIDERS = {
     // auto-maintained by scripts/update-models.mjs (daily)
     // <models:openai:start>
     models: [
+      ["gpt-6.1-terra-pro", "GPT-6.1 Terra Pro"],
+      ["gpt-6.1-terra", "GPT-6.1 Terra"],
       ["gpt-6.1-sol-pro", "GPT-6.1 Sol Pro"],
       ["gpt-6.1-sol", "GPT-6.1 Sol"],
       ["gpt-6-luna-pro", "GPT-6 Luna Pro"],
       ["gpt-6-luna", "GPT-6 Luna"],
-      ["gpt-6-sol-pro", "GPT-6 Sol Pro"],
-      ["gpt-6-sol", "GPT-6 Sol"],
       ["gpt-5.4-nano", "GPT-5.4 Nano"],
     ],
     // <models:openai:end>
@@ -122,9 +122,9 @@ export const PROVIDERS = {
       ["anthropic/claude-sonnet-5.5", "Claude Sonnet 5.5 (paid)"],
       ["anthropic/claude-opus-5.5", "Claude Opus 5.5 (paid)"],
       ["anthropic/claude-fable-5.1", "Claude Fable 5.1 (paid)"],
+      ["openai/gpt-6.1-terra-pro", "GPT-6.1 Terra Pro (paid)"],
+      ["openai/gpt-6.1-terra", "GPT-6.1 Terra (paid)"],
       ["openai/gpt-6.1-sol-pro", "GPT-6.1 Sol Pro (paid)"],
-      ["openai/gpt-6.1-sol", "GPT-6.1 Sol (paid)"],
-      ["openai/gpt-6-luna-pro", "GPT-6 Luna Pro (paid)"],
       ["google/gemini-4-argon", "Gemini 4 Argon (paid)"],
       ["google/gemini-3.8-flash", "Gemini 3.8 Flash (paid)"],
       ["google/gemini-3.7-flash", "Gemini 3.7 Flash (paid)"],

@@ -4,7 +4,7 @@
 // ids this add-on can actually select. Each source carries its OWN freshness, because that is
 // the number people forget to ask for: a leaderboard can be maintained daily and still cover
 // nothing released this year.
-export const BENCHMARK_FETCHED_AT = "2026-10-25";
+export const BENCHMARK_FETCHED_AT = "2026-10-27";
 export const BENCHMARK_SOURCES = {
   "webdev": {
     "label": "LMArena WebDev",
@@ -12,7 +12,7 @@ export const BENCHMARK_SOURCES = {
     "home": "https://lmarena.ai/leaderboard/webdev",
     "metric": "elo",
     "about": "People give two anonymous models the same web-app task and vote for the better result. The score is an Elo rating: higher is better, and only the gaps between models mean something.",
-    "matched": 122,
+    "matched": 121,
     "total": 150,
     "newestModelCovered": "2026-10-23"
   },
@@ -873,13 +873,6 @@ export const BENCHMARK_WEB = {
       "as": "GPT-5.1-Codex-Mini"
     }
   },
-  "arcee-ai/trinity-large-thinking": {
-    "webdev": {
-      "elo": 1238,
-      "votes": 1361,
-      "as": "Trinity Large Thinking"
-    }
-  },
   "google/gemini-2.5-pro": {
     "webdev": {
       "elo": 1226,
@@ -1196,6 +1189,10 @@ export const BENCHMARK_UNMATCHED = [
   },
   {
     "source": "webdev",
+    "model": "Trinity Large Thinking"
+  },
+  {
+    "source": "webdev",
     "model": "Mistral Large 3"
   },
   {
@@ -1425,14 +1422,14 @@ export const BENCHMARK_UNMATCHED = [
   {
     "source": "vectara",
     "model": "mistralai/mistral-medium-2508"
-  },
-  {
-    "source": "vectara",
-    "model": "microsoft/Phi-4-mini-instruct"
   }
 ];
 // The newest catalogue models NO published source covers. This is the gap the live test fills.
 export const BENCHMARK_UNCOVERED = [
+  "openai/gpt-6.1-terra-pro",
+  "openai/gpt-6.1-terra-pro:batch",
+  "openai/gpt-6.1-terra",
+  "openai/gpt-6.1-terra:batch",
   "recursive/flint-v1.0:free",
   "deepseek/deepseek-v4.1-flash-1017",
   "elorian/glimpse",
@@ -1468,9 +1465,5 @@ export const BENCHMARK_UNCOVERED = [
   "openai/gpt-6-luna-pro",
   "openai/gpt-6-luna-pro:batch",
   "openai/gpt-6-luna:batch",
-  "openai/gpt-6-sol-pro",
-  "openai/gpt-6-sol-pro:batch",
-  "openai/gpt-6-sol:batch",
-  "anthropic/claude-opus-5.5:batch",
-  "nvidia/switchyard"
+  "openai/gpt-6-sol-pro"
 ];
