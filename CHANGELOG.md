@@ -10,6 +10,9 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Nouveau nom : « Hivey - AI Browser Assistant »** (au lieu de « Hivey AI — IA multi-fournisseurs »),
+  dans Chrome comme dans Firefox. La description courte du Chrome Web Store passe en anglais, comme
+  la fiche, et la description détaillée est réécrite en entier.
 - **Chrome Web Store** : la description courte de l'extension et le texte de la fiche ne listent
   plus de marques de fournisseurs (refus « spam dans les mots clés ») ; ils décrivent ce que fait
   l'extension.
