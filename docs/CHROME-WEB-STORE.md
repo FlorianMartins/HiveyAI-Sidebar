@@ -25,6 +25,15 @@ brouillon**.
 
 **Distribution** : visibilité (Public ou Non répertorié), régions (toutes), et « gratuit ».
 
+## Nom et description courte
+
+Le nom vient du paquet (`name` de `manifest.chrome.json`) : **Hivey - AI Browser Assistant**. La
+description courte aussi (`description`, 132 caractères au plus), en anglais comme la fiche :
+
+```
+AI assistant in your side panel: ask about any page, translate, summarise, create images, and a safe browser agent. Your keys.
+```
+
 ## Description détaillée (fiche, en anglais)
 
 Refusée le 2026-10-27 pour « spam dans les mots clés » (cas *Yellow Argon*) : la liste de
@@ -32,40 +41,204 @@ fournisseurs « Claude, OpenAI, Gemini, Mistral, Groq, DeepSeek, OpenRouter » a
 bourrage de mots clés. Règle : **aucune liste de marques** (ni fournisseurs d'IA, ni services MCP),
 on décrit ce que fait l'extension. Le nom d'OpenRouter n'apparaît qu'une fois, car c'est le bouton
 de connexion de l'extension. Même règle pour les **captures et vignettes** (`docs/store/`) : leurs
-légendes ne citent aucune marque.
+légendes ne citent aucune marque. Limite du champ : 16 000 caractères (celle-ci en fait 5615).
 
 ```
-Hivey AI puts the AI of your choice in Chrome's side panel, next to every page.
+Hivey is an AI assistant that lives in your browser's side panel, right next to the page you are reading. Ask about the page, translate a paragraph, summarise a PDF, let an agent fill in a form for you, or talk to the work tools you use every day — without copying and pasting between tabs, and without handing your data to yet another company.
 
-• Your provider, your key: connect the AI service you already use with your own API key, sign in with OpenRouter to start with free models, or use a model running on your own computer or server.
-• The page in context: ask about the page, a selection, several tabs or a PDF.
-• Translate, summarise, explain or improve a text from a right-click.
-• An agent that acts in the browser on request (open, click, fill in); every sensitive action waits for your approval, and a refusal stops it.
-• Connected services (MCP): connect the work tools you use and talk to them in plain words.
-• Wisebase: your own knowledge base, indexed in the browser, with answers that cite their sources.
-• Images, interactive artifacts, diagrams, model comparison.
+Hivey has no server of its own. You bring the AI: your own API key, a free account, or a model running on your own computer. Your keys, your conversations and your documents stay in your browser.
 
-Privacy first: no server, no telemetry. Your keys and history stay in your browser; your messages only go to the AI service you choose, and sensitive data is anonymised before it leaves for the cloud.
 
-Open source: https://github.com/FlorianMartins/HiveyAI-Sidebar
+★ GET STARTED IN ONE CLICK
+
+• No key yet? Sign in with OpenRouter and start right away with free models.
+• Already pay for an AI service? Paste your API key and use the models you already have.
+• Want nothing to leave your machine? Point Hivey at a model running on your computer or on your own server.
+• Not sure which model to pick? Choose an intention instead — Free, Smart or Pro — and Hivey sends each request to the model best suited to it: a strong reasoning model for a hard problem, a fast one for a quick question, a good coder for code.
+
+
+★ THE PAGE IN CONTEXT
+
+• Ask about the page you are on: type @ to add the current page or any open tab.
+• Select several tabs to compare, cross-check or summarise them together.
+• Capture an area of the screen or pick an element of the page, and ask about it.
+• Open a PDF and ask questions about it, page after page.
+• Right-click any selection, page, link or image: summarise, explain, translate, improve, draft a reply.
+
+
+★ WRITE, TRANSLATE, IMPROVE
+
+• Translate a text, a selection or a whole page into the language of your choice.
+• Rewrite in the right tone: professional email, newsletter, blog post, social post, marketing copy — or simply fix the grammar.
+• A prompt library ready to use (writing, code, marketing, productivity, learning, data), plus your own prompts and favourites.
+• Slash-command skills that turn any model into a specialist for the task at hand.
+
+
+★ AN AGENT THAT ACTS FOR YOU — SAFELY
+
+• Describe a task in plain words: the agent opens pages, reads them, clicks, scrolls and fills in forms in its own tab.
+• You stay in control: sensitive actions (downloading, booking, deleting, signing up) always wait for your approval, and a refusal stops the run.
+• A built-in purchase guard: the agent can fill a cart, but it can never pay or place an order.
+• Change its course at any time by typing while it works; stop it with one click.
+• It searches the web only when the task needs it, so you do not pay for searches it does not use.
+
+
+★ YOUR SERVICES IN THE CONVERSATION (MCP)
+
+• Connect remote services through the Model Context Protocol (MCP) — from a catalogue of more than 70 verified services, or any server address — and ask in plain words: "find the last invoice", "create a task for tomorrow".
+• Secure sign-in in the browser's own window (OAuth 2.1), tokens kept in your browser.
+• Reading happens on its own; anything that sends, creates, changes or deletes asks you first.
+• What a service returns is treated as data, never as orders.
+
+
+★ SEARCH THE WEB WHEN IT HELPS
+
+• With Web on, Hivey decides for each question whether a search is needed — news, prices, opening hours, recent events — and cites its sources. General knowledge, writing or code are answered directly, which keeps costs down.
+• DeepSearch: multi-step research with an adjustable depth, for questions that deserve a real report.
+
+
+★ WISEBASE — YOUR OWN KNOWLEDGE BASE
+
+• Import documents and pages into collections; they are indexed inside your browser and never uploaded.
+• Answers cite the passages they come from.
+
+
+★ MORE TOOLS
+
+• Images: generate images from a description, or from a picture you attach.
+• Interactive artifacts: ask for a small app, a calculator or a game and run it in its own isolated tab.
+• Diagrams drawn in the answer, with zoom.
+• Compare: replay your last request on another model, right in the conversation.
+• Benchmark: test the models you have connected on scored questions (logic, instructions, JSON, tools, code, writing) and get a report.
+• Defensive security workspace: analyse a network capture summarised locally — only a summary, never the content, can reach the model.
+• Watch a page and get a notification when it changes.
+• Dictation with the microphone.
+
+
+★ PRIVACY FIRST
+
+• No server, no analytics, no telemetry, no tracking.
+• Your keys, history, documents and settings stay in your browser; your messages go only to the AI service you chose, when you ask.
+• Before a request leaves for a cloud model, sensitive values — e-mail addresses, phone numbers, IBANs, card numbers, company names, credentials and terms you list — are replaced with markers and put back in the answer on your device.
+• Each request shows its cost, side requests included, so there are no surprises on your bill.
+• Encrypted backup (AES-256) of your settings, to move them to another device yourself.
+
+
+★ MADE TO FEEL RIGHT
+
+• One message box in every workspace, the model and its thinking level one click away.
+• Thinking levels that match what each model actually supports.
+• Context under control: pause, pin or remove any exchange; long conversations are summarised automatically before they overflow.
+• Six themes plus your own colours, configurable keyboard shortcuts.
+• Interface in English, French, Spanish, German, Italian and Portuguese.
+
+
+★ OPEN SOURCE
+
+Hivey is free and open source (MIT licence). Read the code, report an issue or suggest an idea:
+https://github.com/FlorianMartins/HiveyAI-Sidebar
+
+Privacy policy: https://florianmartins.github.io/HiveyAI-Sidebar/privacy-policy.html
 ```
 
 ## Description détaillée (fiche, en français)
 
 ```
-Hivey AI met l'IA de votre choix dans le panneau latéral de Chrome, à côté de chaque page.
+Hivey est un assistant IA qui vit dans le panneau latéral de votre navigateur, juste à côté de la page que vous lisez. Posez une question sur la page, traduisez un paragraphe, résumez un PDF, laissez un agent remplir un formulaire à votre place, ou parlez aux outils de travail que vous utilisez chaque jour — sans copier-coller entre les onglets, et sans confier vos données à une entreprise de plus.
 
-• Votre fournisseur, votre clé : connectez le service d'IA que vous utilisez déjà avec votre propre clé d'API, connectez-vous avec OpenRouter pour démarrer avec des modèles gratuits, ou utilisez un modèle installé sur votre ordinateur ou votre serveur.
-• La page en contexte : posez une question sur la page, une sélection, plusieurs onglets ou un PDF.
-• Traduire, résumer, expliquer ou améliorer un texte d'un clic droit.
-• Un agent qui agit dans le navigateur à votre demande (ouvrir, cliquer, remplir) ; chaque action sensible attend votre accord, et un refus l'arrête.
-• Services connectés (MCP) : connectez vos outils de travail et parlez-leur en langage naturel.
-• Wisebase : votre base de connaissance indexée dans le navigateur, avec des réponses qui citent leurs sources.
-• Images, artifacts interactifs, diagrammes, comparaison de modèles.
+Hivey n'a aucun serveur. C'est vous qui apportez l'IA : votre propre clé d'API, un compte gratuit, ou un modèle qui tourne sur votre ordinateur. Vos clés, vos conversations et vos documents restent dans votre navigateur.
 
-Confidentialité d'abord : aucun serveur, aucune télémétrie. Vos clés et votre historique restent dans votre navigateur ; vos messages ne partent que vers le service d'IA que vous choisissez, et les données sensibles sont anonymisées avant de partir vers le cloud.
 
-Open source : https://github.com/FlorianMartins/HiveyAI-Sidebar
+★ DÉMARRER EN UN CLIC
+
+• Pas encore de clé ? Connectez-vous avec OpenRouter et commencez tout de suite avec des modèles gratuits.
+• Vous payez déjà un service d'IA ? Collez votre clé d'API et utilisez les modèles que vous avez déjà.
+• Vous ne voulez rien laisser sortir de votre machine ? Branchez Hivey sur un modèle installé sur votre ordinateur ou sur votre propre serveur.
+• Vous ne savez pas quel modèle choisir ? Choisissez plutôt une intention — Free, Smart ou Pro — et Hivey envoie chaque demande au modèle qui lui convient le mieux : un modèle de raisonnement pour un problème difficile, un modèle rapide pour une question simple, un bon codeur pour le code.
+
+
+★ LA PAGE EN CONTEXTE
+
+• Posez une question sur la page ouverte : tapez @ pour ajouter la page courante ou n'importe quel onglet.
+• Cochez plusieurs onglets pour les comparer, les recouper ou les résumer ensemble.
+• Capturez une zone de l'écran ou choisissez un élément de la page, et posez votre question.
+• Ouvrez un PDF et interrogez-le, page après page.
+• Clic droit sur une sélection, une page, un lien ou une image : résumer, expliquer, traduire, améliorer, rédiger une réponse.
+
+
+★ ÉCRIRE, TRADUIRE, AMÉLIORER
+
+• Traduisez un texte, une sélection ou une page entière dans la langue de votre choix.
+• Réécrivez sur le bon ton : e-mail professionnel, newsletter, article de blog, publication sur les réseaux, texte marketing — ou corrigez simplement la grammaire.
+• Une bibliothèque de prompts prête à l'emploi (rédaction, code, marketing, productivité, apprentissage, données), plus vos propres prompts et favoris.
+• Des compétences en commandes « / » qui font de n'importe quel modèle un spécialiste de la tâche.
+
+
+★ UN AGENT QUI AGIT POUR VOUS — EN SÉCURITÉ
+
+• Décrivez une tâche en langage courant : l'agent ouvre des pages, les lit, clique, fait défiler et remplit des formulaires dans son propre onglet.
+• Vous gardez la main : les actions sensibles (télécharger, réserver, supprimer, s'inscrire) attendent toujours votre accord, et un refus arrête tout.
+• Un garde-fou anti-achat intégré : l'agent peut remplir un panier, mais il ne peut jamais payer ni passer commande.
+• Corrigez sa trajectoire à tout moment en écrivant pendant qu'il travaille ; arrêtez-le d'un clic.
+• Il ne cherche sur le web que lorsque la tâche le demande : vous ne payez pas de recherches inutiles.
+
+
+★ VOS SERVICES DANS LA CONVERSATION (MCP)
+
+• Connectez des services distants par le Model Context Protocol (MCP) — parmi un catalogue de plus de 70 services vérifiés, ou n'importe quelle adresse de serveur — et demandez en langage courant : « retrouve la dernière facture », « crée une tâche pour demain ».
+• Connexion sécurisée dans la fenêtre du navigateur (OAuth 2.1), jetons gardés dans votre navigateur.
+• La lecture se fait seule ; tout ce qui envoie, crée, modifie ou supprime vous est d'abord demandé.
+• Ce que renvoie un service est traité comme des données, jamais comme des ordres.
+
+
+★ LE WEB QUAND IL SERT
+
+• Avec « Web » activé, Hivey décide pour chaque question si une recherche est utile — actualité, prix, horaires, événements récents — et cite ses sources. La culture générale, la rédaction ou le code reçoivent une réponse directe, ce qui limite les coûts.
+• DeepSearch : une recherche en plusieurs étapes, à la profondeur réglable, pour les questions qui méritent un vrai rapport.
+
+
+★ WISEBASE — VOTRE BASE DE CONNAISSANCE
+
+• Importez documents et pages dans des collections ; ils sont indexés dans votre navigateur et jamais envoyés.
+• Les réponses citent les passages d'où elles viennent.
+
+
+★ ET AUSSI
+
+• Images : créez des images à partir d'une description, ou d'une image que vous joignez.
+• Artifacts interactifs : demandez une petite application, un calculateur ou un jeu, et lancez-le dans son propre onglet isolé.
+• Des diagrammes dessinés dans la réponse, avec zoom.
+• Comparer : rejouez votre dernière demande sur un autre modèle, directement dans la conversation.
+• Benchmark : testez vos modèles connectés sur des questions notées (logique, consignes, JSON, outils, code, rédaction) et obtenez un rapport.
+• Espace sécurité défensive : analysez une capture réseau résumée localement — seul un résumé, jamais le contenu, peut partir vers le modèle.
+• Surveillez une page et soyez prévenu quand elle change.
+• Dictée au micro.
+
+
+★ LA CONFIDENTIALITÉ D'ABORD
+
+• Aucun serveur, aucune statistique, aucune télémétrie, aucun pistage.
+• Vos clés, votre historique, vos documents et vos réglages restent dans votre navigateur ; vos messages ne partent que vers le service d'IA que vous avez choisi, quand vous le demandez.
+• Avant qu'une requête parte vers un modèle cloud, les valeurs sensibles — adresses e-mail, téléphones, IBAN, numéros de carte, noms de sociétés, identifiants et les termes que vous listez — sont remplacées par des marqueurs, puis remises en clair dans la réponse, sur votre appareil.
+• Chaque réponse affiche son coût, requêtes annexes comprises : pas de surprise sur votre facture.
+• Sauvegarde chiffrée (AES-256) de vos réglages, à transférer vous-même vers un autre appareil.
+
+
+★ AGRÉABLE AU QUOTIDIEN
+
+• Une seule zone de saisie dans tous les espaces, le modèle et son niveau de réflexion à un clic.
+• Des niveaux de réflexion fidèles à ce que chaque modèle sait faire.
+• Un contexte maîtrisé : mettez en veille, épinglez ou supprimez n'importe quel échange ; les longues conversations sont résumées automatiquement avant de déborder.
+• Six thèmes plus vos propres couleurs, des raccourcis clavier configurables.
+• Interface en français, anglais, espagnol, allemand, italien et portugais.
+
+
+★ OPEN SOURCE
+
+Hivey est gratuit et open source (licence MIT). Lisez le code, signalez un problème ou proposez une idée :
+https://github.com/FlorianMartins/HiveyAI-Sidebar
+
+Politique de confidentialité : https://florianmartins.github.io/HiveyAI-Sidebar/privacy-policy.html
 ```
 
 # Pratiques en matière de confidentialité

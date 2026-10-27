@@ -1,4 +1,4 @@
-# Hivey AI — IA multi-fournisseurs pour Firefox & Chromium
+# Hivey - AI Browser Assistant — pour Firefox & Chromium
 
 ![version](https://img.shields.io/badge/version-2.201.0-8b5cf6) ![MV3](https://img.shields.io/badge/manifest-v3-blue) ![licence](https://img.shields.io/badge/licence-MIT-green) [![CI](https://github.com/FlorianMartins/HiveyAI-Sidebar/actions/workflows/ci.yml/badge.svg)](https://github.com/FlorianMartins/HiveyAI-Sidebar/actions/workflows/ci.yml)
 

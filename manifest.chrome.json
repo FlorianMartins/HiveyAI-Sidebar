@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Hivey AI — IA multi-fournisseurs",
+  "name": "Hivey - AI Browser Assistant",
   "version": "2.201.0",
-  "description": "Sidebar IA (BYOK) : chat sur la page et les onglets, traduction, résumé, images, agent. Le fournisseur d'IA de votre choix.",
+  "description": "AI assistant in your side panel: ask about any page, translate, summarise, create images, and a safe browser agent. Your keys.",
   "minimum_chrome_version": "119",
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"

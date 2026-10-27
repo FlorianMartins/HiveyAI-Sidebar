@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Hivey AI — IA multi-fournisseurs",
+  "name": "Hivey - AI Browser Assistant",
   "version": "2.201.0",
   "description": "Sidebar IA open-source, multi-fournisseurs (Claude, OpenAI, Gemini, Mistral, OpenRouter, modèles locaux…) : chat sur la page et les onglets, traduction, résumé, images, agent avec garde-fous, services MCP. Clés et historique restent chez vous.",
   "author": "Florian Martins",
