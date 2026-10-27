@@ -10,6 +10,9 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Chrome Web Store** : la description courte de l'extension et le texte de la fiche ne listent
+  plus de marques de fournisseurs (refus « spam dans les mots clés ») ; ils décrivent ce que fait
+  l'extension.
 - **Intégration à Hivey Browser** : dans le panneau latéral du navigateur Hivey, la barre des
   onglets de la sidebar disparaît et la zone de travail prend toute la largeur — c'est la barre
   verticale du navigateur (« barre Hivey ») qui change d'onglet, sans recharger la page. Ailleurs
