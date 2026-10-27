@@ -31,7 +31,8 @@ Refusée le 2026-10-27 pour « spam dans les mots clés » (cas *Yellow Argon*) 
 fournisseurs « Claude, OpenAI, Gemini, Mistral, Groq, DeepSeek, OpenRouter » a été vue comme du
 bourrage de mots clés. Règle : **aucune liste de marques** (ni fournisseurs d'IA, ni services MCP),
 on décrit ce que fait l'extension. Le nom d'OpenRouter n'apparaît qu'une fois, car c'est le bouton
-de connexion de l'extension.
+de connexion de l'extension. Même règle pour les **captures et vignettes** (`docs/store/`) : leurs
+légendes ne citent aucune marque.
 
 ```
 Hivey AI puts the AI of your choice in Chrome's side panel, next to every page.
