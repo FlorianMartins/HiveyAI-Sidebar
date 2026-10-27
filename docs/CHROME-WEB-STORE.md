@@ -27,18 +27,24 @@ brouillon**.
 
 ## Description détaillée (fiche, en anglais)
 
+Refusée le 2026-10-27 pour « spam dans les mots clés » (cas *Yellow Argon*) : la liste de
+fournisseurs « Claude, OpenAI, Gemini, Mistral, Groq, DeepSeek, OpenRouter » a été vue comme du
+bourrage de mots clés. Règle : **aucune liste de marques** (ni fournisseurs d'IA, ni services MCP),
+on décrit ce que fait l'extension. Le nom d'OpenRouter n'apparaît qu'une fois, car c'est le bouton
+de connexion de l'extension.
+
 ```
 Hivey AI puts the AI of your choice in Chrome's side panel, next to every page.
 
-• Your providers, your keys: Claude, OpenAI, Gemini, Mistral, Groq, DeepSeek, OpenRouter (with free models), a local model (Ollama, LM Studio) or your own server.
+• Your provider, your key: connect the AI service you already use with your own API key, sign in with OpenRouter to start with free models, or use a model running on your own computer or server.
 • The page in context: ask about the page, a selection, several tabs or a PDF.
-• Translate, summarise, explain, improve a text — from a right-click.
+• Translate, summarise, explain or improve a text from a right-click.
 • An agent that acts in the browser on request (open, click, fill in); every sensitive action waits for your approval, and a refusal stops it.
-• MCP services: connect Notion, Jira, Linear, Gmail via Zapier… and talk to them in plain words.
+• Connected services (MCP): connect the work tools you use and talk to them in plain words.
 • Wisebase: your own knowledge base, indexed in the browser, with answers that cite their sources.
-• Images, interactive artifacts, diagrams, model comparison, benchmark.
+• Images, interactive artifacts, diagrams, model comparison.
 
-Privacy first: no server, no telemetry. Your keys and history stay in your browser; your messages only go to the AI service you choose, and sensitive data is anonymised before the cloud.
+Privacy first: no server, no telemetry. Your keys and history stay in your browser; your messages only go to the AI service you choose, and sensitive data is anonymised before it leaves for the cloud.
 
 Open source: https://github.com/FlorianMartins/HiveyAI-Sidebar
 ```
@@ -48,15 +54,15 @@ Open source: https://github.com/FlorianMartins/HiveyAI-Sidebar
 ```
 Hivey AI met l'IA de votre choix dans le panneau latéral de Chrome, à côté de chaque page.
 
-• Vos fournisseurs, vos clés : Claude, OpenAI, Gemini, Mistral, Groq, DeepSeek, OpenRouter (avec des modèles gratuits), un modèle local (Ollama, LM Studio) ou votre propre serveur.
+• Votre fournisseur, votre clé : connectez le service d'IA que vous utilisez déjà avec votre propre clé d'API, connectez-vous avec OpenRouter pour démarrer avec des modèles gratuits, ou utilisez un modèle installé sur votre ordinateur ou votre serveur.
 • La page en contexte : posez une question sur la page, une sélection, plusieurs onglets ou un PDF.
-• Traduire, résumer, expliquer, améliorer un texte — d'un clic droit.
+• Traduire, résumer, expliquer ou améliorer un texte d'un clic droit.
 • Un agent qui agit dans le navigateur à votre demande (ouvrir, cliquer, remplir) ; chaque action sensible attend votre accord, et un refus l'arrête.
-• Services MCP : connectez Notion, Jira, Linear, Gmail via Zapier… et parlez-leur en langage naturel.
+• Services connectés (MCP) : connectez vos outils de travail et parlez-leur en langage naturel.
 • Wisebase : votre base de connaissance indexée dans le navigateur, avec des réponses qui citent leurs sources.
-• Images, artifacts interactifs, diagrammes, comparaison de modèles, banc d'essai.
+• Images, artifacts interactifs, diagrammes, comparaison de modèles.
 
-Confidentialité d'abord : aucun serveur, aucune télémétrie. Vos clés et votre historique restent dans votre navigateur ; vos messages ne partent que vers le service d'IA que vous choisissez, et les données sensibles sont anonymisées avant le cloud.
+Confidentialité d'abord : aucun serveur, aucune télémétrie. Vos clés et votre historique restent dans votre navigateur ; vos messages ne partent que vers le service d'IA que vous choisissez, et les données sensibles sont anonymisées avant de partir vers le cloud.
 
 Open source : https://github.com/FlorianMartins/HiveyAI-Sidebar
 ```
