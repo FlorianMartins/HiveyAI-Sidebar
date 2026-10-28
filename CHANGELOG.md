@@ -10,6 +10,11 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Onglet Web (chats web) : il s'affiche dès la première ouverture**, même juste après le
+  démarrage du navigateur. Avant, si le panneau s'ouvrait sur l'onglet Web avant que la sidebar
+  n'ait fini de démarrer, le site refusait de s'afficher : il fallait attendre le message
+  d'erreur et changer de fournisseur. La sidebar prépare maintenant elle-même l'affichage avant
+  de charger le site, et réessaie une fois avant d'afficher l'erreur.
 - **Nouveau nom : « Hivey - AI Browser Assistant »** (au lieu de « Hivey AI — IA multi-fournisseurs »),
   dans Chrome comme dans Firefox. La description courte du Chrome Web Store passe en anglais, comme
   la fiche, et la description détaillée est réécrite en entier.
