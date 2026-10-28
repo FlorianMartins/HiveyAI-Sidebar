@@ -27,6 +27,7 @@ import { executeTool, setAgentTab, clearAgentTab, getAgentTab } from "../lib/too
 import { initBenchmarkView } from "../lib/benchmarkView.js";
 import { buildTurn } from "../lib/untrusted.js";
 import { isWebChatUrl } from "../lib/memory-policy.js";
+import { registerFrameUnblock } from "../lib/frame-unblock.js";
 import { configureMarkdown, renderMarkdown, enhanceArtifacts, setArtifactsLive, setJudge0Config } from "../lib/markdown.js";
 import { PROVIDERS, PROVIDER_ORDER, modelFor, keyFor, connectedProviders, defaultSearchModel, WRITING_PRESETS, WRITING_TONES, HIVEY_VARIANTS, hiveyTiers, hiveyTierFor, hiveyHeuristicKey, hiveyLabelKey, hiveyRouterModel, HIVEY_ROUTER_SYSTEM, isHivey } from "../lib/models.js";
 import { categoryForMode, categoryLabel, modelScore } from "../lib/benchmarks.js";
@@ -4923,11 +4924,24 @@ function wire() {
     if (els.plusMenu && !els.plusMenu.classList.contains("hidden") && !els.plusMenu.contains(e.target) && !els.attachBtn.contains(e.target)) closePlusMenu();
     if (els.ctxPop && !els.ctxPop.classList.contains("hidden") && !els.ctxPop.contains(e.target) && !els.ctxGauge.contains(e.target)) closeCtxPop();
   });
+  // The Web tab's frame rule (lib/frame-unblock.js) is a session rule the background sets when the
+  // browser starts; a panel that opens on the Web tab before that ran (browser start, slower
+  // machines) got the sites' refusal until another provider was picked. The panel sets the rule
+  // too, and loads a provider only once it is in place.
+  let frameRuleReady = null, webRetried = false;
+  function ensureFrameRule(refresh) {
+    if (!frameRuleReady || refresh) frameRuleReady = registerFrameUnblock(browser).catch(() => false);
+    return frameRuleReady;
+  }
+  function setWebSrc(url) {
+    webRetried = false;
+    return ensureFrameRule().then(() => { els.webFrame.src = url; });
+  }
   // + New: on the Web tab it resets the embedded site (fresh session, like the provider's own
   // "new chat"); otherwise it starts a new Hivey conversation.
   els.newChat.addEventListener("click", () => {
     if (!els.webPanel.classList.contains("hidden")) {
-      if (webCurUrl) els.webFrame.src = webCurUrl;
+      if (webCurUrl) setWebSrc(webCurUrl);
       return;
     }
     newChat();
@@ -4988,7 +5002,7 @@ function wire() {
     webCurUrl = opt.dataset.url;
     webCurProv = opt.dataset.prov;
     setWebHistory(opt.dataset.history);
-    els.webFrame.src = opt.dataset.url;
+    setWebSrc(opt.dataset.url);
     if (els.webProvLabel) els.webProvLabel.textContent = opt.textContent.trim();
     // The label is hidden when the sidebar is very narrow — keep the name in the tooltip.
     if (els.webProvBtn) els.webProvBtn.title = opt.textContent.trim();
@@ -5034,7 +5048,17 @@ function wire() {
     const seen = webHello; webHello = false;
     if (seen || !els.webFrame.getAttribute("src")) { hideWebBlocked(); return; }
     clearTimeout(webBlockedTimer);
-    webBlockedTimer = setTimeout(() => { if (!webHello && els.webBlocked) els.webBlocked.classList.remove("hidden"); }, 1500);
+    webBlockedTimer = setTimeout(() => {
+      if (webHello) return;
+      // Refused once: most often the frame rule was not in place yet (the panel opened while the
+      // browser was starting). Set it again and reload the provider once before giving up.
+      if (!webRetried && webCurUrl) {
+        webRetried = true;
+        ensureFrameRule(true).then(() => { els.webFrame.src = webCurUrl; });
+        return;
+      }
+      if (els.webBlocked) els.webBlocked.classList.remove("hidden");
+    }, 1500);
   });
   if (els.webBlockedOpen) els.webBlockedOpen.addEventListener("click", () => {
     let url = webCurUrl;
@@ -5042,9 +5066,9 @@ function wire() {
     try { browser.tabs.create({ url }); } catch (_) {}
     hideWebBlocked();
   });
-  if (els.webHistory) els.webHistory.addEventListener("click", () => { if (webHistoryUrl) els.webFrame.src = webHistoryUrl; });
+  if (els.webHistory) els.webHistory.addEventListener("click", () => { if (webHistoryUrl) setWebSrc(webHistoryUrl); });
   // ✚ New conversation: reload the provider to its fresh-chat URL (works on every provider).
-  if (els.webNewChat) els.webNewChat.addEventListener("click", () => { if (webCurUrl) els.webFrame.src = webCurUrl; });
+  if (els.webNewChat) els.webNewChat.addEventListener("click", () => { if (webCurUrl) setWebSrc(webCurUrl); });
   // ☰ Hivey menu: a vertical dropdown of Hivey's own workspaces — clicking one CLOSES web mode
   // and jumps straight to that tab (so the web panel is one click away from the rest of Hivey).
   function buildHiveyMenu() {
