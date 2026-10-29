@@ -4,7 +4,7 @@
 // ids this add-on can actually select. Each source carries its OWN freshness, because that is
 // the number people forget to ask for: a leaderboard can be maintained daily and still cover
 // nothing released this year.
-export const BENCHMARK_FETCHED_AT = "2026-10-28";
+export const BENCHMARK_FETCHED_AT = "2026-10-29";
 export const BENCHMARK_SOURCES = {
   "webdev": {
     "label": "LMArena WebDev",
@@ -13,7 +13,7 @@ export const BENCHMARK_SOURCES = {
     "metric": "elo",
     "about": "People give two anonymous models the same web-app task and vote for the better result. The score is an Elo rating: higher is better, and only the gaps between models mean something.",
     "matched": 122,
-    "total": 151,
+    "total": 152,
     "newestModelCovered": "2026-10-26"
   },
   "vectara": {
@@ -22,7 +22,7 @@ export const BENCHMARK_SOURCES = {
     "home": "https://github.com/vectara/hallucination-leaderboard",
     "metric": "factual",
     "about": "How often a model invents facts when summarising a document it was given. Lower hallucination is better.",
-    "matched": 58,
+    "matched": 56,
     "total": 111,
     "newestModelCovered": "2026-10-13"
   }
@@ -30,8 +30,8 @@ export const BENCHMARK_SOURCES = {
 export const BENCHMARK_WEB = {
   "anthropic/claude-opus-5.5": {
     "webdev": {
-      "elo": 1809,
-      "votes": 3451,
+      "elo": 1810,
+      "votes": 3473,
       "as": "Claude Opus 5.5 (Max)"
     },
     "vectara": {
@@ -43,8 +43,8 @@ export const BENCHMARK_WEB = {
   },
   "openai/gpt-6-astra": {
     "webdev": {
-      "elo": 1774,
-      "votes": 7185,
+      "elo": 1773,
+      "votes": 7210,
       "as": "GPT-6 Astra (Max)"
     },
     "vectara": {
@@ -56,43 +56,43 @@ export const BENCHMARK_WEB = {
   },
   "anthropic/claude-sonnet-5.5": {
     "webdev": {
-      "elo": 1769,
-      "votes": 4435,
+      "elo": 1770,
+      "votes": 4469,
       "as": "Claude Sonnet 5.5 (xHigh)"
     }
   },
   "openai/gpt-6.1-sol": {
     "webdev": {
-      "elo": 1752,
-      "votes": 4073,
+      "elo": 1751,
+      "votes": 4092,
       "as": "GPT-6.1 Sol (Max)"
     }
   },
   "anthropic/claude-fable-5.1": {
     "webdev": {
-      "elo": 1745,
-      "votes": 8598,
+      "elo": 1746,
+      "votes": 8614,
       "as": "Claude Fable 5.1 (Max)"
     }
   },
   "moonshotai/kimi-k3.1-pro": {
     "webdev": {
       "elo": 1695,
-      "votes": 2685,
+      "votes": 2671,
       "as": "Kimi K3.1 Pro (Max)"
     }
   },
   "anthropic/claude-opus-5": {
     "webdev": {
-      "elo": 1690,
-      "votes": 19592,
+      "elo": 1691,
+      "votes": 19641,
       "as": "Claude Opus 5 (Max)"
     }
   },
   "google/gemini-4-argon": {
     "webdev": {
-      "elo": 1680,
-      "votes": 3418,
+      "elo": 1679,
+      "votes": 3437,
       "as": "Gemini 4 Argon (High)"
     },
     "vectara": {
@@ -104,8 +104,8 @@ export const BENCHMARK_WEB = {
   },
   "openai/gpt-6-sol": {
     "webdev": {
-      "elo": 1677,
-      "votes": 5681,
+      "elo": 1678,
+      "votes": 5714,
       "as": "GPT-6 Sol (Max)"
     },
     "vectara": {
@@ -117,15 +117,15 @@ export const BENCHMARK_WEB = {
   },
   "openai/gpt-6.1-terra": {
     "webdev": {
-      "elo": 1671,
-      "votes": 1615,
+      "elo": 1673,
+      "votes": 1821,
       "as": "GPT-6.1 Terra (Max)"
     }
   },
   "deepseek/deepseek-v4.1-flash": {
     "webdev": {
-      "elo": 1666,
-      "votes": 7489,
+      "elo": 1665,
+      "votes": 7842,
       "as": "DeepSeek-V4.1-Flash-20261017 (Max)"
     },
     "vectara": {
@@ -138,77 +138,77 @@ export const BENCHMARK_WEB = {
   "moonshotai/kimi-k3": {
     "webdev": {
       "elo": 1656,
-      "votes": 21220,
+      "votes": 21281,
       "as": "Kimi K3 (Max)"
     }
   },
   "meta/muse-spark-1.3": {
     "webdev": {
       "elo": 1656,
-      "votes": 10723,
+      "votes": 10796,
       "as": "Muse Spark 1.3 (Max)"
     }
   },
   "meta/muse-wonder": {
     "webdev": {
       "elo": 1652,
-      "votes": 3672,
+      "votes": 3724,
       "as": "Muse Wonder (Max)"
-    }
-  },
-  "xiaomi/mimo-v2.6-flash": {
-    "webdev": {
-      "elo": 1638,
-      "votes": 7004,
-      "as": "MiMo-V2.6-Flash"
     }
   },
   "x-ai/grok-4.7": {
     "webdev": {
       "elo": 1637,
-      "votes": 6529,
+      "votes": 6572,
       "as": "Grok 4.7 (xHigh)"
+    }
+  },
+  "xiaomi/mimo-v2.6-flash": {
+    "webdev": {
+      "elo": 1637,
+      "votes": 7068,
+      "as": "MiMo-V2.6-Flash"
     }
   },
   "tencent/hy4-preview": {
     "webdev": {
       "elo": 1631,
-      "votes": 4764,
+      "votes": 4765,
       "as": "Hy4 preview"
     }
   },
   "xiaomi/mimo-v2.6-pro": {
     "webdev": {
       "elo": 1625,
-      "votes": 6769,
+      "votes": 6820,
       "as": "MiMo-V2.6-Pro"
     }
   },
   "anthropic/claude-fable-5": {
     "webdev": {
       "elo": 1624,
-      "votes": 16908,
+      "votes": 16951,
       "as": "Claude Fable 5 (High)"
     }
   },
   "z-ai/glm-5.3": {
     "webdev": {
       "elo": 1623,
-      "votes": 11106,
+      "votes": 11150,
       "as": "GLM-5.3 (Max)"
     }
   },
   "x-ai/grok-4.6": {
     "webdev": {
-      "elo": 1617,
-      "votes": 11908,
+      "elo": 1616,
+      "votes": 11966,
       "as": "Grok 4.6 (High)"
     }
   },
   "openai/gpt-5.6-sol": {
     "webdev": {
       "elo": 1616,
-      "votes": 18866,
+      "votes": 18884,
       "as": "GPT-5.6 Sol (xHigh, Codex Harness)"
     },
     "vectara": {
@@ -221,49 +221,56 @@ export const BENCHMARK_WEB = {
   "z-ai/glm-5.3-flash": {
     "webdev": {
       "elo": 1607,
-      "votes": 21491,
+      "votes": 21587,
       "as": "GLM-5.3-Flash"
     }
   },
   "z-ai/glm-5.2": {
     "webdev": {
       "elo": 1606,
-      "votes": 17792,
+      "votes": 17817,
       "as": "GLM-5.2 (Max)"
     }
   },
   "qwen/qwen3.8-27b": {
     "webdev": {
       "elo": 1590,
-      "votes": 18649,
+      "votes": 18752,
       "as": "Qwen3.8-27B"
     }
   },
   "google/gemini-3.7-flash": {
     "webdev": {
-      "elo": 1589,
-      "votes": 14421,
+      "elo": 1590,
+      "votes": 14473,
       "as": "Gemini 3.7 Flash (High)"
     }
   },
   "anthropic/claude-haiku-5.5": {
     "webdev": {
-      "elo": 1588,
-      "votes": 4702,
+      "elo": 1589,
+      "votes": 4758,
       "as": "Claude Haiku 5.5 (High)"
     }
   },
   "google/gemini-3.8-flash": {
     "webdev": {
-      "elo": 1584,
-      "votes": 12290,
+      "elo": 1583,
+      "votes": 12342,
       "as": "Gemini 3.8 Flash (High)"
+    }
+  },
+  "minimax/minimax-m3.1-flash": {
+    "webdev": {
+      "elo": 1582,
+      "votes": 3062,
+      "as": "MiniMax-M3.1-Flash"
     }
   },
   "deepseek/deepseek-v4-pro": {
     "webdev": {
       "elo": 1582,
-      "votes": 4677,
+      "votes": 4676,
       "as": "DeepSeek-V4-Pro (High, 20260813)"
     },
     "vectara": {
@@ -276,35 +283,28 @@ export const BENCHMARK_WEB = {
   "deepseek/deepseek-v4-flash": {
     "webdev": {
       "elo": 1582,
-      "votes": 4926,
+      "votes": 4927,
       "as": "DeepSeek-V4-Flash (High)"
-    }
-  },
-  "minimax/minimax-m3.1-flash": {
-    "webdev": {
-      "elo": 1581,
-      "votes": 3018,
-      "as": "MiniMax-M3.1-Flash"
     }
   },
   "openai/gpt-6-luna": {
     "webdev": {
-      "elo": 1580,
-      "votes": 27608,
+      "elo": 1579,
+      "votes": 27808,
       "as": "GPT-6 Luna (Max)"
     }
   },
   "stepfun/step-5-preview": {
     "webdev": {
-      "elo": 1570,
-      "votes": 5920,
+      "elo": 1571,
+      "votes": 5966,
       "as": "Step 5 Preview (High)"
     }
   },
   "anthropic/claude-opus-4.7": {
     "webdev": {
-      "elo": 1557,
-      "votes": 17840,
+      "elo": 1558,
+      "votes": 17859,
       "as": "Claude Opus 4.7 (High)"
     },
     "vectara": {
@@ -317,21 +317,21 @@ export const BENCHMARK_WEB = {
   "anthropic/claude-opus-4.8": {
     "webdev": {
       "elo": 1556,
-      "votes": 18403,
+      "votes": 18408,
       "as": "Claude Opus 4.8 (High)"
     }
   },
   "x-ai/grok-4.5": {
     "webdev": {
       "elo": 1553,
-      "votes": 11020,
+      "votes": 11018,
       "as": "Grok 4.5"
     }
   },
   "anthropic/claude-opus-4.6": {
     "webdev": {
       "elo": 1546,
-      "votes": 19303,
+      "votes": 19316,
       "as": "Claude Opus 4.6 (High)"
     },
     "vectara": {
@@ -351,14 +351,14 @@ export const BENCHMARK_WEB = {
   "anthropic/claude-sonnet-5": {
     "webdev": {
       "elo": 1540,
-      "votes": 16810,
+      "votes": 16832,
       "as": "Claude Sonnet 5 (High)"
     }
   },
   "google/gemini-3.6-flash": {
     "webdev": {
-      "elo": 1537,
-      "votes": 8727,
+      "elo": 1538,
+      "votes": 8722,
       "as": "Gemini 3.6 Flash (High)"
     }
   },
@@ -372,14 +372,14 @@ export const BENCHMARK_WEB = {
   "meta/muse-spark-open": {
     "webdev": {
       "elo": 1526,
-      "votes": 1708,
+      "votes": 1721,
       "as": "Muse Spark Open (Max)"
     }
   },
   "anthropic/claude-sonnet-4.6": {
     "webdev": {
       "elo": 1523,
-      "votes": 22727,
+      "votes": 22733,
       "as": "Claude Sonnet 4.6"
     },
     "vectara": {
@@ -392,28 +392,28 @@ export const BENCHMARK_WEB = {
   "openai/gpt-5.6-terra": {
     "webdev": {
       "elo": 1520,
-      "votes": 15329,
+      "votes": 15388,
       "as": "GPT-5.6 Terra (xHigh, Codex Harness)"
     }
   },
   "openai/gpt-5.6-luna": {
     "webdev": {
       "elo": 1519,
-      "votes": 12526,
+      "votes": 12522,
       "as": "GPT-5.6 Luna (xHigh, Codex Harness)"
     }
   },
   "qwen/qwen3.7-max": {
     "webdev": {
       "elo": 1515,
-      "votes": 8847,
+      "votes": 8855,
       "as": "Qwen3.7-Max (20260517)"
     }
   },
   "openai/gpt-5.5": {
     "webdev": {
       "elo": 1512,
-      "votes": 15540,
+      "votes": 15553,
       "as": "GPT-5.5 (xHigh, Codex Harness)"
     },
     "vectara": {
@@ -426,7 +426,7 @@ export const BENCHMARK_WEB = {
   "moonshotai/kimi-k2.6": {
     "webdev": {
       "elo": 1509,
-      "votes": 10114,
+      "votes": 10119,
       "as": "Kimi K2.6"
     },
     "vectara": {
@@ -445,8 +445,8 @@ export const BENCHMARK_WEB = {
   },
   "tencent/hy3": {
     "webdev": {
-      "elo": 1506,
-      "votes": 6821,
+      "elo": 1505,
+      "votes": 6844,
       "as": "Hy3"
     }
   },
@@ -460,7 +460,7 @@ export const BENCHMARK_WEB = {
   "anthropic/claude-opus-4.5": {
     "webdev": {
       "elo": 1494,
-      "votes": 10983,
+      "votes": 10981,
       "as": "Claude Opus 4.5 (High, 32K, 20251101)"
     },
     "vectara": {
@@ -473,28 +473,28 @@ export const BENCHMARK_WEB = {
   "minimax/minimax-m3": {
     "webdev": {
       "elo": 1483,
-      "votes": 20981,
+      "votes": 21032,
       "as": "MiniMax-M3"
     }
   },
   "xiaomi/mimo-v2.5-pro": {
     "webdev": {
       "elo": 1480,
-      "votes": 22601,
+      "votes": 22604,
       "as": "MiMo-V2.5-Pro"
     }
   },
   "moonshotai/kimi-k2.7-code": {
     "webdev": {
       "elo": 1474,
-      "votes": 4953,
+      "votes": 4950,
       "as": "Kimi K2.7 Code"
     }
   },
   "openai/gpt-5.4": {
     "webdev": {
       "elo": 1463,
-      "votes": 1342,
+      "votes": 1345,
       "as": "GPT-5.4 (High, Codex Harness)"
     },
     "vectara": {
@@ -507,14 +507,14 @@ export const BENCHMARK_WEB = {
   "qwen/qwen3.6-plus": {
     "webdev": {
       "elo": 1462,
-      "votes": 18510,
+      "votes": 18511,
       "as": "Qwen3.6-Plus"
     }
   },
   "google/gemini-3.1-pro-preview": {
     "webdev": {
       "elo": 1447,
-      "votes": 24120,
+      "votes": 24129,
       "as": "Gemini 3.1 Pro Preview"
     },
     "vectara": {
@@ -527,7 +527,7 @@ export const BENCHMARK_WEB = {
   "google/gemini-3-flash-preview": {
     "webdev": {
       "elo": 1440,
-      "votes": 10850,
+      "votes": 10845,
       "as": "Gemini 3 Flash"
     },
     "vectara": {
@@ -540,14 +540,14 @@ export const BENCHMARK_WEB = {
   "xiaomi/mimo-v2.5": {
     "webdev": {
       "elo": 1438,
-      "votes": 14832,
+      "votes": 14837,
       "as": "MiMo-V2.5"
     }
   },
   "moonshotai/kimi-k2.5": {
     "webdev": {
-      "elo": 1437,
-      "votes": 20012,
+      "elo": 1436,
+      "votes": 20008,
       "as": "Kimi K2.5 (Thinking)"
     },
     "vectara": {
@@ -560,14 +560,14 @@ export const BENCHMARK_WEB = {
   "reflection/beam-1.0-501b-a23b": {
     "webdev": {
       "elo": 1436,
-      "votes": 2926,
+      "votes": 2932,
       "as": "Beam 1.0 501B A23B"
     }
   },
   "z-ai/glm-5": {
     "webdev": {
       "elo": 1436,
-      "votes": 7467,
+      "votes": 7465,
       "as": "GLM-5"
     },
     "vectara": {
@@ -593,14 +593,14 @@ export const BENCHMARK_WEB = {
   },
   "openai/gpt-5": {
     "webdev": {
-      "elo": 1418,
+      "elo": 1417,
       "votes": 3089,
       "as": "GPT-5 (Medium)"
     }
   },
   "openai/gpt-5.2": {
     "webdev": {
-      "elo": 1417,
+      "elo": 1416,
       "votes": 1082,
       "as": "GPT-5.2"
     }
@@ -608,14 +608,14 @@ export const BENCHMARK_WEB = {
   "thinkingmachines/inkling": {
     "webdev": {
       "elo": 1415,
-      "votes": 17042,
+      "votes": 17073,
       "as": "Inkling"
     }
   },
   "thinkingmachines/inkling-small": {
     "webdev": {
       "elo": 1409,
-      "votes": 5296,
+      "votes": 5295,
       "as": "Inkling-Small"
     }
   },
@@ -629,28 +629,28 @@ export const BENCHMARK_WEB = {
   "z-ai/glm-5v-turbo": {
     "webdev": {
       "elo": 1401,
-      "votes": 2395,
+      "votes": 2394,
       "as": "GLM-5V-Turbo"
     }
   },
   "qwen/qwen3.5-397b-a17b": {
     "webdev": {
       "elo": 1400,
-      "votes": 21098,
+      "votes": 21096,
       "as": "Qwen3.5-397B-A17B"
     }
   },
   "minimax/minimax-m2.7": {
     "webdev": {
       "elo": 1398,
-      "votes": 15900,
+      "votes": 15890,
       "as": "MiniMax-M2.7"
     }
   },
   "openai/gpt-5.4-mini": {
     "webdev": {
       "elo": 1397,
-      "votes": 11900,
+      "votes": 11893,
       "as": "GPT-5.4 mini (High)"
     },
     "vectara": {
@@ -663,14 +663,14 @@ export const BENCHMARK_WEB = {
   "openai/gpt-5.1": {
     "webdev": {
       "elo": 1396,
-      "votes": 4893,
+      "votes": 4891,
       "as": "GPT-5.1 (Medium)"
     }
   },
   "anthropic/claude-sonnet-4.5": {
     "webdev": {
       "elo": 1394,
-      "votes": 13215,
+      "votes": 13213,
       "as": "Claude Sonnet 4.5 (High, 32K, 20250929)"
     },
     "vectara": {
@@ -682,8 +682,8 @@ export const BENCHMARK_WEB = {
   },
   "anthropic/claude-opus-4.1": {
     "webdev": {
-      "elo": 1391,
-      "votes": 6906,
+      "elo": 1390,
+      "votes": 6904,
       "as": "Claude Opus 4.1 (20250805)"
     },
     "vectara": {
@@ -696,28 +696,28 @@ export const BENCHMARK_WEB = {
   "minimax/minimax-m2.5": {
     "webdev": {
       "elo": 1386,
-      "votes": 7607,
+      "votes": 7594,
       "as": "MiniMax-M2.5"
     }
   },
   "minimax/minimax-m2.1": {
     "webdev": {
       "elo": 1384,
-      "votes": 7575,
+      "votes": 7573,
       "as": "MiniMax-M2.1 Preview"
     }
   },
   "upstage/solar-pro4": {
     "webdev": {
       "elo": 1370,
-      "votes": 4632,
+      "votes": 4630,
       "as": "Solar Pro 4"
     }
   },
   "google/gemma-4-31b-it": {
     "webdev": {
       "elo": 1369,
-      "votes": 15456,
+      "votes": 15489,
       "as": "Gemma 4 31B"
     },
     "vectara": {
@@ -730,7 +730,7 @@ export const BENCHMARK_WEB = {
   "deepseek/deepseek-v3.2": {
     "webdev": {
       "elo": 1363,
-      "votes": 6870,
+      "votes": 6860,
       "as": "DeepSeek-V3.2 (Thinking)"
     },
     "vectara": {
@@ -743,7 +743,7 @@ export const BENCHMARK_WEB = {
   "qwen/qwen3.5-122b-a10b": {
     "webdev": {
       "elo": 1360,
-      "votes": 8218,
+      "votes": 8210,
       "as": "Qwen3.5-122B-A10B"
     },
     "vectara": {
@@ -756,7 +756,7 @@ export const BENCHMARK_WEB = {
   "google/gemma-4-26b-a4b-it": {
     "webdev": {
       "elo": 1359,
-      "votes": 1495,
+      "votes": 1494,
       "as": "Gemma 4 26B A4B"
     },
     "vectara": {
@@ -768,8 +768,8 @@ export const BENCHMARK_WEB = {
   },
   "qwen/qwen3.5-27b": {
     "webdev": {
-      "elo": 1359,
-      "votes": 7766,
+      "elo": 1358,
+      "votes": 7767,
       "as": "Qwen3.5-27B"
     },
     "vectara": {
@@ -782,7 +782,7 @@ export const BENCHMARK_WEB = {
   "x-ai/grok-4.3": {
     "webdev": {
       "elo": 1358,
-      "votes": 14896,
+      "votes": 14906,
       "as": "Grok 4.3"
     }
   },
@@ -809,14 +809,14 @@ export const BENCHMARK_WEB = {
   "openai/gpt-5.1-codex": {
     "webdev": {
       "elo": 1337,
-      "votes": 4985,
+      "votes": 4981,
       "as": "GPT-5.1-Codex"
     }
   },
   "anthropic/claude-haiku-4.5": {
     "webdev": {
       "elo": 1330,
-      "votes": 28966,
+      "votes": 28961,
       "as": "Claude Haiku 4.5 (20251001)"
     },
     "vectara": {
@@ -829,28 +829,28 @@ export const BENCHMARK_WEB = {
   "moonshotai/kimi-k2-thinking": {
     "webdev": {
       "elo": 1322,
-      "votes": 13065,
+      "votes": 13045,
       "as": "Kimi K2 Thinking Turbo"
     }
   },
   "minimax/minimax-m2": {
     "webdev": {
       "elo": 1297,
-      "votes": 6686,
+      "votes": 6683,
       "as": "MiniMax-M2"
     }
   },
   "mistralai/mistral-medium-3-5": {
     "webdev": {
       "elo": 1264,
-      "votes": 2294,
+      "votes": 2299,
       "as": "Mistral Medium 3.5"
     }
   },
   "google/gemini-3.1-flash-lite": {
     "webdev": {
       "elo": 1256,
-      "votes": 14354,
+      "votes": 14350,
       "as": "Gemini 3.1 Flash-Lite Preview"
     },
     "vectara": {
@@ -883,7 +883,7 @@ export const BENCHMARK_WEB = {
   "google/gemini-2.5-pro": {
     "webdev": {
       "elo": 1226,
-      "votes": 2723,
+      "votes": 2724,
       "as": "Gemini 2.5 Pro"
     },
     "vectara": {
@@ -1018,14 +1018,6 @@ export const BENCHMARK_WEB = {
       "as": "openai/gpt-5.4-pro-2026-03-05"
     }
   },
-  "qwen/qwen3-next-80b-a3b-thinking": {
-    "vectara": {
-      "hallucination": 9.3,
-      "factual": 90.7,
-      "answerRate": 94.4,
-      "as": "qwen/qwen3-next-80b-a3b-thinking"
-    }
-  },
   "z-ai/glm-4.7-flash": {
     "vectara": {
       "hallucination": 9.3,
@@ -1090,14 +1082,6 @@ export const BENCHMARK_WEB = {
       "as": "moonshotai/Kimi-K2-Instruct-0905"
     }
   },
-  "openai/o4-mini-high": {
-    "vectara": {
-      "hallucination": 18.6,
-      "factual": 81.4,
-      "answerRate": 99.2,
-      "as": "openai/o4-mini-high-2025-04-16"
-    }
-  },
   "openai/o3-pro": {
     "vectara": {
       "hallucination": 23.3,
@@ -1110,6 +1094,10 @@ export const BENCHMARK_WEB = {
 // Leaderboard rows whose model could not be joined to a live OpenRouter id — reported rather
 // than force-matched, because attaching one model's score to another is worse than a gap.
 export const BENCHMARK_UNMATCHED = [
+  {
+    "source": "webdev",
+    "model": "Gemini 4 Carbon (High)"
+  },
   {
     "source": "webdev",
     "model": "Muse Wonder Full (Max)"
@@ -1136,11 +1124,11 @@ export const BENCHMARK_UNMATCHED = [
   },
   {
     "source": "webdev",
-    "model": "Qwen3.6-Max-Preview"
+    "model": "Spark-X2.6"
   },
   {
     "source": "webdev",
-    "model": "Spark-X2.6"
+    "model": "Qwen3.6-Max-Preview"
   },
   {
     "source": "webdev",
@@ -1324,6 +1312,10 @@ export const BENCHMARK_UNMATCHED = [
   },
   {
     "source": "vectara",
+    "model": "qwen/qwen3-next-80b-a3b-thinking"
+  },
+  {
+    "source": "vectara",
     "model": "CohereLabs/c4ai-aya-expanse-8b"
   },
   {
@@ -1408,6 +1400,10 @@ export const BENCHMARK_UNMATCHED = [
   },
   {
     "source": "vectara",
+    "model": "openai/o4-mini-high-2025-04-16"
+  },
+  {
+    "source": "vectara",
     "model": "xai-org/grok-4-1-fast-reasoning"
   },
   {
@@ -1417,22 +1413,11 @@ export const BENCHMARK_UNMATCHED = [
   {
     "source": "vectara",
     "model": "xai-org/grok-4-fast-non-reasoning"
-  },
-  {
-    "source": "vectara",
-    "model": "xai-org/grok-4-fast-reasoning"
-  },
-  {
-    "source": "vectara",
-    "model": "mistralai/ministral-3-8b-2512"
-  },
-  {
-    "source": "vectara",
-    "model": "mistralai/mistral-medium-2508"
   }
 ];
 // The newest catalogue models NO published source covers. This is the gap the live test fills.
 export const BENCHMARK_UNCOVERED = [
+  "particle-ai/particle-1",
   "openai/gpt-6.1-terra-pro",
   "openai/gpt-6.1-terra-pro:batch",
   "openai/gpt-6.1-terra:batch",
@@ -1471,6 +1456,5 @@ export const BENCHMARK_UNCOVERED = [
   "cohere/command-a-plus",
   "openai/gpt-6-luna-pro",
   "openai/gpt-6-luna-pro:batch",
-  "openai/gpt-6-luna:batch",
-  "openai/gpt-6-sol-pro"
+  "openai/gpt-6-luna:batch"
 ];
