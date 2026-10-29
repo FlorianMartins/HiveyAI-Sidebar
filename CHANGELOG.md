@@ -10,6 +10,19 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Les questions de suivi cherchent aussi sur le web** : après une réponse tirée du web (« tier list
+  des heals d'Overwatch 2 actuellement »), « Et pour les tanks ? » était jugé seul, sans la question
+  d'avant, et recevait une réponse de mémoire. Une suite d'une recherche cherche à nouveau, et le
+  doute est tranché avec la question précédente sous les yeux.
+- **Plus d'erreur « thinking blocks … cannot be modified »** avec Claude : si Claude refuse le
+  raisonnement de la réponse précédente, la requête repart aussitôt sans lui. Et ce raisonnement
+  n'est plus modifié par la remise en clair des données anonymisées.
+- **Artifacts désactivés par défaut** (les modèles affichent déjà un aperçu) ; ils se réactivent dans
+  les options. Les options sont dans l'ordre Artifacts, Vérifier, DeepSearch, Web.
+- **Les boutons sous les réponses de l'IA** (comparer, copier, copier en Markdown…) restent affichés,
+  au lieu d'apparaître au survol.
+- **Onglet Agent** : les actions gardent leur emoji (📄 Lecture de la page, 🌐 Navigation…), comme
+  les autres.
 - **Onglet Web (chats web) : il s'affiche dès la première ouverture**, même juste après le
   démarrage du navigateur. Avant, si le panneau s'ouvrait sur l'onglet Web avant que la sidebar
   n'ait fini de démarrer, le site refusait de s'afficher : il fallait attendre le message

@@ -411,7 +411,7 @@ function seedToggles() {
   const src = initialToggles || settings || {};
   return {
     thinking: thinkLevelNorm(src.thinkLevel != null ? src.thinkLevel : src.thinking),
-    artifacts: src.artifacts !== false,
+    artifacts: src.artifacts === true,
     webSearch: !!src.webSearch,
     deepSearch: !!src.deepSearch,
     includePageContext: src.includePageContext !== false,
@@ -547,7 +547,7 @@ async function init() {
   // workspace tab seeds from the same baseline and stays independent thereafter.
   initialToggles = {
     thinking: thinkLevelNorm(settings.thinkLevel != null ? settings.thinkLevel : settings.thinking),
-    artifacts: settings.artifacts !== false,
+    artifacts: settings.artifacts === true,
     webSearch: !!settings.webSearch,
     includePageContext: settings.includePageContext !== false,
   };
@@ -569,7 +569,7 @@ async function init() {
   populateImprovePresets();
   populateImproveTones();
   setThink(els.thinking, thinkLevelNorm(settings.thinkLevel != null ? settings.thinkLevel : settings.thinking));
-  els.artifactMode.checked = settings.artifacts !== false; // default ON
+  els.artifactMode.checked = settings.artifacts === true; // default OFF
   setArtifactsLive(els.artifactMode.checked);
   els.webSearch.checked = settings.webSearch;
   els.deepSearch.checked = settings.deepSearch;
@@ -5392,7 +5392,7 @@ function applyPrefChanges(changes) {
     if (k === "verifyAnswers" && els.verifyAnswers) els.verifyAnswers.checked = settings.verifyAnswers === true;
     // The composer chips are per tab: a switch flipped in the settings applies to the tab on screen.
     if (k === "artifacts" && els.artifactMode) {
-      els.artifactMode.checked = settings.artifacts !== false;
+      els.artifactMode.checked = settings.artifacts === true;
       if (CHAT_MODES.includes(mode)) getSession(mode).toggles.artifacts = els.artifactMode.checked;
       setArtifactsLive(els.artifactMode.checked);
     }
@@ -7182,6 +7182,17 @@ function sideTaskSel(sel) {
   const mine = weight(priceOf(sel.providerId, sel.modelId)), theirs = weight(priceOf(cheap.providerId, cheap.modelId));
   return mine && theirs && theirs < mine ? cheap : sel;
 }
+/** The exchange before the request just added: `{ question, searched }`, or null for a first request. */
+function previousExchange(transcript) {
+  const list = transcript || [];
+  let i = list.length - 1;
+  while (i >= 0 && list[i] && list[i].role === "user") i--; // the request itself
+  if (i < 0 || !list[i] || list[i].role !== "assistant") return null;
+  const answer = list[i];
+  let j = i - 1;
+  while (j >= 0 && list[j] && list[j].role !== "user") j--;
+  return { question: j >= 0 && list[j] ? String(list[j].text || "") : "", searched: !!answer.web };
+}
 /** Adds a side request's cost to the answer it served; true when the answer's cost changed. */
 function addSideCost(entry, c) {
   if (!entry || !entry.cost || entry.cost.free || !c || c.free || !(c.usd > 0)) return false;
@@ -7196,13 +7207,17 @@ function addSideCost(entry, c) {
  * short yes/no question to a cheap model, `sideTaskSel`, thinking off). If that question fails,
  * the search runs: the user asked for the web.
  */
-async function decideWeb(text, sel) {
+async function decideWeb(text, sel, before) {
   const rule = webNeedRule(typeof text === "string" ? text : JSON.stringify(text || ""));
   if (rule !== "maybe") return { search: rule === "yes", by: "rule" };
+  // « Et pour les tanks ? » after a tier list the web answered: the follow-up of a search is about the
+  // same changing facts. It used to be asked alone, the yes/no model said no, and the answer came from
+  // memory.
+  if (before && before.searched) return { search: true, by: "rule" };
   try {
     const use = sideTaskSel(sel);
     const provider = makeProvider({ ...settings, provider: use.providerId, models: { ...settings.models, [use.providerId]: use.modelId } }, {});
-    const { system, history } = webNeedMessages(text);
+    const { system, history } = webNeedMessages(text, before && before.question);
     const r = await Promise.race([
       provider.runTurn({ system, history, tools: [], chore: true }),
       new Promise((_, no) => setTimeout(() => no(new Error("timeout")), 8000)),
@@ -8656,7 +8671,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   // Translating or improving a text works on that text only: « traduis "les élections de 2026" »
   // paid a search because the text named a year.
   const webDecision = !forceWeb && els.webSearch.checked && !agentMode && !mcpMode && runMode !== "translate" && runMode !== "improve"
-    ? await decideWeb(displayText || modelContent, sel) : null;
+    ? await decideWeb(displayText || modelContent, sel, previousExchange(boundTranscript)) : null;
   const wantWeb = forceWeb || (agentMode ? els.webSearch.checked : !!(webDecision && webDecision.search));
 
   // Web-search routing: send the turn to a dedicated web-capable model (Perplexity
@@ -8961,7 +8976,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
       const usage = turnResult && turnResult.usage;
       const cost = costOf(turnSel.providerId, turnSel.modelId, usage, settings);
       // The yes/no web question asked for this answer is part of what it cost.
-      const entry = { role: "assistant", text: sink.getRaw(), badge: badge || undefined, turnId, ...(usage ? { usage } : {}), ...(cost ? { cost } : {}) };
+      const entry = { role: "assistant", text: sink.getRaw(), badge: badge || undefined, turnId, ...(usage ? { usage } : {}), ...(cost ? { cost } : {}), ...(wantWeb ? { web: true } : {}) };
       addSideCost(entry, webDecision && webDecision.cost);
       for (const c of sideCosts) addSideCost(entry, c); // the agent's own web searches
       boundTranscript.push(entry);

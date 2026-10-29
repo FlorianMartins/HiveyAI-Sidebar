@@ -275,3 +275,11 @@ test("a connection reset before any answer is sent again, once", async () => {
     assert.equal(calls, 2);
   } finally { globalThis.fetch = real; }
 });
+
+test("a history whose signed thinking was refused is resent without it", () => {
+  const err = '{"error":{"message":"messages.1.content.1: `thinking` or `redacted_thinking` blocks in the latest assistant message cannot be modified."}}';
+  const body = { model: "anthropic/claude-sonnet-5.5", messages: [{ role: "user", content: "q" }, { role: "assistant", content: "a", reasoning_details: [{ type: "reasoning.text", text: "t", signature: "s" }] }, { role: "user", content: "q2" }] };
+  const out = adaptRequest(body, err);
+  assert.deepEqual(out.messages[1], { role: "assistant", content: "a" });
+  assert.equal(adaptRequest({ messages: [{ role: "user", content: "q" }] }, err), undefined, "nothing to drop: no retry");
+});

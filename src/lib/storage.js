@@ -32,7 +32,7 @@ const DEFAULTS = {
   wisebaseScope: "", // last-used search scope: "" = all collections, else a collectionId
   webDefault: false, // open the embedded Web chats panel on startup (for API-free users)
   modeSel: {}, // per-workspace model selection ("provider|model") — each tab keeps its own
-  artifacts: true, // Artifact mode: encourage the model to build runnable artifacts (interactive
+  artifacts: false, // Artifact mode (off by default: the models already preview what they write): encourage the model to build runnable artifacts (interactive
                    // HTML/JS apps & games, React components, SVG, Mermaid diagrams) and render them
                    // live in a sandboxed frame. Off = code stays as plain copyable blocks.
   searchModel: "openrouter|hivey/free", // web-search model: 🐝 Hivey Free (cheap & competent)
@@ -278,12 +278,12 @@ export async function getSettings() {
     s.agentModelResetMigrated = true;
     try { await browser.storage.local.set({ agentModel: "", agentModelResetMigrated: true }); } catch (_) {}
   }
-  // One-time: ensure Artifact mode is ON by default. Flip a stored false → true ONCE; the
-  // user can still turn it off afterwards (the flag prevents re-flipping).
-  if (s.artifacts === false && !s.artifactsOnMigrated) {
-    s.artifacts = true;
-    s.artifactsOnMigrated = true;
-    try { await browser.storage.local.set({ artifacts: true, artifactsOnMigrated: true }); } catch (_) {}
+  // One-time: Artifact mode is now OFF by default (« supprime les artifacts par défaut, les modèles
+  // font déjà de la preview »). Turned off ONCE for everyone; the user can turn it back on.
+  if (!s.artifactsOffMigrated) {
+    s.artifacts = false;
+    s.artifactsOffMigrated = true;
+    try { await browser.storage.local.set({ artifacts: false, artifactsOffMigrated: true }); } catch (_) {}
   }
   return s;
 }
