@@ -210,7 +210,12 @@ export function privateProvider(inner, { level, customTerms = [], vault = new Va
         ...r,
         text: restore(r.text || ""),
         reasoning: r.reasoning ? restore(r.reasoning) : r.reasoning,
-        message: restoreDeep(r.message, restore),
+        // The thinking OpenRouter hands back (`reasoning_details`) stays as the model wrote it, markers
+        // included: Claude signs it, and a thinking block sent back with the real values in it is
+        // refused (« thinking blocks in the latest assistant message cannot be modified »).
+        message: r.message && r.message._reasoningDetails
+          ? { ...restoreDeep(r.message, restore), _reasoningDetails: r.message._reasoningDetails }
+          : restoreDeep(r.message, restore),
         toolCalls: (r.toolCalls || []).map((c) => ({ ...c, input: restoreDeep(c.input, restore) })),
       };
     },

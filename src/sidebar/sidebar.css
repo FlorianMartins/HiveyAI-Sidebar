@@ -1403,15 +1403,11 @@ body.mode-code #controls,
 .msg:hover > .mact-bar.user, .mact-bar.user:focus-within {
   opacity: 1; pointer-events: auto; max-height: 38px; margin-top: 6px;
 }
-/* Assistant answer actions: SAME behaviour as the user bar — collapsed until the message is hovered,
-   then the row (copy / copy-md / mindmap / delete) slides in BELOW the answer, on the left. */
+/* Assistant answer actions (copy / copy-md / compare / delete…): always shown below the answer, on
+   the left (« laisse-les statiques sur les réponses de l'IA ») — they used to appear only on hover. */
 .mact-bar.assistant {
-  justify-content: flex-start; opacity: 0; pointer-events: none;
-  max-height: 0; margin-top: 0; overflow: hidden;
-  transition: opacity .12s ease, max-height .15s ease, margin-top .15s ease;
-}
-.msg:hover > .mact-bar.assistant, .mact-bar.assistant:focus-within {
-  opacity: 1; pointer-events: auto; max-height: 38px; margin-top: 6px;
+  justify-content: flex-start; opacity: 1; pointer-events: auto;
+  max-height: 38px; margin-top: 6px; overflow: hidden;
 }
 /* Unified, slightly larger icons on both message types (shown on hover). Every action is now a
    stroke SVG of the same size, so the toolbar reads as one clean, consistent row. */

@@ -47,14 +47,17 @@ export function webNeedRule(text) {
   return "maybe";
 }
 
-/** The one yes/no question for a doubtful request: short, cheap, no thinking. */
-export function webNeedMessages(text) {
+/**
+ * The one yes/no question for a doubtful request: short, cheap, no thinking. `before` is the
+ * previous request of the conversation: « Et pour les tanks ? » means nothing on its own.
+ */
+export function webNeedMessages(text, before) {
   return {
     system: "You decide whether answering a request well REQUIRES searching the web. Answer YES when it needs " +
       "up-to-date or very specific facts you may not know reliably: news, prices, schedules, recent events, " +
       "current versions or products, details about a specific company, place, person or event. Answer NO when " +
       "general knowledge, reasoning, writing, coding, maths or the text provided is enough. Reply with one word: YES or NO.",
-    history: [{ role: "user", content: String(text || "").slice(0, 1500) }],
+    history: [{ role: "user", content: (before ? `Earlier request in this conversation: ${String(before).slice(0, 600)}\n\nRequest to decide on: ` : "") + String(text || "").slice(0, 1500) }],
   };
 }
 export function parseWebNeed(reply) {

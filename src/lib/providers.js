@@ -188,6 +188,17 @@ export function adaptRequest(body, error) {
     }
     if (changed) return next;
   }
+  // « thinking or redacted_thinking blocks in the latest assistant message cannot be modified »: Claude
+  // signs its thinking, and a history whose thinking came back altered is refused. The thinking of
+  // earlier steps is a help, not a requirement: without it the request goes through.
+  if (/(thinking|redacted_thinking)\b.{0,80}cannot be modified/.test(said) && Array.isArray(next.messages) && next.messages.some((m) => m && m.reasoning_details)) {
+    next.messages = next.messages.map((m) => {
+      if (!m || !m.reasoning_details) return m;
+      const { reasoning_details, ...rest } = m;
+      return rest;
+    });
+    return next;
+  }
   // Some OpenRouter endpoints make reasoning mandatory ("Reasoning is mandatory for this endpoint and
   // cannot be disabled"): the model's own default is the request it accepts.
   if (/reasoning is mandatory|cannot be disabled/.test(said) && next.reasoning) {

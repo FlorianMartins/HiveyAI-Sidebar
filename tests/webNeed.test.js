@@ -34,3 +34,12 @@ test("a time cue or a place to go still searches, even in a general-knowledge qu
     "What is a good restaurant in Lyon?", "Un bon bar près de chez moi", "Comment fonctionne la bourse aujourd'hui ?"])
     assert.equal(webNeedRule(q), "yes", q);
 });
+
+test("a follow-up is judged with the request before it", async () => {
+  const { webNeedMessages } = await import("../src/lib/web-need.js");
+  const alone = webNeedMessages("Et pour les tanks ?").history[0].content;
+  assert.equal(alone, "Et pour les tanks ?");
+  const after = webNeedMessages("Et pour les tanks ?", "Tier list des meilleurs heals d'Overwatch 2 actuellement").history[0].content;
+  assert.match(after, /Overwatch 2/);
+  assert.match(after, /Et pour les tanks \?$/);
+});

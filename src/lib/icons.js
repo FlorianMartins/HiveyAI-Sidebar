@@ -101,7 +101,7 @@ export function stripEmoji(s) {
 }
 
 /** Text the model wrote or the user typed: left exactly as it is. */
-export const SKIP = ".ai-body, .think-body, .umsg-text, .htitle, .sr-title, .sr-snippet, .agent-act-head, .agent-act-res, pre, code, textarea, input, select, [contenteditable], .no-iconize";
+export const SKIP = ".ai-body, .think-body, .umsg-text, .htitle, .sr-title, .sr-snippet, .agent-act-head, .agent-act-res, .agent-actions-label, pre, code, textarea, input, select, [contenteditable], .no-iconize";
 
 const parser = typeof DOMParser !== "undefined" ? new DOMParser() : null;
 function svgNode(name, color) {
