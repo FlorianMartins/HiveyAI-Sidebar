@@ -170,6 +170,9 @@ export function createHarness({ now = () => Date.now() } = {}) {
   return ctx;
 }
 
+/** Tools whose calls of one step may run at the same time: they read, they change nothing. */
+export const CONCURRENT_TOOLS = new Set(["web_search"]);
+
 // ── The reasoning loop ───────────────────────────────────────────────────────────────────────
 //
 // A STEP is one model request plus the tools it calls. A TURN is zero or more steps: it opens
@@ -227,19 +230,25 @@ export async function runTurn(ctx, { maxSteps = 24, signal } = {}) {
 
     const calls = turn.toolCalls || [];
     if (calls.length && tools) {
-      for (const call of calls) {
-        ctx.append("tool/call", { step: steps, id: call.id, name: call.name, input: call.input });
-
-        // A denied call still produces a RESULT, and the result still enters the log. Silently
-        // dropping it desynchronises the provider's call/result pairing, and the model then
-        // answers as if the tool had succeeded.
+      // A denied call still produces a RESULT, and the result still enters the log. Silently
+      // dropping it desynchronises the provider's call/result pairing, and the model then
+      // answers as if the tool had succeeded.
+      const run = async (call) => {
         const decision = await ctx.waterfall(
           "tools/pre-execute",
           { call, deny: null },
           async (d) => (d.deny ? { error: d.deny } : tools.execute(call.name, call.input)),
         );
-
-        const result = await ctx.waterfall("tools/post-execute", { call, result: decision }, (v) => v.result);
+        return ctx.waterfall("tools/post-execute", { call, result: decision }, (v) => v.result);
+      };
+      // Calls that touch nothing (web searches) start together: two searches of one step took
+      // 8.5 s + 8.6 s one after the other. Everything else runs in order, and the log keeps the
+      // order of the calls either way.
+      const early = new Map();
+      if (calls.length > 1) for (const call of calls) if (CONCURRENT_TOOLS.has(call.name)) early.set(call, run(call));
+      for (const call of calls) {
+        ctx.append("tool/call", { step: steps, id: call.id, name: call.name, input: call.input });
+        const result = early.has(call) ? await early.get(call) : await run(call);
         ctx.append("tool/result", { step: steps, id: call.id, name: call.name, result, isError: !!(result && result.error) });
       }
       ctx.append("step/end", { step: steps, owed: true });

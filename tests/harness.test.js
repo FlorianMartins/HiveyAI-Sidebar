@@ -333,3 +333,28 @@ test("a turn runs without a tools seam at all", async () => {
   const r = await runTurn(ctx);
   assert.equal(r.done, true);
 });
+
+test("the web searches of one step run together, other tools in order, and the log keeps the call order", async () => {
+  const ctx = createHarness();
+  ctx.provide("llm", scriptedLlm([
+    { text: "", toolCalls: [{ id: "a", name: "web_search", input: { q: 1 } }, { id: "b", name: "web_search", input: { q: 2 } }, { id: "c", name: "echo", input: {} }] },
+    { text: "done" },
+  ]));
+  let running = 0, most = 0;
+  const order = [];
+  ctx.provide("tools", {
+    list: () => [{ name: "web_search" }, { name: "echo" }],
+    execute: async (name, input) => {
+      running++; most = Math.max(most, running); order.push(`start:${name}`);
+      await new Promise((r) => setTimeout(r, 30));
+      running--; order.push(`end:${name}`);
+      return { name, input };
+    },
+  });
+  inject(ctx, "search twice");
+  await runTurn(ctx);
+  assert.equal(most, 2, "the two searches overlapped");
+  assert.deepEqual(order.slice(-2), ["start:echo", "end:echo"], "the other tool waited for them");
+  const calls = ctx.events().filter((e) => e.type === "tool/call" || e.type === "tool/result").map((e) => `${e.type}:${e.id}`);
+  assert.deepEqual(calls, ["tool/call:a", "tool/result:a", "tool/call:b", "tool/result:b", "tool/call:c", "tool/result:c"]);
+});
