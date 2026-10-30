@@ -10,6 +10,12 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **La recherche web garde le sujet de la conversation** : après un échange sur Overwatch, « Et
+  quelle est la tier list actuelle des healers sur cette saison ? » ramenait une tier list de World of
+  Warcraft. La recherche partait avec la seule dernière phrase (recherche web d'OpenRouter,
+  préréglages Hivey). C'est maintenant le modèle qui répond qui écrit la requête, avec toute la
+  conversation (« Overwatch saison 5 tier list supports »), et qui cherche à nouveau si les résultats
+  parlent d'autre chose.
 - **La suggestion de prochaine demande ne suit plus d'une conversation à l'autre** : elle n'apparaît
   que juste après une réponse, dans la conversation affichée, et disparaît dès qu'on la quitte (autre
   onglet, autre conversation de l'historique, nouvelle conversation). En revenant sur l'onglet Chat, on
