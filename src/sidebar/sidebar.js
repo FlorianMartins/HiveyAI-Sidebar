@@ -8278,12 +8278,12 @@ function endBusy() {
   abortController = null;
   busy = false;
 }
-// ── 🎙 Voice input. Uses the browser's built-in SpeechRecognition when available (Chrome/Edge);
-// otherwise (Firefox, or when on-device recognition is refused) it RECORDS the mic and has the
-// recording transcribed by Whisper (Groq, then OpenAI — the user's own key) or by an audio-capable
-// model through OpenRouter. With none of those connected, a banner says which key to connect and
-// points to the system's own voice typing (Win + H…).
-let _recog = null, _dictating = false, _mediaRec = null, _mediaStream = null;
+// ── 🎙 Voice input. RECORDS the mic — with noise reduction, and stopping by itself when the user stops
+// speaking — and has the recording transcribed by Whisper (Groq, then OpenAI — the user's own key) or
+// by an audio-capable model through OpenRouter. With none of those connected, the browser's built-in
+// SpeechRecognition (Chrome/Edge) is used; with neither, a banner says which key to connect and points
+// to the system's own voice typing (Win + H…).
+let _recog = null, _dictating = false, _mediaRec = null, _mediaStream = null, _micGraph = null;
 function dictationLang() { return { fr: "fr-FR", es: "es-ES", de: "de-DE", it: "it-IT", pt: "pt-PT" }[getLang()] || "en-US"; }
 // How to transcribe the recording: Whisper (Groq free / OpenAI) when connected, otherwise via an
 // audio-capable CHAT model on OpenRouter (Gemini) so the mic works with just the OpenRouter key.
@@ -8300,10 +8300,11 @@ function toggleDictation() {
     try { _recog && _recog.stop(); } catch (_) {}
     return;
   }
+  // « Active l'enregistrement audio, avec la réduction de bruit et le mode silence » (2026-10-30): the
+  // recording is the way whenever something can transcribe it; the browser's recognition, whose
+  // microphone cannot be filtered, only when nothing can.
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (SR) { startSrDictation(SR); return; }   // free on-device recognition (Chrome/Edge)
-  // No in-browser recognition (e.g. Firefox) → record the mic and transcribe via the user's own
-  // Whisper-capable key (Groq is free) or OpenRouter; with none connected, a banner says what to do.
+  if (!transcriptionMethod() && SR) { startSrDictation(SR); return; }
   startMediaDictation();
 }
 // The microphone was refused. The sidebar / side panel can't show the browser's permission prompt
@@ -8326,7 +8327,8 @@ async function startMediaDictation() {
     flashTopBanner(t("dictate.micUnavailable")); els.input.focus(); return;
   }
   let stream;
-  try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+  const clean = settings.dictationNoise !== false;
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: clean, autoGainControl: true } }); }
   catch (e) {
     const nm = (e && (e.name || e.message)) || "";
     if (/NotFound|Devices|Overconstrained/i.test(nm)) {
@@ -8337,6 +8339,10 @@ async function startMediaDictation() {
     return;
   }
   _mediaStream = stream;
+  // Noise reduction and the silence detection both listen through one small audio graph; what is
+  // recorded is what comes out of it.
+  _micGraph = micGraph(stream, { clean, autoStop: settings.dictationAutoStop !== false, onSilence: () => { try { if (_mediaRec && _mediaRec.state !== "inactive") _mediaRec.stop(); } catch (_) {} } });
+  if (_micGraph) stream = _micGraph.stream;
   let rec;
   // Pick a mimeType the browser actually supports (Firefox = ogg/opus, Chrome = webm) so recording
   // never silently fails; fall back to the default if none report supported.
@@ -8347,16 +8353,20 @@ async function startMediaDictation() {
   try { rec = pick ? new MediaRecorder(stream, { mimeType: pick }) : new MediaRecorder(stream); }
   catch (_) {
     try { rec = new MediaRecorder(stream); }
-    catch (e2) { stream.getTracks().forEach((tr) => tr.stop()); _mediaStream = null; flashTopBanner(t("dictate.failed")); return; }
+    catch (e2) { _mediaStream.getTracks().forEach((tr) => tr.stop()); if (_micGraph) _micGraph.close(); _mediaStream = null; _micGraph = null; flashTopBanner(t("dictate.failed")); return; }
   }
   const chunks = [];
   rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
   rec.onstop = async () => {
     try { _mediaStream && _mediaStream.getTracks().forEach((tr) => tr.stop()); } catch (_) {}
-    _mediaStream = null; _mediaRec = null;
+    const heard = _micGraph ? _micGraph.heard() : true;
+    if (_micGraph) _micGraph.close();
+    _mediaStream = null; _mediaRec = null; _micGraph = null;
     stopDictationUI();
     const blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
     if (!blob.size) return;
+    // Nothing but silence (the mic was opened, nobody spoke): nothing to pay a transcription for.
+    if (!heard) { flashTopBanner(t("dictate.empty")); return; }
     flashTopBanner(t("dictate.transcribing"));
     try {
       const text = tMethod.kind === "whisper"
@@ -8385,7 +8395,8 @@ function startSrDictation(SR) {
     _recog = new SR();
     _recog.lang = dictationLang();
     _recog.interimResults = true;
-    _recog.continuous = true;
+    // Silence mode: the recognition ends by itself at the end of what was said.
+    _recog.continuous = settings.dictationAutoStop === false;
     const base = els.input.value;
     _recog.onresult = (e) => {
       let finalTxt = "", interim = "";
@@ -8423,8 +8434,52 @@ function startSrDictation(SR) {
 }
 function stopDictationUI() {
   _dictating = false;
-  if (els.dictateBtn) { els.dictateBtn.classList.remove("active"); els.dictateBtn.setAttribute("aria-pressed", "false"); }
+  if (els.dictateBtn) { els.dictateBtn.classList.remove("active"); els.dictateBtn.setAttribute("aria-pressed", "false"); els.dictateBtn.style.removeProperty("--mic-level"); }
   _recog = null;
+}
+/**
+ * The microphone through Web Audio: `clean` keeps the voice band (cuts the hum below 85 Hz and the
+ * hiss above 8 kHz) on top of the browser's own noise suppression; `autoStop` calls `onSilence` once
+ * the user has spoken and then kept quiet for 1.6 s (or has said nothing for 12 s). The noise floor is
+ * measured in the first half-second, so a fan or a noisy room does not count as speech. Returns the
+ * stream to record, `heard()` (was there any speech) and `close()`; null without Web Audio.
+ */
+function micGraph(stream, { clean, autoStop, onSilence }) {
+  let ctx;
+  try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (_) { return null; }
+  try {
+    const src = ctx.createMediaStreamSource(stream);
+    let node = src;
+    if (clean) {
+      const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 85; hp.Q.value = 0.7;
+      const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 8000; lp.Q.value = 0.7;
+      node.connect(hp); hp.connect(lp); node = lp;
+    }
+    const dest = ctx.createMediaStreamDestination();
+    node.connect(dest);
+    const an = ctx.createAnalyser(); an.fftSize = 1024;
+    node.connect(an);
+    const buf = new Float32Array(an.fftSize);
+    const t0 = performance.now();
+    let floor = 0, floorN = 0, spoke = false, quietSince = 0, timer = 0;
+    timer = setInterval(() => {
+      an.getFloatTimeDomainData(buf);
+      let sum = 0; for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+      const rms = Math.sqrt(sum / buf.length), now = performance.now();
+      if (els.dictateBtn) els.dictateBtn.style.setProperty("--mic-level", Math.min(1, rms * 12).toFixed(2));
+      if (now - t0 < 500) { floor += rms; floorN++; return; }
+      const threshold = Math.max(0.012, (floorN ? floor / floorN : 0) * 2.5);
+      if (rms > threshold) { spoke = true; quietSince = 0; return; }
+      if (!autoStop) return;
+      if (!quietSince) quietSince = now;
+      if ((spoke && now - quietSince > 1600) || (!spoke && now - t0 > 12000)) { clearInterval(timer); timer = 0; onSilence(); }
+    }, 100);
+    return {
+      stream: dest.stream,
+      heard: () => spoke,
+      close: () => { if (timer) clearInterval(timer); try { ctx.close(); } catch (_) {} },
+    };
+  } catch (_) { try { ctx.close(); } catch (_) {} return null; }
 }
 
 // Optional "answer ready" chime — a short two-note tone synthesised with the Web Audio API

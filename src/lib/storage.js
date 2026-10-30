@@ -95,6 +95,8 @@ const DEFAULTS = {
   metricPrice: false, // model picker: show the price (💰) badge. Both can be on at once.
   modelSort: "", // model list quick sort cycle: "" (normal) | "desc" (best first) | "asc" (worst first).
   soundOnDone: false, // play a short chime when an answer finishes (composer 🔔 toggle).
+  dictationNoise: true, // dictation: noise reduction (the browser's suppression + a voice-band filter)
+  dictationAutoStop: true, // dictation: stop by itself when the user stops speaking
   tabDoneIndicator: true, // show a dot on a workspace icon when its answer finishes while you're on another tab.
   selectorOff: {}, // per selector-tab page-mode off state { translate:true, … } (eye toggle).
   msgBorderOn: false, // show the outline around reply bubbles (Settings → Appearance). Off by default.

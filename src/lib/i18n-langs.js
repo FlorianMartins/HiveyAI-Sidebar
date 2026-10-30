@@ -3,6 +3,10 @@
 // back to English. Placeholders {name}, HTML tags and emojis are kept verbatim.
 
 export const ES = {
+  "opt.dictate.noise": "Dictado: reducción de ruido",
+  "opt.dictate.noiseHelp": "Filtra el ruido de fondo del micrófono antes de la transcripción.",
+  "opt.dictate.autoStop": "Dictado: parar cuando dejo de hablar",
+  "opt.dictate.autoStopHelp": "La grabación se detiene sola tras un breve silencio; el texto aparece entonces en el cuadro de mensaje.",
   "cost.sideTitle": "incluye {usd} de solicitudes auxiliares (comprobación y búsquedas web, siguiente petición sugerida)",
   "code.copy": "Copiar",
   "code.copied": "Copiado ✓",
@@ -1113,6 +1117,10 @@ export const ES = {
 };
 
 export const DE = {
+  "opt.dictate.noise": "Diktat: Rauschunterdrückung",
+  "opt.dictate.noiseHelp": "Filtert Hintergrundgeräusche des Mikrofons vor der Transkription.",
+  "opt.dictate.autoStop": "Diktat: stoppen, wenn ich aufhöre zu sprechen",
+  "opt.dictate.autoStopHelp": "Die Aufnahme endet nach einer kurzen Stille von selbst; der Text erscheint dann im Eingabefeld.",
   "cost.sideTitle": "davon {usd} für Nebenanfragen (Web-Prüfung und -Suchen, vorgeschlagene nächste Anfrage)",
   "code.copy": "Kopieren",
   "code.copied": "Kopiert ✓",
@@ -2223,6 +2231,10 @@ export const DE = {
 };
 
 export const IT = {
+  "opt.dictate.noise": "Dettatura: riduzione del rumore",
+  "opt.dictate.noiseHelp": "Filtra il rumore di fondo del microfono prima della trascrizione.",
+  "opt.dictate.autoStop": "Dettatura: fermarsi quando smetto di parlare",
+  "opt.dictate.autoStopHelp": "La registrazione si ferma da sola dopo un breve silenzio; il testo appare poi nella casella del messaggio.",
   "cost.sideTitle": "di cui {usd} per le richieste accessorie (verifica e ricerche web, prossima richiesta suggerita)",
   "code.copy": "Copia",
   "code.copied": "Copiato ✓",
@@ -3333,6 +3345,10 @@ export const IT = {
 };
 
 export const PT = {
+  "opt.dictate.noise": "Ditado: redução de ruído",
+  "opt.dictate.noiseHelp": "Filtra o ruído de fundo do microfone antes da transcrição.",
+  "opt.dictate.autoStop": "Ditado: parar quando deixo de falar",
+  "opt.dictate.autoStopHelp": "A gravação para sozinha após um breve silêncio; o texto aparece então na caixa de mensagem.",
   "cost.sideTitle": "inclui {usd} de pedidos auxiliares (verificação e pesquisas web, próximo pedido sugerido)",
   "code.copy": "Copiar",
   "code.copied": "Copiado ✓",

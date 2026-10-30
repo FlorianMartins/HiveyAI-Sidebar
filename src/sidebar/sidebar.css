@@ -793,6 +793,12 @@ button[aria-expanded="true"], .combo-input:focus {
   animation: micPulse 1.3s ease-in-out infinite;
 }
 @keyframes micPulse { 0%,100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 50%, transparent); } 50% { box-shadow: 0 0 0 5px transparent; } }
+/* While recording, the ring follows the voice (--mic-level, 0–1, set by the silence detection). */
+.mic-btn.active[style*="--mic-level"] {
+  animation: none;
+  box-shadow: 0 0 0 calc(2px + var(--mic-level) * 7px) color-mix(in srgb, var(--accent) 45%, transparent);
+  transition: box-shadow .1s linear;
+}
 /* While the clip is being transcribed by Whisper. */
 .mic-btn.transcribing { color: var(--accent); background: var(--grad-soft); animation: pulse-dim 1s ease-in-out infinite; }
 /* Top-bar 🔔 sound toggle: when ON, tint it with the accent so the state is visible. */

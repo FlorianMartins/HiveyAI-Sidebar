@@ -796,9 +796,25 @@ function blobToBase64(blob) {
     r.readAsDataURL(blob);
   });
 }
-// Dictation via a CHAT model that accepts AUDIO input (e.g. Gemini Flash on OpenRouter) — lets the
-// mic work with just the OpenRouter key (OpenRouter has no Whisper /audio/transcriptions endpoint).
+// Dictation via a CHAT model that accepts AUDIO input — lets the mic work with just the OpenRouter key
+// (OpenRouter has no Whisper /audio/transcriptions endpoint). « Gemini 2.0 Flash », used until
+// 2026-10-30, had left the catalogue: every recording failed. Gemini 3.1 Flash Lite transcribed a
+// noisy French sentence word for word (2.5 Flash Lite takes over); Voxtral refuses the browsers' webm.
+export const AUDIO_TRANSCRIBE_MODELS = ["google/gemini-3.1-flash-lite", "google/gemini-2.5-flash-lite"];
 export async function transcribeAudioViaChat(settings, blob, modelId) {
+  const tries = modelId ? [modelId] : AUDIO_TRANSCRIBE_MODELS;
+  let last = null;
+  for (const m of tries) {
+    try { return await transcribeWith(settings, blob, m); }
+    catch (e) {
+      last = e;
+      // A model gone or unable to take audio: the next one. Anything else (key, credit) is said.
+      if (!/HTTP (400|404|422|503)/.test(String(e && e.message))) throw e;
+    }
+  }
+  throw last || new Error("No transcription model available.");
+}
+async function transcribeWith(settings, blob, modelId) {
   const providerId = "openrouter";
   const meta = PROVIDERS[providerId];
   if (!meta) throw new Error("OpenRouter not available.");
@@ -809,7 +825,7 @@ export async function transcribeAudioViaChat(settings, blob, modelId) {
   const fmt = type.includes("ogg") ? "ogg" : type.includes("mp4") || type.includes("m4a") ? "mp4" : type.includes("wav") ? "wav" : type.includes("mp3") ? "mp3" : "webm";
   const b64 = await blobToBase64(blob);
   const body = {
-    model: modelId || "google/gemini-2.0-flash-001",
+    model: modelId,
     messages: [{
       role: "user",
       content: [
