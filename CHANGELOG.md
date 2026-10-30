@@ -10,6 +10,10 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Réponses avec recherche web plus rapides** : quand le modèle lance plusieurs recherches à la
+  fois, elles tournent maintenant en même temps au lieu de l'une après l'autre ; le modèle qui lit les
+  résultats ne « réfléchit » plus et rend un résumé concis des faits et de leurs sources. Une tier list
+  d'Overwatch 2 sur Claude Sonnet 5.5 : environ 28 s avant, 18 s maintenant.
 - **Dictée par enregistrement audio** (🎤), avec deux nouveautés réglables dans les paramètres
   (Effets et retours) :
   - **réduction de bruit** : la suppression de bruit du navigateur plus un filtre sur la bande de la

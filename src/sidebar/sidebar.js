@@ -8094,11 +8094,12 @@ async function webResearchWith(ss, query, signal, multi, outCitations, outCosts)
   try {
     const provider = makeProvider(
       { ...settings, provider: ss.providerId, models: { ...settings.models, [ss.providerId]: ss.modelId } },
-      { thinking: false, webSearch: true }
+      // No thinking: the reader only gathers, and its thinking was 400–600 tokens of waiting.
+      { thinkLevel: "none", webSearch: true }
     );
     const system = multi
       ? "You are a fast internet-research assistant working ALONGSIDE an agent. (1) If a [Current page: …] block is included below, FIRST give a one-paragraph SUMMARY of that page. (2) Then search the web for the user's task and return SEVERAL viable options/approaches/answers (not just the single most obvious one), each with the key facts and its SOURCE URL. If the task is to WATCH or STREAM something, CHECK and list where it is LEGALLY available — official services and FREE, LEGAL, ad-supported platforms (Pluto TV, Tubi, Plex, Rakuten TV, Roku, ARTE, France.tv, 6play, Molotov, YouTube, Twitch, the official channel/league site for live sports) — each with its URL and whether it's free; NEVER suggest piracy or illegal streaming sites. Be concise and strictly factual — do NOT act, do NOT answer the user; just gather the page summary + raw material and ALTERNATIVES the agent can choose from."
-      : "You are a fast web-research assistant. Search the web for the user's request and return the key facts, figures, dates and quotes WITH their source URLs. Be concise and strictly factual — do NOT answer the user or give opinions, just gather the raw material.";
+      : "You are a fast web-research assistant. Search the web for the user's request and return the key facts, figures, dates and quotes WITH their source URLs. Be concise and strictly factual — do NOT answer the user or give opinions, just gather the raw material: short bullet points, at most about 250 words, each fact once, its source URL at the end of the line.";
     const turn = await Promise.race([
       provider.runTurn({
         system,
