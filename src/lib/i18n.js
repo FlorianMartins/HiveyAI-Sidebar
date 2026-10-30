@@ -14,6 +14,10 @@ import { setHTML } from "./dom.js";
 let lang = "en";
 
 const EN = {
+  "opt.dictate.noise": "Dictation: noise reduction",
+  "opt.dictate.noiseHelp": "Filters background noise from the microphone before transcription.",
+  "opt.dictate.autoStop": "Dictation: stop when I stop speaking",
+  "opt.dictate.autoStopHelp": "Recording ends by itself after a short silence; the text then appears in the message box.",
   "cost.sideTitle": "including {usd} for the side requests (web check and searches, suggested next request)",
   "code.copy": "Copy",
   "code.copied": "Copied ✓",
@@ -1199,6 +1203,10 @@ const EN = {
 };
 
 const FR = {
+  "opt.dictate.noise": "Dictée : réduction de bruit",
+  "opt.dictate.noiseHelp": "Filtre le bruit de fond du micro avant la transcription.",
+  "opt.dictate.autoStop": "Dictée : s'arrêter quand je ne parle plus",
+  "opt.dictate.autoStopHelp": "L'enregistrement s'arrête tout seul après un court silence ; le texte s'affiche alors dans la zone de saisie.",
   "cost.sideTitle": "dont {usd} pour les requêtes annexes (vérification et recherches web, suggestion de prochaine demande)",
   "code.copy": "Copier",
   "code.copied": "Copié ✓",

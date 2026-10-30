@@ -10,6 +10,18 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Dictée par enregistrement audio** (🎤), avec deux nouveautés réglables dans les paramètres
+  (Effets et retours) :
+  - **réduction de bruit** : la suppression de bruit du navigateur plus un filtre sur la bande de la
+    voix ;
+  - **mode silence** : l'enregistrement s'arrête tout seul 1,6 s après la fin de la parole (ou après
+    12 s sans rien entendre, sans rien transcrire ni facturer), et le texte s'affiche dans la zone de
+    saisie. L'anneau du bouton suit votre voix.
+  L'enregistrement est utilisé dès qu'un service sait le transcrire (Groq, OpenAI ou OpenRouter) ; la
+  reconnaissance vocale du navigateur ne sert plus que sans eux.
+- **La dictée fonctionne à nouveau avec OpenRouter seul** : le modèle de transcription (Gemini 2.0
+  Flash) avait disparu d'OpenRouter, chaque enregistrement échouait. Gemini 3.1 Flash Lite prend le
+  relais, et Gemini 2.5 Flash Lite en secours.
 - **Web intelligent, comme un vrai assistant** : avec « Web » activé, c'est le modèle qui répond qui
   se demande s'il connaît vraiment la réponse et si elle a pu changer (actualité, méta d'un jeu, prix,
   versions…). S'il n'est pas sûr, il cherche lui-même sur le web et cite ses sources ; sinon il répond

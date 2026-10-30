@@ -1178,6 +1178,8 @@ async function load() {
   }
   if ($("smoothStream")) $("smoothStream").checked = settings.smoothStream !== false;
   if ($("soundOnDone")) $("soundOnDone").checked = settings.soundOnDone === true;
+  if ($("dictationNoise")) $("dictationNoise").checked = settings.dictationNoise !== false;
+  if ($("dictationAutoStop")) $("dictationAutoStop").checked = settings.dictationAutoStop !== false;
   if ($("tabDoneIndicator")) $("tabDoneIndicator").checked = settings.tabDoneIndicator !== false;
   // Preview the chosen neon colour on the title outline (falls back to accent when unset).
   if (settings.msgBorderColor) document.documentElement.style.setProperty("--msg-border", settings.msgBorderColor);
@@ -1299,6 +1301,8 @@ function collectSettings() {
     contourOn: $("contourOn") ? $("contourOn").checked : false,
     smoothStream: $("smoothStream") ? $("smoothStream").checked : true,
     soundOnDone: $("soundOnDone") ? $("soundOnDone").checked : false,
+    dictationNoise: $("dictationNoise") ? $("dictationNoise").checked : true,
+    dictationAutoStop: $("dictationAutoStop") ? $("dictationAutoStop").checked : true,
     tabDoneIndicator: $("tabDoneIndicator") ? $("tabDoneIndicator").checked : true,
     responseLang: $("responseLang").value,
     targetLang: $("targetLang").value.trim() || "French",
