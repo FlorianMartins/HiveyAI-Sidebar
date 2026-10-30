@@ -10,6 +10,11 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Le sujet de la conversation suit aussi DeepSearch, Comparer et l'Agent** : les sous-recherches de
+  DeepSearch, la réponse d'un autre modèle dans « Comparer » et la recherche du mode Interaction de
+  l'Agent reçoivent la question précédente — « tier list des healers sur cette saison » après un
+  échange sur Overwatch cherche « tier list healers Overwatch 2 saison actuelle ». « Comparer » ne
+  lance plus de recherche web que si la réponse comparée en avait fait une.
 - **La recherche web garde le sujet de la conversation** : après un échange sur Overwatch, « Et
   quelle est la tier list actuelle des healers sur cette saison ? » ramenait une tier list de World of
   Warcraft. La recherche partait avec la seule dernière phrase (recherche web d'OpenRouter,
