@@ -199,6 +199,12 @@ export function adaptRequest(body, error) {
     });
     return next;
   }
+  // A model that cannot call tools, offered one (the Chat's web_search): it answers without it.
+  if (/support tool use|does not support tools|tools? (are|is) not supported|tool calling is not supported/.test(said) && Array.isArray(next.tools) && next.tools.length) {
+    delete next.tools;
+    delete next.tool_choice;
+    return next;
+  }
   // Some OpenRouter endpoints make reasoning mandatory ("Reasoning is mandatory for this endpoint and
   // cannot be disabled"): the model's own default is the request it accepts.
   if (/reasoning is mandatory|cannot be disabled/.test(said) && next.reasoning) {
@@ -532,7 +538,7 @@ function openaiProvider({ apiKey, model, baseUrl, webSearch, providerId, thinkLe
       let response;
       for (let tries = 0; ; tries++) {
         response = await fetchWithRetry(url, { method: "POST", signal, headers, body: JSON.stringify(attempt) });
-        if (response.ok || (response.status !== 400 && response.status !== 402 && response.status !== 422) || tries >= 2) break;
+        if (response.ok || (response.status !== 400 && response.status !== 402 && response.status !== 404 && response.status !== 422) || tries >= 2) break;
         const said = await response.text().catch(() => "");
         const fixed = adaptRequest(attempt, said);
         if (!fixed) throw new Error(`HTTP ${response.status} — ${said.slice(0, 500)}`);

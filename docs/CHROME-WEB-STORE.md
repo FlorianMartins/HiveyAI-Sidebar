@@ -93,7 +93,7 @@ Hivey has no server of its own. You bring the AI: your own API key, a free accou
 
 ★ SEARCH THE WEB WHEN IT HELPS
 
-• With Web on, Hivey decides for each question whether a search is needed — news, prices, opening hours, recent events — and cites its sources. General knowledge, writing or code are answered directly, which keeps costs down.
+• With Web on, the model asks itself whether it really knows the answer and whether it may have changed — news, prices, game metas, versions, opening hours — and searches the web when it is not sure, citing its sources. What it knows well is answered directly, which keeps costs down.
 • DeepSearch: multi-step research with an adjustable depth, for questions that deserve a real report.
 
 
@@ -119,7 +119,7 @@ Hivey has no server of its own. You bring the AI: your own API key, a free accou
 
 • No server, no analytics, no telemetry, no tracking.
 • Your keys, history, documents and settings stay in your browser; your messages go only to the AI service you chose, when you ask.
-• Before a request leaves for a cloud model, sensitive values — e-mail addresses, phone numbers, IBANs, card numbers, company names, credentials and terms you list — are replaced with markers and put back in the answer on your device.
+• Before a request leaves for a cloud model, the sensitive values of the files you attach — e-mail addresses, phone numbers, IBANs, card numbers, company names, credentials and terms you list — are replaced with markers and put back in the answer on your device; keys and passwords are masked wherever they are.
 • Each request shows its cost, side requests included, so there are no surprises on your bill.
 • Encrypted backup (AES-256) of your settings, to move them to another device yourself.
 
@@ -193,7 +193,7 @@ Hivey n'a aucun serveur. C'est vous qui apportez l'IA : votre propre clé d'API,
 
 ★ LE WEB QUAND IL SERT
 
-• Avec « Web » activé, Hivey décide pour chaque question si une recherche est utile — actualité, prix, horaires, événements récents — et cite ses sources. La culture générale, la rédaction ou le code reçoivent une réponse directe, ce qui limite les coûts.
+• Avec « Web » activé, le modèle se demande s'il connaît vraiment la réponse et si elle a pu changer — actualité, prix, méta d'un jeu, versions, horaires — et cherche sur le web quand il n'est pas sûr, en citant ses sources. Ce qu'il sait bien reçoit une réponse directe, ce qui limite les coûts.
 • DeepSearch : une recherche en plusieurs étapes, à la profondeur réglable, pour les questions qui méritent un vrai rapport.
 
 
@@ -219,7 +219,7 @@ Hivey n'a aucun serveur. C'est vous qui apportez l'IA : votre propre clé d'API,
 
 • Aucun serveur, aucune statistique, aucune télémétrie, aucun pistage.
 • Vos clés, votre historique, vos documents et vos réglages restent dans votre navigateur ; vos messages ne partent que vers le service d'IA que vous avez choisi, quand vous le demandez.
-• Avant qu'une requête parte vers un modèle cloud, les valeurs sensibles — adresses e-mail, téléphones, IBAN, numéros de carte, noms de sociétés, identifiants et les termes que vous listez — sont remplacées par des marqueurs, puis remises en clair dans la réponse, sur votre appareil.
+• Avant qu'une requête parte vers un modèle cloud, les valeurs sensibles des fichiers que vous joignez — adresses e-mail, téléphones, IBAN, numéros de carte, noms de sociétés, identifiants et les termes que vous listez — sont remplacées par des marqueurs, puis remises en clair dans la réponse, sur votre appareil ; les clés et mots de passe sont masqués où qu'ils soient.
 • Chaque réponse affiche son coût, requêtes annexes comprises : pas de surprise sur votre facture.
 • Sauvegarde chiffrée (AES-256) de vos réglages, à transférer vous-même vers un autre appareil.
 
@@ -334,8 +334,8 @@ No remote code is executed by the extension. All JavaScript and WebAssembly (inc
 Données à déclarer : celles qui quittent l'appareil vers le service d'IA que l'utilisateur a choisi.
 
 - **Informations permettant d'identifier personnellement l'utilisateur** — ce que l'utilisateur écrit
-  peut en contenir (nom, adresse e-mail) ; en mode « Cloud · anonymisé », elles sont remplacées par
-  des marqueurs avant l'envoi.
+  ou joint peut en contenir (nom, adresse e-mail) ; en mode « Cloud · anonymisé », celles des
+  fichiers joints sont remplacées par des marqueurs avant l'envoi.
 - **Informations d'authentification** — les clés d'API et les jetons de connexion, gardés dans le
   navigateur et envoyés uniquement au fournisseur auquel ils appartiennent.
 - **Communications personnelles** — les messages de l'utilisateur, et les e-mails ou messages que lit

@@ -55,6 +55,8 @@ function sourceOf(m) {
   if (!m) return { from: "unknown" };
   if (m.role === "tool") return { from: "tool" };
   if (m.role === "assistant") return { from: "answer" };
+  // A request built around the user's documents (a PDF of the PDF tab, Wisebase passages).
+  if (m._attachment) return { from: "attached document" };
   const text = typeof m.content === "string" ? m.content : "";
   const head = /^⟦UNTRUSTED ([^⟧]*?)(?: from ([^⟧]*?))? id=[^⟧]+⟧/.exec(text);
   if (head) return { from: head[1], source: head[2] || "" };
@@ -79,7 +81,10 @@ function fileAt(text, at) {
  */
 export function redactRequest(messages, vault, level, customTerms = []) {
   const findings = [];
-  const policyFor = (src) => ({ level: level === "secrets" ? "off" : level, customTerms, blockOnSecret: false, web: isWeb(src) });
+  // « L'anonymisation doit se limiter aux pièces jointes, car c'est généralement là qu'il y a des
+  // données confidentielles » (2026-10-30): the attached documents are anonymised at the chosen level;
+  // everything else — what the user types, pages, tool results — only has its credentials masked.
+  const policyFor = (src) => ({ level: level === "secrets" || src.from !== "attached document" ? "off" : level, customTerms, blockOnSecret: false, web: isWeb(src) });
   const one = (text, src, msgIndex) => {
     if (typeof text !== "string" || !text) return text;
     const policy = policyFor(src);

@@ -26,7 +26,7 @@
 <body>
 <main>
   <h1>Hivey AI — Privacy Policy</h1>
-  <p class="muted">Last updated: 25 October 2026</p>
+  <p class="muted">Last updated: 30 October 2026</p>
 
   <div class="card tldr">
     <strong>In short:</strong> Hivey AI is <strong>100% BYOK</strong> (“bring your own key”). It has
@@ -61,11 +61,12 @@
   <h2>2 bis. Anonymisation before a cloud provider</h2>
   <p>Requests to a <strong>local</strong> model (Ollama, LM Studio, a server on your network) or to
     <strong>your own gateway</strong> are sent as they are. Before a request leaves for a
-    <strong>cloud</strong> provider — including the small side requests (titles, summaries, the
-    suggested next request, the yes/no « does this need the web? » question) — the extension replaces
-    sensitive values — credentials, e-mail addresses, phone numbers, IBANs, card numbers, company and
-    VAT numbers, company names, amounts you write, and any terms you list — with markers such as
-    <code>⟨EMAIL_1⟩</code>, and puts the real values back in the answer on your device. You choose the
+    <strong>cloud</strong> provider, the extension replaces the sensitive values of the <strong>files
+    you attach</strong> (documents, PDFs, Wisebase passages — where confidential data usually is) —
+    credentials, e-mail addresses, phone numbers, IBANs, card numbers, company and VAT numbers, company
+    names, amounts, and any terms you list — with markers such as <code>⟨EMAIL_1⟩</code>, and puts the
+    real values back in the answer on your device. What you type and the pages you ask about are sent
+    as written, except credentials (keys, passwords), which are masked wherever they appear. You choose the
     mode in the settings or from the « Cloud » badge under the message box:
     <strong>Anonymised</strong> (strict or balanced — the values above leave as markers, nothing to
     approve), <strong>Keys masked</strong> (only credentials and passwords are hidden; before one leaves,

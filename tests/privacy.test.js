@@ -36,7 +36,7 @@ test("local, gateway, cloud: what the provider is, and where its address points"
 
 test("a cloud request carries markers, never the value — and the answer comes back in clear", async () => {
   const { body, result } = await turn("openrouter", {
-    history: [{ role: "user", content: "Écris un mot à jeanne.dupont@acme-corp.fr pour la facture." }],
+    history: [{ role: "user", content: "Écris un mot à jeanne.dupont@acme-corp.fr pour la facture.", _attachment: true }],
     reply: say("Voici le message pour ⟨EM", "AIL_1⟩ : bonjour."),
     privacy: { conversation: "c1" },
   });
@@ -48,28 +48,28 @@ test("a cloud request carries markers, never the value — and the answer comes 
 
 test("a marker split across two packets is restored on screen, not shown raw", async () => {
   const shown = [];
-  await turn("openrouter", { history: [{ role: "user", content: "Contacte jeanne.dupont@acme-corp.fr" }], reply: say("À ⟨EMA", "IL_1⟩."), privacy: { conversation: "c2" }, onText: (d) => shown.push(d) });
+  await turn("openrouter", { history: [{ role: "user", content: "Contacte jeanne.dupont@acme-corp.fr", _attachment: true }], reply: say("À ⟨EMA", "IL_1⟩."), privacy: { conversation: "c2" }, onText: (d) => shown.push(d) });
   assert.equal(shown.join(""), "À jeanne.dupont@acme-corp.fr.");
   assert.doesNotMatch(shown.join(""), /⟨/);
 });
 
 test("the agent's actions get the real values back: a form is filled with the address, not its marker", async () => {
   const reply = [{ choices: [{ delta: { tool_calls: [{ index: 0, id: "t1", function: { name: "fill_input", arguments: JSON.stringify({ ref: "e2", value: "⟨EMAIL_1⟩" }) } }] }, finish_reason: "tool_calls" }] }, "[DONE]"];
-  const { result } = await turn("openrouter", { history: [{ role: "user", content: "Remplis avec lea.martin@acme-corp.fr" }], reply, privacy: { conversation: "c3" } });
+  const { result } = await turn("openrouter", { history: [{ role: "user", content: "Remplis avec lea.martin@acme-corp.fr", _attachment: true }], reply, privacy: { conversation: "c3" } });
   assert.deepEqual(result.toolCalls[0].input, { ref: "e2", value: "lea.martin@acme-corp.fr" });
   assert.match(result.message.tool_calls[0].function.arguments, /lea\.martin@acme-corp\.fr/);
 });
 
 test("the same value keeps the same marker for the whole conversation", async () => {
   const vault = new Vault();
-  const a = await turn("openrouter", { history: [{ role: "user", content: "jeanne.dupont@acme-corp.fr et paul.durand@acme-corp.fr" }], privacy: { vault, conversation: "c4" } });
-  const b = await turn("openrouter", { history: [{ role: "user", content: "et encore paul.durand@acme-corp.fr" }], privacy: { vault, conversation: "c4" } });
+  const a = await turn("openrouter", { history: [{ role: "user", content: "jeanne.dupont@acme-corp.fr et paul.durand@acme-corp.fr", _attachment: true }], privacy: { vault, conversation: "c4" } });
+  const b = await turn("openrouter", { history: [{ role: "user", content: "et encore paul.durand@acme-corp.fr", _attachment: true }], privacy: { vault, conversation: "c4" } });
   assert.match(sent(a.body), /⟨EMAIL_2⟩/);
   assert.match(sent(b.body), /⟨EMAIL_2⟩/);
 });
 
 test("the user's own gateway and local models get the request exactly as written", async () => {
-  const history = [{ role: "user", content: "Écris à jeanne.dupont@acme-corp.fr, IBAN FR76 3000 6000 0112 3456 7890 189" }];
+  const history = [{ role: "user", content: "Écris à jeanne.dupont@acme-corp.fr, IBAN FR76 3000 6000 0112 3456 7890 189", _attachment: true }];
   const gw = await turn("custom", { history });
   assert.match(sent(gw.body), /jeanne\.dupont@acme-corp\.fr/);
   assert.match(sent(gw.body), /FR76 3000/);
@@ -77,15 +77,18 @@ test("the user's own gateway and local models get the request exactly as written
   assert.doesNotMatch(sent(strictOwn.body), /jeanne\.dupont/, "trust switched off: the gateway is treated like a cloud");
 });
 
-test("a public page keeps its prices — a model cannot add up markers — but not its e-mail addresses", () => {
+test("only the attached documents are anonymised: what the user types and the pages leave as written, credentials excepted", () => {
   const vault = new Vault();
   const page = buildTurn({ userText: "", untrusted: [{ kind: "web page", source: "https://shop.example", text: "MacBook 2 499 € — contact ventes@shop-pro.fr" }] }).messages[0];
-  const typed = { role: "user", content: "Mon budget est de 2 500 €" };
-  const { messages, findings } = redactRequest([page, typed], vault, "balanced");
+  const doc = buildTurn({ userText: "", untrusted: [{ kind: "attached document", source: "a file you attached", text: "[Attached file: devis.txt]\nClient : jeanne.dupont@acme-corp.fr — 12 400 €" }] }).messages[0];
+  const typed = { role: "user", content: "Mon budget est de 2 500 €, écris à paul.durand@acme-corp.fr. Clé sk-ant-api03-EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE" };
+  const { messages } = redactRequest([page, doc, typed], vault, "balanced");
   assert.match(messages[0].content, /2 499 €/);
-  assert.doesNotMatch(messages[0].content, /ventes@shop-pro\.fr/);
-  assert.doesNotMatch(messages[1].content, /2 500 €/, "what the user typed is private: its amount is replaced");
-  assert.deepEqual(findingsToAsk(findings).map((f) => f.from), ["web page"], "asked about the page's address, not about what the user typed");
+  assert.match(messages[0].content, /ventes@shop-pro\.fr/, "a page is not an attachment");
+  assert.doesNotMatch(messages[1].content, /jeanne\.dupont@acme-corp\.fr/, "the attached document is anonymised");
+  assert.match(messages[2].content, /2 500 €/, "what the user types leaves as written");
+  assert.match(messages[2].content, /paul\.durand@acme-corp\.fr/);
+  assert.doesNotMatch(messages[2].content, /sk-ant-api03-E/, "a credential is masked wherever it is");
 });
 
 test("no masking at all (« none »): everything leaves as written and nobody is asked", async () => {
@@ -160,7 +163,7 @@ test("not anonymised, a side task nobody watches is not sent when it would have 
 });
 
 test("the model is told what the markers are — only when a request carries some", async () => {
-  const marked = await turn("openrouter", { history: [{ role: "user", content: "Écris à jeanne.dupont@acme-corp.fr" }], privacy: { conversation: "c9" } });
+  const marked = await turn("openrouter", { history: [{ role: "user", content: "Écris à jeanne.dupont@acme-corp.fr", _attachment: true }], privacy: { conversation: "c9" } });
   assert.match(marked.body.messages[0].content, /PRIVACY MARKERS/);
   const plain = await turn("openrouter", { history: [{ role: "user", content: "Quelle heure est-il à Tokyo ?" }], privacy: { conversation: "c9" } });
   assert.doesNotMatch(plain.body.messages[0].content, /PRIVACY MARKERS/);
