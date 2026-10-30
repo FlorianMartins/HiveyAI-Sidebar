@@ -8762,6 +8762,14 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
     badge = "🐝 " + prettifyORName({ id: turnSel.modelId }) + " 👁";
   }
 
+  // The search itself is written by the model that answers, which has the whole conversation: on
+  // OpenRouter, the web plugin searched the LAST message only, and the Hivey preset's fetcher got
+  // that message alone — « Et quelle est la tier list actuelle des healers sur cette saison ? »,
+  // after an exchange about Overwatch, brought back World of Warcraft (2026-10-30). So a request
+  // that needs the web gets the `web_search` tool and is told to search first.
+  const webByTool = wantWeb && !agentMode && !mcpMode && runMode !== "translate" && runMode !== "improve" && turnSel.providerId === "openrouter";
+  if (webByTool) webPlugin = false;
+
   // Web search for NON-Hivey models: a model whose provider searches itself (OpenRouter's web
   // plugin works with any model, Anthropic has its search tool) searches itself — the answer stays
   // the user's model's; only a provider that can't search hands the turn to a dedicated model.
@@ -8783,7 +8791,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   // the grunt work, the smart routed model does the thinking. Pure chat turns only.
   if (hid && !agentMode && !mcpMode && tierKey !== "vision" && runMode !== "translate" && runMode !== "improve") {
     const T = hiveyTiers(hid);
-    if (wantWeb) {
+    if (wantWeb && !webByTool) {
       // (a) Web: a small fast model gathers facts + sources, the routed model analyses.
       if (hstep) hstep.set(t("step.search"));
       const fetched = await hiveyWebFetch(hid, modelContent, abortController.signal);
@@ -8862,7 +8870,12 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   let turnHistory;
   let turnStart = 0;
   if (isolated) {
-    turnHistory = [...untrustedMsgs, { role: "user", content: userContent, ...(documents ? { _attachment: true } : {}) }];
+    // Alone with this message, the search model would not know what « this season » is: the request
+    // before it goes along.
+    const prev = previousExchange(boundTranscript);
+    const content = prev && prev.question && typeof userContent === "string"
+      ? `[Earlier in this conversation, the user asked: ${prev.question.slice(0, 800)}]\n\n${userContent}` : userContent;
+    turnHistory = [...untrustedMsgs, { role: "user", content, ...(documents ? { _attachment: true } : {}) }];
   } else {
     // Where this question starts: its page block and the question itself are never summarized away.
     turnStart = boundHistory.length;
@@ -8884,7 +8897,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   // decided it before. On OpenRouter the model gets a `web_search` tool; Anthropic's own search is
   // already a tool the model calls when it needs it.
   const chatWeb = !agentMode && !mcpMode && !wantWeb && els.webSearch.checked && runMode !== "translate" && runMode !== "improve" && !isolated;
-  const chatWebTool = chatWeb && turnSel.providerId === "openrouter";
+  const chatWebTool = (chatWeb && turnSel.providerId === "openrouter") || webByTool;
   if (chatWeb && turnSel.providerId === "anthropic") webPlugin = true;
   let searchedByTool = false;
   const sideCosts = [];
@@ -8905,7 +8918,9 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   // « il me dit "Je ne peux pas consulter le web" alors que le mode web est activé »: the model was
   // never told the app searches for it. With Web on (and nothing about it otherwise sent), it is.
   if (!agentMode && !mcpMode && els.webSearch.checked && runMode !== "translate" && runMode !== "improve") {
-    system += wantWeb
+    system += webByTool
+      ? "\n\nWEB: this request needs up-to-date information. Call web_search FIRST, before answering. Write the query from the WHOLE conversation, not from the last message alone: the subject is often named earlier (« this season », « its price », « and the tanks? » refer to what was discussed). Then answer from what you found and cite the sources; if the results are about something else, say so and search again with a better query rather than answering about the wrong subject."
+      : wantWeb
       ? "\n\nWEB: this app searched the web for this request — the results are part of what you received. Use them and cite their sources; never say you cannot access the internet."
       : chatWebTool || webPlugin
         ? "\n\nWEB: you can search the web (the web_search tool). Before answering, ask yourself whether you reliably know the answer AND whether it may have changed since your training: current events, game metas and patches, prices, versions and releases, products, who holds a role, schedules, rankings, anything recent or very specific. If you are not sure, search first — never guess, and never present possibly outdated facts as current. When you searched, cite your sources. Do not search for what you know well (stable knowledge, writing, code, maths, the text given)."
