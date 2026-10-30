@@ -8660,7 +8660,7 @@ async function compareRun(list, btn) {
           ? `[Earlier in this conversation, the user asked: ${prevQ.slice(0, 800)}]\n\n${lastUserContent}` : lastUserContent;
         const provider = makeProvider(
           { ...settings, provider: second.providerId, models: { ...settings.models, [second.providerId]: second.modelId } },
-          { thinkLevel: getThink(els.thinking), webSearch: cmpWeb, privacy: privacyOpts(getSession(mode), getSession(mode).convId, mode) }
+          { thinkLevel: getThink(), webSearch: cmpWeb, privacy: privacyOpts(getSession(mode), getSession(mode).convId, mode) }
         );
         const system = buildSystemPrompt({ agentMode: false, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: lastRunMode, blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked, thinkLevel: getThink(els.thinking) });
         cmpPending = addPendingIndicator();
