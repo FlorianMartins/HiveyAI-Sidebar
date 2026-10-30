@@ -6314,6 +6314,11 @@ async function runDeepSearch(question) {
   const userDiv = addMessage("user", question, "chat");
   attachUserActions(userDiv, question);
   sess.transcript.push({ role: "user", text: question });
+  // A follow-up (« et pour cette saison ? ») is searched with the question before it: alone, the
+  // sub-queries lost the subject of the conversation.
+  const before = previousExchange(sess.transcript);
+  const asked = before && before.question
+    ? `${question}\n(Context — the previous question in this conversation: ${before.question.slice(0, 600)})` : question;
 
   // Collapsible live-progress trace (reasoning-panel style).
   const panel = document.createElement("details"); panel.className = "think deep-progress"; panel.open = true;
@@ -6332,7 +6337,7 @@ async function runDeepSearch(question) {
     try {
       const raw = await runUtilityCompletion(utilSel,
         `Decompose the user's question into up to ${depth.subs} focused, diverse web-search queries that together fully cover it. Reply with ONLY a JSON array of short query strings (in the question's language). No prose.`,
-        question, signal);
+        asked, signal);
       subs = JSON.parse((raw.match(/\[[\s\S]*\]/) || ["[]"])[0]);
     } catch (_) { subs = []; }
     subs = (Array.isArray(subs) ? subs : []).filter((s) => typeof s === "string" && s.trim()).slice(0, depth.subs);
@@ -6362,7 +6367,7 @@ async function runDeepSearch(question) {
       const p = await deepFetchPage(url);
       if (!p || !p.text.trim()) continue;
       const s2 = await runUtilityCompletion(utilSel,
-        `Summarize the following web page STRICTLY as it relates to this question: "${question}". Keep only relevant facts, figures and quotes. If irrelevant, reply exactly "N/A".`,
+        `Summarize the following web page STRICTLY as it relates to this question: "${asked}". Keep only relevant facts, figures and quotes. If irrelevant, reply exactly "N/A".`,
         `[URL] ${p.url}\n\n${p.text}`, signal).catch(() => "");
       if (s2 && !/^n\/?a\.?$/i.test(s2.trim())) pages.push({ url: p.url, summary: s2.trim() });
     }
@@ -6389,7 +6394,7 @@ async function runDeepSearch(question) {
     const pageBlock = pages.map((p) => { const n = numOf(p.url); return `${n ? `[${n}] ` : ""}${p.url}\n${p.summary}`; }).join("\n\n");
     const sourceList = topSources.map((s, i) => `[${i + 1}] ${s.url}${s.title ? ` — ${s.title}` : ""}`).join("\n");
     const sysReport = `You are a rigorous research analyst. Using ONLY the gathered material below, write a clear, well-structured report in ${lang} that answers the user's question. Cross-check claims across sources, note disagreements and remaining uncertainty, and never invent facts. CITE sources inline as [n] using ONLY the numbered SOURCES list below — NEVER write a raw URL in the body, NEVER invent a URL, and NEVER cite a number that is not in that list. Do NOT write your own "Sources" section: a verified one is appended automatically.`;
-    const synthContent = `[Question]\n${question}\n\n[Gathered search findings]\n${findBlock}${pageBlock ? `\n\n[Deep-read sources]\n${pageBlock}` : ""}${sourceList ? `\n\n[SOURCES — cite these as [n]; do not use any other URL]\n${sourceList}` : ""}`;
+    const synthContent = `[Question]\n${asked}\n\n[Gathered search findings]\n${findBlock}${pageBlock ? `\n\n[Deep-read sources]\n${pageBlock}` : ""}${sourceList ? `\n\n[SOURCES — cite these as [n]; do not use any other URL]\n${sourceList}` : ""}`;
 
     const pending = addPendingIndicator("chat");
     const sink = makeSink("🔎 " + t("deep.badge"), true, pending, "chat");
@@ -8644,16 +8649,25 @@ async function compareRun(list, btn) {
       let cmpPending = null;
       const badge = `${PROVIDERS[second.providerId].label} · ${second.modelId}`;
       try {
+        // The other model gets the question with the one before it, and searches the web only if the
+        // answer it is compared with did — it used to search every time « Web » was on, with the last
+        // message alone for a query.
+        const said = transcript.filter((e) => e && e.role === "user" && e.kind !== "note");
+        const prevQ = said.length > 1 ? String(said[said.length - 2].text || "") : "";
+        const lastAnswer = [...transcript].reverse().find((e) => e && e.role === "assistant");
+        const cmpWeb = lastForceWeb || !!(lastAnswer && lastAnswer.web);
+        const cmpContent = prevQ && typeof lastUserContent === "string"
+          ? `[Earlier in this conversation, the user asked: ${prevQ.slice(0, 800)}]\n\n${lastUserContent}` : lastUserContent;
         const provider = makeProvider(
           { ...settings, provider: second.providerId, models: { ...settings.models, [second.providerId]: second.modelId } },
-          { thinkLevel: getThink(els.thinking), webSearch: els.webSearch.checked || lastForceWeb, privacy: privacyOpts(getSession(mode), getSession(mode).convId, mode) }
+          { thinkLevel: getThink(els.thinking), webSearch: cmpWeb, privacy: privacyOpts(getSession(mode), getSession(mode).convId, mode) }
         );
         const system = buildSystemPrompt({ agentMode: false, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: lastRunMode, blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked, thinkLevel: getThink(els.thinking) });
         cmpPending = addPendingIndicator();
         const sink = makeSink(badge, true, cmpPending);
-        await runConversation({ provider, system, history: [{ role: "user", content: lastUserContent }], tools: [], onText: sink.onText, onThink: sink.onThink, signal: abortController.signal });
+        await runConversation({ provider, system, history: [{ role: "user", content: cmpContent }], tools: [], onText: sink.onText, onThink: sink.onThink, signal: abortController.signal });
         sink.finalize();
-        if (sink.getRaw()) transcript.push({ role: "assistant", text: `**${badge}**\n\n${sink.getRaw()}` });
+        if (sink.getRaw()) transcript.push({ role: "assistant", text: `**${badge}**\n\n${sink.getRaw()}`, ...(cmpWeb ? { web: true } : {}) });
         const cmpEl = sink.getEl();
         if (cmpEl) { cmpEl._raw = sink.getRaw(); cmpEl._modelSel = `${second.providerId}|${second.modelId}`; }
         attachCompareBar(cmpEl); // allow comparing/voting again on the newest answer
@@ -8831,7 +8845,9 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
       if (!currentPage) await refreshCurrentPage();
       if (currentPage) pageText = cleanText(currentPage.text || "").slice(0, 6000);
     } catch (_) {}
+    const prevAsk = previousExchange(boundTranscript);
     const researchInput =
+      (prevAsk && prevAsk.question ? `[Earlier in this conversation, the user asked: ${prevAsk.question.slice(0, 600)}]\n\n` : "") +
       (displayText || modelContent) +
       (pageText ? `\n\n[Current page: ${currentPage ? currentPage.title || currentPage.url : ""}]\n${pageText}` : "");
     const research = await webResearchWith(researchSel, researchInput, abortController && abortController.signal, true);
