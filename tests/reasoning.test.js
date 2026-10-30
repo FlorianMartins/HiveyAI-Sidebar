@@ -283,3 +283,9 @@ test("a history whose signed thinking was refused is resent without it", () => {
   assert.deepEqual(out.messages[1], { role: "assistant", content: "a" });
   assert.equal(adaptRequest({ messages: [{ role: "user", content: "q" }] }, err), undefined, "nothing to drop: no retry");
 });
+
+test("a model that cannot call tools is asked again without them", () => {
+  const body = { model: "x/y", messages: [{ role: "user", content: "q" }], tools: [{ type: "function", function: { name: "web_search" } }] };
+  assert.deepEqual(adaptRequest(body, '{"error":{"message":"No endpoints found that support tool use."}}'), { model: "x/y", messages: [{ role: "user", content: "q" }] });
+  assert.equal(adaptRequest({ model: "x/y", messages: [] }, "No endpoints found that support tool use."), undefined);
+});

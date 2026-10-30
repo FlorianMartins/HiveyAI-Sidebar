@@ -15,7 +15,7 @@ test("anonymised answers keep their reasoning_details as the model wrote them", 
     },
   };
   const p = privateProvider(inner, { level: "strict" });
-  const r = await p.runTurn({ system: "", history: [{ role: "user", content: "Write to paul.durand@acme-corp.com" }], tools: [] });
+  const r = await p.runTurn({ system: "", history: [{ role: "user", content: "Write to paul.durand@acme-corp.com", _attachment: true }], tools: [] });
   assert.match(r.text, /paul\.durand@acme-corp\.com/, "the answer holds the real value");
   assert.match(r.message.content, /paul\.durand@acme-corp\.com/);
   assert.match(r.message._reasoningDetails[0].text, /⟨[^⟩]+⟩/, "the signed thinking is untouched");

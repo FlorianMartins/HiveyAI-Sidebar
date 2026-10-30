@@ -39,8 +39,9 @@ masque, et le choix est gardé), donne accès à :
 ## Fonctionnalités
 
 - 🔒 **Confidentialité d'abord — local, passerelle ou cloud** : les fournisseurs sont rangés du plus
-  privé au moins privé. Avant toute requête vers un modèle **cloud**, identifiants secrets, e-mails,
-  téléphones, IBAN, cartes, numéros d'entreprise, noms de sociétés et vos propres termes deviennent
+  privé au moins privé. Avant toute requête vers un modèle **cloud**, dans les **pièces jointes**
+  (fichiers, PDF, passages Wisebase) identifiants secrets, e-mails, téléphones, IBAN, cartes, numéros
+  d'entreprise, noms de sociétés et vos propres termes deviennent
   des marqueurs (`⟨EMAIL_1⟩`…), constants dans la conversation, **remis en clair** dans la réponse,
   la réflexion et les actions de l'agent — automatiquement, sans rien demander. En mode
   **« Clés masquées »**, une **fenêtre des données sensibles** montre où se trouve chaque clé ou mot de passe
@@ -74,11 +75,11 @@ masque, et le choix est gardé), donne accès à :
   onnxruntime WASM, modèle `all-MiniLM-L6-v2`) et stocké en **IndexedDB**. Les
   réponses citent vos sources. Rien n'est jamais téléversé ; désinstaller l'extension
   purge la base.
-- 🌐 **Recherche web quand elle sert** : « Web » est activé par défaut dans le Chat, mais une
-  règle gratuite décide si la question en a besoin (un lien, l'actualité, un prix, des horaires →
-  recherche ; écrire, traduire, coder, calculer → non) et seuls les cas douteux posent une question
-  oui/non d'un mot à un modèle économique. Le modèle choisi cherche lui-même quand son fournisseur le
-  permet (OpenRouter, Anthropic) et cite ses sources.
+- 🌐 **Recherche web quand elle sert** : « Web » est activé par défaut dans le Chat. Un lien,
+  l'actualité, un prix ou des horaires cherchent d'emblée ; pour le reste, c'est le modèle qui répond
+  qui se demande s'il connaît vraiment la réponse et si elle a pu changer, et cherche lui-même s'il
+  n'est pas sûr (outil `web_search` sur OpenRouter, recherche native sur Anthropic). Les résultats
+  sont lus par un modèle économique, qui rend les faits et leurs sources.
 - 🔎 **DeepSearch** : bascule de recherche web approfondie dans le chat, avec une
   **profondeur réglable** (rapide / standard / approfondie).
 - 📚 **Prompt Library** : prompts prêts à l'emploi (rédaction, code, cybersec,

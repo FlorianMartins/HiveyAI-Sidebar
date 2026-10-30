@@ -10,6 +10,17 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Web intelligent, comme un vrai assistant** : avec « Web » activé, c'est le modèle qui répond qui
+  se demande s'il connaît vraiment la réponse et si elle a pu changer (actualité, méta d'un jeu, prix,
+  versions…). S'il n'est pas sûr, il cherche lui-même sur le web et cite ses sources ; sinon il répond
+  directement. « Tier list des heals d'Overwatch 2 » (sans « actuellement ») cherche désormais ;
+  « capitale de l'Australie » non. La lecture des résultats de recherche est confiée à un modèle
+  économique (Claude Haiku) : la même tier list coûtait 0,26 $ lue par Sonnet, 0,06 $ maintenant. Sur
+  OpenRouter et Anthropic ; ailleurs, le choix reste fait avant la réponse.
+- **Anonymisation limitée aux pièces jointes** : les fichiers joints, les PDF et les passages
+  Wisebase — là où se trouvent généralement les données confidentielles — sont anonymisés avant le
+  cloud ; ce que vous tapez et les pages lues partent tels quels. Les clés d'API et mots de passe
+  restent masqués partout.
 - **Les questions de suivi cherchent aussi sur le web** : après une réponse tirée du web (« tier list
   des heals d'Overwatch 2 actuellement »), « Et pour les tanks ? » était jugé seul, sans la question
   d'avant, et recevait une réponse de mémoire. Une suite d'une recherche cherche à nouveau, et le

@@ -23,7 +23,8 @@ import { IMAGE_SHAPES, imageResolutions, pixelSizes } from "../lib/image-sizes.j
 import { webNeedRule, webNeedMessages, parseWebNeed } from "../lib/web-need.js";
 import { detectUserLanguage } from "../lib/user-language.js";
 import { SKILLS, GOAL_SYSTEM, ENHANCE_SYSTEM } from "../lib/skills.js";
-import { executeTool, setAgentTab, clearAgentTab, getAgentTab } from "../lib/tools.js";
+import { executeTool, setAgentTab, clearAgentTab, getAgentTab, TOOLS } from "../lib/tools.js";
+const webSearchTool = () => TOOLS.find((x) => x.name === "web_search");
 import { initBenchmarkView } from "../lib/benchmarkView.js";
 import { buildTurn } from "../lib/untrusted.js";
 import { isWebChatUrl } from "../lib/memory-policy.js";
@@ -6228,7 +6229,7 @@ async function onWisebaseSend() {
     if (!Array.isArray(sess.history)) sess.history = [];
     const history = sess.history;
     const turnStart = history.length;
-    history.push({ role: "user", content: modelContent, _turn: turnId });
+    history.push({ role: "user", content: modelContent, _turn: turnId, _attachment: true }); // the user's documents
     let turn;
     try {
       turn = await runChatTurn({ provider, providerId: sel.providerId, modelId: sel.modelId, settings, system, history, turnStart, tools: [], onText: sink.onText, onThink: sink.onThink, signal });
@@ -7214,6 +7215,8 @@ async function decideWeb(text, sel, before) {
   // same changing facts. It used to be asked alone, the yes/no model said no, and the answer came from
   // memory.
   if (before && before.searched) return { search: true, by: "rule" };
+  // OpenRouter and Anthropic: the answering model has a search it calls itself when it does not know.
+  if (sel.providerId === "openrouter" || sel.providerId === "anthropic") return { search: false, by: "model-tool" };
   try {
     const use = sideTaskSel(sel);
     const provider = makeProvider({ ...settings, provider: use.providerId, models: { ...settings.models, [use.providerId]: use.modelId } }, {});
@@ -8613,7 +8616,7 @@ async function compareRun(list, btn) {
 }
 
 // ----- Core send ------------------------------------------------------------
-async function sendToModel(displayText, modelContent, { forceWeb = false, runMode = "chat", attImgs = [], attMeta = [], reuseUserEl = null, versioned = false, untrusted = [] } = {}) {
+async function sendToModel(displayText, modelContent, { forceWeb = false, runMode = "chat", attImgs = [], attMeta = [], reuseUserEl = null, versioned = false, untrusted = [], documents = false } = {}) {
   if (busy) return;
   const sel = currentSelection();
   if (currentKeyMissing(sel.providerId)) {
@@ -8803,11 +8806,11 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   let turnHistory;
   let turnStart = 0;
   if (isolated) {
-    turnHistory = [...untrustedMsgs, { role: "user", content: userContent }];
+    turnHistory = [...untrustedMsgs, { role: "user", content: userContent, ...(documents ? { _attachment: true } : {}) }];
   } else {
     // Where this question starts: its page block and the question itself are never summarized away.
     turnStart = boundHistory.length;
-    boundHistory.push(...untrustedMsgs.map((m) => ({ ...m, _turn: turnId })), { role: "user", content: userContent, _turn: turnId });
+    boundHistory.push(...untrustedMsgs.map((m) => ({ ...m, _turn: turnId })), { role: "user", content: userContent, _turn: turnId, ...(documents ? { _attachment: true } : {}) });
     turnHistory = boundHistory;
   }
   // 🐝 Hivey auto-thinking: spend a reasoning budget ONLY on the reasoning tier (where it pays
@@ -8819,10 +8822,22 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   // tool the model calls when it needs it.
   const agentWebTool = agentMode && wantWeb && turnSel.providerId === "openrouter";
   if (agentWebTool) webPlugin = false;
+  // The Chat, « Web » on, nothing searched up front: the MODEL judges whether it knows. « Il faudrait
+  // que le modèle se demande s'il a l'information, et s'il ne l'a pas, qu'il cherche sur le web »
+  // (2026-10-30) — a yes/no question to a small model, which did not know what the big one knew,
+  // decided it before. On OpenRouter the model gets a `web_search` tool; Anthropic's own search is
+  // already a tool the model calls when it needs it.
+  const chatWeb = !agentMode && !mcpMode && !wantWeb && els.webSearch.checked && runMode !== "translate" && runMode !== "improve" && !isolated;
+  const chatWebTool = chatWeb && turnSel.providerId === "openrouter";
+  if (chatWeb && turnSel.providerId === "anthropic") webPlugin = true;
+  let searchedByTool = false;
   const sideCosts = [];
   const agentWebSearch = async (query) => {
-    const ss = hid ? ensureUsable(parseSel(hiveyTiers(hid).search || hiveyTiers(hid).chat), hid) : turnSel;
+    // The search and the reading of its results (some 35 000 tokens a search) on a cheap model, which
+    // hands back the facts and their sources: read by Claude Sonnet itself, a tier list cost 0.26 $.
+    const ss = hid ? ensureUsable(parseSel(hiveyTiers(hid).search || hiveyTiers(hid).chat), hid) : sideTaskSel(turnSel);
     const sources = [];
+    searchedByTool = true;
     const found = await webResearchWith(ss, query, abortController && abortController.signal, false, sources, sideCosts);
     return found ? { results: found, sources: sources.slice(0, 8) } : { error: "The search returned nothing; try other words or open a page." };
   };
@@ -8836,9 +8851,12 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   if (!agentMode && !mcpMode && els.webSearch.checked && runMode !== "translate" && runMode !== "improve") {
     system += wantWeb
       ? "\n\nWEB: this app searched the web for this request — the results are part of what you received. Use them and cite their sources; never say you cannot access the internet."
-      : "\n\nWEB: this app can search the web for the user, and judged it unnecessary for this request. Answer from your knowledge; never say you cannot access the internet — if up-to-date facts would change the answer, say so in one line and offer to search.";
+      : chatWebTool || webPlugin
+        ? "\n\nWEB: you can search the web (the web_search tool). Before answering, ask yourself whether you reliably know the answer AND whether it may have changed since your training: current events, game metas and patches, prices, versions and releases, products, who holds a role, schedules, rankings, anything recent or very specific. If you are not sure, search first — never guess, and never present possibly outdated facts as current. When you searched, cite your sources. Do not search for what you know well (stable knowledge, writing, code, maths, the text given)."
+        : "\n\nWEB: this app can search the web for the user, and judged it unnecessary for this request. Answer from your knowledge; never say you cannot access the internet — if up-to-date facts would change the answer, say so in one line and offer to search.";
   }
   let tools = activeTools({ agentMode, webSearch: agentWebTool });
+  if (chatWebTool) tools = [webSearchTool()];
   let mcpExecute = null;
   // « Refuser » ENDS the run: the model used to read the refusal as an error to work around and did
   // the same thing another way (« mon ami a mis refusé mais il l'a quand même fait »). From the first
@@ -8857,7 +8875,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   const sink = makeSink(badge, true, pending, sessMode);
   // Agent mode: collapse the agent's tool calls into ONE foldable "Actions" block for
   // a cleaner, more immersive run — the steps are hidden but consultable on click.
-  const agentActs = agentMode || mcpMode ? makeAgentActions() : null;
+  const agentActs = agentMode || mcpMode || chatWebTool ? makeAgentActions() : null;
   if (agentMode) {
     await ensureAgentTab(); // 🔒 dedicate ONE background tab to THIS conversation (created/reused)
     agentGlowActiveTab();   // glow the page border while the agent works
@@ -8884,7 +8902,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
         compactNote = null;
       },
       system, history: turnHistory, tools,
-      ...(mcpExecute ? { execute: mcpExecute } : agentMode ? { execute: (name, input, opts) => (refused ? Promise.resolve(REFUSED) : executeTool(name, input, { ...opts, webSearch: agentWebTool ? agentWebSearch : null })) } : {}),
+      ...(mcpExecute ? { execute: mcpExecute } : agentMode || chatWebTool ? { execute: (name, input, opts) => (refused ? Promise.resolve(REFUSED) : executeTool(name, input, { ...opts, webSearch: agentWebTool || chatWebTool ? agentWebSearch : null })) } : {}),
       onText: sink.onText, onThink: sink.onThink,
       onToolStart: (call) => {
         sink.finalize();
@@ -8976,7 +8994,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
       const usage = turnResult && turnResult.usage;
       const cost = costOf(turnSel.providerId, turnSel.modelId, usage, settings);
       // The yes/no web question asked for this answer is part of what it cost.
-      const entry = { role: "assistant", text: sink.getRaw(), badge: badge || undefined, turnId, ...(usage ? { usage } : {}), ...(cost ? { cost } : {}), ...(wantWeb ? { web: true } : {}) };
+      const entry = { role: "assistant", text: sink.getRaw(), badge: badge || undefined, turnId, ...(usage ? { usage } : {}), ...(cost ? { cost } : {}), ...(wantWeb || searchedByTool ? { web: true } : {}) };
       addSideCost(entry, webDecision && webDecision.cost);
       for (const c of sideCosts) addSideCost(entry, c); // the agent's own web searches
       boundTranscript.push(entry);
@@ -9644,11 +9662,11 @@ async function onPdfSend() {
   if (!text) return;
   if (!pdfs.length) return addMessage("error", t("pdf.none"));
   els.input.value = "";
-  await sendToModel(text, pdfContextBlock() + `[Question]\n${text}`, { runMode: "chat" });
+  await sendToModel(text, pdfContextBlock() + `[Question]\n${text}`, { runMode: "chat", documents: true });
 }
 async function pdfSummarizeAction() {
   if (!pdfs.length) return addMessage("error", t("pdf.none"));
-  await sendToModel(t("pdf.summLabel"), pdfContextBlock() + "[Task]\n" + t("pdf.summPrompt"), { runMode: "chat" });
+  await sendToModel(t("pdf.summLabel"), pdfContextBlock() + "[Task]\n" + t("pdf.summPrompt"), { runMode: "chat", documents: true });
 }
 function pdfExtractTextAction() {
   if (!pdfs.length) return addMessage("error", t("pdf.none"));
