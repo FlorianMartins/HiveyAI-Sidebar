@@ -10,6 +10,10 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **La suggestion de prochaine demande ne suit plus d'une conversation à l'autre** : elle n'apparaît
+  que juste après une réponse, dans la conversation affichée, et disparaît dès qu'on la quitte (autre
+  onglet, autre conversation de l'historique, nouvelle conversation). En revenant sur l'onglet Chat, on
+  pouvait retrouver la suggestion d'une ancienne conversation sous Tab.
 - **Réponses avec recherche web plus rapides** : quand le modèle lance plusieurs recherches à la
   fois, elles tournent maintenant en même temps au lieu de l'une après l'autre ; le modèle qui lit les
   résultats ne « réfléchit » plus et rend un résumé concis des faits et de leurs sources. Une tier list

@@ -3103,7 +3103,7 @@ function setMode(next) {
   if (prev !== next && els.searchBar && !els.searchBar.classList.contains("hidden")) closeSearch();
   // Save the conversation we're leaving (data + DOM nodes), then point the globals
   // at the target workspace's own conversation.
-  if (prev !== next && CHAT_MODES.includes(prev)) { syncSessionFromGlobals(prev); stashMode(prev); }
+  if (prev !== next && CHAT_MODES.includes(prev)) { syncSessionFromGlobals(prev); stashMode(prev); getSession(prev).suggestion = null; }
   mode = next;
   settings.mode = next;
   setSettings({ mode: next });
@@ -3828,8 +3828,6 @@ async function saveSession(sess, m, sel) {
     id: sess.convId, title, customTitle: sess.customTitle || "", updatedAt: Date.now(), mode: m,
     providerId: sel.providerId, model: sel.modelId, transcript: sess.transcript, nativeHistory: sess.history,
     importedSources: sess.importedSources || [],
-    // The next-request suggestion belongs to its conversation: shown again when it is reopened.
-    suggestion: sess.suggestion || "",
   });
 }
 async function saveCurrent() {
@@ -3897,9 +3895,11 @@ async function loadConversation(id) {
   getSession(mode).pageCtxKeys = new Set(); // re-attach page context once for this thread
   getSession(mode).customTitle = c.customTitle || ""; // keep a manual rename
   getSession(mode).importedSources = c.importedSources || []; // keep dedup of imports
-  getSession(mode).suggestion = c.suggestion || null; // its own suggestion, not the previous one's
+  // The suggested next request lives only right after an answer: a conversation reopened shows none
+  // (« on voit la suggestion de l'ancienne conversation », 2026-10-30).
+  getSession(mode).suggestion = null;
   syncSessionFromGlobals(mode); // these new arrays become this tab's live session
-  if (!els.input.value) showSuggestion(getSession(mode).suggestion);
+  showSuggestion(null);
   let lastAssistantEl = null;
   for (const item of transcript) {
     const el = renderTranscriptItem(item);
@@ -7156,10 +7156,10 @@ async function suggestNextAfter(question, answer, sess, m, sel, entry, el) {
       if (getSession(mode) === sess) updateCtxGauge();
     }
     const next = parseNextStep(r && r.text);
-    if (!next || sess.convId !== convAt || sess.transcript.length !== lenAt) return;
+    // Only for the conversation still on screen: one the user has left gets none.
+    if (!next || sess.convId !== convAt || sess.transcript.length !== lenAt || mode !== m || getSession(m) !== sess) return;
     sess.suggestion = next;
-    saveSession(sess, m, sel).catch(() => {}); // kept with the conversation, for when it is reopened
-    if (mode === m && !busy && !els.input.value && getSession(m) === sess) showSuggestion(next);
+    if (!busy && !els.input.value) showSuggestion(next);
   } catch (_) { /* no suggestion: nothing to say about it */ }
 }
 
