@@ -10,6 +10,8 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Hivey Browser : depuis le nouvel onglet** : la zone de saisie du nouvel onglet peut envoyer
+  une question au Chat ou une tâche à l'Agent ; le panneau s'ouvre et s'en occupe.
 - **Le sujet de la conversation suit aussi DeepSearch, Comparer et l'Agent** : les sous-recherches de
   DeepSearch, la réponse d'un autre modèle dans « Comparer » et la recherche du mode Interaction de
   l'Agent reçoivent la question précédente — « tier list des healers sur cette saison » après un

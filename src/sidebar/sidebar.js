@@ -4123,6 +4123,16 @@ async function consumePendingAction() {
   if (pendingAction.ts === lastPendingTs) return; // already handled
   lastPendingTs = pendingAction.ts;
   await browser.storage.local.remove("pendingAction");
+  // Hivey Browser's new tab: what the user typed there, sent to the Chat or the Agent as if
+  // typed here. Only the browser itself can write this (the extension's own storage).
+  if (pendingAction.action === "ask" || pendingAction.action === "agent") {
+    const typed = (pendingAction.text || "").trim();
+    if (!typed) return;
+    setMode(pendingAction.action === "agent" ? "agent" : "chat");
+    els.input.value = typed;
+    await onSend();
+    return;
+  }
   // A right-click on a SELECTION opens an isolated, non-historised bubble (it
   // doesn't touch the conversation). Page-level actions keep the normal chat flow.
   if (BUBBLE_ACTIONS.has(pendingAction.action) && (pendingAction.text || "").trim()) {
