@@ -112,6 +112,24 @@ export function routeTurn(text) {
   return sentences.some(sentenceActs) ? "agent" : "chat";
 }
 
+/**
+ * What to search for when the message plainly asks for music (« lance-moi une musique », « mets du jazz »),
+ * else null. Such a turn needs no model: it would only slow the music down on a small machine, and
+ * tends to search for the words of the order themselves (« lance musique »).
+ */
+export function mediaQuery(text) {
+  const t = normalize(text).replace(TRAILING_POLITE, "").replace(/[.!?]+$/, "").trim();
+  const m = t.match(/^(?:lance|lancer|mets|mettre|joue|jouer|passe|passer|ecoute|ecouter|play|put on)\s+(?:moi |nous |me |us )?(.+)$/);
+  if (!m || t.length > 120) return null;
+  const words = m[1].split(" ");
+  const MUSIC = new Set(["musique", "musiques", "chanson", "chansons", "morceau", "morceaux", "music", "song", "songs"]);
+  const STYLE = new Set(["jazz", "rock", "rap", "pop", "metal", "classique", "lofi", "techno", "electro", "reggae", "blues", "funk", "disco"]);
+  if (!words.some((w) => MUSIC.has(w) || STYLE.has(w))) return null;
+  const SKIP = new Set(["une", "un", "de", "la", "le", "les", "du", "des", "d", "l", "some", "a", "the", "any", "n", "importe", "quelle", "quel", "peu", "ma", "mon", "mes"]);
+  const rest = words.filter((w) => !SKIP.has(w) && !MUSIC.has(w));
+  return rest.length ? `${rest.join(" ")} music` : "popular music";
+}
+
 /** The composer's switch: "chat" and "agent" force the turn, anything else lets the rule decide. */
 export function resolveRoute(choice, text) {
   if (choice === "chat" || choice === "agent") return choice;

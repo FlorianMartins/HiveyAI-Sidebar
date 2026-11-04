@@ -529,8 +529,10 @@ function setHTML(el, html) {
         if (a > best) { best = a; v = x; }
       });
       if (action === "play") {
-        // Already on a page with a player → make sure it actually plays.
-        if (v) {
+        // Already on a page with a player → make sure it actually plays. YouTube's results and home
+        // pages hold a hidden <video> too, for previews on hover: not a player, and it never starts.
+        const hasPlayer = !isYT || /^\/(watch|shorts|embed|live)/.test(location.pathname);
+        if (v && hasPlayer) {
           return playVideo(v, soundLabel); // async: guarantees the video LAUNCHES, with sound when allowed
         }
         // No player yet (search results / home / channel). Return the FIRST video's URL so the

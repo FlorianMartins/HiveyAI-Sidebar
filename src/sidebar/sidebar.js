@@ -46,7 +46,7 @@ import { setHTML } from "../lib/dom.js";
 import { initMcp } from "../lib/mcp-ui.js";
 import { startIconizer, stripEmoji } from "../lib/icons.js";
 import { applyEmbedClass, bindWorkspaceHash, EMBED_TOOLS, isBlankTabUrl } from "../lib/embed.js";
-import { resolveRoute } from "../lib/assistant-route.js";
+import { resolveRoute, mediaQuery } from "../lib/assistant-route.js";
 import { createEngineGate, progressPercent, modelSizeGb } from "../lib/hivey-engine.js";
 import { standaloneQuery, researchWeb, webContextBlock, WEB_GROUNDED_RULE, ANSWER_SHAPE_RULE, webMissRule, cleanAnswer, attributeAnswer, stripCitations, splitCitations, passageBudget } from "../lib/web-search.js";
 
@@ -2671,6 +2671,7 @@ async function storedAgentTab(conv) {
   return agentTabByConv.get(conv);
 }
 async function ensureAgentTab(conv = getSession("agent").convId) {
+  if (settings.hiveyAi) await waitForSites();
   // Reuse this conversation's tab if it's still open.
   try {
     const existing = (await storedAgentTab(conv)) ?? getAgentTab();
@@ -8405,7 +8406,36 @@ function endBusy() {
 // The light Hivey Browser draws around its address bar follows this. Written only in that browser.
 function setAiBusy(on) {
   if (!settings || !settings.hiveyAi) return;
-  try { browser.storage.local.set({ hiveyAiBusy: !!on }); } catch (_) {}
+  // hiveyAiAgent: the browser lets this extension reach sites only while the agent works.
+  try { browser.storage.local.set({ hiveyAiBusy: !!on, hiveyAiAgent: !!on && agentActive() }); } catch (_) {}
+}
+// The browser gives the sites asynchronously: an action started at once could find them still closed.
+async function waitForSites() {
+  for (let i = 0; i < 30; i++) {
+    try { if (await browser.permissions.contains({ origins: ["<all_urls>"] })) return; } catch (_) { return; }
+    await new Promise((r) => setTimeout(r, 100));
+  }
+}
+// « Lance-moi une musique »: straight to the player, in the tab the user is on when it is empty.
+async function runMediaShortcut(text, query) {
+  addMessage("user", text, mode);
+  const sess = getSession(mode);
+  sess.transcript.push({ role: "user", text });
+  assistantAgentTurn = true;
+  setAiBusy(true);
+  let answer;
+  try {
+    await ensureAgentTab();
+    const res = await executeTool("control_media", { action: "play", query }, {});
+    answer = res && res.error ? res.error : t("agent.media.started", { query });
+  } catch (e) {
+    answer = e instanceof Error ? e.message : String(e);
+  } finally {
+    setAiBusy(false);
+    assistantAgentTurn = false;
+  }
+  addMessage("assistant", answer, mode);
+  sess.transcript.push({ role: "assistant", text: answer });
 }
 // ── 🎙 Voice input. RECORDS the mic — with noise reduction, and stopping by itself when the user stops
 // speaking — and has the recording transcribed by Whisper (Groq, then OpenAI — the user's own key) or
@@ -9636,6 +9666,10 @@ async function onChatSend() {
   // an action on the browser, or when the switch in the composer says so. Same conversation either way.
   const asAgent = IS_EMBED && mode === "chat" && !!text && (assistantForceAgent || resolveRoute(settings.assistantRoute, text) === "agent");
   assistantForceAgent = false;
+  if (asAgent && settings.hiveyAi && !meta.length) {
+    const query = mediaQuery(text);
+    if (query) return runMediaShortcut(text, query);
+  }
   // 🔎 DeepSearch — multi-step cited web research instead of a single answer (Chat tab only).
   if (els.deepSearch && els.deepSearch.checked && mode === "chat" && text && !asAgent) { return runDeepSearch(text); }
   assistantAgentTurn = asAgent;

@@ -10,6 +10,11 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Hivey Browser : la recherche web et l'agent fonctionnent vraiment** : l'extension n'a pas accès aux
+  sites par sécurité, ce qui bloquait la lecture des pages. Le navigateur les récupère maintenant pour elle,
+  sans cookies, et l'agent reçoit l'accès aux sites seulement pendant qu'il travaille.
+- **« Lance-moi une musique » lance directement une musique** sur YouTube, sans attendre le modèle, et le
+  lecteur d'aperçu caché des pages de résultats n'est plus pris pour une vraie vidéo.
 - **Hivey Browser : un seul Assistant, sur un modèle local, sans clé** : dans le panneau du navigateur,
   plus de colonne d'onglets. Le titre est « Assistant », un petit menu donne accès à Traduire, Améliorer,
   Image, PDF, Cybersécurité, Wisebase, Benchmark et MCP, et les chats web gardent leur bouton dans le

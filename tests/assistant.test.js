@@ -573,3 +573,14 @@ test("the space used: the browser's count, or the JSON's size where it has none"
   assert.equal(await conversationBytes(), 0);
   delete globalThis.browser;
 });
+
+test("mediaQuery: plain requests for music, nothing else", async () => {
+  const { mediaQuery } = await import("../src/lib/assistant-route.js");
+  assert.equal(mediaQuery("Lance-moi une musique"), "popular music");
+  assert.equal(mediaQuery("mets de la musique s'il te plaît"), "popular music");
+  assert.equal(mediaQuery("Mets du jazz"), "jazz music");
+  assert.equal(mediaQuery("play some music"), "popular music");
+  assert.equal(mediaQuery("Lance une recherche sur Overwatch"), null);
+  assert.equal(mediaQuery("Quelle est la meilleure musique de 1990 ?"), null);
+  assert.equal(mediaQuery("Ouvre YouTube"), null);
+});
