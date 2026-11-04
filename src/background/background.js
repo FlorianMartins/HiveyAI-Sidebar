@@ -576,13 +576,44 @@ browser.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 // background (extension context) so it bypasses CORS via the <all_urls> host permission. Only
 // static HTML is read (no JS execution); credentials are omitted. Used to deep-read the best
 // sources found during a DeepSearch run.
+// Hivey Browser withholds the sites from this extension, so that a page cannot reach it: the browser
+// fetches for it, without cookies, and answers in session storage. Shaped like a fetch Response.
+async function fetchThroughBrowser(url) {
+  const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const key = `hiveyAiFetch_${id}`;
+  const answer = await new Promise((resolve, reject) => {
+    const done = (fn, value) => {
+      clearTimeout(timer);
+      browser.storage.onChanged.removeListener(onChange);
+      fn(value);
+    };
+    const timer = setTimeout(() => done(reject, new Error("timeout")), 20000);
+    const onChange = (changes, area) => {
+      if (area === "session" && changes[key] && changes[key].newValue) done(resolve, changes[key].newValue);
+    };
+    browser.storage.onChanged.addListener(onChange);
+    browser.storage.local.set({ hiveyAiFetch: { id, url } }).catch((e) => done(reject, e));
+  });
+  browser.storage.session.remove(key).catch(() => {});
+  if (answer.error) throw new Error(answer.error);
+  const status = answer.status || 0;
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    url: answer.url || url,
+    headers: { get: () => answer.contentType || "" },
+    text: async () => answer.body || "",
+  };
+}
+
 browser.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (!msg || msg.type !== "fetch:page" || !msg.url) return;
   (async () => {
     try {
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), 12000);
-      const res = await fetch(msg.url, { credentials: "omit", cache: "no-store", redirect: "follow", signal: ctrl.signal });
+      const { hiveyAi } = await browser.storage.local.get("hiveyAi");
+      const res = hiveyAi ? await fetchThroughBrowser(msg.url) : await fetch(msg.url, { credentials: "omit", cache: "no-store", redirect: "follow", signal: ctrl.signal });
       clearTimeout(timer);
       if (!res.ok) return sendResponse({ ok: false, error: "HTTP " + res.status });
       const ct = res.headers.get("content-type") || "";
