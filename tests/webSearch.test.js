@@ -215,7 +215,7 @@ test("search, read, select: only pages really fetched become sources, numbered",
   assert.equal(r.sources[0].url, "https://gamesite.test/overwatch/tier-list?season=12");
   assert.match(r.sources[0].passages.join(""), /Kiriko/);
   assert.equal(r.blocked, false);
-  assert.ok(web.seen.includes("https://other.test/page"), "it was tried");
+  assert.ok(web.seen.some((u) => u === "https://other.test/page"), "it was tried");
 });
 
 test("pages read that say nothing: no sources. Nothing readable at all: the engine's summaries, marked", async () => {

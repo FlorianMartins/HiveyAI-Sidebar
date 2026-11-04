@@ -159,7 +159,6 @@ export function selectPassages(pages, query, { budgetChars = 6000, maxPerPage = 
       if (taken.length) continue;
       // The very best chunk does not fit: its part around the line that says the most.
       taken.push({ ...c, ...focusWithin(usable[c.page].text, c, query, budgetChars) });
-      used = budgetChars;
       break;
     }
     taken.push(c);
