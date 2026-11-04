@@ -4,7 +4,7 @@
 // ids this add-on can actually select. Each source carries its OWN freshness, because that is
 // the number people forget to ask for: a leaderboard can be maintained daily and still cover
 // nothing released this year.
-export const BENCHMARK_FETCHED_AT = "2026-11-03";
+export const BENCHMARK_FETCHED_AT = "2026-11-04";
 export const BENCHMARK_SOURCES = {
   "webdev": {
     "label": "LMArena WebDev",
@@ -14,7 +14,7 @@ export const BENCHMARK_SOURCES = {
     "about": "People give two anonymous models the same web-app task and vote for the better result. The score is an Elo rating: higher is better, and only the gaps between models mean something.",
     "matched": 122,
     "total": 152,
-    "newestModelCovered": "2026-10-26"
+    "newestModelCovered": "2026-11-04"
   },
   "vectara": {
     "label": "Vectara Hallucination",
@@ -170,7 +170,7 @@ export const BENCHMARK_WEB = {
       "as": "MiMo-V2.6-Flash"
     }
   },
-  "tencent/hy4-preview": {
+  "tencent/hy4": {
     "webdev": {
       "elo": 1631,
       "votes": 4765,
@@ -1417,6 +1417,7 @@ export const BENCHMARK_UNMATCHED = [
 ];
 // The newest catalogue models NO published source covers. This is the gap the live test fills.
 export const BENCHMARK_UNCOVERED = [
+  "stealth/crouton-alpha",
   "z-ai/glm-5.3-flashx-legal",
   "particle-ai/particle-1",
   "openai/gpt-6.1-terra-pro",
@@ -1455,6 +1456,5 @@ export const BENCHMARK_UNCOVERED = [
   "aion-labs/aion-3.5",
   "upstage/solar-mini4",
   "cohere/command-a-plus",
-  "openai/gpt-6-luna-pro",
-  "openai/gpt-6-luna-pro:batch"
+  "openai/gpt-6-luna-pro"
 ];
