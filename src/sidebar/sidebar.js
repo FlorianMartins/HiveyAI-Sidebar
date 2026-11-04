@@ -2671,6 +2671,7 @@ async function storedAgentTab(conv) {
   return agentTabByConv.get(conv);
 }
 async function ensureAgentTab(conv = getSession("agent").convId) {
+  if (settings.hiveyAi) await waitForSites();
   // Reuse this conversation's tab if it's still open.
   try {
     const existing = (await storedAgentTab(conv)) ?? getAgentTab();
@@ -8424,7 +8425,6 @@ async function runMediaShortcut(text, query) {
   setAiBusy(true);
   let answer;
   try {
-    await waitForSites();
     await ensureAgentTab();
     const res = await executeTool("control_media", { action: "play", query }, {});
     answer = res && res.error ? res.error : t("agent.media.started", { query });
