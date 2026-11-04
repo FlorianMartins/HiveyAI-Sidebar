@@ -32,6 +32,8 @@
         <!-- Past conversations of the embedded site (claude.ai/recents…): page tools, history, +, expand,
              settings — the order of the other tabs. -->
         <div class="web-only-head" id="webHistorySlot"><button type="button" id="webHistory" class="icon icon-accent hidden" data-i18n-title="web.history" title="Your past conversations on this site"><svg class="glyph-svg" viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="url(#histg)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3.5v5h5"/><path d="M3.5 13a9 9 0 1 0 2.4-6.4L3 8.5"/><path d="M12 7.5v5l3.5 2"/></svg></button></div>
+        <!-- Hivey Browser's Assistant (html.embed-hivey): every other workspace, without a rail. -->
+        <button id="toolsMenuBtn" class="icon icon-accent embed-only" type="button" aria-haspopup="true" aria-expanded="false" data-i18n-title="assistant.tools" title="Tools"><svg class="glyph-svg" viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="url(#histg)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg></button>
         <button id="searchBtn" class="icon icon-accent" data-i18n-title="search.title" title="Search in this conversation"><svg class="glyph-svg" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="url(#histg)" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button>
         <button id="historyBtn" class="icon icon-accent" data-i18n-title="history.title" title="History (local)"><svg class="glyph-svg" viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="url(#histg)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3.5v5h5"/><path d="M3.5 13a9 9 0 1 0 2.4-6.4L3 8.5"/><path d="M12 7.5v5l3.5 2"/></svg></button>
         <button id="newChat" class="icon icon-accent" data-i18n-title="newChat.title" title="New conversation"><svg class="glyph-svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="url(#histg)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
@@ -39,6 +41,7 @@
         <button id="openOptions" class="icon icon-accent" data-i18n-title="settings.title" title="Settings"><svg class="glyph-svg" viewBox="0 0 16 16" width="18" height="18" fill="url(#gearg)" aria-hidden="true"><path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/><path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.16.291a1.873 1.873 0 0 0 1.116 2.693l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.16a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.16-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.16a1.873 1.873 0 0 0 2.692-1.115l.094-.319z"/></svg></button>
       </div>
     </header>
+    <div id="toolsMenu" class="think-pop plus-menu tools-menu hidden" role="menu"></div>
 
     <!-- Workspace = left activity rail (always-visible workspace switcher) + work area.
          The rail scales cleanly to many workspaces where a horizontal tab bar can't,
@@ -108,6 +111,7 @@
       <div class="hist-search-wrap">
         <input id="historySearch" type="text" class="hist-search" data-i18n-ph="history.searchPh" placeholder="Search conversations…" autocomplete="off" spellcheck="false" />
       </div>
+      <p id="historyUsage" class="hist-usage muted hidden"></p>
       <ul id="historyList" class="historylist"></ul>
     </div>
 
@@ -358,6 +362,7 @@
       <!-- Attachment preview strip (files / images fed to the AI as context). -->
       <div id="attachStrip" class="attach-strip hidden"></div>
       <div id="cmdChips" class="cmd-chips hidden"></div>
+      <div id="localStatus" class="local-status hidden" role="status"></div>
       <!-- One rounded input box: the "+" sits to the LEFT of the text on the first row,
            the chat toggles + stop on a bottom row at the right. No send button — Enter sends. -->
       <div class="composer-box">
@@ -383,6 +388,12 @@
             <button id="modelConnect" class="btn-grad hidden"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2v6"/><path d="M15 2v6"/><path d="M7 8h10v3a5 5 0 0 1-10 0z"/><path d="M12 16v6"/></svg><span data-i18n="model.connect">Connect a provider</span></button>
           </div>
           <div class="tools-right">
+            <!-- Hivey Browser's Assistant: Auto routes each turn, Chat and Agent force it. -->
+            <div class="assistant-switch embed-only" id="assistantSwitch" role="group" data-i18n-title="assistant.routeTitle" title="Auto sends actions on the browser to the agent and the rest to the chat">
+              <button type="button" data-route="auto" data-i18n="assistant.routeAuto">Auto</button>
+              <button type="button" data-route="chat" data-i18n="assistant.routeChat">Chat</button>
+              <button type="button" data-route="agent" data-i18n="assistant.routeAgent">Agent</button>
+            </div>
             <button type="button" id="optsToggle" class="ctool opts-toggle" data-i18n-title="opts.title" title="Options" aria-label="Options" aria-expanded="false"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></button>
             <div class="chat-toggles" id="chatControls">
               <div class="opts-head" data-i18n="opts.title">Options</div>

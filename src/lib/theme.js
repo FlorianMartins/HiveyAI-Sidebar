@@ -15,6 +15,9 @@ export const THEMES = {
   modern: { label: "Modern (Teal)",    bg: "#090d16", panel: "#121b2c", panel2: "#1b2840", border: "#243349", borderSoft: "#182338", text: "#f4f4f5", muted: "#8b9bb0", accent: "#0d9488", accent2: "#14b8a6", split: 0.4 },
   neon:   { label: "Neon / Cyberpunk", bg: "#05050a", panel: "#0f0f1a", panel2: "#18182a", border: "#232342", borderSoft: "#1a1a30", text: "#ffffff", muted: "#9a9ac4", accent: "#06b6d4", accent2: "#d946ef", split: 0.0 },
   sunset: { label: "Midnight Sunset",  bg: "#110e18", panel: "#1d1827", panel2: "#2a2236", border: "#382c44", borderSoft: "#261e30", text: "#fafafa", muted: "#b5a6b8", accent: "#e11d48", accent2: "#ea580c", split: 0.2 },
+  // Hivey Browser's Assistant (html.embed-hivey): near-black neutral surfaces and hairlines; colour is
+  // kept for what moves or is active, in the Hivey gradient. Not offered outside the browser.
+  graphite: { label: "Graphite", bg: "#101013", panel: "#151518", panel2: "#1b1b1f", border: "rgba(255,255,255,0.09)", borderSoft: "rgba(255,255,255,0.05)", text: "#ececee", muted: "rgba(236,236,238,0.56)", accent: "#3b82f6", accent2: "#d946ef", gradient: "linear-gradient(90deg, #3b82f6, #8b5cf6, #d946ef)", browserOnly: true, split: 0.5 },
   light:  { label: "Light (Premium)",  bg: "#f4f5f7", panel: "#ffffff", panel2: "#f4f4f5", border: "#e2e8f0", borderSoft: "#eef1f5", text: "#18181b", muted: "#64748b", accent: "#6366f1", accent2: "#8b5cf6", split: 0.4 },
 };
 
@@ -105,6 +108,7 @@ export function applyTheme(themeKey, custom, opts) {
     set("--grad", `linear-gradient(135deg, ${c.accent} 0%, ${mid(c.accent, c.accent2)} ${split}%, ${c.accent2} 100%)`);
     set("--grad-soft", `linear-gradient(135deg, ${hexToRgba(c.accent, 0.16)} 0%, ${mid(hexToRgba(c.accent, 0.16), hexToRgba(c.accent2, 0.16))} ${split}%, ${hexToRgba(c.accent2, 0.16)} 100%)`);
     set("--user", `linear-gradient(135deg, ${c.accent} 0%, ${mid(c.accent, c.accent2)} ${split}%, ${c.accent2} 100%)`);
+    if (c.gradient) set("--grad", c.gradient);
   } else {
     set("--grad", `linear-gradient(135deg, ${c.accent}, ${c.accent})`); // flat accent (no gradient)
     set("--grad-soft", `linear-gradient(135deg, ${hexToRgba(c.accent, 0.16)}, ${hexToRgba(c.accent, 0.16)})`);

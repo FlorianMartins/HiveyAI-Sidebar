@@ -66,8 +66,8 @@ export const TOOLS = [
     name: "web_search",
     description:
       "Search the web and get back the key facts with their source URLs. Use it for up-to-date or outside " +
-      "information that the open pages do not give; each call is a paid search, so do not use it for what " +
-      "you can read on the page.",
+      "information that the open pages do not give; each call takes time and may be paid, so do not use it " +
+      "for what you can read on the page.",
     input_schema: {
       type: "object",
       properties: { query: { type: "string", description: "What to look for, in a few words." } },
@@ -234,7 +234,7 @@ export const TOOLS = [
       + "The briefing is a summary: if it seems thin or you need exact wording, call get_memory with "
       + "one of the returned ids.",
     write: false,
-    parameters: { type: "object", properties: { query: { type: "string", description: "What to look for." } }, required: ["query"] },
+    input_schema: { type: "object", properties: { query: { type: "string", description: "What to look for." } }, required: ["query"] },
   },
   {
     name: "get_memory",
@@ -242,7 +242,7 @@ export const TOOLS = [
       "Fetch one memory verbatim by its id, as returned by recall. Use it when the briefing lost a "
       + "detail you need exactly.",
     write: false,
-    parameters: { type: "object", properties: { id: { type: "string" } }, required: ["id"] },
+    input_schema: { type: "object", properties: { id: { type: "string" } }, required: ["id"] },
   },
 ];
 

@@ -94,7 +94,11 @@
     (e.g. Anthropic, OpenAI, Google Gemini, Mistral, Groq, DeepSeek, xAI, Perplexity, OpenRouter, or a local
     server such as Ollama / LM Studio, or your own gateway), authenticated with <strong>your</strong> key.
     When « Web » search is on and a question needs it, the search is made by that same provider (its
-    web search feature). Those providers are independent third parties and process your prompts under
+    web search feature). When the model in use has no web search of its own, the extension searches by
+    itself: your search query (rewritten from your conversation) goes to DuckDuckGo, and the pages it finds
+    are fetched directly, without cookies or credentials. With Hivey Browser's local model, your prompts stay
+    on your computer; only those searches and page requests go out, and only when Web is on.
+    Those providers are independent third parties and process your prompts under
     <strong>their own</strong> privacy policies and terms. Please review the policy of whichever
     provider(s) you connect. We are not a party to that processing and never receive a copy.</p>
   <p>The only other network requests, each made only when you use the feature concerned:</p>

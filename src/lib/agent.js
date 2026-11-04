@@ -25,7 +25,7 @@ export function buildSystemPrompt({ agentMode, targetLang, responseLang, mode, b
     ? `Reply concisely and usefully, in ${fixedLang} (unless the user explicitly asks for another language).`
     : "Reply concisely and usefully, in the SAME language as the user's message (detect it automatically; unless the user explicitly asks for another language)." + named;
   let p =
-    "You are an assistant embedded as a sidebar inside the user's Firefox browser, " +
+    "You are an assistant embedded as a sidebar inside the user's web browser, " +
     "in the spirit of Sider. You have \"eyes\": the content of the page being viewed " +
     "may be provided to you automatically as context — lean on it to answer (summarise, " +
     "translate, explain, compare). " + langRule + "\n\n" +

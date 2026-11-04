@@ -2714,3 +2714,91 @@ body.rail-pinned.rail-right .top-banner { right: calc(var(--rail-w, 56px) + 8px)
 html.embed-hivey #rail, html.embed-hivey #railResize, html.embed-hivey #railAddMenu,
 html.embed-hivey .rail-confirm { display: none !important; }
 html.embed-hivey .menu-btn, html.embed-hivey .brand-word { cursor: default; }
+
+/* ── Hivey Browser's Assistant ──────────────────────────────────────────────────────────────────
+   Everything below applies inside html.embed-hivey (the Graphite look: near-black neutral surfaces,
+   hairlines, 12 px cards, a pill composer, colour only for what moves or is active), except the
+   web-search blocks, which belong to the answers themselves. */
+.embed-only { display: none; }
+html.embed-hivey .embed-only { display: inline-flex; }
+html.embed-hivey .menu-btn, html.embed-hivey #expandTab { display: none; }
+html.embed-hivey { --aura-op: 0 !important; }
+html.embed-hivey body { background: var(--bg); }
+html.embed-hivey .topbar { background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; border-bottom: 1px solid var(--border-soft); min-height: 44px; padding: 6px 12px; }
+html.embed-hivey .brand-word, html.embed-hivey body.web-active .brand-word { display: inline !important; font-size: 14px; font-weight: 600; letter-spacing: -0.01em; color: var(--text); margin-left: 0; cursor: default; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+html.embed-hivey .brand-word:hover { opacity: 1; }
+html.embed-hivey .topbar .glyph-svg { stroke: var(--muted); fill: none; }
+html.embed-hivey #openOptions .glyph-svg { fill: var(--muted); stroke: none; }
+html.embed-hivey .topbar .icon:hover .glyph-svg { stroke: var(--text); }
+html.embed-hivey #openOptions:hover .glyph-svg { fill: var(--text); stroke: none; }
+html.embed-hivey .empty-logo { opacity: .5; filter: grayscale(1); transform: scale(.72); }
+html.embed-hivey #emptyFeatures { display: none; }
+html.embed-hivey .empty-title { background: none; -webkit-background-clip: border-box; background-clip: border-box; -webkit-text-fill-color: var(--text); color: var(--text); text-shadow: none; filter: none; font-size: 18px; font-weight: 500; letter-spacing: -0.01em; }
+/* The row fits the panel: the model's name gives way first, and the switch makes room for Stop. */
+html.embed-hivey .composer-tools { flex-wrap: nowrap; min-width: 0; }
+html.embed-hivey .composer-tools .tools-left { flex: 1 1 auto; min-width: 0; }
+html.embed-hivey .composer-tools .tools-right { flex: 0 0 auto; }
+html.embed-hivey .composer-tools .model-chip { flex: 0 1 auto; min-width: 48px; max-width: 100%; }
+html.embed-hivey body.mode-chat .composer-box.is-busy .assistant-switch { display: none; }
+html.embed-hivey .composer-box { background: var(--panel); border: 1px solid var(--border); border-radius: 22px; backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none; }
+html.embed-hivey .composer-box:hover:not(:focus-within) { border-color: color-mix(in srgb, var(--text) 16%, transparent); box-shadow: none; }
+html.embed-hivey .composer-box:focus-within { border-color: color-mix(in srgb, var(--text) 22%, transparent); box-shadow: none; }
+html.embed-hivey .cb-ring { border-radius: 22px; }
+html.embed-hivey .cb-run { border-radius: 22px; }
+html.embed-hivey .composer-tools .attach-btn, html.embed-hivey .composer-tools .mic-btn, html.embed-hivey .composer-tools .ctool:not(.stop) { color: var(--muted); }
+html.embed-hivey .composer-tools .attach-btn:hover, html.embed-hivey .composer-tools .mic-btn:hover, html.embed-hivey .composer-tools .ctool:not(.send-btn):not(.stop):hover { color: var(--text); }
+html.embed-hivey .composer-tools .model-chip .combo-caret, html.embed-hivey .composer-tools .cchip .tc-caret { color: var(--muted); }
+html.embed-hivey .combo-input, html.embed-hivey .sec-analysis-btn { background: transparent; border-color: transparent; box-shadow: none; }
+html.embed-hivey .msg.user > .umsg-text { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); border-radius: 12px; }
+html.embed-hivey .think, html.embed-hivey .deep-progress { background: transparent; border: 1px solid var(--border-soft); border-radius: 12px; }
+html.embed-hivey .panel, html.embed-hivey #historyPanel:not(.hidden), html.embed-hivey #tabsPanel:not(.hidden) { background: var(--panel); backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none; border-bottom: 1px solid var(--border); border-radius: 0 0 12px 12px; }
+html.embed-hivey .think-pop, html.embed-hivey .combo-menu, html.embed-hivey .filter-panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 10px 28px rgba(0, 0, 0, .45); backdrop-filter: none; -webkit-backdrop-filter: none; }
+html.embed-hivey .btn-grad { background: var(--grad); color: #fff; border: 0; }
+html.embed-hivey .plus-menu .pm-item svg { color: var(--muted); }
+html.embed-hivey .plus-menu .pm-item:hover { background: color-mix(in srgb, var(--text) 7%, transparent); }
+
+/* The tools menu, under its button. */
+.tools-menu { position: fixed; top: 44px; right: 10px; min-width: 200px; z-index: 1200; }
+.tools-menu.hidden { display: none; }
+.tools-menu .pm-item.on .pm-label { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 600; }
+
+/* Chat / Agent in the composer. */
+html.embed-hivey .assistant-switch { display: none; }
+html.embed-hivey body.mode-chat .assistant-switch { display: inline-flex; align-items: center; gap: 1px; padding: 2px; border: 1px solid var(--border-soft); border-radius: 999px; margin-right: 2px; }
+.assistant-switch button { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 11.5px; line-height: 1; padding: 4px 8px; border-radius: 999px; cursor: pointer; }
+.assistant-switch button:hover { color: var(--text); }
+.assistant-switch button.on { background: color-mix(in srgb, var(--text) 10%, transparent); color: var(--text); }
+@media (max-width: 380px) { .assistant-switch button { padding: 4px 6px; font-size: 11px; } }
+
+/* The engine: its status line, its first-use card. */
+.local-status { font-size: 12px; color: var(--muted); padding: 0 12px 6px; }
+.local-status.hidden { display: none; }
+.engine-card { margin: 8px 0; padding: 14px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; gap: 8px; }
+.engine-card .ec-name { font-weight: 600; color: var(--text); }
+.engine-card .ec-lead { font-size: 12.5px; color: var(--muted); }
+.engine-card .ec-bar { height: 4px; border-radius: 999px; overflow: hidden; background: color-mix(in srgb, var(--text) 8%, transparent); }
+.engine-card .ec-bar.hidden { display: none; }
+.engine-card .ec-bar span { display: block; height: 100%; width: 0; border-radius: inherit; background: var(--grad); transition: width .3s ease; }
+.engine-card .ec-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 30px; }
+.engine-card .ec-pct { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.engine-card .ec-download { margin-left: auto; padding: 6px 14px; border-radius: 999px; cursor: pointer; }
+.engine-card .ec-download.hidden { display: none; }
+.engine-card .ec-download:disabled { opacity: .6; cursor: default; }
+
+/* An answer's citations and sources. */
+.msg .cite-chip { display: inline-flex; align-items: center; justify-content: center; min-width: 16px; height: 16px; padding: 0 4px; margin: 0 1px; border-radius: 5px; vertical-align: 1px; font-size: 10.5px; font-weight: 600; line-height: 1; text-decoration: none; color: var(--text); background: color-mix(in srgb, var(--text) 10%, transparent); }
+.msg .cite-chip:hover { background: var(--grad); color: #fff; }
+.web-sources { margin: 10px 0 4px; padding: 10px 12px; border: 1px solid var(--border-soft); border-radius: 12px; }
+.web-sources .ws-head { font-size: 11px; font-weight: 600; letter-spacing: .03em; color: var(--muted); margin-bottom: 6px; }
+.msg .web-sources .ws-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.msg .web-sources .ws-list li { margin: 0; padding: 0; }
+.msg .web-sources a { display: flex; align-items: baseline; gap: 8px; padding: 3px 4px; border-radius: 6px; color: var(--text); text-decoration: none; font-size: 12.5px; min-width: 0; }
+.msg .web-sources a:hover { background: color-mix(in srgb, var(--text) 6%, transparent); }
+.web-sources .ws-num { flex: 0 0 auto; font-size: 10.5px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
+.web-sources .ws-title { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.web-sources .ws-host { flex: 0 1 auto; max-width: 40%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; color: var(--muted); }
+
+html.embed-hivey .web-trace > summary { color: var(--muted); font-weight: 500; }
+/* The history's space. */
+.hist-usage { margin: 2px 2px 8px; font-size: 11.5px; line-height: 1.4; }
+.hist-usage.hidden { display: none; }

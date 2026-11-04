@@ -10,6 +10,7 @@ export function conversationToMarkdown(conv) {
   for (const m of conv.transcript || []) {
     const who = m.role === "user" ? "🧑 **You**" : "🐝 **Assistant**";
     lines.push(who, "", (m.text || "").trim(), "");
+    if (m.sources && m.sources.length) lines.push(...m.sources.map((s) => `[${s.n}] ${s.title ? `${s.title} — ` : ""}${s.url}`), "");
   }
   return lines.join("\n");
 }

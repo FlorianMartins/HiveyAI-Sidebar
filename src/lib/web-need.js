@@ -38,6 +38,12 @@ const NO = [
   /\b(capitale? (de|du|des|d'|of)|capital (of|de)|hauptstadt (von)?)\b/i,
 ].map(W);
 
+/** A greeting or a thank-you, with little else: nothing a search could answer. */
+export function isSmallTalk(text) {
+  const t = String(text || "").trim();
+  return t.length <= 40 && /^(salut|bonjour|bonsoir|coucou|hello|hi|hey|merci|thanks|thank you|ok|d'accord|ça va|comment ça va|comment vas-tu|how are you)\b/i.test(t);
+}
+
 /** "yes" / "no" from the rule alone, "maybe" when it can't tell. */
 export function webNeedRule(text) {
   const t = String(text || "").slice(0, 2000);

@@ -24,7 +24,8 @@
     "sidePanel",
     "declarativeNetRequest",
     "alarms",
-    "notifications"
+    "notifications",
+    "unlimitedStorage"
   ],
   "declarative_net_request": {
     "rule_resources": [

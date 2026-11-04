@@ -1,6 +1,6 @@
 import { getSettings, setSettings } from "../lib/storage.js";
 import { startIconizer } from "../lib/icons.js";
-import { PROVIDERS, PROVIDER_ORDER, IMAGE_SIZES, WRITING_PRESETS, isConnected } from "../lib/models.js";
+import { PROVIDERS, PROVIDER_ORDER, HIVEY_LOCAL, IMAGE_SIZES, WRITING_PRESETS, isConnected } from "../lib/models.js";
 import { connectOpenRouter } from "../lib/auth.js";
 import { listModels } from "../lib/providers.js";
 import { clearConversations } from "../lib/history.js";
@@ -144,6 +144,7 @@ function buildThemeControls() {
   if (sel) {
     sel.innerHTML = "";
     for (const [key, th] of Object.entries(THEMES)) {
+      if (th.browserOnly && !settings.hiveyAi && curTheme !== key) continue; // Hivey Browser's own look
       const o = document.createElement("option");
       o.value = key; o.textContent = th.label;
       sel.appendChild(o);
@@ -533,6 +534,11 @@ function buildCard(id) {
   sec.appendChild(head);
   const body = el("div", "prov-body");
   sec.appendChild(body);
+  // The browser provides this one: no key, no address, nothing to edit.
+  if (meta.browserManaged) {
+    body.appendChild(el("p", "hint", t("opt.hiveyLocal.hint")));
+    return sec;
+  }
 
   // Connect affordance on EVERY cloud provider. P8 — the badge AND this button now
   // reflect the connection state live (as soon as a key is pasted, before saving),
@@ -694,6 +700,7 @@ function buildProviderFields() {
   // Privacy first: your own machine, then your own server, then the clouds.
   const rank = { local: 0, custom: 1, cloud: 2 };
   for (const id of [...PROVIDER_ORDER].sort((a, b) => rank[category(a)] - rank[category(b)])) {
+    if (id === HIVEY_LOCAL && !settings.hiveyAi) continue; // exists only inside Hivey Browser
     const cat = category(id);
     if (cat !== lastCat) {
       root.appendChild(el("div", "group-title", t("opt.group." + cat)));
@@ -858,6 +865,8 @@ function wireSync() {
     if (!pass) return;
     try {
       const fresh = await getSettings();
+      // The browser's engine state (its port and bearer included) is not a setting.
+      for (const k of ["hiveyAi", "hiveyAiRequest", "hiveyAiBusy"]) delete fresh[k];
       const blob = await encryptSettings(fresh, pass);
       const b = new Blob([blob], { type: "application/json" });
       const url = URL.createObjectURL(b);

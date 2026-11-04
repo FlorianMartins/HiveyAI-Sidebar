@@ -42,7 +42,7 @@
 
     // ── Shared THEME: mirror the sidebar's accent colour into Hivey Code (sidebar = source of truth
     // for the common colour). Hivey Code reads `hivey.accent` on load.
-    const THEME_ACCENT = { dark: "#8b5cf6", hive: "#d97706", modern: "#0d9488", neon: "#06b6d4", sunset: "#e11d48", light: "#3b82f6" };
+    const THEME_ACCENT = { dark: "#8b5cf6", hive: "#d97706", modern: "#0d9488", neon: "#06b6d4", sunset: "#e11d48", light: "#3b82f6", graphite: "#3b82f6" };
     function syncAccent(theme, themeColors) {
       const accent = (themeColors && themeColors.accent) || THEME_ACCENT[theme] || "#8b5cf6";
       try {
@@ -65,6 +65,7 @@
       neon:   { bg: "#05050a", panel: "#0f0f1a", panel2: "#18182a", border: "#232342", borderSoft: "#1a1a30", text: "#ffffff", muted: "#9a9ac4", accent: "#06b6d4", accent2: "#d946ef" },
       sunset: { bg: "#110e18", panel: "#1d1827", panel2: "#2a2236", border: "#382c44", borderSoft: "#261e30", text: "#fafafa", muted: "#b5a6b8", accent: "#e11d48", accent2: "#ea580c" },
       light:  { bg: "#f4f5f7", panel: "#ffffff", panel2: "#f4f4f5", border: "#e2e8f0", borderSoft: "#eef1f5", text: "#18181b", muted: "#64748b", accent: "#6366f1", accent2: "#8b5cf6" },
+      graphite: { bg: "#101013", panel: "#151518", panel2: "#1b1b1f", border: "rgba(255,255,255,0.09)", borderSoft: "rgba(255,255,255,0.05)", text: "#ececee", muted: "rgba(236,236,238,0.56)", accent: "#3b82f6", accent2: "#d946ef" },
     };
     function syncTheme(theme, themeColors) {
       const base = THEME_PALETTES[theme] || THEME_PALETTES.dark;
@@ -93,7 +94,7 @@
 
     // ── Shared APPEARANCE: map the sidebar's display settings (custom colours + background auras) to
     // Hivey Code's UiPrefs shape and push them live, so the two products stay visually identical.
-    const AURA_BY_THEME = { dark: "#8b5cf6", hive: "#d97706", modern: "#0d9488", neon: "#06b6d4", sunset: "#e11d48", light: "#3b82f6" };
+    const AURA_BY_THEME = { dark: "#8b5cf6", hive: "#d97706", modern: "#0d9488", neon: "#06b6d4", sunset: "#e11d48", light: "#3b82f6", graphite: "#3b82f6" };
     function toHex(c) {
       if (typeof c !== "string") return null;
       c = c.trim();

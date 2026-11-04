@@ -10,6 +10,38 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Hivey Browser : un seul Assistant, sur un modèle local, sans clé** : dans le panneau du navigateur,
+  plus de colonne d'onglets. Le titre est « Assistant », un petit menu donne accès à Traduire, Améliorer,
+  Image, PDF, Cybersécurité, Wisebase, Benchmark et MCP, et les chats web gardent leur bouton dans le
+  navigateur. Sans clé configurée, c'est le modèle local fourni par le navigateur qui répond ; une clé
+  déjà configurée reste utilisée, et le sélecteur de modèle permet de passer de l'un à l'autre. Au premier
+  usage, une carte montre le modèle et sa taille : rien n'est téléchargé sans votre clic, la progression
+  s'affiche, puis la réponse continue toute seule. Pendant un jeu, le modèle est suspendu par le navigateur :
+  « En pause pendant votre partie », et la réponse reprend d'elle-même.
+- **Hivey Browser : l'Assistant agit quand on lui demande d'agir** : « lance-moi une musique », « ouvre
+  YouTube », « remplis ce formulaire » partent à l'agent dans la même conversation ; une question reste une
+  question. Le sélecteur Auto · Chat · Agent de la zone de saisie permet d'imposer l'un ou l'autre. Depuis
+  le nouvel onglet, l'agent travaille dans cet onglet au lieu d'en ouvrir un second, vide.
+- **Une recherche web pour tous les modèles, et des réponses qui s'y tiennent** : sans recherche propre au
+  fournisseur ni clé OpenRouter, rien n'était cherché alors que le modèle s'entendait dire le contraire.
+  Désormais l'extension cherche elle-même (DuckDuckGo, sans cookie), lit les pages et donne au modèle **les
+  passages qui répondent à la question**, pas le début de chaque page : c'est ce qui faisait répondre
+  « Moira » à « le meilleur healer d'Overwatch », la tier list étant loin dans la page. « Et en compétition ? »
+  cherche sur Overwatch en compétition ; une nouvelle question ne garde rien de la précédente. Les sources
+  l'emportent sur ce que le modèle croit savoir, il le dit quand elles ne répondent pas, et seul ce qui a
+  été réellement lu peut être cité. Une recherche refusée par le moteur est annoncée comme telle.
+- **Hivey Browser : des réponses droit au but, sourcées** : la réponse d'abord en une phrase, puis le détail
+  en liste courte ou en tableau ; les citations sont de petites pastilles cliquables, avec un bloc
+  « Sources » sous la réponse. Le panneau adopte un thème graphite sobre : la couleur est réservée à ce qui
+  bouge ou à ce qui est actif.
+- **Hivey Browser : l'historique dit ce qu'il occupe** : la place prise par les conversations est affichée,
+  et supprimer la libère (aussitôt pour le navigateur, un peu plus tard sur le disque). Si le stockage est
+  plein, les plus anciennes conversations non épinglées laissent la place, et c'est annoncé ; jusqu'à 300
+  conversations sont gardées au lieu de 60. Partout, un stockage plein ne fait plus disparaître une réponse
+  sans un mot.
+- **L'agent dit quand un serveur refuse ses outils** : il répondait sans eux, comme un chat, en ayant l'air
+  d'agir. Il l'annonce maintenant, et rien n'est fait dans le navigateur. Le prompt ne dit plus « Firefox »
+  sur les autres navigateurs.
 - **Hivey Browser : depuis le nouvel onglet** : la zone de saisie du nouvel onglet peut envoyer
   une question au Chat ou une tâche à l'Agent ; le panneau s'ouvre et s'en occupe.
 - **Le sujet de la conversation suit aussi DeepSearch, Comparer et l'Agent** : les sous-recherches de
