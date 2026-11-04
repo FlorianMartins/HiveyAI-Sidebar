@@ -18,7 +18,7 @@ import { runConversation, buildSystemPrompt, activeTools } from "./agent.js";
 import { buildTurn } from "./untrusted.js";
 import { CONTEXT_WINDOWS } from "./model-catalog.generated.js";
 import { catalogWindowId } from "./model-ids.js";
-import { baseUrlFor, keyFor } from "./models.js";
+import { baseUrlFor, keyFor, HIVEY_LOCAL } from "./models.js";
 import { isSelfHostedProvider } from "./reasoning.js";
 import { makeProvider } from "./providers.js";
 import { detectUserLanguage } from "./user-language.js";
@@ -32,6 +32,9 @@ export const CONTEXT_FLOOR_TOKENS = 8000;
 /** What the window keeps back for the answer: a twentieth, never less than one answer. */
 const RESERVE_SHARE = 0.05;
 const ANSWER_TOKENS = 4000;
+
+/** llama-server's window when the browser starts it without another size. */
+export const HIVEY_LOCAL_WINDOW = 8192;
 
 /** Windows learned from the servers themselves — their /models list or their refusal. */
 const learned = new Map();
@@ -72,8 +75,14 @@ export async function contextWindowFor(settings, providerId, modelId, fetchImpl 
  * runtime window is what refuses a request, not the model's training maximum.
  */
 export async function modelContextWindow(settings, providerId, modelId, fetchImpl = globalThis.fetch) {
+  if (providerId === HIVEY_LOCAL && !baseUrlFor(providerId, settings)) return HIVEY_LOCAL_WINDOW; // not running yet: asked once it is
   const key = keyOf(providerId, modelId, settings);
   if (learned.has(key)) return learned.get(key);
+  if (providerId === HIVEY_LOCAL) {
+    const n = (await localServerWindow(baseUrlFor(providerId, settings), keyFor(providerId, settings), fetchImpl)) || HIVEY_LOCAL_WINDOW;
+    learned.set(key, n);
+    return n;
+  }
   let n = providerId === "openrouter" || !isSelfHostedProvider(providerId) ? catalogWindow(providerId, modelId) : 0;
   if (!n && isSelfHostedProvider(providerId)) {
     try {
@@ -88,6 +97,31 @@ export async function modelContextWindow(settings, providerId, modelId, fetchImp
   }
   learned.set(key, n);
   return n;
+}
+
+/**
+ * The window a llama-server really runs with: `/props` (one slot's n_ctx), else its /v1/models entry.
+ * That list names the model by its file, so it is not looked up by the name shown to the user.
+ */
+async function localServerWindow(base, apiKey, fetchImpl) {
+  const root = String(base || "").replace(/\/+$/, "");
+  const headers = apiKey ? { authorization: `Bearer ${String(apiKey).trim()}` } : {};
+  try {
+    const res = await fetchImpl(root.replace(/\/v1$/, "") + "/props", { headers });
+    if (res.ok) {
+      const json = await res.json();
+      const n = Number((json.default_generation_settings && json.default_generation_settings.n_ctx) || json.n_ctx);
+      if (Number.isFinite(n) && n > 0) return Math.floor(n);
+    }
+  } catch (_) { /* the list below may still say */ }
+  try {
+    const res = await fetchImpl(root + "/models", { headers });
+    if (res.ok) {
+      const json = await res.json();
+      return windowOfEntry((json.data || json.models || [])[0]);
+    }
+  } catch (_) { /* unknown: the caller uses the default */ }
+  return 0;
 }
 
 export function learnWindow(settings, providerId, modelId, tokens) {
@@ -144,6 +178,15 @@ export const COMPACT_FLOOR_TOKENS = 6000;
 export function shouldAutoCompact(tokens, budget, count) {
   if (budget <= 0 || tokens < COMPACT_FLOOR_TOKENS || count < 4) return false;
   return tokens / budget >= AUTO_COMPACT_RATIO;
+}
+
+/**
+ * The same question for the browser's local model. Its window is small and known (8 192 tokens by
+ * default), so the floors above are too late: at 6 000 estimated tokens, tools not counted, the server is
+ * about to refuse. Summarized past half the window, as soon as there is something to summarize.
+ */
+export function shouldCompactLocal(tokens, window, count) {
+  return window > 0 && count >= 3 && tokens >= window * 0.5;
 }
 
 // ── The summary ───────────────────────────────────────────────────────────────────────────────
@@ -265,7 +308,10 @@ export async function runChatTurn({ provider, providerId, modelId, settings, sys
   const win = window ?? (await contextWindowFor(settings, providerId, modelId));
   const budget = contextBudget(win);
   let compacted = false;
-  if (settings.compressHistory !== false && shouldAutoCompact(estimateTokens(history, system), budget, exchanges(history))) {
+  const compactNow = providerId === HIVEY_LOCAL
+    ? shouldCompactLocal(estimateTokens(history, system), win, exchanges(history))
+    : shouldAutoCompact(estimateTokens(history, system), budget, exchanges(history));
+  if (settings.compressHistory !== false && compactNow) {
     onCompact && onCompact("auto", "start");
     compacted = await compactHistory(history, { provider, signal, keepFrom: turnStart });
     onCompact && onCompact("auto", compacted ? "done" : "failed");

@@ -127,7 +127,10 @@ modèle et la réflexion ne montrent plus que leur icône (leur nom reste au sur
   horaires → recherche ; écrire, traduire, coder, calculer, reformuler → pas de recherche ; les cas
   douteux sont tranchés par une question oui/non à un modèle économique. Le modèle répond alors avec
   ses sources. **DeepSearch** mène une recherche en plusieurs étapes (rapide, standard ou
-  approfondie), avec un rapport cité.
+  approfondie), avec un rapport cité. Quand ni le fournisseur ni une clé OpenRouter ne peuvent chercher,
+  l'extension cherche elle-même sur DuckDuckGo (sans cookie), lit quelques pages et donne au modèle les
+  passages qui répondent à la question ; la requête est réécrite à partir de la conversation (« Et en
+  compétition ? » garde son sujet), et seul ce qui a été lu peut être cité.
 - **Vérifier** (dans les options) relit et corrige la réponse — seulement quand l'option est
   activée (des appels en plus).
 - **Pièces jointes** : `+` → Joindre un fichier, ou glissez des fichiers, des images, un PDF, un
@@ -381,6 +384,25 @@ haut. La page suit votre thème, clair ou sombre.
   Sécurité, `Ctrl+Shift+K` bibliothèque de prompts. Ils agissent quand la sidebar a le focus.
 - **Sauvegarde chiffrée** : exporte vos réglages et clés dans un fichier protégé par une phrase
   secrète (AES-256-GCM), à importer sur un autre appareil.
+
+## Dans Hivey Browser : l'Assistant
+
+Dans le panneau de Hivey Browser, l'extension devient un **Assistant** : pas de colonne d'onglets, un thème
+graphite, et par défaut un **modèle local** fourni par le navigateur, sans clé.
+
+- **Il répond et il agit** : une demande d'action sur le navigateur (« lance-moi une musique », « ouvre
+  YouTube », « remplis ce formulaire ») part à l'agent, une question reste au chat, dans la même
+  conversation. **Auto · Chat · Agent**, dans la zone de saisie, l'impose si besoin.
+- **Le menu Outils** (en haut) donne accès à Traduire, Améliorer, Image, PDF, Cybersécurité, Wisebase,
+  Benchmark et MCP. Les chats web ont leur propre bouton dans le navigateur.
+- **Premier usage** : une carte montre le modèle et sa taille. Rien n'est téléchargé sans votre clic ; la
+  réponse continue toute seule une fois le modèle prêt.
+- **Pendant un jeu**, le navigateur suspend le modèle : « En pause pendant votre partie », puis la réponse
+  reprend d'elle-même.
+- **Les réponses** commencent par la réponse, citent leurs sources par de petites pastilles et se terminent
+  par un bloc « Sources ».
+- **L'historique** indique la place occupée par vos conversations ; en supprimer la libère.
+- Une clé déjà configurée reste utilisée, et le sélecteur de modèle permet de changer à tout moment.
 
 ## 11. Questions fréquentes
 

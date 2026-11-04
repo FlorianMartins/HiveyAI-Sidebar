@@ -12,7 +12,7 @@
 // DeepSeek/o-series reasoning_content) so the UI can show it separately.
 
 import { imageConfigOf, imageResolutions } from "./image-sizes.js";
-import { PROVIDERS, baseUrlFor, modelFor, keyFor } from "./models.js";
+import { PROVIDERS, HIVEY_LOCAL, baseUrlFor, modelFor, keyFor } from "./models.js";
 import { anthropicThinking, wireReasoning, selfHostedThinkingBudget, isSelfHostedProvider } from "./reasoning.js";
 import { privateProvider, redactsFor } from "./privacy.js";
 import { stripPrivate } from "./context-control.js";
@@ -161,6 +161,18 @@ async function fetchWithRetry(url, opts, maxRetries = 3) {
   }
 }
 
+/** A server saying it cannot take `tools` (llama-server without --jinja says so too). */
+export function isToolsRefusal(message) {
+  return /support tool use|does not support tools|tools? (are|is) not supported|tool calling is not supported|tools param requires/i.test(String(message || ""));
+}
+
+/** The error of a turn that needs its tools (the Agent) on a server that refuses them. */
+function toolsRejected(said) {
+  const err = new Error(`Tools refused by the server: ${String(said || "").slice(0, 300)}`);
+  err.code = "tools_rejected";
+  return err;
+}
+
 /**
  * What to drop when a server refuses a parameter, read from what it said (hivey-vscode,
  * `adaptRequest`). "OpenAI-compatible" is a family, not a specification: OpenAI refuses `max_tokens`
@@ -200,7 +212,7 @@ export function adaptRequest(body, error) {
     return next;
   }
   // A model that cannot call tools, offered one (the Chat's web_search): it answers without it.
-  if (/support tool use|does not support tools|tools? (are|is) not supported|tool calling is not supported/.test(said) && Array.isArray(next.tools) && next.tools.length) {
+  if (isToolsRefusal(said) && Array.isArray(next.tools) && next.tools.length) {
     delete next.tools;
     delete next.tool_choice;
     return next;
@@ -470,7 +482,7 @@ function anthropicProvider({ apiKey, model, baseUrl, thinkLevel, webSearch }) {
 // Generic OpenAI-compatible (OpenAI, OpenRouter, Gemini, Mistral, Groq,
 // DeepSeek, Ollama, LM Studio, self-hosted…)
 // ---------------------------------------------------------------------------
-function openaiProvider({ apiKey, model, baseUrl, webSearch, providerId, thinkLevel }) {
+function openaiProvider({ apiKey, model, baseUrl, webSearch, providerId, thinkLevel, requireTools }) {
   const url = baseUrl.replace(/\/$/, "") + "/chat/completions";
   const selfHosted = isSelfHostedProvider(providerId);
   const ollama = /:11434(\/|$)/.test(baseUrl) || /ollama/i.test(baseUrl) || providerId === "ollama";
@@ -517,13 +529,16 @@ function openaiProvider({ apiKey, model, baseUrl, webSearch, providerId, thinkLe
       // Reasoning: what the level is for THIS provider and THIS model — the field, the word, and
       // whether thinking can be off at all. One table, with the vendors' documentation: reasoning.js.
       // Nothing picked on a cloud = nothing sent, the model's own default, as before.
-      const level = levelOf(thinkLevel) ?? (selfHosted ? "medium" : undefined);
-      const thinking = wireReasoning(providerId, model, level, { tools: Boolean(tools && tools.length), ...(chore ? { chore: true } : {}) });
-      Object.assign(body, thinking.fields);
+      // Hivey Browser's local model answers without thinking, whatever the turn: it runs on the user's
+      // own machine, on a window of 8 192 tokens by default, and its template takes the switch itself.
+      const hiveyLocal = providerId === HIVEY_LOCAL;
+      const level = hiveyLocal ? undefined : levelOf(thinkLevel) ?? (selfHosted ? "medium" : undefined);
+      if (hiveyLocal) body.chat_template_kwargs = { enable_thinking: false };
+      else Object.assign(body, wireReasoning(providerId, model, level, { tools: Boolean(tools && tools.length), ...(chore ? { chore: true } : {}) }).fields);
       // The level's thinking budget on the user's own server: llama.cpp closes the thought itself
       // when it is spent, so "Bref" really is brief (measured on Qwen3.8 in hivey-vscode: as precise,
       // 29 % faster). Not for a side task, whose thinking is off already; not for Ollama.
-      if (selfHosted && !ollama && !chore) Object.assign(body, selfHostedThinkingBudget(level));
+      if (selfHosted && !hiveyLocal && !ollama && !chore) Object.assign(body, selfHostedThinkingBudget(level));
       if (providerId === "openrouter") body.usage = { include: true };
       // The accounting. A server that does not know the field ignores it, or names it and it goes.
       body.stream_options = { include_usage: true };
@@ -540,6 +555,8 @@ function openaiProvider({ apiKey, model, baseUrl, webSearch, providerId, thinkLe
         response = await fetchWithRetry(url, { method: "POST", signal, headers, body: JSON.stringify(attempt) });
         if (response.ok || (response.status !== 400 && response.status !== 402 && response.status !== 404 && response.status !== 422) || tries >= 2) break;
         const said = await response.text().catch(() => "");
+        // The Agent is its tools: answering without them is a chat pretending to have acted.
+        if (requireTools && isToolsRefusal(said)) throw toolsRejected(said);
         const fixed = adaptRequest(attempt, said);
         if (!fixed) throw new Error(`HTTP ${response.status} — ${said.slice(0, 500)}`);
         attempt = fixed;
@@ -660,9 +677,32 @@ function openaiProvider({ apiKey, model, baseUrl, webSearch, providerId, thinkLe
   };
 }
 
+// ---------------------------------------------------------------------------
+// Hivey Browser's local model: the OpenAI client, on an address known only once the engine runs
+// ---------------------------------------------------------------------------
+// The browser starts the engine on demand and gives it a new port and bearer each time, so they are
+// read for each request. `gate` (set by the sidebar, which shows the states to the user) resolves
+// with `{ baseUrl, key }` when the engine runs — starting it if needed — and rejects when it cannot.
+let localEngineGate = null;
+export function setLocalEngineGate(gate) { localEngineGate = gate; }
+
+function hiveyLocalProvider({ settings, model, requireTools }) {
+  const client = (ep) => openaiProvider({ apiKey: ep.key, model, baseUrl: ep.baseUrl, providerId: HIVEY_LOCAL, requireTools });
+  return {
+    id: "openai",
+    async runTurn(args) {
+      const ep = localEngineGate ? await localEngineGate(args && args.signal) : settings.hiveyAi;
+      if (!ep || !ep.baseUrl) throw new Error("The local model is not running.");
+      return client(ep).runTurn(args);
+    },
+    formatToolResults: (results) => client({ baseUrl: "", key: "" }).formatToolResults(results),
+  };
+}
+
 // Build the provider for the current conversation.
 export function makeProvider(settings, opts = {}) {
   const id = settings.provider;
+  if (id === HIVEY_LOCAL) return hiveyLocalProvider({ settings, model: modelFor(id, settings), requireTools: !!opts.requireTools });
   const meta = PROVIDERS[id] || PROVIDERS.anthropic;
   const apiKey = keyFor(id, settings);
   const model = modelFor(id, settings);
@@ -688,6 +728,7 @@ export function makeProvider(settings, opts = {}) {
       providerId: id,
       webSearch: !!opts.webSearch && !!meta.supportsWebSearch,
       thinkLevel: lvl,
+      requireTools: !!opts.requireTools,
     });
   // Privacy first: every request to a cloud is pseudonymized here, whichever tab or side task made
   // it — see privacy.js. The user's own machine and gateway are sent as they are.

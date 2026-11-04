@@ -188,6 +188,7 @@ masque, et le choix est gardé), donne accès à :
   pas une iframe ?* il s'appuie sur **WebContainers**, qui exigent l'isolation cross-origine
   (COOP/COEP) impossible dans une iframe d'extension.
 - [x] **Wisebase** : base de connaissance locale + RAG, embeddings dans le navigateur
+- [x] **Hivey Browser** : un Assistant unique (chat + agent routés automatiquement) sur le modèle local du navigateur, sans clé ; recherche web et passages cités pour tout modèle sans recherche propre
 - [x] **DeepSearch**, **Prompt Library**, **Skills** en slash-commands
 - [x] **Web chats sans clé API** (10 IA grand public dans la sidebar)
 - [x] **Espace Sécurité défensive** + parseur `.pcap` anonymisant côté client

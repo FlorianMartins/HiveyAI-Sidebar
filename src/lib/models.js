@@ -12,7 +12,25 @@
 
 import { HIVEY_MODELS } from "./hivey-models.js";
 
+// Hivey Browser's own local model (a llama-server the browser starts on demand). Its address and
+// bearer change at every start and live in `storage.local.hiveyAi`, written only by the browser —
+// never in `keys`, which src/content/hivey-bridge.js copies into web pages' localStorage. They are
+// read at the seams below (baseUrlFor, keyFor, modelFor, isConnected). Without `hiveyAi` this is not
+// Hivey Browser and the provider does not exist as far as the user can tell.
+export const HIVEY_LOCAL = "hiveyLocal";
+
 export const PROVIDERS = {
+  hiveyLocal: {
+    label: "Local (Hivey)",
+    kind: "openai",
+    baseUrl: "",
+    needsKey: false,
+    local: true,
+    browserManaged: true, // no key, no base URL, nothing to edit: the browser provides all of it
+    canListModels: false,
+    models: [["local", "Local model"]],
+  },
+
   anthropic: {
     label: "Claude (Anthropic)",
     kind: "anthropic",
@@ -371,6 +389,7 @@ export const PROVIDERS = {
 };
 
 export const PROVIDER_ORDER = [
+  "hiveyLocal",
   "anthropic",
   "openai",
   "openrouter",
@@ -407,6 +426,7 @@ export const IMAGE_SIZES = [
 
 // Effective base URL (honours the user's override for local / custom servers).
 export function baseUrlFor(providerId, settings) {
+  if (providerId === HIVEY_LOCAL) return (settings && settings.hiveyAi && settings.hiveyAi.baseUrl) || "";
   const override = settings && settings.baseUrls && settings.baseUrls[providerId];
   return (override && override.trim()) || PROVIDERS[providerId].baseUrl;
 }
@@ -539,6 +559,7 @@ export function hiveyTierForLabel(modelId, label) {
 }
 
 export function modelFor(providerId, settings) {
+  if (providerId === HIVEY_LOCAL) return (settings && settings.hiveyAi && settings.hiveyAi.modelName) || PROVIDERS[HIVEY_LOCAL].models[0][0];
   const chosen = settings && settings.models && settings.models[providerId];
   if (chosen) return chosen;
   const def = PROVIDERS[providerId].models[0];
@@ -546,6 +567,7 @@ export function modelFor(providerId, settings) {
 }
 
 export function keyFor(providerId, settings) {
+  if (providerId === HIVEY_LOCAL) return (settings && settings.hiveyAi && settings.hiveyAi.key) || "";
   return (settings && settings.keys && settings.keys[providerId]) || "";
 }
 
@@ -554,6 +576,7 @@ export function keyFor(providerId, settings) {
 export function isConnected(providerId, settings) {
   const meta = PROVIDERS[providerId];
   if (!meta) return false;
+  if (providerId === HIVEY_LOCAL) return !!(settings && settings.hiveyAi);
   // Local servers require an explicit opt-in (enabled in settings or a custom URL),
   // so a brand-new install shows no default models — only a "connect" button.
   if (meta.local) {
@@ -568,6 +591,13 @@ export function isConnected(providerId, settings) {
 
 export function connectedProviders(settings) {
   return PROVIDER_ORDER.filter((id) => isConnected(id, settings));
+}
+
+/** Did the user set up any other provider — a key, a local server, a custom endpoint? */
+export function hasOwnProvider(settings) {
+  const s = settings || {};
+  const some = (o) => Object.values(o || {}).some((v) => (typeof v === "string" ? v.trim() : v));
+  return !!(some(s.keys) || some(s.localEnabled) || some(s.baseUrls));
 }
 
 // Pick a sensible model for WEB SEARCH mode, so we don't spend Claude on it.

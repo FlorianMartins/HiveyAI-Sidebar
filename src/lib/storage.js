@@ -9,6 +9,8 @@
 // The project ships 100% blank: every key is empty by default. Users supply
 // their own credentials (or point at a local model that needs none).
 
+import { HIVEY_LOCAL, hasOwnProvider } from "./models.js";
+
 const DEFAULTS = {
   // ----- Provider / model selection ----------------------------------------
   provider: "openrouter", // active provider id — OpenRouter (free models + 1-click OAuth)
@@ -22,6 +24,7 @@ const DEFAULTS = {
   imageSize: "", // "" = "—": no fixed size; the model uses the dimensions described in the prompt
 
   // ----- UI / behaviour ------------------------------------------------------
+  assistantRoute: "auto", // Hivey Browser's Assistant: "auto" routes each turn (lib/assistant-route.js), "chat" / "agent" force it
   mode: "chat", // active workspace tab: chat | agent | translate | improve | image | terminal | code
   thinkLevel: "off", // reasoning depth: "off" (no thinking — fast/cheap) | "high" | "max"
   webSearch: true, // web search ON by default in the Chat (user, 2026-10-25); per tab, turned off in Options
@@ -286,6 +289,21 @@ export async function getSettings() {
     s.artifacts = false;
     s.artifactsOffMigrated = true;
     try { await browser.storage.local.set({ artifacts: false, artifactsOffMigrated: true }); } catch (_) {}
+  }
+  return applyHiveyBrowser(s);
+}
+
+/**
+ * Hivey Browser's local model as the default: with `hiveyAi` present and nothing else configured, it
+ * is the provider. Never persisted here, and `keys` is not touched: `hiveyAi` stays where the browser
+ * wrote it, read only at the seams of models.js. Someone with a key keeps their provider; settings
+ * restored outside Hivey Browser fall back to the usual default.
+ */
+export function applyHiveyBrowser(s) {
+  if (s.hiveyAi) {
+    if (!hasOwnProvider(s)) s.provider = HIVEY_LOCAL;
+  } else if (s.provider === HIVEY_LOCAL) {
+    s.provider = DEFAULTS.provider;
   }
   return s;
 }

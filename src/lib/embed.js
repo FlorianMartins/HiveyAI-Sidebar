@@ -15,6 +15,20 @@ export const EMBED_PARAM = "embed";
 export const EMBED_HIVEY = "hivey";
 export const EMBED_CLASS = "embed-hivey";
 
+/**
+ * The workspaces of the Assistant's small tools menu. Chat and Agent are the Assistant itself, and the
+ * providers' web chats have their own button in the browser (`#mode=web`). Together with those three,
+ * this is every workspace of the rail: nothing is lost without it (a test holds that).
+ */
+export const EMBED_TOOLS = ["translate", "improve", "image", "pdf", "security", "wisebase", "benchmark", "mcp"];
+
+/** A tab with nothing in it: the browser's new tab or a blank page. An agent run can use it as it is. */
+export function isBlankTabUrl(url) {
+  const u = String(url || "").trim().toLowerCase().replace(/[#?].*$/, "").replace(/\/$/, "");
+  if (!u) return false;
+  return ["about:blank", "about:newtab", "about:home", "chrome://newtab", "chrome://new-tab-page", "chrome://new-tab-page-third-party", "edge://newtab", "brave://newtab", "vivaldi://newtab", "hivey://newtab"].includes(u);
+}
+
 /** Is this page embedded in Hivey Browser's side panel? `search` is `location.search`. */
 export function isHiveyEmbed(search) {
   try { return new URLSearchParams(search || "").get(EMBED_PARAM) === EMBED_HIVEY; } catch (_) { return false; }

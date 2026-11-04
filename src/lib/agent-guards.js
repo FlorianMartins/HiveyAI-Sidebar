@@ -228,7 +228,10 @@ const LIVE_BRIEF = [
  */
 export function mountAgentGuards(ctx, { provider, system = "", contextWindow = 0, signal, replyLanguageName = "", ownWords = "", report = () => {} } = {}) {
   const state = { repeatNudges: 0, stoppedRepeating: false, runawayNotes: 0, continuations: 0, liveCompacts: 0, shrinks: 0 };
-  const limit = contextWindow > 0 ? Math.floor(contextWindow * 0.9) - ANSWER_ROOM_TOKENS : 0;
+  // On a small window the room for the answer is a quarter of it: 8 192 tokens kept back on an 8 192-token
+  // server would leave no limit at all, and the server would be the first to say it no longer fits.
+  const room = contextWindow > 0 && contextWindow < ANSWER_ROOM_TOKENS * 2 ? Math.floor(contextWindow * 0.25) : ANSWER_ROOM_TOKENS;
+  const limit = contextWindow > 0 ? Math.floor(contextWindow * 0.9) - room : 0;
   let tokenRatio = 1;
   const said = new Set();
   const once = (m) => { if (!said.has(m)) { said.add(m); report(m); } };

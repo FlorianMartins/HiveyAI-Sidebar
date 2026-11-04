@@ -7,6 +7,12 @@
 
 const KEY = "conversations";
 const MAX_CONVERSATIONS = 60;
+// In Hivey Browser the storage is unlimited (manifest.chrome.json), so what bounds the list is that it is
+// rewritten whole at every save, and a conversation deleted without asking is a surprise. A cap stays,
+// five times higher; the history view says what the conversations take up.
+export const HIVEY_BROWSER_MAX_CONVERSATIONS = 300;
+
+const isQuotaError = (e) => /quota/i.test(String((e && (e.message || e.name)) || e));
 
 export async function listConversations() {
   const { [KEY]: list } = await browser.storage.local.get(KEY);
@@ -27,7 +33,11 @@ export function sortConversations(list) {
 }
 
 // Insert or update a conversation, keeping the list capped (pinned are NEVER dropped by the cap).
-export async function saveConversation(conv) {
+//
+// A full storage used to lose the answer without a word. Now the oldest unpinned conversations make room
+// for the one being saved (`conv.evicted` says how many), and only when even that does not fit does it
+// throw, with `code: "storage_quota"`, for the caller to say so. The conversation is never lost on screen.
+export async function saveConversation(conv, { cap = MAX_CONVERSATIONS } = {}) {
   const list = await listConversations();
   const idx = list.findIndex((c) => c.id === conv.id);
   conv.updatedAt = Date.now();
@@ -37,9 +47,40 @@ export async function saveConversation(conv) {
   const sorted = sortConversations(list);
   // Keep every pinned conversation + the most recent unpinned up to the cap.
   const pinned = sorted.filter((c) => c.pinned);
-  const rest = sorted.filter((c) => !c.pinned).slice(0, Math.max(0, MAX_CONVERSATIONS - pinned.length));
-  await browser.storage.local.set({ [KEY]: sortConversations([...pinned, ...rest]) });
-  return conv;
+  const rest = sorted.filter((c) => !c.pinned).slice(0, Math.max(0, cap - pinned.length));
+  let evicted = 0;
+  for (;;) {
+    try {
+      await browser.storage.local.set({ [KEY]: sortConversations([...pinned, ...rest]) });
+      break;
+    } catch (e) {
+      if (!isQuotaError(e)) throw e;
+      // The oldest one that is neither pinned nor this conversation makes room.
+      let i = rest.length - 1;
+      while (i >= 0 && rest[i].id === conv.id) i--;
+      if (i < 0) {
+        const full = new Error("The browser's storage is full.");
+        full.code = "storage_quota";
+        throw full;
+      }
+      rest.splice(i, 1);
+      evicted++;
+    }
+  }
+  return evicted ? { ...conv, evicted } : conv;
+}
+
+/**
+ * What the saved conversations take up, in bytes: the browser's own count, or their JSON's size where it
+ * has none (Firefox's storage.local long had no getBytesInUse).
+ */
+export async function conversationBytes() {
+  const area = browser.storage.local;
+  try {
+    if (typeof area.getBytesInUse === "function") return await area.getBytesInUse(KEY);
+  } catch (_) { /* counted below */ }
+  const list = await listConversations();
+  return list.length ? new TextEncoder().encode(JSON.stringify(list)).length : 0;
 }
 
 export async function togglePinned(id) {

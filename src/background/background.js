@@ -586,6 +586,12 @@ browser.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       clearTimeout(timer);
       if (!res.ok) return sendResponse({ ok: false, error: "HTTP " + res.status });
       const ct = res.headers.get("content-type") || "";
+      // The Assistant's web search reads the page itself (lib/web-search.js, an inert DOMParser
+      // document in the sidebar, where DOMParser exists): the HTML as it came, and only HTML or text.
+      if (msg.raw) {
+        if (!/text\/html|application\/xhtml|text\/plain/i.test(ct)) return sendResponse({ ok: false, error: "Not a page: " + ct.slice(0, 60) });
+        return sendResponse({ ok: true, url: res.url || msg.url, status: res.status, html: (await res.text()).slice(0, 2000000) });
+      }
       const raw = await res.text();
       const text = /text\/html|application\/xhtml/i.test(ct) ? stripHtml(raw) : raw.replace(/\s+/g, " ").trim().slice(0, 200000);
       sendResponse({ ok: true, url: res.url || msg.url, text });
