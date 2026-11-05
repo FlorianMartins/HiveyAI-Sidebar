@@ -280,6 +280,38 @@ function setHTML(el, html) {
     return { count: out.length, elements: out };
   }
 
+  // Hivey Browser: the agent's cursor goes to what it acts on. Purely visual, and it never delays the action.
+  let ghostAllowed = false;
+  try { browser.storage.local.get("hiveyAi").then((r) => { ghostAllowed = !!(r && r.hiveyAi); }).catch(() => {}); } catch (_) {}
+  let ghostHost = null, ghostMark = null, ghostTimer = 0;
+  function showGhost(target) {
+    if (!ghostAllowed || !target || !target.getBoundingClientRect) return;
+    if (!ghostHost || !ghostHost.isConnected) {
+      ghostHost = document.createElement("div");
+      ghostHost.style.cssText = "position:fixed;left:0;top:0;width:0;height:0;z-index:2147483647;pointer-events:none";
+      const root = ghostHost.attachShadow({ mode: "closed" });
+      ghostMark = document.createElement("div");
+      ghostMark.style.cssText = "position:fixed;left:0;top:0;width:22px;height:22px;transition:transform .55s cubic-bezier(.16,1,.3,1),opacity .3s;opacity:0;filter:drop-shadow(0 0 8px #8b5cf6)";
+      const NS = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(NS, "svg");
+      svg.setAttribute("viewBox", "0 0 24 24");
+      const path = document.createElementNS(NS, "path");
+      path.setAttribute("d", "M4 2 20 12l-7 2-3 7z");
+      path.setAttribute("fill", "#8b5cf6");
+      path.setAttribute("stroke", "#fff");
+      path.setAttribute("stroke-width", "1.5");
+      svg.append(path);
+      ghostMark.append(svg);
+      root.append(ghostMark);
+      (document.documentElement || document.body).append(ghostHost);
+    }
+    const r = target.getBoundingClientRect();
+    ghostMark.style.opacity = "1";
+    ghostMark.style.transform = `translate(${Math.round(r.left + Math.min(r.width / 2, 40))}px, ${Math.round(r.top + r.height / 2)}px)`;
+    clearTimeout(ghostTimer);
+    ghostTimer = setTimeout(() => { if (ghostMark) ghostMark.style.opacity = "0"; }, 2500);
+  }
+
   function clickElement(ref, guard, confirmed) {
     const el = refMap.get(ref);
     if (!el) return { error: `ref not found: ${ref} (re-run find_elements)` };
@@ -292,6 +324,7 @@ function setHTML(el, html) {
       if (reason) return { confirm: true, action: reason, label: labelOf(el) };
     }
     el.scrollIntoView({ block: "center" });
+    showGhost(el);
     el.click();
     return { ok: true, clicked: labelOf(el) };
   }
@@ -307,6 +340,7 @@ function setHTML(el, html) {
       const reason = looksLikeSensitiveSubmit(el.form);
       if (reason) return { confirm: true, action: reason, label: labelOf(el) };
     }
+    showGhost(el);
     el.focus();
     const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(el), "value");
     if (setter && setter.set) setter.set.call(el, value);
