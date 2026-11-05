@@ -8427,7 +8427,9 @@ async function runMediaShortcut(text, query) {
   try {
     await ensureAgentTab();
     const res = await executeTool("control_media", { action: "play", query }, {});
-    answer = res && res.error ? res.error : t("agent.media.started", { query });
+    // Said only when it is true: the tool also returns when the player did not start.
+    const started = res && !res.error && (res.ok || res.playing || res.soundButton);
+    answer = started ? t("agent.media.started", { query }) : (res && (res.error || res.note)) || t("agent.media.failed");
   } catch (e) {
     answer = e instanceof Error ? e.message : String(e);
   } finally {
