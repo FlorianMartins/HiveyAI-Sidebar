@@ -8123,7 +8123,8 @@ function confirmAction(name, input) {
       els.confirmText.textContent = input.label;
     } else if (input && input.sensitive) {
       const what = input.label || input.url || "";
-      els.confirmText.textContent = t("confirm.sensitive", { action: input.sensitive, what: String(what).slice(0, 80) }).replace(IS_EMBED ? /^⚠\s*/ : /$^/, "");
+      const warning = t("confirm.sensitive", { action: input.sensitive, what: String(what).slice(0, 80) });
+      els.confirmText.textContent = IS_EMBED ? warning.replace(/^⚠\s*/, "") : warning; // the Assistant's card needs no emoji
     } else {
       els.confirmText.textContent = t("confirm.prompt", { name, input: JSON.stringify(input).slice(0, 120) });
     }
