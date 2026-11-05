@@ -131,8 +131,6 @@ export const PROVIDERS = {
       ["xingchen-agi/xing4.0-29b-a4b:free", "Xing4.0 29B A4B — free"],
       ["dots-studio/dots-3-note-preview:free", "Dots3-Note Preview — free"],
       ["liquid/lfm-2.5-2.6b:free", "LFM2.5-2.6B — free"],
-      ["thinkingmachines/inkling-small:free", "Inkling Small — free (reasoning)"],
-      ["thinkingmachines/inkling:free", "Inkling — free (reasoning)"],
       ["cohere/north-mini-code:free", "North Mini Code — free"],
       ["openrouter/free", "Free Models Router — free"],
       ["anthropic/claude-sonnet-5.5", "Claude Sonnet 5.5 (paid)"],
