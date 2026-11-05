@@ -4,7 +4,7 @@
 // ids this add-on can actually select. Each source carries its OWN freshness, because that is
 // the number people forget to ask for: a leaderboard can be maintained daily and still cover
 // nothing released this year.
-export const BENCHMARK_FETCHED_AT = "2026-11-04";
+export const BENCHMARK_FETCHED_AT = "2026-11-05";
 export const BENCHMARK_SOURCES = {
   "webdev": {
     "label": "LMArena WebDev",
@@ -1417,6 +1417,8 @@ export const BENCHMARK_UNMATCHED = [
 ];
 // The newest catalogue models NO published source covers. This is the gap the live test fills.
 export const BENCHMARK_UNCOVERED = [
+  "inclusionai/ling-3.0-tiny",
+  "ricursiveai/ripple-65b-preview",
   "stealth/crouton-alpha",
   "z-ai/glm-5.3-flashx-legal",
   "particle-ai/particle-1",
@@ -1454,7 +1456,5 @@ export const BENCHMARK_UNCOVERED = [
   "qwen/qwen3.8-max-prime",
   "aion-labs/aion-3.5-mini",
   "aion-labs/aion-3.5",
-  "upstage/solar-mini4",
-  "cohere/command-a-plus",
-  "openai/gpt-6-luna-pro"
+  "upstage/solar-mini4"
 ];
