@@ -323,11 +323,12 @@ async function playMedia(query) {
     try { return await sendToTab(tab.id, { type: "control_media", action: "play", soundLabel: t("agent.media.soundOn") }); }
     catch (_) { return null; }
   };
-  // Poll a few times after a navigation: a freshly-loaded YouTube page (SPA) often isn't ready
-  // — the content script may not have injected yet, or the result list is still rendering.
+  // Poll after a navigation: a freshly-loaded YouTube page (SPA) often isn't ready — the content
+  // script may not have injected yet, or the result list is still rendering. A busy machine can take
+  // many seconds; this stops as soon as it is there.
   const poll = async (ok) => {
     let r = await tryPlay();
-    for (let i = 0; i < 6 && !(r && ok(r)); i++) { await delay(650); r = await tryPlay(); }
+    for (let i = 0; i < 24 && !(r && ok(r)); i++) { await delay(650); r = await tryPlay(); }
     return r;
   };
   // A NEW song: the tab may still hold the previous one, paused — playing whatever is there would

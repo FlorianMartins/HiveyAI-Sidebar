@@ -15,6 +15,8 @@ Version de développement, toujours à jour :
   sans cookies, et l'agent reçoit l'accès aux sites seulement pendant qu'il travaille.
 - **« Lance-moi une musique » lance directement une musique** sur YouTube, sans attendre le modèle, et le
   lecteur d'aperçu caché des pages de résultats n'est plus pris pour une vraie vidéo.
+- **La musique patiente sur une machine chargée** (jusqu'à 15 secondes que YouTube soit prêt), et l'assistant
+  ne dit plus qu'elle joue si elle n'a pas démarré.
 - **Hivey Browser : un seul Assistant, sur un modèle local, sans clé** : dans le panneau du navigateur,
   plus de colonne d'onglets. Le titre est « Assistant », un petit menu donne accès à Traduire, Améliorer,
   Image, PDF, Cybersécurité, Wisebase, Benchmark et MCP, et les chats web gardent leur bouton dans le
