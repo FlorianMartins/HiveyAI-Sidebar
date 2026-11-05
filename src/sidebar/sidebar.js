@@ -9059,6 +9059,7 @@ function requestEngine(action) {
 function setupHiveyBrowser() {
   setLocalEngineGate(localEngineGate);
   if (!settings.hiveyAi) return;
+  document.documentElement.classList.toggle("ai-accel", !!settings.hiveyAi.accel);
   // A panel closed in the middle of a turn may have left the light on.
   setAiBusy(false);
   window.addEventListener("pagehide", () => setAiBusy(false));
@@ -9069,6 +9070,7 @@ function onHiveyAiChanged(ai) {
   hiveyAiWatchers.forEach((fn) => fn());
   renderLocalStatus();
   document.documentElement.classList.toggle("ai-game", !!(ai && ai.game));
+  document.documentElement.classList.toggle("ai-accel", !!(ai && ai.accel));
   // The browser wrote it after this panel opened: the local model becomes the default now.
   if (appeared) getSettings().then((s) => { settings = s; refreshModelUI(); updatePrivBadge(); }).catch(() => {});
 }
