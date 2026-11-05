@@ -1,0 +1,179 @@
+/* Hivey Browser's Assistant, the look of its mock-up: graphite and hairlines at rest, the Hivey mark's
+   colours for everything that moves. Nothing here applies outside html.embed-hivey. */
+@font-face { font-family: "Space Grotesk"; src: url("../../vendor/fonts/space-grotesk.woff2") format("woff2"); font-weight: 300 700; font-display: swap; }
+@font-face { font-family: "JetBrains Mono"; src: url("../../vendor/fonts/jetbrains-mono.woff2") format("woff2"); font-weight: 100 800; font-display: swap; }
+
+html.embed-hivey {
+  --ct-bg: #0a0a0c;
+  --ct-panel: #151518;
+  --ct-raise: #1c1c20;
+  --ct-line: #29292e;
+  --ct-line-2: #3a3a41;
+  --ct-ink: #f4f4f6;
+  --ct-muted: #a3a3ad;
+  --fx-1: #d946ef;
+  --fx-2: #8b5cf6;
+  --fx-3: #3b82f6;
+  --fx-grad: linear-gradient(90deg, var(--fx-3), var(--fx-2), var(--fx-1));
+  --ct-ok: #4ade80;
+  --ct-warn: #fbbf24;
+  --ct-danger: #fb7185;
+  --ct-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --ct-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  --ct-ease: cubic-bezier(.16, 1, .3, 1);
+}
+html.embed-hivey body, html.embed-hivey button, html.embed-hivey input, html.embed-hivey textarea, html.embed-hivey select { font-family: var(--ct-display); }
+/* The panel is a card beside the page, on the browser's own background. */
+html.embed-hivey { background: #101013; }
+html.embed-hivey body { height: calc(100vh - 10px); margin: 0 10px 10px 0; overflow: hidden; background: var(--ct-panel); color: var(--ct-ink); border: 1px solid var(--ct-line); border-radius: 13px; transition: border-color .4s; }
+html.embed-hivey.ai-busy body { border-color: var(--fx-2); }
+html.embed-hivey.ai-game body { border-color: var(--ct-line); }
+html.embed-hivey .topbar, html.embed-hivey .composer { background: var(--ct-panel); }
+
+/* The header: the living mark, one word. */
+html.embed-hivey .topbar { min-height: 48px; padding: 8px 10px 8px 14px; gap: 10px; border-bottom: 1px solid var(--ct-line); }
+html.embed-hivey .hive-mark { width: 22px; height: 22px; flex: none; }
+html.embed-hivey .hive-mark rect { transform-box: fill-box; transform-origin: center; }
+html.embed-hivey.ai-busy .hive-mark rect { animation: ct-breathe 1.15s ease-in-out infinite; }
+html.embed-hivey.ai-busy .hive-mark rect:nth-child(2) { animation-delay: .12s; }
+html.embed-hivey.ai-busy .hive-mark rect:nth-child(3) { animation-delay: .24s; }
+html.embed-hivey.ai-busy .hive-mark rect:nth-child(4) { animation-delay: .36s; }
+html.embed-hivey.ai-game .hive-mark { opacity: .4; filter: grayscale(1); }
+html.embed-hivey .brand-word, html.embed-hivey body.web-active .brand-word { font-family: var(--ct-display); font-size: 15px; font-weight: 500; color: var(--ct-ink); background: none; -webkit-text-fill-color: currentColor; letter-spacing: 0; }
+html.embed-hivey .topbar .icon { width: 30px; height: 30px; border-radius: 7px; background: none; border: 0; }
+html.embed-hivey .topbar .icon:hover { background: var(--ct-raise); }
+html.embed-hivey .topbar .glyph-svg { width: 16px; height: 16px; }
+
+/* The conversation. */
+html.embed-hivey .messages { padding: 14px; gap: 16px; background: var(--ct-panel); }
+html.embed-hivey .msg { margin: 0; animation: ct-rise .5s var(--ct-ease) backwards; }
+html.embed-hivey .msg.user { display: block; align-self: stretch; width: 100%; max-width: none; margin-left: 0; background: none; border: 0; padding: 0; text-align: left; }
+html.embed-hivey .msg.user > .umsg-text { display: block; padding: 0; background: none; border: 0; border-radius: 0; box-shadow: none; color: var(--ct-ink); font-size: 16px; line-height: 1.35; font-weight: 500; text-align: left; }
+html.embed-hivey .msg.assistant { display: flex; flex-direction: column; background: none; border: 0; padding: 0; max-width: none; font-size: 15px; line-height: 1.6; color: var(--ct-ink); box-shadow: none; }
+html.embed-hivey .msg.assistant > .web-sources { order: -1; margin: 0 0 14px; }
+html.embed-hivey .answer-head, html.embed-hivey .model-badge { display: none; }
+html.embed-hivey .answer-meta { display: none; }
+html.embed-hivey .ai-body strong { font-weight: 600; color: #fff; }
+html.embed-hivey .ai-body h1, html.embed-hivey .ai-body h2, html.embed-hivey .ai-body h3, html.embed-hivey .ai-body h4 { font-family: var(--ct-display); font-weight: 500; line-height: 1.25; letter-spacing: -.01em; margin: 16px 0 6px; color: var(--ct-ink); background: none; -webkit-text-fill-color: currentColor; }
+html.embed-hivey .ai-body h1 { font-size: 19px; }
+html.embed-hivey .ai-body h2 { font-size: 17px; }
+html.embed-hivey .ai-body h3, html.embed-hivey .ai-body h4 { font-size: 15px; }
+html.embed-hivey .ai-body p { margin: 0 0 10px; }
+html.embed-hivey .ai-body ul, html.embed-hivey .ai-body ol { margin: 0 0 10px; padding-left: 18px; }
+html.embed-hivey .ai-body li { margin: 3px 0; }
+html.embed-hivey .ai-body li::marker { color: var(--fx-2); }
+html.embed-hivey .ai-body a:not(.cite-chip) { color: var(--ct-ink); text-decoration: underline; text-decoration-color: var(--fx-2); text-underline-offset: 2px; }
+html.embed-hivey .ai-body table { border-collapse: collapse; font-size: 13px; }
+html.embed-hivey .ai-body th, html.embed-hivey .ai-body td { border: 0; border-top: 1px solid var(--ct-line); padding: 6px 8px; text-align: left; }
+html.embed-hivey .ai-body code { font-family: var(--ct-mono); }
+html.embed-hivey .live-word { color: var(--fx-1); }
+
+/* While it thinks. */
+html.embed-hivey .pending-msg .typing { display: flex; align-items: center; gap: 8px; background: none; border: 0; padding: 0; color: var(--ct-muted); font: 11px var(--ct-mono); }
+
+/* The timeline: every step of the agent and of the web search, its dot lit while it runs. */
+html.embed-hivey .agent-actions, html.embed-hivey .web-trace { margin: 0; padding: 0; background: none; border: 0; box-shadow: none; animation: ct-rise .5s var(--ct-ease) backwards; }
+html.embed-hivey .agent-actions[open] > summary, html.embed-hivey .web-trace[open] > summary { display: none; }
+html.embed-hivey .agent-actions:not([open]) > summary { font: 11px var(--ct-mono); color: var(--ct-muted); cursor: pointer; list-style: none; padding: 0; background: none; border: 0; }
+html.embed-hivey .agent-actions-list, html.embed-hivey .web-trace .think-body { position: relative; display: grid; gap: 8px; margin: 0; padding: 0; border: 0; background: none; max-height: none; overflow: visible; font-size: 14px; }
+html.embed-hivey .agent-actions-list::before, html.embed-hivey .web-trace .think-body::before { content: ""; position: absolute; left: 3px; top: 9px; bottom: 9px; width: 1px; background: linear-gradient(var(--fx-3), var(--fx-2), var(--fx-1)); opacity: .7; }
+html.embed-hivey .agent-act, html.embed-hivey .web-trace .deep-step { position: relative; display: block; margin: 0; padding: 0 0 0 19px; background: none; border: 0; color: var(--ct-ink); font: 14px/1.4 var(--ct-display); overflow-wrap: anywhere; }
+html.embed-hivey .agent-act::before, html.embed-hivey .web-trace .deep-step::before { content: ""; position: absolute; left: 0; top: .45em; width: 7px; height: 7px; border-radius: 50%; background: var(--fx-2); }
+html.embed-hivey .agent-act-head { padding: 0; background: none; border: 0; color: inherit; font: inherit; white-space: normal; }
+html.embed-hivey .agent-act.pending::before, html.embed-hivey .web-trace:not(.finished) .deep-step:last-child::before { background: var(--fx-1); box-shadow: 0 0 0 3px color-mix(in srgb, var(--fx-1) 30%, transparent), 0 0 12px var(--fx-1); animation: ct-pulse 1.1s ease-in-out infinite; }
+html.embed-hivey .agent-act.pending .agent-act-head::after { content: none; }
+html.embed-hivey .agent-act-res { margin: 2px 0 0; padding: 0; background: none; border: 0; font-size: 12px; color: var(--ct-danger); white-space: normal; }
+html.embed-hivey .agent-act:has(.agent-act-res)::before { background: var(--ct-danger); }
+html.embed-hivey .agent-sound-note { padding: 10px 12px; border-radius: 9px; background: var(--ct-raise); box-shadow: inset 2px 0 0 var(--ct-warn); font-size: 14px; }
+
+/* Notes: a line on a raised surface, its colour on the edge. */
+html.embed-hivey .msg.tool { padding: 10px 12px; border-radius: 9px; background: var(--ct-raise); border: 0; font: 14px/1.4 var(--ct-display); color: var(--ct-ink); }
+html.embed-hivey .msg.error { padding: 10px 12px; border-radius: 9px; background: var(--ct-raise); border: 0; box-shadow: inset 2px 0 0 var(--ct-danger); color: var(--ct-ink); font-size: 14px; }
+
+/* Reasoning: quiet. */
+html.embed-hivey .think:not(.web-trace) { background: none; border: 0; border-left: 1px solid var(--ct-line-2); border-radius: 0; padding: 0 0 0 10px; color: var(--ct-muted); font-size: 13px; }
+
+/* Sources and citations. */
+html.embed-hivey .web-sources { margin: 0; padding: 0; background: none; border: 0; animation: ct-rise .5s var(--ct-ease) backwards; }
+html.embed-hivey .ws-head { margin: 0 0 8px; font: 11px var(--ct-mono); color: var(--ct-muted); letter-spacing: 0; text-transform: none; }
+html.embed-hivey .ws-list { display: grid; margin: 0; padding: 0; list-style: none; }
+html.embed-hivey .ws-list li { margin: 0; border-top: 1px solid var(--ct-line); transition: background .15s; }
+html.embed-hivey .ws-list li:last-child { border-bottom: 1px solid var(--ct-line); }
+html.embed-hivey .ws-list li a { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 12px; padding: 8px 0; color: var(--ct-muted); text-decoration: none; font-size: 13px; line-height: 1.35; background: none; border: 0; transition: color .2s; }
+html.embed-hivey .ws-list li:hover a, html.embed-hivey .ws-list li.lit a { color: var(--ct-ink); }
+html.embed-hivey .ws-num { grid-row: span 2; width: auto; height: auto; padding: 0; background: none; border: 0; font: 11px/1.7 var(--ct-mono); color: inherit; }
+html.embed-hivey .ws-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html.embed-hivey .ws-host { grid-column: 2; font: 11px var(--ct-mono); color: var(--ct-muted); overflow-wrap: anywhere; }
+html.embed-hivey .msg .cite-chip { display: inline-grid; place-items: center; min-width: 22px; height: 20px; margin: 0 2px; padding: 0 5px; border: 0; border-radius: 5px; background: none; box-shadow: inset 0 0 0 1px var(--ct-line-2); color: var(--ct-ink); font: 500 11px var(--ct-mono); text-decoration: none; vertical-align: 1px; transition: background .15s, color .15s, box-shadow .15s; }
+html.embed-hivey .msg .cite-chip:hover, html.embed-hivey .msg .cite-chip.lit, html.embed-hivey .msg .cite-chip:focus-visible { background: var(--fx-2); box-shadow: none; color: #fff; }
+
+/* What is under an answer appears when it is wanted. */
+html.embed-hivey .mact-bar { opacity: 0; transition: opacity .15s; background: none; border: 0; padding: 0; margin-top: 4px; gap: 2px; }
+html.embed-hivey .msg:hover .mact-bar, html.embed-hivey .mact-bar:focus-within { opacity: 1; }
+html.embed-hivey .mact-bar button { background: none; border: 0; color: var(--ct-muted); }
+html.embed-hivey .mact-bar button:hover { color: var(--ct-ink); background: var(--ct-raise); }
+
+/* The empty conversation: the mark alone, alive. */
+html.embed-hivey .empty-logo { opacity: 1; filter: drop-shadow(0 0 22px color-mix(in srgb, var(--fx-2) 70%, transparent)); transform: none; width: 62px; height: 62px; margin: 0 auto 18px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='8' y1='8' x2='88' y2='88' gradientUnits='userSpaceOnUse'%3E%3Cstop offset='0' stop-color='%23d946ef'/%3E%3Cstop offset='.5' stop-color='%238b5cf6'/%3E%3Cstop offset='1' stop-color='%233b82f6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cg fill='url(%23g)'%3E%3Crect x='17' y='9' width='62' height='14' rx='7'/%3E%3Crect x='8' y='30' width='80' height='14' rx='7'/%3E%3Crect x='12' y='51' width='72' height='14' rx='7'/%3E%3Crect x='23' y='72' width='50' height='14' rx='7'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat; animation: ct-rise .7s var(--ct-ease) backwards; }
+html.embed-hivey .empty-logo::before, html.embed-hivey .empty-logo::after { content: none; }
+html.embed-hivey .empty-logo svg { display: none; }
+html.embed-hivey .empty, html.embed-hivey .empty .muted { color: var(--ct-muted); }
+html.embed-hivey .empty-title, html.embed-hivey #emptyGreeting { color: var(--ct-muted); font-weight: 400; font-size: 15px; }
+
+/* The composer: one pill, its round button, its quiet row. */
+html.embed-hivey .composer { padding: 10px 14px 12px; border: 0; }
+html.embed-hivey .composer-box { --ct-r: 22px; padding: 6px 6px 4px; border-radius: var(--ct-r); background: #0f0f12; border: 1px solid var(--ct-line-2); box-shadow: 0 8px 40px -14px color-mix(in srgb, var(--fx-2) 60%, transparent); }
+html.embed-hivey .composer-box:hover:not(:focus-within) { border-color: color-mix(in srgb, var(--fx-2) 45%, var(--ct-line-2)); }
+html.embed-hivey .composer-box:focus-within { border-color: var(--fx-2); box-shadow: 0 8px 40px -10px color-mix(in srgb, var(--fx-2) 80%, transparent); }
+html.embed-hivey .composer-main { display: flex; align-items: flex-end; gap: 8px; padding: 2px 2px 2px 10px; }
+html.embed-hivey #input { flex: 1; min-width: 0; padding: 8px 0; background: none; border: 0; color: var(--ct-ink); font-size: 15px; line-height: 1.4; }
+html.embed-hivey #input::placeholder { color: var(--ct-muted); }
+html.embed-hivey .send-go { flex: none; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; color: #fff; background: linear-gradient(135deg, var(--fx-3), var(--fx-2), var(--fx-1)); cursor: pointer; transition: transform .2s var(--ct-ease), opacity .2s; }
+html.embed-hivey .send-go:hover { transform: scale(1.06); }
+html.embed-hivey .composer-box.is-busy .send-go { display: none; }
+html.embed-hivey .composer-tools { align-items: center; gap: 2px; padding: 2px 4px 0; }
+html.embed-hivey .composer-tools .attach-btn, html.embed-hivey .composer-tools .mic-btn, html.embed-hivey .composer-tools .ctool { width: 28px; height: 28px; color: var(--ct-muted); background: none; border: 0; border-radius: 7px; }
+html.embed-hivey .composer-tools .attach-btn:hover, html.embed-hivey .composer-tools .mic-btn:hover, html.embed-hivey .composer-tools .ctool:hover { color: var(--ct-ink); background: var(--ct-raise); }
+html.embed-hivey .composer-tools .model-chip { color: var(--ct-muted); }
+html.embed-hivey .composer-tools .mc-icon { filter: grayscale(1) brightness(1.4); }
+/* The model is its icon here; its name appears while it is being chosen. */
+html.embed-hivey .composer-tools .tools-left { flex: 0 0 auto; gap: 2px; }
+html.embed-hivey .composer-tools .model-chip { position: relative; flex: 0 0 28px; width: 28px; min-width: 28px; justify-content: center; padding: 0; background: none; border: 0; }
+html.embed-hivey .composer-tools .model-chip .combo-input { position: absolute; inset: 0; width: 100%; padding: 0; opacity: 0; cursor: pointer; }
+html.embed-hivey .composer-tools .model-chip .combo-caret { display: none; }
+html.embed-hivey .composer-tools .tools-right { flex: 1 1 auto; min-width: 0; justify-content: flex-end; gap: 2px; }
+html.embed-hivey .assistant-switch { flex: none; margin-right: auto; margin-left: 4px; }
+html.embed-hivey .composer-tools .model-chip .combo-input { font: 11px var(--ct-mono); color: var(--ct-muted); }
+html.embed-hivey .composer-tools #stop { width: 36px; height: 36px; border-radius: 50%; color: var(--ct-ink); box-shadow: inset 0 0 0 1px var(--ct-line-2); background: none; }
+html.embed-hivey .assistant-switch { gap: 0; padding: 2px; border-radius: 15px; box-shadow: inset 0 0 0 1px var(--ct-line); background: none; }
+html.embed-hivey .assistant-switch button { padding: 2px 9px; border: 0; border-radius: 13px; background: none; color: var(--ct-muted); font-size: 12px; }
+html.embed-hivey .assistant-switch button:hover { color: var(--ct-ink); }
+html.embed-hivey .assistant-switch button.on { background: var(--fx-grad); color: #fff; }
+html.embed-hivey .composer-foot { justify-content: flex-end; min-height: 0; padding: 4px 4px 0; }
+html.embed-hivey .cf-priv { display: none; }
+html.embed-hivey .ctx-gauge { font: 11px var(--ct-mono); color: var(--ct-muted); }
+html.embed-hivey .local-status { margin: 0 0 8px; padding: 8px 12px; border-radius: 9px; background: var(--ct-raise); box-shadow: inset 2px 0 0 var(--fx-2); font: 11px var(--ct-mono); color: var(--ct-ink); }
+html.embed-hivey.ai-game .local-status { box-shadow: inset 2px 0 0 var(--ct-warn); }
+
+/* Confirmation: a card over the panel. Its words are the extension's, never the model's or the page's. */
+html.embed-hivey #confirmBar:not(.hidden) { position: fixed; inset: 0; z-index: 40; display: grid; align-content: center; gap: 14px; margin: 0; padding: 18px; border: 0; border-radius: 0; background: #0a0a0cd0; color: var(--ct-ink); font-size: 15px; line-height: 1.4; font-weight: 500; animation: ct-fade .25s; }
+html.embed-hivey #confirmBar .confirm-actions { display: flex; flex-wrap: wrap; flex-direction: row-reverse; gap: 8px; }
+html.embed-hivey #confirmBar button { flex: 1 1 120px; min-height: 44px; border-radius: 9px; font-weight: 500; font-size: 14px; border: 0; }
+html.embed-hivey #confirmBar .ok { background: var(--ct-ink); color: #0b0b0d; }
+html.embed-hivey #confirmBar .no { background: none; color: var(--ct-ink); box-shadow: inset 0 0 0 1px var(--ct-line-2); }
+
+/* The first-use card. */
+html.embed-hivey .engine-card { padding: 18px; border: 0; border-radius: 13px; background: var(--ct-raise); box-shadow: 0 0 0 1px var(--ct-line-2), 0 24px 70px #000b; }
+
+/* Panels and menus. */
+html.embed-hivey #historyPanel:not(.hidden), html.embed-hivey #tabsPanel:not(.hidden) { background: var(--ct-panel); }
+html.embed-hivey .think-pop, html.embed-hivey .combo-menu, html.embed-hivey .filter-panel { background: var(--ct-raise); border-color: var(--ct-line-2); border-radius: 12px; }
+
+@keyframes ct-breathe { 50% { transform: scaleX(.55); opacity: .6; } }
+@keyframes ct-pulse { 50% { opacity: .4; } }
+@keyframes ct-rise { from { transform: translateY(8px); opacity: 0; } }
+@keyframes ct-fade { from { opacity: 0; } }
+@keyframes ct-bar-in { from { transform: scaleX(.2); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  html.embed-hivey *, html.embed-hivey *::before { animation: none !important; transition: none !important; }
+}

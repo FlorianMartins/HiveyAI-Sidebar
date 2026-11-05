@@ -2613,6 +2613,7 @@ function syncGlowStorage() {
   } catch (_) {}
 }
 async function agentGlowActiveTab() {
+  if (settings && settings.hiveyAi) return; // Hivey Browser draws its own light around the page
   try {
     // Glow the tab the agent is PINNED to (its work tab), not whatever tab is live now — the
     // user may have switched away to keep browsing. Falls back to the active tab if not pinned.
@@ -3975,7 +3976,7 @@ function clearMessages() {
   // Also drop the agent "Actions" block, its sound note + any action overlay — they're appended straight to
   // els.messages (not as .msg/.think), so without this they'd leak into the next conversation
   // (a stale actions bar at the bottom of a brand-new chat). 🐝
-  els.messages.querySelectorAll(".msg, .think, .agent-actions, .agent-sound-note, .action-bubble-overlay").forEach((n) => n.remove());
+  els.messages.querySelectorAll(".msg, .think, .agent-actions, .agent-sound-note, .action-bubble-overlay, .web-sources.early").forEach((n) => n.remove());
 }
 // Reset the view to a brand-new empty conversation (no saving).
 function startFreshChat() {
@@ -7688,6 +7689,8 @@ function describeAgentAction(call) {
     }
   }
 }
+/** An action's description without its leading emoji: the Assistant's timeline has dots instead. */
+function stepWords(desc) { return String(desc || "").replace(/^[^\p{L}\p{N}«]+/u, ""); }
 function makeAgentActions() {
   // One block per stretch of actions, in the order things happened: the reasoning that led to a
   // step sits ABOVE the actions it decided (« le mode action passe devant le mode de réflexion »
@@ -7702,7 +7705,8 @@ function makeAgentActions() {
     if (sp) sp.remove();
     // A single action says what it was (« 📄 Lecture de la page ✓ »), several are counted.
     if (label) label.textContent = count === 1 ? `${lastDesc} ${failed ? "✗" : "✓"}` : count ? t("agent.actionsDone", { n: count }) : t("agent.actionsNone");
-    wrap.open = false; // folded once finished; the user can expand to review
+    // Folded once finished; the user can expand to review. In the Assistant, a short plan stays in view.
+    wrap.open = IS_EMBED && count <= 6;
   };
   const ensure = () => {
     if (wrap && els.messages.lastElementChild === wrap) return;
@@ -7744,7 +7748,7 @@ function makeAgentActions() {
       row.className = "agent-act";
       const head = document.createElement("div");
       head.className = "agent-act-head";
-      head.textContent = `→ ${call.name}(${JSON.stringify(call.input).slice(0, 80)})`;
+      head.textContent = IS_EMBED ? stepWords(lastDesc) : `→ ${call.name}(${JSON.stringify(call.input).slice(0, 80)})`;
       row.appendChild(head);
       // Mark the step as in-progress: navigations wait for the page to fully load (up to ~12s), so
       // a visible "…" pulse tells the user it's working, not frozen.
@@ -7759,7 +7763,7 @@ function makeAgentActions() {
       const res = document.createElement("div");
       res.className = "agent-act-res" + (out && (out.blocked || out.error) ? " err" : "");
       res.textContent = out && out.blocked ? `🛡 ${out.error}` : out && out.error ? `✗ ${out.error}` : "✓ ok";
-      currentRow.appendChild(res);
+      if (!IS_EMBED || (out && (out.blocked || out.error))) currentRow.appendChild(res); // the timeline's dot says it went well
       currentRow = null;
       if (out && (out.blocked || out.error)) failed = true;
       // Playback could only start muted (Firefox refuses sound until the PAGE is clicked, and a
@@ -7849,6 +7853,19 @@ function prefersReducedMotion() {
   try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (_) { return false; }
 }
 
+/** The word being written carries the colour of what moves. */
+function lightLastWord(root) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let last = null;
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) if (n.nodeValue.trim()) last = n;
+  if (!last) return;
+  const at = last.nodeValue.trimEnd().lastIndexOf(" ") + 1;
+  const tail = document.createElement("span");
+  tail.className = "live-word";
+  tail.textContent = last.nodeValue.slice(at);
+  last.nodeValue = last.nodeValue.slice(0, at);
+  last.after(tail);
+}
 function makeSink(badgeLabel, showThink = true, pendingEl = null, m = null) {
   // `m` = the mode this card belongs to; when that tab isn't on screen, the card and its
   // reasoning block render into the tab's detached holder (homeFor) instead of the visible area.
@@ -7862,7 +7879,14 @@ function makeSink(badgeLabel, showThink = true, pendingEl = null, m = null) {
   // tail end glides in like a typewriter — fluid regardless of the provider's chunking.
   const smooth = settings.smoothStream !== false && !prefersReducedMotion();
   let shown = 0, rafId = 0;
-  const paint = () => { setHTML(contentEl, renderMarkdown(smooth ? raw.slice(0, shown) : raw)); };
+  let liveSources = null;
+  const paint = () => {
+    setHTML(contentEl, renderMarkdown(smooth ? raw.slice(0, shown) : raw));
+    if (IS_EMBED) {
+      if (liveSources) citationChips(contentEl, liveSources);
+      if (smooth && shown < raw.length) lightLastWord(contentEl);
+    }
+  };
   const tick = () => {
     rafId = 0;
     const gap = raw.length - shown;
@@ -7931,8 +7955,10 @@ function makeSink(badgeLabel, showThink = true, pendingEl = null, m = null) {
     if (m === "agent") d.open = false;
   };
   return {
+    setSources(list) { liveSources = list && list.length ? list : null; },
     onText(delta) {
       dropPending();
+      setPageActivity(null);
       full += delta;
       // Strip any <think>…</think> out of the visible answer (→ reasoning block instead).
       const sp = splitThink(full);
@@ -8097,7 +8123,7 @@ function confirmAction(name, input) {
       els.confirmText.textContent = input.label;
     } else if (input && input.sensitive) {
       const what = input.label || input.url || "";
-      els.confirmText.textContent = t("confirm.sensitive", { action: input.sensitive, what: String(what).slice(0, 80) });
+      els.confirmText.textContent = t("confirm.sensitive", { action: input.sensitive, what: String(what).slice(0, 80) }).replace(IS_EMBED ? /^⚠\s*/ : /$^/, "");
     } else {
       els.confirmText.textContent = t("confirm.prompt", { name, input: JSON.stringify(input).slice(0, 120) });
     }
@@ -8407,7 +8433,24 @@ function endBusy() {
 function setAiBusy(on) {
   if (!settings || !settings.hiveyAi) return;
   // hiveyAiAgent: the browser lets this extension reach sites only while the agent works.
+  document.documentElement.classList.toggle("ai-busy", !!on);
+  if (!on) setPageActivity(null);
   try { browser.storage.local.set({ hiveyAiBusy: !!on, hiveyAiAgent: !!on && agentActive() }); } catch (_) {}
+}
+// What the AI does with the page, for the browser to show over it: a page cannot imitate that.
+const READS_PAGE = new Set(["read_page", "read_selection", "read_tab", "find_elements", "screenshot"]);
+const ACTS_ON_PAGE = new Set(["navigate", "click_element", "click_at", "fill_input", "scroll_page", "control_media", "switch_tab"]);
+let pageActivity = "";
+async function setPageActivity(call) {
+  if (!IS_EMBED || !settings || !settings.hiveyAi) return;
+  const name = call && call.name;
+  const kind = READS_PAGE.has(name) ? "reading" : ACTS_ON_PAGE.has(name) ? "acting" : "";
+  if (kind === pageActivity && kind !== "acting") return;
+  pageActivity = kind;
+  let tabId = -1;
+  if (kind) { tabId = getAgentTab(); if (tabId == null) tabId = await getActiveTabId().catch(() => null); }
+  const label = kind ? t(kind === "reading" ? "assistant.reading" : "assistant.acting") : "";
+  try { browser.storage.local.set({ hiveyAiActivity: { kind, label, tabId: tabId == null ? -1 : tabId } }); } catch (_) {}
 }
 // The browser gives the sites asynchronously: an action started at once could find them still closed.
 async function waitForSites() {
@@ -8862,8 +8905,19 @@ function webTrace(m) {
   els.empty.classList.add("hidden");
   return {
     step(text) { const d = document.createElement("div"); d.className = "deep-step"; d.textContent = text; log.appendChild(d); if (m === mode) scrollMessages(); },
-    done(title) { if (title) sum.textContent = title; panel.open = false; },
+    done(title) {
+      if (title) sum.textContent = title;
+      if (IS_EMBED) { panel.classList.add("finished"); if (title) this.step(title); return; }
+      panel.open = false;
+    },
   };
+}
+/** What is kept of a source once the turn is over: never the passages, only a few words to find them again. */
+function webSourceList(sources) {
+  return sources.map(({ n, url, title, passages }) => {
+    const first = Array.isArray(passages) ? passages[0] : passages;
+    return { n, url, title, quote: String((first && first.text) || first || "").slice(0, 120) };
+  });
 }
 const hostOf = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch (_) { return ""; } };
 /**
@@ -8917,6 +8971,31 @@ function renderWebSources(el, sources) {
   const bodies = el.querySelectorAll(".ai-body");
   const body = bodies[bodies.length - 1];
   if (!body || !safe.length) return;
+  citationChips(body, safe);
+  el.querySelectorAll(":scope > .web-sources").forEach((x) => x.remove());
+  els.messages.querySelectorAll(".web-sources.early").forEach((x) => x.remove());
+  const box = sourcesBox(safe);
+  // Right under the answer's text, above its actions and figures.
+  let top = body;
+  while (top.parentElement && top.parentElement !== el) top = top.parentElement;
+  top.after(box);
+}
+/** The Assistant shows what it read before it writes, as soon as it is known. */
+function renderEarlySources(sources, m) {
+  const safe = (sources || []).filter((s) => s && /^https?:\/\//.test(String(s.url || "")));
+  if (!safe.length) return;
+  const box = sourcesBox(safe);
+  box.classList.add("early");
+  homeFor(m).appendChild(box);
+  scrollMessages();
+}
+/** Opens the source on the passage the answer rests on, when the page still has it (a text fragment). */
+function sourceHref(s) {
+  const quote = String(s.quote || "").replace(/\s+/g, " ").trim().split(" ").slice(0, 8).join(" ");
+  return quote ? `${s.url.split("#")[0]}#:~:text=${encodeURIComponent(quote)}` : s.url;
+}
+/** The [n] of a text become chips; every piece goes in as text or as an http(s) href, never as markup. */
+function citationChips(body, safe) {
   const byN = new Map(safe.map((s) => [s.n, s]));
   const texts = [];
   const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT);
@@ -8933,7 +9012,8 @@ function renderWebSources(el, sources) {
       for (const n of p.cite) {
         const s = byN.get(n);
         const a = document.createElement("a");
-        a.className = "cite-chip"; a.href = s.url; a.target = "_blank"; a.rel = "noopener noreferrer";
+        a.className = "cite-chip"; a.href = sourceHref(s); a.target = "_blank"; a.rel = "noopener noreferrer";
+        a.dataset.n = String(n);
         a.textContent = String(n);
         a.title = s.title || s.url;
         frag.appendChild(a);
@@ -8941,14 +9021,16 @@ function renderWebSources(el, sources) {
     }
     node.replaceWith(frag);
   }
-  el.querySelectorAll(":scope > .web-sources").forEach((x) => x.remove());
+}
+function sourcesBox(safe) {
   const box = document.createElement("div"); box.className = "web-sources";
   const head = document.createElement("div"); head.className = "ws-head"; head.textContent = t("web.sources"); box.appendChild(head);
   const list = document.createElement("ol"); list.className = "ws-list";
   for (const s of safe) {
     const li = document.createElement("li");
+    li.dataset.n = String(s.n);
     const a = document.createElement("a");
-    a.href = s.url; a.target = "_blank"; a.rel = "noopener noreferrer";
+    a.href = sourceHref(s); a.target = "_blank"; a.rel = "noopener noreferrer";
     const num = document.createElement("span"); num.className = "ws-num"; num.textContent = String(s.n);
     const title = document.createElement("span"); title.className = "ws-title"; title.textContent = s.title || hostOf(s.url);
     const host = document.createElement("span"); host.className = "ws-host"; host.textContent = hostOf(s.url);
@@ -8957,10 +9039,7 @@ function renderWebSources(el, sources) {
     list.appendChild(li);
   }
   box.appendChild(list);
-  // Right under the answer's text, above its actions and figures.
-  let top = body;
-  while (top.parentElement && top.parentElement !== el) top = top.parentElement;
-  top.after(box);
+  return box;
 }
 
 // ----- Hivey Browser: the local engine, its states, the Assistant's surface ----
@@ -8986,6 +9065,7 @@ function onHiveyAiChanged(ai) {
   settings.hiveyAi = ai || undefined;
   hiveyAiWatchers.forEach((fn) => fn());
   renderLocalStatus();
+  document.documentElement.classList.toggle("ai-game", !!(ai && ai.game));
   // The browser wrote it after this panel opened: the local model becomes the default now.
   if (appeared) getSettings().then((s) => { settings = s; refreshModelUI(); updatePrivBadge(); }).catch(() => {});
 }
@@ -9036,6 +9116,17 @@ function renderEngineState(ai) {
 /** The Assistant's header and its small tools menu: every other workspace, without a rail. */
 function setupAssistantChrome() {
   updateAssistantTitle();
+  const go = document.getElementById("sendBtn");
+  if (go) go.addEventListener("click", () => onSend());
+  // A citation and its source light up together.
+  const lit = (e, on) => {
+    const chip = e.target.closest && e.target.closest(".cite-chip, .ws-list li");
+    if (!chip) return;
+    const scope = chip.closest(".msg") || els.messages;
+    scope.querySelectorAll(`.cite-chip[data-n="${chip.dataset.n}"], .ws-list li[data-n="${chip.dataset.n}"]`).forEach((n) => n.classList.toggle("lit", on));
+  };
+  els.messages.addEventListener("mouseover", (e) => lit(e, true));
+  els.messages.addEventListener("mouseout", (e) => lit(e, false));
   const btn = document.getElementById("toolsMenuBtn"), menu = document.getElementById("toolsMenu");
   if (!btn || !menu) return;
   const close = () => { menu.classList.add("hidden"); btn.setAttribute("aria-expanded", "false"); };
@@ -9287,6 +9378,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   if (localWeb) {
     if (hstep) hstep.set(t("step.search"));
     webGround = await groundOnWeb(displayText || modelContent, boundTranscript, boundHistory, turnSel, sessMode);
+    if (IS_EMBED && webGround) renderEarlySources(webSourceList(webGround.sources), sessMode);
   }
 
   // With image attachments, switch the user turn to the provider's multimodal
@@ -9397,6 +9489,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   if (hstep) hstep.set(t("step.generate"));
   const pending = addPendingIndicator(sessMode);
   const sink = makeSink(badge, true, pending, sessMode);
+  if (IS_EMBED && webGround) sink.setSources(webSourceList(webGround.sources));
   // Agent mode: collapse the agent's tool calls into ONE foldable "Actions" block for
   // a cleaner, more immersive run — the steps are hidden but consultable on click.
   const agentActs = agentMode || mcpMode || chatWebTool ? makeAgentActions() : null;
@@ -9429,6 +9522,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
       ...(mcpExecute ? { execute: mcpExecute } : agentMode || chatWebTool ? { execute: (name, input, opts) => (refused ? Promise.resolve(REFUSED) : executeTool(name, input, { ...opts, webSearch: agentWebTool || chatWebTool ? agentWebSearch : null })) } : {}),
       onText: sink.onText, onThink: sink.onThink,
       onToolStart: (call) => {
+      setPageActivity(call);
         sink.finalize();
         if (agentMode) agentGlowActiveTab();
         if (agentActs) agentActs.start(call);
@@ -9511,7 +9605,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
     }
     sink.finalize();
     // What the model wrote, held to what was really fetched.
-    const webSources = webGround && webGround.sources.length ? webGround.sources.map(({ n, url, title }) => ({ n, url, title })) : null;
+    const webSources = webGround && webGround.sources.length ? webSourceList(webGround.sources) : null;
     if (webSources && sink.getRaw()) {
       const held = attributeAnswer(cleanAnswer(sink.getRaw(), webGround.sources), webGround.sources);
       if (held && held !== sink.getRaw()) sink.setRaw(held);

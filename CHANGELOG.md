@@ -10,6 +10,9 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Hivey Browser : l'assistant prend le design de sa maquette** : logo vivant, question en grand, étapes en
+  frise lumineuse, sources numérotées avant la réponse, citations reliées à leur source (un clic ouvre la page
+  sur le passage quand il s'y trouve encore), curseur de l'agent sur la page. L'extension classique ne change pas.
 - **Hivey Browser : la recherche web et l'agent fonctionnent vraiment** : l'extension n'a pas accès aux
   sites par sécurité, ce qui bloquait la lecture des pages. Le navigateur les récupère maintenant pour elle,
   sans cookies, et l'agent reçoit l'accès aux sites seulement pendant qu'il travaille.
