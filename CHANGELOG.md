@@ -10,6 +10,9 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Hivey Browser : le panneau devient aussi dépouillé que sa maquette** : logo, un mot, l'historique, le menu et
+  la croix ; un seul champ lumineux, le reste rangé derrière son +, Auto / Chat / Agent en pastilles dessous ; une
+  lumière qui tourne autour du panneau pendant que l'IA travaille.
 - **Hivey Browser : l'assistant prend le design de sa maquette** : logo vivant, question en grand, étapes en
   frise lumineuse, sources numérotées avant la réponse, citations reliées à leur source (un clic ouvre la page
   sur le passage quand il s'y trouve encore), curseur de l'agent sur la page. L'extension classique ne change pas.

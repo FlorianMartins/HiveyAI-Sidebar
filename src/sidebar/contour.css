@@ -40,12 +40,39 @@ html.embed-hivey.ai-busy .hive-mark rect:nth-child(3) { animation-delay: .24s; }
 html.embed-hivey.ai-busy .hive-mark rect:nth-child(4) { animation-delay: .36s; }
 html.embed-hivey.ai-game .hive-mark { opacity: .4; filter: grayscale(1); }
 html.embed-hivey .brand-word, html.embed-hivey body.web-active .brand-word { font-family: var(--ct-display); font-size: 15px; font-weight: 500; color: var(--ct-ink); background: none; -webkit-text-fill-color: currentColor; letter-spacing: 0; }
-html.embed-hivey .topbar .icon { width: 30px; height: 30px; border-radius: 7px; background: none; border: 0; }
+html.embed-hivey .topbar .icon { width: 32px; height: 32px; border-radius: 7px; background: none; border: 0; color: var(--ct-muted); }
+html.embed-hivey .topbar .icon:hover { color: var(--ct-ink); }
+/* A mark, a word, what is needed and the cross: the rest is in the menu. */
+html.embed-hivey #searchBtn, html.embed-hivey #newChat, html.embed-hivey #openOptions { display: none; }
+html.embed-hivey .topbar .row { gap: 0; margin-left: auto; }
+html.embed-hivey #historyBtn { order: 1; }
+html.embed-hivey #toolsMenuBtn { order: 2; }
+html.embed-hivey #panelClose { order: 3; align-items: center; justify-content: center; }
+html.embed-hivey .pm-rule { height: 1px; margin: 4px 8px; background: var(--ct-line); }
 html.embed-hivey .topbar .icon:hover { background: var(--ct-raise); }
-html.embed-hivey .topbar .glyph-svg { width: 16px; height: 16px; }
+html.embed-hivey .topbar .glyph-svg { width: 17px; height: 17px; }
+html.embed-hivey .topbar .icon svg { width: 17px !important; height: 17px !important; }
+html.embed-hivey .topbar #panelClose svg { width: 13px !important; height: 13px !important; }
+html.embed-hivey :focus-visible { outline: 2px solid var(--fx-2); outline-offset: 1px; }
+html.embed-hivey #input:focus-visible { outline: 0; }
+
+/* Ambient light in a corner of the card, like the new tab; a light travelling around it while the AI works. */
+html.embed-hivey body { position: relative; isolation: isolate; background:
+    radial-gradient(420px circle at 0% 0%, color-mix(in srgb, #a855f7 13%, transparent), transparent 62%),
+    radial-gradient(320px circle at 100% 100%, color-mix(in srgb, var(--fx-3) 9%, transparent), transparent 62%), var(--ct-panel); animation: ct-enter .5s var(--ct-ease); }
+html.embed-hivey .topbar { background: none; }
+html.embed-hivey body::after { content: ""; position: absolute; inset: 0; z-index: 30; padding: 1.5px; border-radius: 12px; pointer-events: none; opacity: 0; transition: opacity .4s; overflow: hidden;
+  background: conic-gradient(from var(--ct-turn), transparent 0 58%, var(--fx-3) 72%, var(--fx-2) 86%, var(--fx-1) 97%, transparent);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite: exclude; }
+html.embed-hivey.ai-busy body::after { opacity: 1; animation: ct-turn 3.4s linear infinite; }
+html.embed-hivey.ai-game body::after { opacity: 0; animation: none; }
+html.embed-hivey.ai-busy body { box-shadow: inset 0 0 44px -14px color-mix(in srgb, var(--fx-2) 45%, transparent); }
+@property --ct-turn { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@keyframes ct-turn { to { --ct-turn: 360deg; } }
+@keyframes ct-enter { from { opacity: 0; transform: translateX(24px); } }
 
 /* The conversation. */
-html.embed-hivey .messages { padding: 14px; gap: 16px; background: var(--ct-panel); }
+html.embed-hivey .messages { padding: 14px; gap: 16px; background: none; }
 html.embed-hivey .msg { margin: 0; animation: ct-rise .5s var(--ct-ease) backwards; }
 html.embed-hivey .msg.user { display: block; align-self: stretch; width: 100%; max-width: none; margin-left: 0; background: none; border: 0; padding: 0; text-align: left; }
 html.embed-hivey .msg.user > .umsg-text { display: block; padding: 0; background: none; border: 0; border-radius: 0; box-shadow: none; color: var(--ct-ink); font-size: 16px; line-height: 1.35; font-weight: 500; text-align: left; }
@@ -74,6 +101,7 @@ html.embed-hivey .pending-msg .typing { display: flex; align-items: center; gap:
 /* The timeline: every step of the agent and of the web search, its dot lit while it runs. */
 html.embed-hivey .agent-actions, html.embed-hivey .web-trace { margin: 0; padding: 0; background: none; border: 0; box-shadow: none; animation: ct-rise .5s var(--ct-ease) backwards; }
 html.embed-hivey .agent-actions[open] > summary, html.embed-hivey .web-trace[open] > summary { display: none; }
+html.embed-hivey .web-trace::before, html.embed-hivey .msg.user + .agent-actions::before { content: attr(data-label); display: block; margin-bottom: 8px; font: 11px var(--ct-mono); color: var(--ct-muted); }
 html.embed-hivey .agent-actions:not([open]) > summary { font: 11px var(--ct-mono); color: var(--ct-muted); cursor: pointer; list-style: none; padding: 0; background: none; border: 0; }
 html.embed-hivey .agent-actions-list, html.embed-hivey .web-trace .think-body { position: relative; display: grid; gap: 8px; margin: 0; padding: 0; border: 0; background: none; max-height: none; overflow: visible; font-size: 14px; }
 html.embed-hivey .agent-actions-list::before, html.embed-hivey .web-trace .think-body::before { content: ""; position: absolute; left: 3px; top: 9px; bottom: 9px; width: 1px; background: linear-gradient(var(--fx-3), var(--fx-2), var(--fx-1)); opacity: .7; }
@@ -120,38 +148,39 @@ html.embed-hivey .empty-logo svg { display: none; }
 html.embed-hivey .empty, html.embed-hivey .empty .muted { color: var(--ct-muted); }
 html.embed-hivey .empty-title, html.embed-hivey #emptyGreeting { color: var(--ct-muted); font-weight: 400; font-size: 15px; }
 
-/* The composer: one pill, its round button, its quiet row. */
-html.embed-hivey .composer { padding: 10px 14px 12px; border: 0; }
-html.embed-hivey .composer-box { --ct-r: 22px; padding: 6px 6px 4px; border-radius: var(--ct-r); background: #0f0f12; border: 1px solid var(--ct-line-2); box-shadow: 0 8px 40px -14px color-mix(in srgb, var(--fx-2) 60%, transparent); }
-html.embed-hivey .composer-box:hover:not(:focus-within) { border-color: color-mix(in srgb, var(--fx-2) 45%, var(--ct-line-2)); }
-html.embed-hivey .composer-box:focus-within { border-color: var(--fx-2); box-shadow: 0 8px 40px -10px color-mix(in srgb, var(--fx-2) 80%, transparent); }
-html.embed-hivey .composer-main { display: flex; align-items: flex-end; gap: 8px; padding: 2px 2px 2px 10px; }
-html.embed-hivey #input { flex: 1; min-width: 0; padding: 8px 0; background: none; border: 0; color: var(--ct-ink); font-size: 15px; line-height: 1.4; }
+/* The composer: the new tab's field, one line of light. The rest waits behind its +. */
+html.embed-hivey .composer { padding: 10px 14px 12px; border: 0; background: none; }
+html.embed-hivey .composer-box { padding: 1.5px; border: 0; border-radius: 22px; background: var(--ct-line-2); box-shadow: 0 8px 40px -14px color-mix(in srgb, var(--fx-2) 70%, transparent); transition: background .3s, box-shadow .3s; backdrop-filter: none; -webkit-backdrop-filter: none; }
+html.embed-hivey .composer-box:hover:not(:focus-within) { border: 0; background: color-mix(in srgb, var(--fx-2) 55%, var(--ct-line-2)); }
+html.embed-hivey .composer-box:focus-within { border: 0; background: var(--fx-grad); box-shadow: 0 8px 40px -8px color-mix(in srgb, var(--fx-2) 85%, transparent); }
+html.embed-hivey .composer-main { display: flex; align-items: flex-end; gap: 6px; padding: 6px; border-radius: 20.5px 20.5px 0 0; background: #0d0e14; }
+html.embed-hivey .composer-box:not(.tray-open) .composer-main { border-radius: 20.5px; }
+html.embed-hivey .more-go { flex: none; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--ct-muted); cursor: pointer; transition: color .15s, background .15s, transform .3s var(--ct-ease); }
+html.embed-hivey .more-go:hover { color: var(--ct-ink); background: var(--ct-raise); }
+html.embed-hivey .more-go[aria-expanded="true"] { color: var(--ct-ink); transform: rotate(45deg); }
+html.embed-hivey #input { flex: 1; min-width: 0; min-height: 36px; padding: 8px 2px; background: none; border: 0; color: var(--ct-ink); font-size: 15px; line-height: 1.35; }
 html.embed-hivey #input::placeholder { color: var(--ct-muted); }
-html.embed-hivey .send-go { flex: none; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; color: #fff; background: linear-gradient(135deg, var(--fx-3), var(--fx-2), var(--fx-1)); cursor: pointer; transition: transform .2s var(--ct-ease), opacity .2s; }
+html.embed-hivey .send-go { flex: none; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; color: #fff; background: linear-gradient(135deg, var(--fx-3), var(--fx-2), var(--fx-1)); cursor: pointer; transition: transform .2s var(--ct-ease); }
 html.embed-hivey .send-go:hover { transform: scale(1.06); }
 html.embed-hivey .composer-box.is-busy .send-go { display: none; }
-html.embed-hivey .composer-tools { align-items: center; gap: 2px; padding: 2px 4px 0; }
-html.embed-hivey .composer-tools .attach-btn, html.embed-hivey .composer-tools .mic-btn, html.embed-hivey .composer-tools .ctool { width: 28px; height: 28px; color: var(--ct-muted); background: none; border: 0; border-radius: 7px; }
+html.embed-hivey #stop { flex: none; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--ct-ink); box-shadow: inset 0 0 0 1px var(--ct-line-2); }
+html.embed-hivey #stop:not(.hidden) { display: inline-flex; }
+/* Behind the +: the row of the classic extension, quiet. */
+html.embed-hivey .composer-tools { display: none; flex-wrap: wrap; align-items: center; gap: 2px; padding: 4px 8px 6px; border-radius: 0 0 20.5px 20.5px; background: #0d0e14; }
+html.embed-hivey .composer-box.tray-open .composer-tools { display: flex; animation: ct-fade .25s; }
+html.embed-hivey .composer-tools .attach-btn, html.embed-hivey .composer-tools .mic-btn, html.embed-hivey .composer-tools .ctool { width: 30px; height: 30px; color: var(--ct-muted); background: none; border: 0; border-radius: 7px; }
 html.embed-hivey .composer-tools .attach-btn:hover, html.embed-hivey .composer-tools .mic-btn:hover, html.embed-hivey .composer-tools .ctool:hover { color: var(--ct-ink); background: var(--ct-raise); }
-html.embed-hivey .composer-tools .model-chip { color: var(--ct-muted); }
-html.embed-hivey .composer-tools .mc-icon { filter: grayscale(1) brightness(1.4); }
-/* The model is its icon here; its name appears while it is being chosen. */
-html.embed-hivey .composer-tools .tools-left { flex: 0 0 auto; gap: 2px; }
-html.embed-hivey .composer-tools .model-chip { position: relative; flex: 0 0 28px; width: 28px; min-width: 28px; justify-content: center; padding: 0; background: none; border: 0; }
-html.embed-hivey .composer-tools .model-chip .combo-input { position: absolute; inset: 0; width: 100%; padding: 0; opacity: 0; cursor: pointer; }
-html.embed-hivey .composer-tools .model-chip .combo-caret { display: none; }
-html.embed-hivey .composer-tools .tools-right { flex: 1 1 auto; min-width: 0; justify-content: flex-end; gap: 2px; }
-html.embed-hivey .assistant-switch { flex: none; margin-right: auto; margin-left: 4px; }
+html.embed-hivey .composer-tools .tools-left { flex: 1 1 auto; min-width: 0; gap: 2px; }
+html.embed-hivey .composer-tools .tools-right { flex: 0 0 auto; gap: 2px; }
+html.embed-hivey .composer-tools .model-chip { flex: 0 1 auto; min-width: 48px; color: var(--ct-muted); background: none; border: 0; }
 html.embed-hivey .composer-tools .model-chip .combo-input { font: 11px var(--ct-mono); color: var(--ct-muted); }
-html.embed-hivey .composer-tools #stop { width: 36px; height: 36px; border-radius: 50%; color: var(--ct-ink); box-shadow: inset 0 0 0 1px var(--ct-line-2); background: none; }
-html.embed-hivey .assistant-switch { gap: 0; padding: 2px; border-radius: 15px; box-shadow: inset 0 0 0 1px var(--ct-line); background: none; }
-html.embed-hivey .assistant-switch button { padding: 2px 9px; border: 0; border-radius: 13px; background: none; color: var(--ct-muted); font-size: 12px; }
+html.embed-hivey .composer-tools .mc-icon { filter: grayscale(1) brightness(1.4); }
+/* Auto, Chat, Agent: the new tab's chips. */
+html.embed-hivey body.mode-chat .assistant-switch { display: flex; justify-content: center; gap: 6px; margin: 10px 0 0; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
+html.embed-hivey .assistant-switch button { min-height: 28px; padding: 2px 13px; border: 0; border-radius: 14px; background: none; color: var(--ct-muted); font-size: 12.5px; box-shadow: inset 0 0 0 1px var(--ct-line); transition: color .15s; }
 html.embed-hivey .assistant-switch button:hover { color: var(--ct-ink); }
-html.embed-hivey .assistant-switch button.on { background: var(--fx-grad); color: #fff; }
-html.embed-hivey .composer-foot { justify-content: flex-end; min-height: 0; padding: 4px 4px 0; }
-html.embed-hivey .cf-priv { display: none; }
-html.embed-hivey .ctx-gauge { font: 11px var(--ct-mono); color: var(--ct-muted); }
+html.embed-hivey .assistant-switch button.on { background: var(--fx-grad); box-shadow: none; color: #fff; }
+html.embed-hivey .composer-foot { display: none; }
 html.embed-hivey .local-status { margin: 0 0 8px; padding: 8px 12px; border-radius: 9px; background: var(--ct-raise); box-shadow: inset 2px 0 0 var(--fx-2); font: 11px var(--ct-mono); color: var(--ct-ink); }
 html.embed-hivey.ai-game .local-status { box-shadow: inset 2px 0 0 var(--ct-warn); }
 

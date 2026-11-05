@@ -7716,6 +7716,7 @@ function makeAgentActions() {
     els.empty.classList.add("hidden");
     wrap = document.createElement("details");
     wrap.className = "agent-actions";
+    wrap.dataset.label = t("assistant.steps");
     // Expanded WHILE the agent works, so the user sees each step (navigate / read / click…) happen
     // live instead of staring at a lone spinner and wondering what's going on. close() folds it.
     wrap.open = true;
@@ -8900,6 +8901,7 @@ function webReader(signal) {
 /** The small foldable trace of a search: what was asked, what was read. */
 function webTrace(m) {
   const panel = document.createElement("details"); panel.className = "think deep-progress web-trace"; panel.open = true;
+  panel.dataset.label = t("assistant.steps");
   const sum = document.createElement("summary"); sum.textContent = t("web.step.title"); panel.appendChild(sum);
   const log = document.createElement("div"); log.className = "think-body"; panel.appendChild(log);
   homeFor(m).appendChild(panel);
@@ -9140,7 +9142,28 @@ function setupAssistantChrome() {
     b.addEventListener("click", () => { close(); selectWorkspace(m); });
     return b;
   };
-  menu.replaceChildren(item("chat", "Assistant"), ...EMBED_TOOLS.map((m) => item(m, workspaceName(m))));
+  // What the header no longer shows, one click away: a button of its own stays the one that acts.
+  const action = (id, label) => {
+    const source = document.getElementById(id);
+    const b = document.createElement("button");
+    b.type = "button"; b.setAttribute("role", "menuitem"); b.className = "pm-item";
+    const ic = source && source.querySelector("svg");
+    if (ic) b.appendChild(ic.cloneNode(true));
+    const l = document.createElement("span"); l.className = "pm-label"; l.textContent = label; b.appendChild(l);
+    b.addEventListener("click", () => { close(); if (source) source.click(); });
+    return b;
+  };
+  const rule = () => { const hr = document.createElement("div"); hr.className = "pm-rule"; return hr; };
+  menu.replaceChildren(action("newChat", t("newChat.title")), action("searchBtn", t("search.title")), rule(),
+    item("chat", "Assistant"), ...EMBED_TOOLS.map((m) => item(m, workspaceName(m))), rule(), action("openOptions", t("settings.title")));
+  // The composer is one field: the other controls wait behind its +, Auto / Chat / Agent under it, Stop in it.
+  const box = document.querySelector(".composer-box"), main = document.getElementById("composerMain"), more = document.getElementById("moreBtn");
+  const seg0 = document.getElementById("assistantSwitch");
+  if (box && seg0) box.after(seg0);
+  if (main && els.stop) main.appendChild(els.stop);
+  if (more && box) more.addEventListener("click", () => more.setAttribute("aria-expanded", String(box.classList.toggle("tray-open"))));
+  const shut = document.getElementById("panelClose");
+  if (shut) shut.addEventListener("click", () => window.close());
   btn.addEventListener("click", (e) => {
     e.stopPropagation();
     menu.querySelectorAll(".pm-item").forEach((b) => b.classList.toggle("on", b.dataset.mode === mode));
