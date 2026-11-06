@@ -1,0 +1,15 @@
+/* Hivey Browser's settings, in the world of its assistant. Nothing here applies outside html.embed-hivey. */
+@font-face { font-family: "Space Grotesk"; src: url("../../vendor/fonts/space-grotesk.woff2") format("woff2"); font-weight: 300 700; font-display: swap; }
+@font-face { font-family: "JetBrains Mono"; src: url("../../vendor/fonts/jetbrains-mono.woff2") format("woff2"); font-weight: 100 800; font-display: swap; }
+html.embed-hivey {
+  --bg: #101013 !important; --panel: #151518 !important; --panel-2: #1c1c20 !important; --border: #3a3a41 !important; --border-soft: #29292e !important;
+  --text: #f4f4f6 !important; --muted: #a3a3ad !important; --grad: linear-gradient(90deg, #3b82f6, #8b5cf6, #d946ef) !important; --aura-op: 0 !important;
+}
+html.embed-hivey body { font-family: "Space Grotesk", "Segoe UI", system-ui, sans-serif; background:
+    radial-gradient(620px circle at 0% 0%, color-mix(in srgb, #a855f7 16%, transparent), transparent 60%),
+    radial-gradient(520px circle at 100% 0%, color-mix(in srgb, #7c6cf6 9%, transparent), transparent 60%), #0f111a; color: #f4f4f6; }
+html.embed-hivey button, html.embed-hivey input, html.embed-hivey select, html.embed-hivey textarea { font-family: inherit; }
+html.embed-hivey input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), html.embed-hivey select, html.embed-hivey textarea { background: #0d0e14; border: 1px solid #3a3a41; border-radius: 9px; color: #f4f4f6; }
+html.embed-hivey input:focus, html.embed-hivey select:focus, html.embed-hivey textarea:focus { outline: 0; border-color: #8b5cf6; }
+html.embed-hivey h1, html.embed-hivey h2, html.embed-hivey h3 { font-weight: 500; letter-spacing: -.01em; background: none; -webkit-text-fill-color: currentColor; color: #f4f4f6; }
+html.embed-hivey code, html.embed-hivey kbd, html.embed-hivey .mono { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }

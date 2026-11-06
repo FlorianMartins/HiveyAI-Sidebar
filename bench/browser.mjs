@@ -1,3 +1,4 @@
+import { calculate } from "../src/lib/calc.js";
 // A simulated browser for the bench: the agent's real tools, answered from fixture sites.
 //
 // The sidebar's agent acts on real pages through a content script, which a bench cannot drive
@@ -7,7 +8,7 @@
 // tabs, a search engine over the fixture sites, and the same payment guard as content.js.
 //
 // The result shapes are those of content.js and tools.js — `{title,url,description,text}` for
-// read_page (text cut at 20 000 characters, as there), `{count,elements:[{ref,tag,type,text,href}]}`
+// read_page (long text in parts of 20 000 characters, as there), `{count,elements:[{ref,tag,type,text,href}]}`
 // for find_elements (60 at most), `{ok:true}` or `{error}` for actions — so the model reads exactly
 // what it would read in the extension. What the agent did is kept in `log`, and the world's state
 // in `state`, for the task's check to decide on facts rather than on what the model claims.
@@ -32,6 +33,16 @@ function normalize(url) {
  * `{ url, query, state, browser }` and a page is `{ title, text, description?, elements?: [...] }`.
  * An element is `{ tag, text, href?, type?, name?, payment?, onClick?(ctx), onSubmit?(ctx) }`.
  */
+// A page in parts, the way src/content/content.js gives it.
+function pagePart(full, from) {
+  const start = Math.max(0, Number(from) || 0);
+  const end = start + PAGE_TEXT_MAX;
+  return {
+    text: full.slice(start, end),
+    ...(end < full.length ? { more: `The page goes on: ${full.length - end} more characters. Call again with from=${end} to read them, and do not conclude that something is absent before you have.` } : {}),
+  };
+}
+
 export function createBrowser({ sites = {}, tabs = [], search = [], initial = {} } = {}) {
   const state = { fields: {}, ...structuredClone(initial) };
   const log = [];
@@ -145,17 +156,19 @@ export function createBrowser({ sites = {}, tabs = [], search = [], initial = {}
       case "read_page": {
         if (!active) return { error: "No active tab." };
         const p = render(active);
-        return { title: p.title, url: active.url, description: p.description, text: p.text.replace(/\n{3,}/g, "\n\n").slice(0, PAGE_TEXT_MAX) };
+        return { title: p.title, url: active.url, description: p.description, ...pagePart(p.text.replace(/\n{3,}/g, "\n\n"), input && input.from) };
       }
       case "read_selection":
         return { selection: "" };
+      case "calculate":
+        try { return { result: calculate(input && input.expression) }; } catch (e) { return { error: e.message }; }
       case "list_tabs":
         return { tabs: openTabs.map((t) => ({ id: t.id, title: render(t).title, url: t.url, active: t === active })) };
       case "read_tab": {
         const t = openTabs.find((x) => x.id === Number(input.tabId));
         if (!t) return { error: `No tab with id ${input.tabId}.` };
         const p = render(t);
-        return { title: p.title, url: t.url, text: p.text.slice(0, PAGE_TEXT_MAX) };
+        return { title: p.title, url: t.url, ...pagePart(p.text, input && input.from) };
       }
       case "find_elements":
         return elementsOf(input.query);

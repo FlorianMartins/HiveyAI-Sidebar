@@ -482,7 +482,7 @@ function anthropicProvider({ apiKey, model, baseUrl, thinkLevel, webSearch }) {
 // Generic OpenAI-compatible (OpenAI, OpenRouter, Gemini, Mistral, Groq,
 // DeepSeek, Ollama, LM Studio, self-hosted…)
 // ---------------------------------------------------------------------------
-function openaiProvider({ apiKey, model, baseUrl, webSearch, providerId, thinkLevel, requireTools }) {
+function openaiProvider({ apiKey, model, baseUrl, webSearch, providerId, thinkLevel, requireTools, localReasons = false }) {
   const url = baseUrl.replace(/\/$/, "") + "/chat/completions";
   const selfHosted = isSelfHostedProvider(providerId);
   const ollama = /:11434(\/|$)/.test(baseUrl) || /ollama/i.test(baseUrl) || providerId === "ollama";
@@ -532,13 +532,15 @@ function openaiProvider({ apiKey, model, baseUrl, webSearch, providerId, thinkLe
       // Hivey Browser's local model answers without thinking, whatever the turn: it runs on the user's
       // own machine, on a window of 8 192 tokens by default, and its template takes the switch itself.
       const hiveyLocal = providerId === HIVEY_LOCAL;
-      const level = hiveyLocal ? undefined : levelOf(thinkLevel) ?? (selfHosted ? "medium" : undefined);
-      if (hiveyLocal) body.chat_template_kwargs = { enable_thinking: false };
+      // The level the bench measured: 30/30 on Qwen3.6 27B with it, 28/30 without.
+      const level = hiveyLocal ? (localReasons ? "medium" : undefined) : levelOf(thinkLevel) ?? (selfHosted ? "medium" : undefined);
+      // On a CPU, reasoning costs minutes. On a graphics card it costs seconds, and it is what catches errors.
+      if (hiveyLocal && !localReasons) body.chat_template_kwargs = { enable_thinking: false };
       else Object.assign(body, wireReasoning(providerId, model, level, { tools: Boolean(tools && tools.length), ...(chore ? { chore: true } : {}) }).fields);
       // The level's thinking budget on the user's own server: llama.cpp closes the thought itself
       // when it is spent, so "Bref" really is brief (measured on Qwen3.8 in hivey-vscode: as precise,
       // 29 % faster). Not for a side task, whose thinking is off already; not for Ollama.
-      if (selfHosted && !hiveyLocal && !ollama && !chore) Object.assign(body, selfHostedThinkingBudget(level));
+      if (selfHosted && (!hiveyLocal || localReasons) && !ollama && !chore) Object.assign(body, selfHostedThinkingBudget(level));
       if (providerId === "openrouter") body.usage = { include: true };
       // The accounting. A server that does not know the field ignores it, or names it and it goes.
       body.stream_options = { include_usage: true };
@@ -687,7 +689,7 @@ let localEngineGate = null;
 export function setLocalEngineGate(gate) { localEngineGate = gate; }
 
 function hiveyLocalProvider({ settings, model, requireTools }) {
-  const client = (ep) => openaiProvider({ apiKey: ep.key, model, baseUrl: ep.baseUrl, providerId: HIVEY_LOCAL, requireTools });
+  const client = (ep) => openaiProvider({ apiKey: ep.key, model, baseUrl: ep.baseUrl, providerId: HIVEY_LOCAL, requireTools, localReasons: !!(settings.hiveyAi && settings.hiveyAi.gpu) });
   return {
     id: "openai",
     async runTurn(args) {

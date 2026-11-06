@@ -10,6 +10,7 @@
 // (see content.js) refuses checkout/payment actions when enabled, so the agent
 // can fill a cart but can never complete a purchase.
 
+import { calculate } from "./calc.js";
 import { isWebChatUrl } from "./memory-policy.js";
 import { t } from "./i18n.js";
 
@@ -17,9 +18,16 @@ export const TOOLS = [
   {
     name: "read_page",
     description:
-      "Read the visible text of the ACTIVE tab (title, URL, text). Use this to answer questions about the page the user is looking at.",
+      "Read the visible text of the ACTIVE tab (title, URL, text). Use this to answer questions about the page the user is looking at. A long page comes in parts: when the result has `more`, call again with `from` to read on.",
     write: false,
-    input_schema: { type: "object", properties: {}, required: [] },
+    input_schema: { type: "object", properties: { from: { type: "integer", description: "Where to read from in the page's text; leave it out to start at the beginning." } }, required: [] },
+  },
+  {
+    name: "calculate",
+    description:
+      "Work out arithmetic exactly: + - * / % and parentheses. Use it for every sum, total, average or price comparison instead of doing it in your head.",
+    write: false,
+    input_schema: { type: "object", properties: { expression: { type: "string", description: "For example 41+17+8" } }, required: ["expression"] },
   },
   {
     name: "read_selection",
@@ -42,7 +50,7 @@ export const TOOLS = [
     write: false,
     input_schema: {
       type: "object",
-      properties: { tabId: { type: "integer" } },
+      properties: { tabId: { type: "integer" }, from: { type: "integer", description: "Where to read from, when the result said there is more." } },
       required: ["tabId"],
     },
   },
@@ -376,7 +384,7 @@ async function playMedia(query) {
 // what it read there. The refusal is CODE, not a line in a prompt, for the same reason the
 // anti-purchase guard is code: a prompt is not a control.
 const TAB_ACTING = new Set([
-  "read_page", "read_selection", "read_tab", "find_elements", "click_element",
+  "read_page", "calculate", "read_selection", "read_tab", "find_elements", "click_element",
   "fill_input", "scroll_page", "control_media", "screenshot", "extract_data",
 ]);
 function webChatRefused(url) {
@@ -464,11 +472,13 @@ export async function executeTool(name, input, opts = {}) {
         return await opts.webSearch(String((input && input.query) || ""));
       }
       case "read_page":
-        return await sendToActiveTab({ type: "read_page" });
+        return await sendToActiveTab({ type: "read_page", from: input && input.from });
+      case "calculate":
+        try { return { result: calculate(input && input.expression) }; } catch (e) { return { error: e.message }; }
       case "read_selection":
         return await sendToActiveTab({ type: "read_selection" });
       case "read_tab":
-        return await sendToTab(input.tabId, { type: "read_page" });
+        return await sendToTab(input.tabId, { type: "read_page", from: input.from });
       case "find_elements":
         return await sendToActiveTab({ type: "find_elements", query: input.query || "" });
       case "click_element": {

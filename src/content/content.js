@@ -151,14 +151,19 @@ function setHTML(el, html) {
     return (m && m.getAttribute("content")) || "";
   }
 
-  function readPage() {
+  // One part of the page: the model reads on with `from`, rather than a long page being cut for good.
+  const PAGE_PART = 20000;
+  function readPage(from) {
     const main = document.querySelector("main, article, [role=main]") || document.body;
-    const text = (main.innerText || "").replace(/\n{3,}/g, "\n\n").slice(0, 20000);
+    const full = (main.innerText || "").replace(/\n{3,}/g, "\n\n");
+    const start = Math.max(0, Number(from) || 0);
+    const end = start + PAGE_PART;
     return {
       title: document.title,
       url: location.href,
       description: metaDescription(),
-      text,
+      text: full.slice(start, end),
+      ...(end < full.length ? { more: `The page goes on: ${full.length - end} more characters. Call again with from=${end} to read them, and do not conclude that something is absent before you have.` } : {}),
     };
   }
 
@@ -1027,7 +1032,7 @@ function setHTML(el, html) {
         setAgentGlow(!!msg.on);
         return Promise.resolve({ ok: true });
       case "read_page":
-        return Promise.resolve(readPage());
+        return Promise.resolve(readPage(msg.from));
       case "read_selection":
         return Promise.resolve(readSelection());
       case "tr_collect":
