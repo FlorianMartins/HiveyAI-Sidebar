@@ -482,6 +482,23 @@ function anthropicProvider({ apiKey, model, baseUrl, thinkLevel, webSearch }) {
 // Generic OpenAI-compatible (OpenAI, OpenRouter, Gemini, Mistral, Groq,
 // DeepSeek, Ollama, LM Studio, self-hosted…)
 // ---------------------------------------------------------------------------
+/**
+ * Consecutive user messages as one, for a template that takes only one at a time. Untrusted material stays
+ * safe: what isolates it is the nonce fence in its text, not the message it travels in.
+ */
+export function mergeUserRuns(messages) {
+  const out = [];
+  for (const m of messages) {
+    const last = out[out.length - 1];
+    if (m && last && m.role === "user" && last.role === "user" && typeof m.content === "string" && typeof last.content === "string") {
+      out[out.length - 1] = { ...last, content: `${last.content}\n\n${m.content}` };
+    } else {
+      out.push(m);
+    }
+  }
+  return out;
+}
+
 function openaiProvider({ apiKey, model, baseUrl, webSearch, providerId, thinkLevel, requireTools, localReasons = false }) {
   const url = baseUrl.replace(/\/$/, "") + "/chat/completions";
   const selfHosted = isSelfHostedProvider(providerId);
@@ -518,7 +535,9 @@ function openaiProvider({ apiKey, model, baseUrl, webSearch, providerId, thinkLe
     id: "openai",
 
     async runTurn({ system, history, tools, onText, onThink, signal, chore }) {
-      const messages = (system ? [{ role: "system", content: system }, ...history] : [...history]).map(wire);
+      const wired = (system ? [{ role: "system", content: system }, ...history] : [...history]).map(wire);
+      // Mistral's models have a template that refuses two user messages in a row (hosted platforms merge them themselves).
+      const messages = (selfHosted || providerId === HIVEY_LOCAL) && /ministral|mistral/i.test(String(model)) ? mergeUserRuns(wired) : wired;
       const body = { model, messages, stream: true };
       // Web search: OpenRouter exposes a universal "web" plugin that works with
       // ANY model (including the free ones), so a fast free model can search the

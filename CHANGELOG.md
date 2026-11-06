@@ -10,6 +10,8 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Les modèles Mistral locaux fonctionnent** : leur modèle de conversation refusait deux messages d'utilisateur à la suite
+  (page, puis question), ce qui faisait échouer chaque demande.
 - **L'agent lit les longues pages jusqu'au bout** : la limite fixe de 20 000 caractères disparaît, la page arrive par
   morceaux. Un outil de calcul remplace les additions de tête, et l'agent regarde les onglets ouverts avant d'inventer
   une adresse. Banc sur Qwen3.5 4B : 18 avant, 21 après ces corrections, puis 23 contre 19 avec peu d'outils.

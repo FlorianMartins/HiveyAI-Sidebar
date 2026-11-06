@@ -42,6 +42,7 @@ const LABEL = arg("as", "run");
 const ONLY = (arg("only", "") || "").split(",").filter(Boolean);
 const JOBS = Math.max(1, Number(arg("jobs", "1")));
 const TIMEOUT_S = Number(arg("timeout", "900"));
+const LEAN = process.argv.includes("--lean"); // few tools, as on a small local model
 const LEVEL = arg("level", ""); // a reasoning level to pick; empty = the extension's default
 const OUT = arg("out", join("bench-results", `${LABEL}.json`));
 
@@ -159,9 +160,9 @@ async function legacyAgent(task, browser, signal) {
     pageSent = true;
     const before = untrusted.length ? buildTurn({ userText: "", untrusted }).messages.slice(0, -1) : [];
     history.push(...before, { role: "user", content: text });
-    const system = buildSystemPrompt({ agentMode: true, responseLang: "Auto", mode: "chat", blockPayments: true, artifacts: true, thinkLevel });
+    const system = buildSystemPrompt({ agentMode: true, lean: LEAN, responseLang: "Auto", mode: "chat", blockPayments: true, artifacts: true, thinkLevel });
     const r = await runConversation({
-      provider: provider(), system, history, tools: activeTools({ agentMode: true }), signal,
+      provider: provider(), system, history, tools: activeTools({ agentMode: true, lean: LEAN }), signal,
       confirmActions: false, confirmFn: null, guard: { blockPayments: true },
       execute: (name, input) => browser.execute(name, input),
     });
