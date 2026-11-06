@@ -617,3 +617,12 @@ test("arithmetic is exact, and anything else is refused", async () => {
   assert.throws(() => calculate("1/0"));
   assert.throws(() => calculate(""));
 });
+
+test("two user messages in a row become one, nothing else moves", async () => {
+  const { mergeUserRuns } = await import("../src/lib/providers.js");
+  const a = { role: "system", content: "s" }, b = { role: "assistant", content: "x", tool_calls: [] }, c = { role: "tool", content: "r" };
+  assert.deepEqual(mergeUserRuns([a, { role: "user", content: "page" }, { role: "user", content: "q" }]), [a, { role: "user", content: "page\n\nq" }]);
+  assert.deepEqual(mergeUserRuns([a, { role: "user", content: "q" }, b, c, { role: "user", content: "r" }]), [a, { role: "user", content: "q" }, b, c, { role: "user", content: "r" }]);
+  const image = { role: "user", content: [{ type: "text", text: "t" }] };
+  assert.equal(mergeUserRuns([{ role: "user", content: "q" }, image]).length, 2);
+});
