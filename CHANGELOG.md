@@ -10,6 +10,17 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **L'agent lit les longues pages jusqu'au bout** : la limite fixe de 20 000 caractères disparaît, la page arrive par
+  morceaux. Un outil de calcul remplace les additions de tête, et l'agent regarde les onglets ouverts avant d'inventer
+  une adresse. Banc sur Qwen3.5 4B : 18 avant, 21 après ces corrections, puis 23 contre 19 avec peu d'outils.
+- **Hivey Browser** : réflexion activée sur carte graphique, 10 outils au lieu de 20 sur les petits modèles.
+- **Recherche web plus juste** : une correction (« mais pas du tout… ») cherche le même sujet au lieu de sa propre phrase ;
+  ce qui change dans le temps est cherché avec l'année, parmi les pages récentes d'abord, chaque page portant sa date ;
+  traducteurs et chatbots ne comptent plus comme sources. Le modèle connaît la date du jour et ne complète plus de
+  mémoire ce que les sources ne disent pas.
+- **Hivey Browser : plusieurs modèles locaux** : Auto selon le PC, ou un modèle au choix, à installer, utiliser ou supprimer.
+- **Hivey Browser : l'assistant décide seul** s'il répond, cherche ou agit, sans bouton Auto / Chat / Agent. Les
+  messages de l'utilisateur se distinguent des réponses, et les boutons sous un message restent toujours visibles.
 - **Hivey Browser : le panneau devient aussi dépouillé que sa maquette** : logo, un mot, l'historique, le menu et
   la croix ; un seul champ lumineux, le reste rangé derrière son +, Auto / Chat / Agent en pastilles dessous ; une
   lumière qui tourne autour du panneau pendant que l'IA travaille.

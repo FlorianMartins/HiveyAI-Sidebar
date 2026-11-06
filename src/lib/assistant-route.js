@@ -135,3 +135,23 @@ export function resolveRoute(choice, text) {
   if (choice === "chat" || choice === "agent") return choice;
   return routeTurn(text);
 }
+
+/** For what the rule above leaves to the chat: is it a question, or might it be an order? A question costs nothing more. */
+export function worthAsking(text) {
+  const t = normalize(text);
+  if (!t || t.length > 300 || /\?\s*$/.test(String(text).trim())) return false;
+  return !/^(?:qui|que|quoi|quel|quelle|quels|quelles|quand|ou|comment|pourquoi|combien|est ce|what|who|when|where|why|how|which|is|are|does|do|did|can|explique|resume|traduis|ecris|corrige|explain|summarize|summarise|translate|write)\b/.test(t);
+}
+
+export const ROUTE_SYSTEM =
+  "You route a message sent to a web browser's assistant. Reply with one word. " +
+  "ACT: the user wants the browser itself to do something on websites for them: open a site, click, fill in a form, log in, " +
+  "book, buy, order, send, post, subscribe, download, play something. " +
+  "ANSWER: the user wants information or text, even if it must be searched on the web, compared or looked up: facts, advice, lists, opinions, a summary, a statement or correction about what was said. " +
+  "When in doubt, ANSWER.";
+
+/** The model's word, or null if it said something else: then the rule's choice stands. */
+export function parseRoute(reply) {
+  const m = /^\W*(act|answer)\b/i.exec(String(reply || "").replace(/<think>[\s\S]*?<\/think>/g, ""));
+  return m ? (m[1].toLowerCase() === "act" ? "agent" : "chat") : null;
+}

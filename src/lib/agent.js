@@ -10,7 +10,7 @@ import { mountAgentGuards, toolResultChars, CONCLUDE_REPEATING } from "./agent-g
 // tab (chat / translate / improve / image), `agentMode` unlocks the browser
 // tools, and `blockPayments` documents the hard safety rule that is ALSO
 // enforced in code.
-export function buildSystemPrompt({ agentMode, targetLang, responseLang, mode, blockPayments, artifacts = true, thinkLevel = "off", skill = "", goal = "", interactive = false, region = "", replyLanguage = "" }) {
+export function buildSystemPrompt({ agentMode, targetLang, responseLang, mode, blockPayments, artifacts = true, thinkLevel = "off", skill = "", goal = "", interactive = false, region = "", replyLanguage = "", lean = false }) {
   // "Auto" (or empty) → reply in the SAME language as the user's message; a specific
   // value forces that language. (This is independent of the UI language.)
   const fixedLang = responseLang && responseLang !== "Auto" ? responseLang : "";
@@ -108,9 +108,15 @@ export function buildSystemPrompt({ agentMode, targetLang, responseLang, mode, b
   if (agentMode) {
     p +=
       "\n\nAGENT MODE ON. You can actively control this browser through tools — do not " +
-      "just describe what to do, DO it by calling the tools. Available tools: read_page, " +
-      "read_selection, list_tabs, read_tab, find_elements, open_tab, switch_tab, close_tab, " +
-      "navigate, click_element, fill_input, scroll_page, control_media, screenshot, click_at.\n" +
+      "just describe what to do, DO it by calling the tools. Available tools: " +
+      (lean
+        ? "read_page, calculate, list_tabs, read_tab, find_elements, navigate, click_element, fill_input, scroll_page, control_media.\n"
+        : "read_page, calculate, read_selection, list_tabs, read_tab, find_elements, open_tab, switch_tab, close_tab, " +
+          "navigate, click_element, fill_input, scroll_page, control_media, screenshot, click_at.\n") +
+      "LOOK AT WHAT IS OPEN FIRST: the answer is often in another tab. Before guessing an address or searching the web, call list_tabs " +
+      "and read the tabs that look related. An address you make up is usually wrong: go to a site only by a link or result you have seen.\n" +
+      "EXACT WORK: use calculate for any sum, total or comparison of figures, never your head. When read_page says there is `more`, read on " +
+      "before saying that something is not on the page.\n" +
       "VISION (hybrid) — DOM FIRST, eyes only when needed: rely on read_page / find_elements / " +
       "read_selection by default (fast, precise, cheap). Use vision ONLY when the DOM isn't enough — " +
       "content drawn on a <canvas>/in an image, a PDF/preview, a captcha or visual layout you must " +
@@ -290,8 +296,12 @@ const MEMORY_TOOLS = new Set(["recall", "get_memory"]);
  * call to learn something the settings already knew — and teaches the model that its tools are
  * unreliable.
  */
-export function activeTools({ agentMode, memoryEnabled = false, webSearch = false }) {
+// A small model chooses better among few tools: on the bench the 4B went from 19/30 to 23/30 with these,
+// in the same minutes on the same server. A large one keeps them all.
+const LEAN_TOOLS = new Set(["read_page", "calculate", "list_tabs", "read_tab", "find_elements", "web_search", "navigate", "click_element", "fill_input", "scroll_page", "control_media"]);
+export function activeTools({ agentMode, memoryEnabled = false, webSearch = false, lean = false }) {
   if (!agentMode) return [];
+  if (lean) return TOOLS.filter((t) => LEAN_TOOLS.has(t.name) && (webSearch || t.name !== "web_search"));
   return TOOLS.filter((t) => (memoryEnabled || !MEMORY_TOOLS.has(t.name)) && (webSearch || t.name !== "web_search"));
 }
 

@@ -297,3 +297,46 @@ test("citations split into text and chips, known numbers only", () => {
   assert.deepEqual(splitCitations("rien", SOURCES), [{ text: "rien" }]);
   assert.deepEqual(splitCitations("[lien](x) [1](y)", SOURCES), [{ text: "[lien](x) [1](y)" }], "a markdown link is not a citation");
 });
+
+test("a correction searches the same subject, not its own words", async () => {
+  const { fallbackQuery, isCorrection } = await import("../src/lib/web-search.js");
+  const asked = "quels sont les meilleurs healers sur la saison actuelle de overwatch en compétitif?";
+  const said = "mais alors pas du totu je ne sais pas ou tuas trouvé ces information actuellement les S tier c'est jetpack cat, sombra et doctrine";
+  assert.equal(isCorrection(said), true);
+  assert.equal(isCorrection("Quelle est la capitale de la France ?"), false);
+  const q = fallbackQuery(said, [asked]).toLowerCase();
+  for (const w of ["overwatch", "healers", "jetpack", "sombra"]) assert.ok(q.includes(w), `${w} in ${q}`);
+  for (const w of ["totu", "information", "alors"]) assert.ok(!q.split(" ").includes(w), `${w} not in ${q}`);
+  assert.equal(fallbackQuery("Quelle est la capitale de la France ?", [asked]), "Quelle est la capitale de la France");
+});
+
+test("what changes over time is searched recent, with the year; a tool is no source", async () => {
+  const { researchWeb, changesOverTime, pageDate } = await import("../src/lib/web-search.js");
+  assert.equal(changesOverTime("les meilleurs healers de la saison actuelle"), true);
+  assert.equal(changesOverTime("Quelle est la capitale de la France ?"), false);
+  assert.equal(pageDate('<meta property="article:modified_time" content="2026-03-14T10:00:00Z">', Date.parse("2026-11-06")), "2026-03-14");
+  assert.equal(pageDate('<time datetime="2031-01-01">', Date.parse("2026-11-06")), "");
+  const asked = [];
+  const pages = {
+    "https://new.example/a": { html: '<meta property="article:modified_time" content="2026-10-01"><title>New</title><p>Overwatch healers meta: Kiriko leads the healers of the season.</p>' },
+    "https://old.example/a": { html: '<meta property="article:modified_time" content="2019-01-01"><title>Old</title><p>Overwatch healers meta: Mercy leads the healers of the season.</p>' },
+    "https://mid.example/a": { html: '<meta property="article:modified_time" content="2026-01-01"><title>Mid</title><p>Overwatch healers meta: Ana leads the healers of the season.</p>' },
+  };
+  const links = ["https://www.reverso.net/x", "https://old.example/a", "https://mid.example/a", "https://new.example/a"];
+  const fetchHtml = async (url) => {
+    if (url.includes("duckduckgo.com")) { asked.push(url); return { status: 200, html: links.join(" ") }; }
+    assert.ok(!url.includes("reverso"), "a translator is not read");
+    return pages[url];
+  };
+  const parse = (html) => {
+    if (html.includes("reverso")) {
+      const anchors = html.split(" ").map((u) => ({ getAttribute: () => u, textContent: u, closest: () => null }));
+      return { querySelector: () => null, querySelectorAll: (sel) => (sel === "a.result__a" ? anchors : []) };
+    }
+    return parseHtml(html);
+  };
+  const out = await researchWeb("meilleurs healers overwatch meta actuelle", { fetchHtml, parseHtml: parse, now: Date.parse("2026-11-06") });
+  assert.ok(decodeURIComponent(asked[0]).includes("2026") && asked[0].includes("df=m"), asked[0]);
+  assert.deepEqual(out.sources.map((s) => s.url), ["https://new.example/a", "https://mid.example/a"]);
+  assert.equal(out.sources[0].date, "2026-10-01");
+});

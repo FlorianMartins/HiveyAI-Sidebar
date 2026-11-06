@@ -80,7 +80,7 @@ html.embed-hivey.ai-busy body { box-shadow: inset 0 0 44px -14px color-mix(in sr
 html.embed-hivey .messages { padding: 14px; gap: 16px; background: none; }
 html.embed-hivey .msg { margin: 0; animation: ct-rise .5s var(--ct-ease) backwards; }
 html.embed-hivey .msg.user { display: block; align-self: stretch; width: 100%; max-width: none; margin-left: 0; background: none; border: 0; padding: 0; text-align: left; }
-html.embed-hivey .msg.user > .umsg-text { display: block; padding: 0; background: none; border: 0; border-radius: 0; box-shadow: none; color: var(--ct-ink); font-size: 16px; line-height: 1.35; font-weight: 500; text-align: left; }
+html.embed-hivey .msg.user > .umsg-text { display: inline-block; max-width: 100%; padding: 9px 13px; border: 0; border-radius: 13px 13px 13px 4px; background: color-mix(in srgb, var(--fx-2) 22%, var(--ct-raise)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fx-2) 40%, transparent); color: #fff; font-size: 15px; line-height: 1.4; font-weight: 500; text-align: left; }
 html.embed-hivey .msg.assistant { display: flex; flex-direction: column; background: none; border: 0; padding: 0; max-width: none; font-size: 15px; line-height: 1.6; color: var(--ct-ink); box-shadow: none; }
 html.embed-hivey .msg.assistant > .web-sources { order: -1; margin: 0 0 14px; }
 html.embed-hivey .answer-head, html.embed-hivey .model-badge { display: none; }
@@ -140,9 +140,8 @@ html.embed-hivey .ws-host { grid-column: 2; font: 11px var(--ct-mono); color: va
 html.embed-hivey .msg .cite-chip { display: inline-grid; place-items: center; min-width: 22px; height: 20px; margin: 0 2px; padding: 0 5px; border: 0; border-radius: 5px; background: none; box-shadow: inset 0 0 0 1px var(--ct-line-2); color: var(--ct-ink); font: 500 11px var(--ct-mono); text-decoration: none; vertical-align: 1px; transition: background .15s, color .15s, box-shadow .15s; }
 html.embed-hivey .msg .cite-chip:hover, html.embed-hivey .msg .cite-chip.lit, html.embed-hivey .msg .cite-chip:focus-visible { background: var(--fx-2); box-shadow: none; color: #fff; }
 
-/* What is under an answer appears when it is wanted. */
-html.embed-hivey .mact-bar { opacity: 0; transition: opacity .15s; background: none; border: 0; padding: 0; margin-top: 4px; gap: 2px; }
-html.embed-hivey .msg:hover .mact-bar, html.embed-hivey .mact-bar:focus-within { opacity: 1; }
+/* What can be done with a message, always in view. */
+html.embed-hivey .mact-bar { opacity: 1; background: none; border: 0; padding: 0; margin-top: 6px; gap: 2px; }
 html.embed-hivey .mact-bar button { background: none; border: 0; color: var(--ct-muted); }
 html.embed-hivey .mact-bar button:hover { color: var(--ct-ink); background: var(--ct-raise); }
 
@@ -180,11 +179,8 @@ html.embed-hivey .composer-tools .tools-right { flex: 0 0 auto; gap: 2px; }
 html.embed-hivey .composer-tools .model-chip { flex: 0 1 auto; min-width: 48px; color: var(--ct-muted); background: none; border: 0; }
 html.embed-hivey .composer-tools .model-chip .combo-input { font: 11px var(--ct-mono); color: var(--ct-muted); }
 html.embed-hivey .composer-tools .mc-icon { filter: grayscale(1) brightness(1.4); }
-/* Auto, Chat, Agent: the new tab's chips. */
-html.embed-hivey body.mode-chat .assistant-switch { display: flex; justify-content: center; gap: 6px; margin: 10px 0 0; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
-html.embed-hivey .assistant-switch button { min-height: 28px; padding: 2px 13px; border: 0; border-radius: 14px; background: none; color: var(--ct-muted); font-size: 12.5px; box-shadow: inset 0 0 0 1px var(--ct-line); transition: color .15s; }
-html.embed-hivey .assistant-switch button:hover { color: var(--ct-ink); }
-html.embed-hivey .assistant-switch button.on { background: var(--fx-grad); box-shadow: none; color: #fff; }
+/* The assistant decides by itself. */
+html.embed-hivey body.mode-chat .assistant-switch { display: none; }
 html.embed-hivey .composer-foot { display: none; }
 html.embed-hivey .local-status { margin: 0 0 8px; padding: 8px 12px; border-radius: 9px; background: var(--ct-raise); box-shadow: inset 2px 0 0 var(--fx-2); font: 11px var(--ct-mono); color: var(--ct-ink); }
 html.embed-hivey.ai-game .local-status { box-shadow: inset 2px 0 0 var(--ct-warn); }
@@ -211,3 +207,17 @@ html.embed-hivey .think-pop, html.embed-hivey .combo-menu, html.embed-hivey .fil
 @media (prefers-reduced-motion: reduce) {
   html.embed-hivey *, html.embed-hivey *::before { animation: none !important; transition: none !important; }
 }
+
+/* History and search, in the same world. */
+html.embed-hivey #historyPanel:not(.hidden), html.embed-hivey #searchBar { background: var(--ct-raise); border: 0; border-bottom: 1px solid var(--ct-line); border-radius: 0; box-shadow: none; }
+html.embed-hivey #historySearch, html.embed-hivey #searchBar input { background: var(--ct-panel); border: 1px solid var(--ct-line-2); border-radius: 9px; color: var(--ct-ink); }
+
+/* Which model: the first-use card and the list in the menu. */
+html.embed-hivey .ec-pick { width: 100%; margin: 10px 0 4px; padding: 8px 10px; background: #0d0e14; color: var(--ct-ink); border: 1px solid var(--ct-line-2); border-radius: 9px; font-size: 13px; }
+html.embed-hivey .model-picker { display: grid; gap: 6px; width: 100%; max-width: none; align-self: stretch; }
+html.embed-hivey .mp-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 0; border-top: 1px solid var(--ct-line); font-size: 13px; color: var(--ct-muted); }
+html.embed-hivey .mp-row.on { color: var(--ct-ink); }
+html.embed-hivey .mp-row.on .mp-label::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 8px; border-radius: 50%; background: var(--fx-1); box-shadow: 0 0 8px var(--fx-1); }
+html.embed-hivey .mp-label { flex: 1 1 100%; }
+html.embed-hivey .mp-row button { padding: 3px 10px; border: 0; border-radius: 7px; background: none; color: var(--ct-ink); font-size: 12px; box-shadow: inset 0 0 0 1px var(--ct-line-2); cursor: pointer; }
+html.embed-hivey .mp-row button:hover { background: var(--ct-panel); }

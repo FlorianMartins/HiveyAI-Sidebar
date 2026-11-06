@@ -584,3 +584,36 @@ test("mediaQuery: plain requests for music, nothing else", async () => {
   assert.equal(mediaQuery("Quelle est la meilleure musique de 1990 ?"), null);
   assert.equal(mediaQuery("Ouvre YouTube"), null);
 });
+
+test("the model is asked only about what may be an order, and its word is read strictly", async () => {
+  const { worthAsking, parseRoute } = await import("../src/lib/assistant-route.js");
+  assert.equal(worthAsking("Réserve-moi une table chez Paul"), true);
+  assert.equal(worthAsking("Quelle est la capitale de la France ?"), false);
+  assert.equal(worthAsking("qui a gagné la coupe du monde"), false);
+  assert.equal(worthAsking("Traduis ce texte en anglais"), false);
+  assert.equal(parseRoute("ACT"), "agent");
+  assert.equal(parseRoute("answer."), "chat");
+  assert.equal(parseRoute("<think>hm</think>ACT"), "agent");
+  assert.equal(parseRoute("Sure, I can open it"), null);
+});
+
+test("a small local model chooses among few tools, and its prompt names only those", async () => {
+  const { activeTools, buildSystemPrompt } = await import("../src/lib/agent.js");
+  const lean = activeTools({ agentMode: true, lean: true }).map((x) => x.name);
+  assert.ok(lean.includes("read_page") && lean.includes("calculate") && lean.includes("navigate"));
+  assert.ok(!lean.includes("screenshot") && !lean.includes("close_tab"));
+  assert.ok(activeTools({ agentMode: true }).length > lean.length);
+  assert.ok(!buildSystemPrompt({ agentMode: true, lean: true }).split("Available tools:")[1].split("\n")[0].includes("screenshot"));
+  assert.ok(buildSystemPrompt({ agentMode: true }).split("Available tools:")[1].split("\n")[0].includes("screenshot"));
+});
+
+test("arithmetic is exact, and anything else is refused", async () => {
+  const { calculate } = await import("../src/lib/calc.js");
+  assert.equal(calculate("41+17+8+63+25+12+30+5+19+44+27+9"), 300);
+  assert.equal(calculate("(2+3)*4/2"), 10);
+  assert.equal(calculate("10,5*2"), 21);
+  assert.equal(calculate("0.1+0.2"), 0.3);
+  assert.throws(() => calculate("process.exit()"));
+  assert.throws(() => calculate("1/0"));
+  assert.throws(() => calculate(""));
+});

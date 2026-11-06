@@ -11,6 +11,8 @@ import { encryptSettings, decryptSettings } from "../lib/syncCrypto.js";
 import { setHTML } from "../lib/dom.js";
 import { memoryModelChoices } from "../lib/memory-models.js";
 import { QUICK_TOGGLES, QUICK_CATS, quickState, quickPatch } from "../lib/quick-toggles.js";
+// Hivey Browser: the same world as its panel.
+try { (globalThis.browser || globalThis.chrome).storage.local.get("hiveyAi").then((r) => { if (r && r.hiveyAi) document.documentElement.classList.add("embed-hivey"); }); } catch (_) {}
 
 const $ = (id) => document.getElementById(id);
 

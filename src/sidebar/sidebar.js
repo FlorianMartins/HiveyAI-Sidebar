@@ -46,7 +46,7 @@ import { setHTML } from "../lib/dom.js";
 import { initMcp } from "../lib/mcp-ui.js";
 import { startIconizer, stripEmoji } from "../lib/icons.js";
 import { applyEmbedClass, bindWorkspaceHash, EMBED_TOOLS, isBlankTabUrl } from "../lib/embed.js";
-import { resolveRoute, mediaQuery } from "../lib/assistant-route.js";
+import { resolveRoute, mediaQuery, worthAsking, ROUTE_SYSTEM, parseRoute } from "../lib/assistant-route.js";
 import { createEngineGate, progressPercent, modelSizeGb } from "../lib/hivey-engine.js";
 import { standaloneQuery, researchWeb, webContextBlock, WEB_GROUNDED_RULE, ANSWER_SHAPE_RULE, webMissRule, cleanAnswer, attributeAnswer, stripCitations, splitCitations, passageBudget } from "../lib/web-search.js";
 
@@ -4275,7 +4275,7 @@ async function runBubbleModel() {
     // Use the RESOLVED sel (a real model) — not raw settings, whose models.openrouter may be the
     // "hivey/free" pseudo-id, which OpenRouter rejects with "not a valid model ID".
     const provider = makeProvider({ ...settings, provider: sel.providerId, models: { ...settings.models, [sel.providerId]: sel.modelId } }, { thinking: false, webSearch: false });
-    const system = buildSystemPrompt({ agentMode: false, targetLang: lang, responseLang: settings.responseLang, mode: action === "translate" ? "translate" : action === "improve" ? "improve" : "chat", blockPayments: settings.blockPayments });
+    const system = buildSystemPrompt({ lean: leanLocalTools(), agentMode: false, targetLang: lang, responseLang: settings.responseLang, mode: action === "translate" ? "translate" : action === "improve" ? "improve" : "chat", blockPayments: settings.blockPayments });
     setAiBusy(true);
     await runConversation({
       provider, system, history: [{ role: "user", content: req.content }], tools: [],
@@ -4479,7 +4479,7 @@ async function openActionBubble(action, providedText) {
     try {
       // Use the RESOLVED sel (real model), not raw settings whose models.openrouter may be "hivey/free".
       const provider = makeProvider({ ...settings, provider: sel.providerId, models: { ...settings.models, [sel.providerId]: sel.modelId } }, { thinking: false, webSearch: false });
-      const system = buildSystemPrompt({ agentMode: false, targetLang: lang, responseLang: settings.responseLang, mode: action === "translate" ? "translate" : action === "improve" ? "improve" : "chat", blockPayments: settings.blockPayments });
+      const system = buildSystemPrompt({ lean: leanLocalTools(), agentMode: false, targetLang: lang, responseLang: settings.responseLang, mode: action === "translate" ? "translate" : action === "improve" ? "improve" : "chat", blockPayments: settings.blockPayments });
       setAiBusy(true);
       await runConversation({
         provider, system, history: [{ role: "user", content: req.content }], tools: [],
@@ -6302,7 +6302,7 @@ async function onWisebaseSend() {
       { ...settings, provider: sel.providerId, models: { ...settings.models, [sel.providerId]: sel.modelId } },
       { thinkLevel: getThink(els.thinking), webSearch: false, privacy: privacyOpts(sess, sess.convId, "wisebase") }
     );
-    const system = buildSystemPrompt({ agentMode: false, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: "chat", blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked, replyLanguage: replyLanguageOf(q, settings) });
+    const system = buildSystemPrompt({ lean: leanLocalTools(), agentMode: false, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: "chat", blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked, replyLanguage: replyLanguageOf(q, settings) });
     // Through lib/conversation.js like the Chat: a cut stream is continued, an oversized set of
     // passages is reported by the server's own refusal rather than guessed at.
     if (!Array.isArray(sess.history)) sess.history = [];
@@ -6498,7 +6498,7 @@ async function runDeepSearch(question) {
       { ...settings, provider: synthSel.providerId, models: { ...settings.models, [synthSel.providerId]: synthSel.modelId } },
       { thinkLevel: getThink(els.thinking), webSearch: false, privacy: privacyOpts(getSession("chat"), getSession("chat").convId, "chat") }
     );
-    const system = buildSystemPrompt({ agentMode: false, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: "chat", blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked });
+    const system = buildSystemPrompt({ lean: leanLocalTools(), agentMode: false, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: "chat", blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked });
     const turn = await provider.runTurn({ system: system + "\n\n" + sysReport, history: [{ role: "user", content: synthContent }], tools: [], onText: sink.onText, onThink: sink.onThink, signal });
     sink.finalize();
     let answer = (turn && turn.text) || sink.getRaw();
@@ -8432,6 +8432,28 @@ function endBusy() {
   renderLocalStatus();
 }
 // The light Hivey Browser draws around its address bar follows this. Written only in that browser.
+/** Few tools for the small local model, the one that runs without a graphics card. */
+function leanLocalTools() {
+  const ai = settings && settings.hiveyAi;
+  const sel = ai && !ai.gpu ? currentSelection() : null;
+  return !!(sel && sel.providerId === HIVEY_LOCAL);
+}
+/** Should this turn act on the browser? Any failure leaves it a chat turn, which still answers. */
+async function routeByModel(text) {
+  setAiBusy(true);
+  try {
+    const sel = currentSelection();
+    const reply = await Promise.race([
+      runUtilityCompletion(sel, ROUTE_SYSTEM, String(text).slice(0, 300), null),
+      new Promise((_, no) => setTimeout(() => no(new Error("timeout")), 20000)),
+    ]);
+    return parseRoute(reply) === "agent";
+  } catch (_) {
+    return false;
+  } finally {
+    setAiBusy(false);
+  }
+}
 function setAiBusy(on) {
   if (!settings || !settings.hiveyAi) return;
   // hiveyAiAgent: the browser lets this extension reach sites only while the agent works.
@@ -8862,7 +8884,7 @@ async function compareRun(list, btn) {
           { ...settings, provider: second.providerId, models: { ...settings.models, [second.providerId]: second.modelId } },
           { thinkLevel: getThink(), webSearch: cmpWeb, privacy: privacyOpts(getSession(mode), getSession(mode).convId, mode) }
         );
-        const system = buildSystemPrompt({ agentMode: false, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: lastRunMode, blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked, thinkLevel: getThink(els.thinking) });
+        const system = buildSystemPrompt({ lean: leanLocalTools(), agentMode: false, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: lastRunMode, blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked, thinkLevel: getThink(els.thinking) });
         cmpPending = addPendingIndicator();
         const sink = makeSink(badge, true, cmpPending);
         await runConversation({ provider, system, history: [{ role: "user", content: cmpContent }], tools: [], onText: sink.onText, onThink: sink.onThink, signal: abortController.signal });
@@ -9053,8 +9075,44 @@ const localEngineGate = createEngineGate({
   subscribe: (fn) => { hiveyAiWatchers.add(fn); return () => hiveyAiWatchers.delete(fn); },
   onState: renderEngineState,
 });
-function requestEngine(action) {
-  try { browser.storage.local.set({ hiveyAiRequest: { action, ts: Date.now() } }); } catch (_) {}
+function requestEngine(action, model) {
+  try { browser.storage.local.set({ hiveyAiRequest: { action, ts: Date.now(), ...(model ? { model } : {}) } }); } catch (_) {}
+}
+/** One line per model: « Auto » first, what suits this PC. */
+function modelChoiceLabel(ai, m) {
+  const size = t("local.gb", { n: Number(m.gb).toLocaleString(getLang()) });
+  return [m.name, size, m.slow ? t("local.slow") : ""].filter(Boolean).join(" · ");
+}
+/** The local models: which one to use, which to fetch, which to remove. In the conversation, like the first-use card. */
+function showModelPicker() {
+  const ai = settings.hiveyAi;
+  if (!ai || !Array.isArray(ai.models)) return;
+  els.messages.querySelectorAll(".model-picker").forEach((n) => n.remove());
+  els.empty.classList.add("hidden");
+  const box = document.createElement("div");
+  box.className = "msg tool model-picker";
+  const title = document.createElement("div"); title.className = "ec-name"; title.textContent = t("local.pick"); box.appendChild(title);
+  const row = (label, current, buttons) => {
+    const r = document.createElement("div"); r.className = "mp-row" + (current ? " on" : "");
+    const l = document.createElement("span"); l.className = "mp-label"; l.textContent = label; r.appendChild(l);
+    for (const [text, fn] of buttons) {
+      const b = document.createElement("button"); b.type = "button"; b.textContent = text;
+      b.addEventListener("click", () => { fn(); box.remove(); });
+      r.appendChild(b);
+    }
+    box.appendChild(r);
+  };
+  const auto = ai.models.find((m) => m.auto);
+  row(`${t("local.auto")}${auto ? ` · ${auto.name}` : ""}`, ai.choice === "auto", ai.choice === "auto" ? [] : [[t("local.use"), () => requestEngine(auto && auto.installed ? "select" : "download", "auto")]]);
+  for (const m of ai.models) {
+    const current = ai.choice === m.name;
+    const buttons = [];
+    if (!current) buttons.push([m.installed ? t("local.use") : t("local.download"), () => requestEngine(m.installed ? "select" : "download", m.name)]);
+    if (m.installed) buttons.push([t("local.remove"), () => requestEngine("remove", m.name)]);
+    row(modelChoiceLabel(ai, m), current, buttons);
+  }
+  els.messages.appendChild(box);
+  scrollMessages();
 }
 function setupHiveyBrowser() {
   setLocalEngineGate(localEngineGate);
@@ -9098,9 +9156,15 @@ function renderEngineState(ai) {
     const row = document.createElement("div"); row.className = "ec-row";
     const pct = document.createElement("span"); pct.className = "ec-pct";
     const btn = document.createElement("button"); btn.type = "button"; btn.className = "btn-grad ec-download"; btn.textContent = t("local.download");
-    btn.addEventListener("click", () => { btn.disabled = true; requestEngine("download"); });
+    // Auto, or a model of the user's: the choice is theirs, the click is what starts the download.
+    const pick = document.createElement("select"); pick.className = "ec-pick"; pick.setAttribute("aria-label", t("local.pick"));
+    const autoModel = Array.isArray(ai.models) ? ai.models.find((m) => m.auto) : null;
+    const autoOption = new Option(`Auto${autoModel ? ` · ${modelChoiceLabel(ai, autoModel)}` : ""}`, "auto");
+    pick.appendChild(autoOption);
+    for (const m of ai.models || []) pick.appendChild(new Option(modelChoiceLabel(ai, m), m.name));
+    btn.addEventListener("click", () => { btn.disabled = true; requestEngine("download", pick.value); });
     row.append(pct, btn);
-    engineCard.append(name, lead, bar, row);
+    engineCard.append(name, lead, pick, bar, row);
     homeFor(mode).appendChild(engineCard);
     els.empty.classList.add("hidden");
   }
@@ -9109,6 +9173,7 @@ function renderEngineState(ai) {
   engineCard.querySelector(".ec-name").textContent = [ai.modelName || t("local.modelLabel"), size].filter(Boolean).join(" · ");
   const downloading = ai.state === "downloading";
   engineCard.querySelector(".ec-lead").textContent = t("local.cardLead");
+  engineCard.querySelector(".ec-pick").classList.toggle("hidden", downloading || !(ai.models || []).length);
   engineCard.querySelector(".ec-bar").classList.toggle("hidden", !downloading);
   engineCard.querySelector(".ec-bar span").style.width = progressPercent(ai.progress) + "%";
   engineCard.querySelector(".ec-pct").textContent = downloading ? t("local.downloading", { pct: progressPercent(ai.progress) }) : "";
@@ -9156,7 +9221,11 @@ function setupAssistantChrome() {
     return b;
   };
   const rule = () => { const hr = document.createElement("div"); hr.className = "pm-rule"; return hr; };
-  menu.replaceChildren(action("newChat", t("newChat.title")), action("searchBtn", t("search.title")), rule(),
+  const picker = document.createElement("button");
+  picker.type = "button"; picker.setAttribute("role", "menuitem"); picker.className = "pm-item";
+  const pickerLabel = document.createElement("span"); pickerLabel.className = "pm-label"; pickerLabel.textContent = t("local.pick"); picker.appendChild(pickerLabel);
+  picker.addEventListener("click", () => { close(); showModelPicker(); });
+  menu.replaceChildren(action("newChat", t("newChat.title")), action("searchBtn", t("search.title")), picker, rule(),
     item("chat", "Assistant"), ...EMBED_TOOLS.map((m) => item(m, workspaceName(m))), rule(), action("openOptions", t("settings.title")));
   // The composer is one field: the other controls wait behind its +, Auto / Chat / Agent under it, Stop in it.
   const box = document.querySelector(".composer-box"), main = document.getElementById("composerMain"), more = document.getElementById("moreBtn");
@@ -9478,7 +9547,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
     { ...settings, provider: turnSel.providerId, models: { ...settings.models, [turnSel.providerId]: turnSel.modelId } },
     { thinkLevel: effThink, webSearch: webPlugin, requireTools: agentMode || mcpMode, privacy: privacyOpts(sess, boundConvId, sessMode) }
   );
-  let system = buildSystemPrompt({ agentMode, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: runMode, blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked, thinkLevel: effThink, skill: activeSkill ? activeSkill.system : "", goal: goalMode ? GOAL_SYSTEM : "", interactive: agentMode && !!settings.agentInteractive, region: userRegion(), replyLanguage: replyLanguageOf(displayText || modelContent, settings) });
+  let system = buildSystemPrompt({ lean: leanLocalTools(), agentMode, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: runMode, blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked, thinkLevel: effThink, skill: activeSkill ? activeSkill.system : "", goal: goalMode ? GOAL_SYSTEM : "", interactive: agentMode && !!settings.agentInteractive, region: userRegion(), replyLanguage: replyLanguageOf(displayText || modelContent, settings) });
   // « il me dit "Je ne peux pas consulter le web" alors que le mode web est activé »: the model was
   // never told the app searches for it. With Web on (and nothing about it otherwise sent), it is.
   // Every claim below has to be true for the provider in use. What the app itself read says so in its
@@ -9497,7 +9566,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   }
   // The Assistant's answers open on the answer (Hivey Browser's panel only: the bench's prompts do not change).
   if (IS_EMBED && !agentMode && !mcpMode && runMode === "chat") system += "\n\n" + ANSWER_SHAPE_RULE;
-  let tools = activeTools({ agentMode, webSearch: agentWebTool });
+  let tools = activeTools({ lean: leanLocalTools(), agentMode, webSearch: agentWebTool });
   if (chatWebTool) tools = [webSearchTool()];
   let mcpExecute = null;
   // « Refuser » ENDS the run: the model used to read the refusal as an error to work around and did
@@ -9786,7 +9855,11 @@ async function onChatSend() {
   closePalette();
   // Hivey Browser's Assistant is the Chat that can act: this turn goes to the agent when it asks for
   // an action on the browser, or when the switch in the composer says so. Same conversation either way.
-  const asAgent = IS_EMBED && mode === "chat" && !!text && (assistantForceAgent || resolveRoute(settings.assistantRoute, text) === "agent");
+  let asAgent = IS_EMBED && mode === "chat" && !!text && (assistantForceAgent || resolveRoute("auto", text) === "agent");
+  // The rule knows the plain orders. For the rest, a model that answers at once (on the graphics card) decides.
+  if (IS_EMBED && mode === "chat" && !asAgent && settings.hiveyAi && settings.hiveyAi.gpu && !meta.length && worthAsking(text)) {
+    asAgent = await routeByModel(text);
+  }
   assistantForceAgent = false;
   if (asAgent && settings.hiveyAi && !meta.length) {
     const query = mediaQuery(text);
