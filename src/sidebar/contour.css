@@ -26,8 +26,6 @@ html.embed-hivey body, html.embed-hivey button, html.embed-hivey input, html.emb
 /* The panel is a card beside the page, on the browser's own background. */
 html.embed-hivey { background: #101013; }
 html.embed-hivey body { height: calc(100vh - 10px); margin: 0 10px 10px 0; overflow: hidden; background: var(--ct-panel); color: var(--ct-ink); border: 1px solid var(--ct-line); border-radius: 13px; transition: border-color .4s; }
-html.embed-hivey.ai-busy body { border-color: var(--fx-2); }
-html.embed-hivey.ai-game body { border-color: var(--ct-line); }
 html.embed-hivey .topbar, html.embed-hivey .composer { background: var(--ct-panel); }
 
 /* The header: the living mark, one word. */
@@ -56,24 +54,11 @@ html.embed-hivey .topbar #panelClose svg { width: 13px !important; height: 13px 
 html.embed-hivey :focus-visible { outline: 2px solid var(--fx-2); outline-offset: 1px; }
 html.embed-hivey #input:focus-visible { outline: 0; }
 
-/* Ambient light in a corner of the card, like the new tab; a light travelling around it while the AI works. */
+/* Ambient light in a corner of the card, like the new tab. While the AI works, only the composer moves. */
 html.embed-hivey body { position: relative; isolation: isolate; background:
     radial-gradient(420px circle at 0% 0%, color-mix(in srgb, #a855f7 13%, transparent), transparent 62%),
     radial-gradient(320px circle at 100% 100%, color-mix(in srgb, var(--fx-3) 9%, transparent), transparent 62%), var(--ct-panel); animation: ct-enter .5s var(--ct-ease); }
 html.embed-hivey .topbar { background: none; }
-/* Measured on a machine without GPU: animating the gradient itself took 210 % of a core from the model, a turning
-   element 49 %, a pulse of opacity 15 %. With a GPU the compositor turns it; without one it only breathes. */
-#panelLight { display: none; }
-html.embed-hivey.ai-busy #panelLight { display: block; position: absolute; inset: 0; z-index: 30; border-radius: 12px; pointer-events: none; box-shadow: inset 0 0 0 1.5px var(--fx-2), inset 0 0 40px -12px var(--fx-2); animation: ct-glow 1.8s ease-in-out infinite alternate; will-change: opacity; }
-html.embed-hivey.ai-busy #panelLight i { display: none; }
-html.embed-hivey.ai-busy.ai-accel #panelLight { padding: 1.5px; overflow: hidden; box-shadow: none; animation: none; will-change: auto;
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite: exclude; }
-html.embed-hivey.ai-busy.ai-accel #panelLight i { display: block; position: absolute; left: 50%; top: 50%; width: 170%; aspect-ratio: 1; margin: -85% 0 0 -85%;
-  background: conic-gradient(transparent 0 58%, var(--fx-3) 72%, var(--fx-2) 86%, var(--fx-1) 97%, transparent); animation: ct-spin 3.4s linear infinite; will-change: transform; }
-html.embed-hivey.ai-game #panelLight { display: none !important; }
-html.embed-hivey.ai-busy body { box-shadow: inset 0 0 44px -14px color-mix(in srgb, var(--fx-2) 45%, transparent); }
-@keyframes ct-glow { from { opacity: .35; } to { opacity: 1; } }
-@keyframes ct-spin { to { transform: rotate(360deg); } }
 @keyframes ct-enter { from { opacity: 0; transform: translateX(24px); } }
 
 /* The conversation. */
@@ -167,8 +152,13 @@ html.embed-hivey #input::placeholder { color: var(--ct-muted); }
 html.embed-hivey .send-go { flex: none; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; color: #fff; background: linear-gradient(135deg, var(--fx-3), var(--fx-2), var(--fx-1)); cursor: pointer; transition: transform .2s var(--ct-ease); }
 html.embed-hivey .send-go:hover { transform: scale(1.06); }
 html.embed-hivey .composer-box.is-busy .send-go { display: none; }
-html.embed-hivey #stop { flex: none; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--ct-ink); box-shadow: inset 0 0 0 1px var(--ct-line-2); }
+html.embed-hivey #stop { flex: none; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--ct-danger); box-shadow: inset 0 0 0 1.5px var(--ct-danger); }
+html.embed-hivey #stop:hover { background: color-mix(in srgb, var(--ct-danger) 14%, transparent); }
 html.embed-hivey #stop:not(.hidden) { display: inline-flex; }
+/* The light that runs while the AI works: on the frame itself, with the frame's own curve, so that it holds in the corners. */
+html.embed-hivey .composer-box .cb-ring, html.embed-hivey .composer-box .cb-run { inset: 0; border-radius: 22px; }
+html.embed-hivey .composer-box .cb-cover { inset: 1.5px; border-radius: 20.5px; }
+html.embed-hivey .composer-box.is-busy .composer-main, html.embed-hivey .composer-box.is-busy .composer-tools { position: relative; z-index: 1; }
 /* Behind the +: the row of the classic extension, quiet. */
 html.embed-hivey .composer-tools { display: none; flex-wrap: wrap; align-items: center; gap: 2px; padding: 4px 8px 6px; border-radius: 0 0 20.5px 20.5px; background: #0d0e14; }
 html.embed-hivey .composer-box.tray-open .composer-tools { display: flex; animation: ct-fade .25s; }

@@ -626,3 +626,18 @@ test("two user messages in a row become one, nothing else moves", async () => {
   const image = { role: "user", content: [{ type: "text", text: "t" }] };
   assert.equal(mergeUserRuns([{ role: "user", content: "q" }, image]).length, 2);
 });
+
+test("an order typed in a hurry is still an order, and music goes straight to the player", async () => {
+  const { routeTurn, mediaQuery, fixOpeningVerb } = await import("../src/lib/assistant-route.js");
+  assert.equal(fixOpeningVerb("lanc ela musique"), "lance la musique");
+  assert.equal(fixOpeningVerb("ouvr youtube"), "ouvre youtube");
+  assert.equal(fixOpeningVerb("Quelle est la capitale"), "quelle est la capitale");
+  assert.equal(routeTurn("lanc ela musique under no flag en orchestre"), "agent");
+  assert.equal(mediaQuery("lanc ela musique under no flag en orchestre"), "under no flag en orchestre music");
+  assert.equal(mediaQuery("lance under no flag"), "under no flag");
+  assert.equal(mediaQuery("joue moi du daft punk"), "daft punk");
+  assert.equal(mediaQuery("Lance une recherche sur Overwatch"), null);
+  assert.equal(mediaQuery("lance le téléchargement"), null);
+  assert.equal(mediaQuery("mets la table"), null);
+  assert.equal(routeTurn("Quelle est la musique la plus écoutée ?"), "chat");
+});
