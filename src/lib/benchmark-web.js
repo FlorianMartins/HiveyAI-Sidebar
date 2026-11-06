@@ -4,7 +4,7 @@
 // ids this add-on can actually select. Each source carries its OWN freshness, because that is
 // the number people forget to ask for: a leaderboard can be maintained daily and still cover
 // nothing released this year.
-export const BENCHMARK_FETCHED_AT = "2026-11-05";
+export const BENCHMARK_FETCHED_AT = "2026-11-06";
 export const BENCHMARK_SOURCES = {
   "webdev": {
     "label": "LMArena WebDev",
@@ -12,7 +12,7 @@ export const BENCHMARK_SOURCES = {
     "home": "https://lmarena.ai/leaderboard/webdev",
     "metric": "elo",
     "about": "People give two anonymous models the same web-app task and vote for the better result. The score is an Elo rating: higher is better, and only the gaps between models mean something.",
-    "matched": 122,
+    "matched": 120,
     "total": 152,
     "newestModelCovered": "2026-11-04"
   },
@@ -700,13 +700,6 @@ export const BENCHMARK_WEB = {
       "as": "MiniMax-M2.5"
     }
   },
-  "minimax/minimax-m2.1": {
-    "webdev": {
-      "elo": 1384,
-      "votes": 7573,
-      "as": "MiniMax-M2.1 Preview"
-    }
-  },
   "upstage/solar-pro4": {
     "webdev": {
       "elo": 1370,
@@ -831,13 +824,6 @@ export const BENCHMARK_WEB = {
       "elo": 1322,
       "votes": 13045,
       "as": "Kimi K2 Thinking Turbo"
-    }
-  },
-  "minimax/minimax-m2": {
-    "webdev": {
-      "elo": 1297,
-      "votes": 6683,
-      "as": "MiniMax-M2"
     }
   },
   "mistralai/mistral-medium-3-5": {
@@ -1144,6 +1130,10 @@ export const BENCHMARK_UNMATCHED = [
   },
   {
     "source": "webdev",
+    "model": "MiniMax-M2.1 Preview"
+  },
+  {
+    "source": "webdev",
     "model": "Grok 4.20 Beta (Reasoning, 0309)"
   },
   {
@@ -1161,6 +1151,10 @@ export const BENCHMARK_UNMATCHED = [
   {
     "source": "webdev",
     "model": "Laguna XS.2"
+  },
+  {
+    "source": "webdev",
+    "model": "MiniMax-M2"
   },
   {
     "source": "webdev",
@@ -1405,19 +1399,14 @@ export const BENCHMARK_UNMATCHED = [
   {
     "source": "vectara",
     "model": "xai-org/grok-4-1-fast-reasoning"
-  },
-  {
-    "source": "vectara",
-    "model": "mistralai/ministral-3-14b-2512"
-  },
-  {
-    "source": "vectara",
-    "model": "xai-org/grok-4-fast-non-reasoning"
   }
 ];
 // The newest catalogue models NO published source covers. This is the gap the live test fills.
 export const BENCHMARK_UNCOVERED = [
-  "inclusionai/ling-3.0-tiny",
+  "google/gemini-omni-1.2-flash",
+  "openrouter/auto",
+  "openrouter/auto-code",
+  "google/gemini-omni-1.1-flash",
   "ricursiveai/ripple-65b-preview",
   "stealth/crouton-alpha",
   "z-ai/glm-5.3-flashx-legal",
@@ -1453,8 +1442,5 @@ export const BENCHMARK_UNCOVERED = [
   "perceptron/perceptron-mk1.5",
   "fireworks/ember-1",
   "z-ai/glm-5.3-prime",
-  "qwen/qwen3.8-max-prime",
-  "aion-labs/aion-3.5-mini",
-  "aion-labs/aion-3.5",
-  "upstage/solar-mini4"
+  "qwen/qwen3.8-max-prime"
 ];
