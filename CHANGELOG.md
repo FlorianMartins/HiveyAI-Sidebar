@@ -10,6 +10,12 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Hivey Browser : l'agent agit au lieu de réfléchir** : la réflexion est coupée sur les modèles locaux, car elle
+  n'apportait rien de mesurable à l'agent (15, 15, 16 sur 16 sans, 15, 15, 15 avec) pour environ 40 % de temps en plus.
+- **Les ordres tapés vite sont compris** : « lanc ela musique… » lance la musique directement, sans modèle. Sur carte
+  graphique, le modèle a enfin le temps de se charger avant de trancher les cas ambigus.
+- **Un seul effet sur la page** : le cadre du mode agent quand il prend le contrôle ; dans le panneau, seule la zone de
+  saisie s'anime, avec la bonne courbe dans les angles, et le bouton Stop est rouge.
 - **Les modèles Mistral locaux fonctionnent** : leur modèle de conversation refusait deux messages d'utilisateur à la suite
   (page, puis question), ce qui faisait échouer chaque demande.
 - **L'agent lit les longues pages jusqu'au bout** : la limite fixe de 20 000 caractères disparaît, la page arrive par

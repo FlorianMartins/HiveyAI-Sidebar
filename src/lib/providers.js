@@ -551,9 +551,9 @@ function openaiProvider({ apiKey, model, baseUrl, webSearch, providerId, thinkLe
       // Hivey Browser's local model answers without thinking, whatever the turn: it runs on the user's
       // own machine, on a window of 8 192 tokens by default, and its template takes the switch itself.
       const hiveyLocal = providerId === HIVEY_LOCAL;
-      // The level the bench measured: 30/30 on Qwen3.6 27B with it, 28/30 without.
-      const level = hiveyLocal ? (localReasons ? "medium" : undefined) : levelOf(thinkLevel) ?? (selfHosted ? "medium" : undefined);
-      // On a CPU, reasoning costs minutes. On a graphics card it costs seconds, and it is what catches errors.
+      // Measured on Qwen3.8 27B, the agent's 16 tasks, three runs: no reasoning 15, 15, 16 in about 29 s a task,
+      // medium 15, 15, 15 in about 40 s. It acts rather than deliberates, on a graphics card too.
+      const level = hiveyLocal ? (localReasons ? "none" : undefined) : levelOf(thinkLevel) ?? (selfHosted ? "medium" : undefined);
       if (hiveyLocal && !localReasons) body.chat_template_kwargs = { enable_thinking: false };
       else Object.assign(body, wireReasoning(providerId, model, level, { tools: Boolean(tools && tools.length), ...(chore ? { chore: true } : {}) }).fields);
       // The level's thinking budget on the user's own server: llama.cpp closes the thought itself

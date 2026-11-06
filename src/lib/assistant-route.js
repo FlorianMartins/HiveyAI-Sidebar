@@ -82,10 +82,34 @@ const ACTIONS = [
 
 const STARTS_QUESTION = /^(?:comment|pourquoi|quel|quelle|quels|quelles|qui|que|quoi|ou|quand|combien|est ce|c est|lequel|laquelle|how|why|what|which|who|whom|where|when|is|are|am|do|does|did|should|shall|may|might|was|were|has|have)\b/;
 
+// The verbs an order opens on, to read one typed in a hurry: « lanc ela musique », « ouvr youtube ».
+const ORDER_VERBS = new Set(["lance", "lancer", "mets", "mettre", "joue", "jouer", "passe", "passer", "ecoute", "ecouter", "ouvre", "ouvrir", "clique", "remplis", "remplir", "cherche", "chercher", "telecharge", "play", "open", "click", "fill", "search", "download"]);
+function oneEditAway(a, b) {
+  if (Math.abs(a.length - b.length) > 1) return false;
+  let i = 0;
+  while (i < a.length && a[i] === b[i]) i++;
+  const rest = (x, n) => x.slice(i + n);
+  return rest(a, 1) === rest(b, 1) || rest(a, 1) === rest(b, 0) || rest(a, 0) === rest(b, 1);
+}
+/** The opening verb put right: a letter on the wrong side of the space, or one letter off. Nothing else is touched. */
+export function fixOpeningVerb(text) {
+  const words = normalize(text).split(" ");
+  const [first, next] = words;
+  if (!first || ORDER_VERBS.has(first)) return words.join(" ");
+  if (next && next.length > 1 && ORDER_VERBS.has(first + next[0])) {
+    words[0] = first + next[0];
+    words[1] = next.slice(1);
+  } else if (first.length >= 4) {
+    const near = [...ORDER_VERBS].find((v) => v.length >= 4 && oneEditAway(first, v));
+    if (near) words[0] = near;
+  }
+  return words.join(" ");
+}
+
 /** One sentence: does it order something done in the browser? */
 function sentenceActs(raw) {
   const asked = /\?\s*$/.test(raw);
-  let s = normalize(raw).replace(/[.!?…:;,\s]+$/, "").replace(GREETING, "").replace(TRAILING_POLITE, "").trim();
+  let s = fixOpeningVerb(raw).replace(/[.!?…:;,\s]+$/, "").replace(GREETING, "").replace(TRAILING_POLITE, "").trim();
   if (!s) return false;
   const asking = ASKING.exec(s);
   if (asking) s = s.slice(asking[0].length);
@@ -118,15 +142,21 @@ export function routeTurn(text) {
  * tends to search for the words of the order themselves (« lance musique »).
  */
 export function mediaQuery(text) {
-  const t = normalize(text).replace(TRAILING_POLITE, "").replace(/[.!?]+$/, "").trim();
-  const m = t.match(/^(?:lance|lancer|mets|mettre|joue|jouer|passe|passer|ecoute|ecouter|play|put on)\s+(?:moi |nous |me |us )?(.+)$/);
+  const t = fixOpeningVerb(text).replace(TRAILING_POLITE, "").replace(/[.!?]+$/, "").trim();
+  const m = t.match(/^(lance|lancer|mets|mettre|joue|jouer|passe|passer|ecoute|ecouter|play|put on)\s+(?:moi |nous |me |us )?(.+)$/);
   if (!m || t.length > 120) return null;
-  const words = m[1].split(" ");
+  const words = m[2].split(" ");
   const MUSIC = new Set(["musique", "musiques", "chanson", "chansons", "morceau", "morceaux", "music", "song", "songs"]);
   const STYLE = new Set(["jazz", "rock", "rap", "pop", "metal", "classique", "lofi", "techno", "electro", "reggae", "blues", "funk", "disco"]);
-  if (!words.some((w) => MUSIC.has(w) || STYLE.has(w))) return null;
   const SKIP = new Set(["une", "un", "de", "la", "le", "les", "du", "des", "d", "l", "some", "a", "the", "any", "n", "importe", "quelle", "quel", "peu", "ma", "mon", "mes"]);
   const rest = words.filter((w) => !SKIP.has(w) && !MUSIC.has(w));
+  if (!words.some((w) => MUSIC.has(w) || STYLE.has(w))) {
+    // « Lance Daft Punk », « joue under no flag »: a name after a verb that plays. Not « lance une recherche ».
+    const plays = /^(?:lance|lancer|joue|jouer|ecoute|ecouter|play)$/.test(m[1]);
+    const NOT_MUSIC = /^(?:recherche|analyse|telechargement|programme|application|appli|logiciel|jeu|partie|site|minuteur|chrono|appel|scan|test|installation|mise|procedure|commande|conversation|discussion|search|download|game|program|app)\b/;
+    if (!plays || !rest.length || NOT_MUSIC.test(rest.join(" "))) return null;
+    return rest.join(" ");
+  }
   return rest.length ? `${rest.join(" ")} music` : "popular music";
 }
 

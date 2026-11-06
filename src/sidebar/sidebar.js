@@ -2613,7 +2613,6 @@ function syncGlowStorage() {
   } catch (_) {}
 }
 async function agentGlowActiveTab() {
-  if (settings && settings.hiveyAi) return; // Hivey Browser draws its own light around the page
   try {
     // Glow the tab the agent is PINNED to (its work tab), not whatever tab is live now — the
     // user may have switched away to keep browsing. Falls back to the active tab if not pinned.
@@ -7959,7 +7958,6 @@ function makeSink(badgeLabel, showThink = true, pendingEl = null, m = null) {
     setSources(list) { liveSources = list && list.length ? list : null; },
     onText(delta) {
       dropPending();
-      setPageActivity(null);
       full += delta;
       // Strip any <think>…</think> out of the visible answer (→ reasoning block instead).
       const sp = splitThink(full);
@@ -8445,7 +8443,7 @@ async function routeByModel(text) {
     const sel = currentSelection();
     const reply = await Promise.race([
       runUtilityCompletion(sel, ROUTE_SYSTEM, String(text).slice(0, 300), null),
-      new Promise((_, no) => setTimeout(() => no(new Error("timeout")), 20000)),
+      new Promise((_, no) => setTimeout(() => no(new Error("timeout")), 90000)),
     ]);
     return parseRoute(reply) === "agent";
   } catch (_) {
@@ -8458,23 +8456,7 @@ function setAiBusy(on) {
   if (!settings || !settings.hiveyAi) return;
   // hiveyAiAgent: the browser lets this extension reach sites only while the agent works.
   document.documentElement.classList.toggle("ai-busy", !!on);
-  if (!on) setPageActivity(null);
   try { browser.storage.local.set({ hiveyAiBusy: !!on, hiveyAiAgent: !!on && agentActive() }); } catch (_) {}
-}
-// What the AI does with the page, for the browser to show over it: a page cannot imitate that.
-const READS_PAGE = new Set(["read_page", "read_selection", "read_tab", "find_elements", "screenshot"]);
-const ACTS_ON_PAGE = new Set(["navigate", "click_element", "click_at", "fill_input", "scroll_page", "control_media", "switch_tab"]);
-let pageActivity = "";
-async function setPageActivity(call) {
-  if (!IS_EMBED || !settings || !settings.hiveyAi) return;
-  const name = call && call.name;
-  const kind = READS_PAGE.has(name) ? "reading" : ACTS_ON_PAGE.has(name) ? "acting" : "";
-  if (kind === pageActivity && kind !== "acting") return;
-  pageActivity = kind;
-  let tabId = -1;
-  if (kind) { tabId = getAgentTab(); if (tabId == null) tabId = await getActiveTabId().catch(() => null); }
-  const label = kind ? t(kind === "reading" ? "assistant.reading" : "assistant.acting") : "";
-  try { browser.storage.local.set({ hiveyAiActivity: { kind, label, tabId: tabId == null ? -1 : tabId } }); } catch (_) {}
 }
 // The browser gives the sites asynchronously: an action started at once could find them still closed.
 async function waitForSites() {
@@ -8493,6 +8475,7 @@ async function runMediaShortcut(text, query) {
   let answer;
   try {
     await ensureAgentTab();
+    await agentGlowActiveTab();
     const res = await executeTool("control_media", { action: "play", query }, {});
     // Said only when it is true: the tool also returns when the player did not start.
     const started = res && !res.error && (res.ok || res.playing || res.soundButton);
@@ -8500,6 +8483,7 @@ async function runMediaShortcut(text, query) {
   } catch (e) {
     answer = e instanceof Error ? e.message : String(e);
   } finally {
+    clearAgentGlow();
     setAiBusy(false);
     assistantAgentTurn = false;
   }
@@ -9617,7 +9601,6 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
       ...(mcpExecute ? { execute: mcpExecute } : agentMode || chatWebTool ? { execute: (name, input, opts) => (refused ? Promise.resolve(REFUSED) : executeTool(name, input, { ...opts, webSearch: agentWebTool || chatWebTool ? agentWebSearch : null })) } : {}),
       onText: sink.onText, onThink: sink.onThink,
       onToolStart: (call) => {
-      setPageActivity(call);
         sink.finalize();
         if (agentMode) agentGlowActiveTab();
         if (agentActs) agentActs.start(call);
