@@ -324,8 +324,9 @@ test("what changes over time is searched recent, with the year; a tool is no sou
   };
   const links = ["https://www.reverso.net/x", "https://old.example/a", "https://mid.example/a", "https://new.example/a"];
   const fetchHtml = async (url) => {
-    if (url.includes("duckduckgo.com")) { asked.push(url); return { status: 200, html: links.join(" ") }; }
-    assert.ok(!url.includes("reverso"), "a translator is not read");
+    const host = new URL(url).hostname;
+    if (host.endsWith(".duckduckgo.com")) { asked.push(url); return { status: 200, html: links.join(" ") }; }
+    assert.notEqual(host, "www.reverso.net", "a translator is not read");
     return pages[url];
   };
   const parse = (html) => {

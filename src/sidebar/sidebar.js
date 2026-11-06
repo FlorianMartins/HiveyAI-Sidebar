@@ -4275,7 +4275,7 @@ async function runBubbleModel() {
     // Use the RESOLVED sel (a real model) — not raw settings, whose models.openrouter may be the
     // "hivey/free" pseudo-id, which OpenRouter rejects with "not a valid model ID".
     const provider = makeProvider({ ...settings, provider: sel.providerId, models: { ...settings.models, [sel.providerId]: sel.modelId } }, { thinking: false, webSearch: false });
-    const system = buildSystemPrompt({ lean: leanLocalTools(), agentMode: false, targetLang: lang, responseLang: settings.responseLang, mode: action === "translate" ? "translate" : action === "improve" ? "improve" : "chat", blockPayments: settings.blockPayments });
+    const system = buildSystemPrompt({ agentMode: false, targetLang: lang, responseLang: settings.responseLang, mode: action === "translate" ? "translate" : action === "improve" ? "improve" : "chat", blockPayments: settings.blockPayments });
     setAiBusy(true);
     await runConversation({
       provider, system, history: [{ role: "user", content: req.content }], tools: [],
@@ -4479,7 +4479,7 @@ async function openActionBubble(action, providedText) {
     try {
       // Use the RESOLVED sel (real model), not raw settings whose models.openrouter may be "hivey/free".
       const provider = makeProvider({ ...settings, provider: sel.providerId, models: { ...settings.models, [sel.providerId]: sel.modelId } }, { thinking: false, webSearch: false });
-      const system = buildSystemPrompt({ lean: leanLocalTools(), agentMode: false, targetLang: lang, responseLang: settings.responseLang, mode: action === "translate" ? "translate" : action === "improve" ? "improve" : "chat", blockPayments: settings.blockPayments });
+      const system = buildSystemPrompt({ agentMode: false, targetLang: lang, responseLang: settings.responseLang, mode: action === "translate" ? "translate" : action === "improve" ? "improve" : "chat", blockPayments: settings.blockPayments });
       setAiBusy(true);
       await runConversation({
         provider, system, history: [{ role: "user", content: req.content }], tools: [],
@@ -6300,9 +6300,9 @@ async function onWisebaseSend() {
     const sink = makeSink("📚 " + t("wb.title"), true, pending, "wisebase");
     const provider = makeProvider(
       { ...settings, provider: sel.providerId, models: { ...settings.models, [sel.providerId]: sel.modelId } },
-      { thinkLevel: getThink(els.thinking), webSearch: false, privacy: privacyOpts(sess, sess.convId, "wisebase") }
+      { thinkLevel: getThink(), webSearch: false, privacy: privacyOpts(sess, sess.convId, "wisebase") }
     );
-    const system = buildSystemPrompt({ lean: leanLocalTools(), agentMode: false, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: "chat", blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked, replyLanguage: replyLanguageOf(q, settings) });
+    const system = buildSystemPrompt({ agentMode: false, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: "chat", blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked, replyLanguage: replyLanguageOf(q, settings) });
     // Through lib/conversation.js like the Chat: a cut stream is continued, an oversized set of
     // passages is reported by the server's own refusal rather than guessed at.
     if (!Array.isArray(sess.history)) sess.history = [];
@@ -6496,9 +6496,9 @@ async function runDeepSearch(question) {
     const sink = makeSink("🔎 " + t("deep.badge"), true, pending, "chat");
     const provider = makeProvider(
       { ...settings, provider: synthSel.providerId, models: { ...settings.models, [synthSel.providerId]: synthSel.modelId } },
-      { thinkLevel: getThink(els.thinking), webSearch: false, privacy: privacyOpts(getSession("chat"), getSession("chat").convId, "chat") }
+      { thinkLevel: getThink(), webSearch: false, privacy: privacyOpts(getSession("chat"), getSession("chat").convId, "chat") }
     );
-    const system = buildSystemPrompt({ lean: leanLocalTools(), agentMode: false, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: "chat", blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked });
+    const system = buildSystemPrompt({ agentMode: false, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: "chat", blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked });
     const turn = await provider.runTurn({ system: system + "\n\n" + sysReport, history: [{ role: "user", content: synthContent }], tools: [], onText: sink.onText, onThink: sink.onThink, signal });
     sink.finalize();
     let answer = (turn && turn.text) || sink.getRaw();
@@ -8884,7 +8884,7 @@ async function compareRun(list, btn) {
           { ...settings, provider: second.providerId, models: { ...settings.models, [second.providerId]: second.modelId } },
           { thinkLevel: getThink(), webSearch: cmpWeb, privacy: privacyOpts(getSession(mode), getSession(mode).convId, mode) }
         );
-        const system = buildSystemPrompt({ lean: leanLocalTools(), agentMode: false, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: lastRunMode, blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked, thinkLevel: getThink(els.thinking) });
+        const system = buildSystemPrompt({ agentMode: false, targetLang: settings.targetLang, responseLang: settings.responseLang, mode: lastRunMode, blockPayments: settings.blockPayments, artifacts: els.artifactMode.checked, thinkLevel: getThink() });
         cmpPending = addPendingIndicator();
         const sink = makeSink(badge, true, cmpPending);
         await runConversation({ provider, system, history: [{ role: "user", content: cmpContent }], tools: [], onText: sink.onText, onThink: sink.onThink, signal: abortController.signal });
@@ -9506,7 +9506,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   }
   // 🐝 Hivey auto-thinking: spend a reasoning budget ONLY on the reasoning tier (where it pays
   // off), never on cheap/utility turns. The user's manual Thinking choice still wins if higher.
-  const effThink = hid ? hiveyThink(tierKey, getThink(els.thinking)) : getThink(els.thinking);
+  const effThink = hid ? hiveyThink(tierKey, getThink()) : getThink();
   // The agent on OpenRouter searches when IT decides to, through a `web_search` tool. With the web
   // plugin on the agent's model, every step of the run paid a search — three steps to read a page
   // title cost 0.025 $ instead of 0.001 $ (measured 2026-10-26). Anthropic's own search is already a
