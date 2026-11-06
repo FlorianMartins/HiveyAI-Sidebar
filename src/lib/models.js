@@ -139,9 +139,9 @@ export const PROVIDERS = {
       ["openai/gpt-6.1-terra-pro", "GPT-6.1 Terra Pro (paid)"],
       ["openai/gpt-6.1-terra", "GPT-6.1 Terra (paid)"],
       ["openai/gpt-6.1-sol-pro", "GPT-6.1 Sol Pro (paid)"],
+      ["google/gemini-omni-1.2-flash", "Gemini Omni 1.2 Flash (paid)"],
+      ["google/gemini-omni-1.1-flash", "Gemini Omni 1.1 Flash (paid)"],
       ["google/gemini-4-argon", "Gemini 4 Argon (paid)"],
-      ["google/gemini-3.8-flash", "Gemini 3.8 Flash (paid)"],
-      ["google/gemini-3.7-flash", "Gemini 3.7 Flash (paid)"],
       ["x-ai/grok-4.7", "Grok 4.7 (paid)"],
       ["x-ai/grok-4.6", "Grok 4.6 (paid)"],
       ["x-ai/grok-4.5", "Grok 4.5 (paid)"],
@@ -175,11 +175,11 @@ export const PROVIDERS = {
     // auto-maintained by scripts/update-models.mjs (daily)
     // <models:google:start>
     models: [
+      ["gemini-omni-1.2-flash", "Gemini Omni 1.2 Flash"],
+      ["gemini-omni-1.1-flash", "Gemini Omni 1.1 Flash"],
       ["gemini-4-argon", "Gemini 4 Argon"],
       ["gemini-3.8-flash", "Gemini 3.8 Flash"],
       ["gemini-3.7-flash", "Gemini 3.7 Flash"],
-      ["gemini-3.6-flash", "Gemini 3.6 Flash"],
-      ["gemini-3.5-flash", "Gemini 3.5 Flash"],
       ["gemini-nano-banana-2.1", "Nano Banana 2.1"],
     ],
     // <models:google:end>
