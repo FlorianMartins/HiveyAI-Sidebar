@@ -129,3 +129,19 @@ test("the reply language is restated after the latest tool results", async () =>
   await runConversation({ provider: p, system: "S", history: [{ role: "user", content: "résume" }], tools: TOOLS, replyLanguage: "fr", execute: async () => ({ text: "English page" }) });
   assert.match(p.seen[1].history.at(-1).content, /\[Reply language: French\.[^\]]*Réponds en français/);
 });
+
+test("an action that twice led to the same page is a circle; the next page is not", async () => {
+  const { actionGoesNowhere } = await import("../src/lib/agent-guards.js");
+  const events = (results) => results.flatMap((result, i) => [
+    { type: "tool/call", id: `c${i}`, name: "click_element", input: { ref: "e3" } },
+    { type: "tool/result", id: `c${i}`, result },
+  ]);
+  const page = (text) => ({ ok: true, url: "https://x.example/", text });
+  const call = { name: "click_element", input: { ref: "e3" } };
+  assert.equal(actionGoesNowhere(events([page("A")]), call), false, "once is nothing");
+  assert.equal(actionGoesNowhere(events([page("A"), page("A")]), call), true);
+  assert.equal(actionGoesNowhere(events([page("A"), { unchanged: "same" }]), call), true);
+  assert.equal(actionGoesNowhere(events([page("A"), page("B")]), call), false, "next page, same ref");
+  assert.equal(actionGoesNowhere(events([{ ok: true }, { ok: true }]), call), false, "without the page, nothing can be told");
+  assert.equal(actionGoesNowhere(events([page("A"), page("A")]), { name: "read_page", input: {} }), false, "reads have their own rule");
+});

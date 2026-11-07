@@ -1,4 +1,6 @@
 import { calculate } from "../src/lib/calc.js";
+import { guardPage } from "../src/lib/page-guard.js";
+import { webContextBlock } from "../src/lib/web-search.js";
 // A simulated browser for the bench: the agent's real tools, answered from fixture sites.
 //
 // The sidebar's agent acts on real pages through a content script, which a bench cannot drive
@@ -67,6 +69,7 @@ export function createBrowser({ sites = {}, tabs = [], search = [], initial = {}
   // The search engine: every fixture result whose words meet the query, best match first.
   function searchPage(ctx) {
     const q = (ctx.query.get("q") || "").toLowerCase();
+    if (!q) return { title: "Search", text: "Type your search: add ?q=your+words to the address.", elements: [] };
     const words = q.split(/[^\p{L}\p{N}]+/u).filter((w) => w.length > 2);
     const scored = search
       .map((r) => ({ r, s: words.filter((w) => `${r.title} ${r.snippet}`.toLowerCase().includes(w)).length }))
@@ -109,7 +112,18 @@ export function createBrowser({ sites = {}, tabs = [], search = [], initial = {}
   for (const t of tabs) open(t, false);
   if (!active && openTabs.length) active = openTabs[0];
 
+  const plain = (s) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+  const byLabel = (nodes, words) => {
+    const want = plain(words);
+    if (!want) return null;
+    const named = nodes.map((el) => [el, plain(el.text || el.name || el.placeholder)]).filter(([, label]) => label);
+    const hit = named.find(([, label]) => label === want) || named.find(([, label]) => label.includes(want) || want.includes(label));
+    return hit ? hit[0] : null;
+  };
+
   const api = {
+    // As tools.js with `observe`: a page comes with its actions, an action with what it leads to.
+    observe: false,
     state,
     log,
     tabs: openTabs,
@@ -149,14 +163,36 @@ export function createBrowser({ sites = {}, tabs = [], search = [], initial = {}
     return { url: active.url, query: url ? url.searchParams : new URLSearchParams(), state, browser: api };
   };
 
+  const linesHolding = (full, find) => {
+    const words = plain(find).split(" ").filter((w) => w.length > 1);
+    const lines = full.split("\n");
+    const hits = lines.flatMap((line, i) => (words.some((w) => plain(line).includes(w)) ? [i] : []));
+    const kept = [...new Set(hits.slice(0, 40).flatMap((i) => [i - 1, i, i + 1]))].filter((i) => i >= 0 && i < lines.length).sort((a, b) => a - b);
+    return { found: hits.length, text: kept.map((i) => lines[i]).filter((l) => l.trim()).join("\n") };
+  };
+  const pageNow = (from, find) => {
+    const p = render(active);
+    if (find) return guardPage({ title: p.title, url: active.url, ...linesHolding(p.text, find) });
+    return guardPage({ title: p.title, url: active.url, description: p.description, ...pagePart(p.text.replace(/\n{3,}/g, "\n\n"), from), ...(api.observe ? { actions: elementsOf("").elements } : {}) });
+  };
+  const thenPage = (res) => (api.observe && res.ok && active ? { ...res, ...pageNow() } : res);
+  const pressed = (el) => {
+    log.push({ type: "click", label: el.text, href: el.href });
+    if (el.onClick) {
+      const to = el.onClick(ctxFor());
+      if (typeof to === "string") api.navigate(new URL(to, active.url).toString());
+    } else if (el.href) {
+      api.navigate(new URL(el.href, active.url).toString());
+    }
+  };
+
   /** The executor handed to runConversation: same name, same input, same result shapes as tools.js. */
   async function execute(name, input = {}) {
     log.push({ type: "tool", name, input });
     switch (name) {
       case "read_page": {
         if (!active) return { error: "No active tab." };
-        const p = render(active);
-        return { title: p.title, url: active.url, description: p.description, ...pagePart(p.text.replace(/\n{3,}/g, "\n\n"), input && input.from) };
+        return pageNow(input && input.from, input && input.find);
       }
       case "read_selection":
         return { selection: "" };
@@ -168,7 +204,7 @@ export function createBrowser({ sites = {}, tabs = [], search = [], initial = {}
         const t = openTabs.find((x) => x.id === Number(input.tabId));
         if (!t) return { error: `No tab with id ${input.tabId}.` };
         const p = render(t);
-        return { title: p.title, url: t.url, ...pagePart(p.text, input && input.from) };
+        return guardPage({ title: p.title, url: t.url, ...pagePart(p.text, input && input.from) });
       }
       case "find_elements":
         return elementsOf(input.query);
@@ -177,7 +213,7 @@ export function createBrowser({ sites = {}, tabs = [], search = [], initial = {}
       case "navigate": {
         if (!input.url) return { error: "url is required." };
         api.navigate(input.url);
-        return name === "open_tab" ? { ok: true, tabId: active.id, reusedTab: true } : { ok: true };
+        return thenPage(name === "open_tab" ? { ok: true, tabId: active.id, reusedTab: true } : { ok: true });
       }
       case "switch_tab": {
         const t = openTabs.find((x) => x.id === Number(input.tabId));
@@ -199,14 +235,8 @@ export function createBrowser({ sites = {}, tabs = [], search = [], initial = {}
           log.push({ type: "blocked-payment", label: el.text });
           return { error: "Blocked by safety guardrail: payment/checkout action is not allowed.", blocked: true };
         }
-        log.push({ type: "click", label: el.text, href: el.href });
-        if (el.onClick) {
-          const to = el.onClick(ctxFor());
-          if (typeof to === "string") api.navigate(new URL(to, active.url).toString());
-        } else if (el.href) {
-          api.navigate(new URL(el.href, active.url).toString());
-        }
-        return { ok: true, clicked: el.text || el.href || el.tag };
+        pressed(el);
+        return thenPage({ ok: true, clicked: el.text || el.href || el.tag });
       }
       case "fill_input": {
         const el = refs.get(String(input.ref));
@@ -227,6 +257,42 @@ export function createBrowser({ sites = {}, tabs = [], search = [], initial = {}
           }
         }
         return { ok: true, filled: el.text || key };
+      }
+      case "fill_form": {
+        if (!active) return { error: "No active tab." };
+        const nodes = render(active).elements;
+        const fields = nodes.filter((el) => el.tag === "input" || el.tag === "textarea" || el.tag === "select");
+        const filled = [], missing = [], refused = [];
+        for (const [label, value] of Object.entries(input.fields || {})) {
+          const el = byLabel(fields, label);
+          if (!el) { missing.push(label); continue; }
+          if (el.payment || /card|carte|cvv|cvc|iban/i.test(`${el.name || ""} ${el.text || ""}`)) { log.push({ type: "blocked-payment", label: el.text }); refused.push(label); continue; }
+          state.fields[el.name || el.text] = String(value ?? "");
+          log.push({ type: "fill", field: el.name || el.text, value: String(value ?? "") });
+          filled.push(label);
+        }
+        const result = { ok: filled.length > 0 || !Object.keys(input.fields || {}).length, filled, ...(missing.length ? { missing, fields: fields.map((f) => f.text || f.name).filter(Boolean) } : {}), ...(refused.length ? { refused, note: "Card and payment fields are left to the user." } : {}) };
+        if (!input.submit || missing.length) return result;
+        const buttons = nodes.filter((el) => el.tag === "button" || el.tag === "a");
+        const button = byLabel(buttons, input.submit);
+        if (!button) return { ...result, ok: false, error: `No button called « ${input.submit} »`, buttons: buttons.map((b) => b.text).filter(Boolean).slice(0, 30) };
+        if (button.payment || PAY_RE.test(button.text || "")) {
+          log.push({ type: "blocked-payment", label: button.text });
+          return { ...result, ok: false, error: "Blocked by safety guardrail: payment/checkout action is not allowed.", blocked: true };
+        }
+        pressed(button);
+        return thenPage({ ...result, clicked: button.text });
+      }
+      case "web_search": {
+        const found = searchPage({ query: new URLSearchParams({ q: String((input && input.query) || "") }) });
+        const hits = found.elements.slice(0, 5);
+        if (!hits.length) return { error: "The search found nothing useful; try other words or open a page." };
+        const sources = hits.map((h, i) => {
+          const p = render({ url: normalize(h.href) });
+          return { n: i + 1, url: h.href, title: h.text, passages: [guardPage({ text: p.text }).text.slice(0, 3000)] };
+        });
+        log.push(...hits.map((h) => ({ type: "visit", url: normalize(h.href), tab: 0, background: true })));
+        return { results: webContextBlock({ query: String(input.query || ""), sources }), sources: sources.map((s) => ({ url: s.url, title: s.title })) };
       }
       case "scroll_page":
         return { ok: true };

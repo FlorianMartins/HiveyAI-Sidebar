@@ -14,6 +14,7 @@
 // The sidebar and the bench (scripts/bench.mjs) both call this module, so what is measured is what
 // ships.
 
+import { cleanPageText } from "./page-guard.js";
 import { runConversation, buildSystemPrompt, activeTools } from "./agent.js";
 import { buildTurn } from "./untrusted.js";
 import { CONTEXT_WINDOWS } from "./model-catalog.generated.js";
@@ -347,7 +348,12 @@ export async function runChatTurn({ provider, providerId, modelId, settings, sys
 
 // ── The bench's entry point ───────────────────────────────────────────────────────────────────
 
-const pageBlock = (page, max) => `[Active page context]\nTitle: ${page.title}\nURL: ${page.url}\n${String(page.text || "").slice(0, max)}\n\n`;
+// With `lean`, it says what it leaves out: a page cut without a word reads as a page that does not have the answer.
+export const pageNote = (full, max) => `[${full.length > max ? `The page goes on: ${full.length - max} more characters. ` : ""}Its links, buttons and the rest of it: call read_page.]`;
+const pageBlock = (page, max, lean) => {
+  const full = cleanPageText(String(page.text || "")).text;
+  return `[Active page context]\nTitle: ${page.title}\nURL: ${page.url}\n${full.slice(0, max)}\n${lean ? `${pageNote(full, max)}\n` : ""}\n`;
+};
 const stripThink = (s) => String(s || "").replace(/<think>[\s\S]*?<\/think>/g, "").trim();
 
 /** The language a turn's answer must be in: the user's own, whatever they write in. */
@@ -362,7 +368,7 @@ export function replyLanguageOf(text, settings) {
  * The bench's driver (scripts/bench.mjs): each tab run through the functions the sidebar runs it
  * through. `task.tab` is chat, security, wisebase or agent; `browser` is the simulated web.
  */
-export async function benchTurns({ task, settings, browser, page, signal, thinkLevel, wisebaseSystem = t("wb.system") }) {
+export async function benchTurns({ task, settings, browser, page, signal, thinkLevel, lean = false, wisebaseSystem = t("wb.system") }) {
   const providerId = settings.provider;
   const modelId = settings.models[providerId];
   const provider = makeProvider(settings, { thinkLevel, webSearch: false });
@@ -377,18 +383,18 @@ export async function benchTurns({ task, settings, browser, page, signal, thinkL
       content = `${wisebaseSystem}\n\n[Context passages]\n${ctxBlock}\n\n[Question]\n${text}`;
     }
     const current = agent ? browser.activePage() : page;
-    const untrusted = current && !pageSent && task.tab !== "wisebase" ? [{ kind: "web page", source: current.url, text: pageBlock(current, settings.maxPageChars || 12000) }] : [];
+    const untrusted = current && !pageSent && task.tab !== "wisebase" ? [{ kind: "web page", source: current.url, text: pageBlock(current, settings.maxPageChars || 12000, lean) }] : [];
     pageSent = pageSent || untrusted.length > 0;
     const before = untrusted.length ? buildTurn({ userText: "", untrusted }).messages.slice(0, -1) : [];
     history.push(...before, { role: "user", content });
     const replyLanguage = replyLanguageOf(text, settings);
     const system = buildSystemPrompt({
       agentMode: agent, responseLang: settings.responseLang, mode: task.tab === "security" ? "security" : "chat",
-      blockPayments: true, artifacts: true, thinkLevel, replyLanguage,
+      blockPayments: true, artifacts: true, thinkLevel, replyLanguage, lean,
     });
     const r = await runChatTurn({
       provider, providerId, modelId, settings, system, history, signal, replyLanguage,
-      tools: agent ? activeTools({ agentMode: true }) : [],
+      tools: agent ? activeTools({ agentMode: true, lean, webSearch: lean }) : [],
       ...(agent ? { confirmActions: false, confirmFn: null, guard: { blockPayments: true }, execute: (name, input) => browser.execute(name, input) } : {}),
     });
     answers.push(stripThink(r.text));

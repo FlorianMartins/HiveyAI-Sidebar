@@ -113,6 +113,19 @@ export function repeatsSinceChange(events, call) {
   return n;
 }
 
+/**
+ * The same action, which twice already led to the very same page. Only with results that carry their
+ * page (`observe`): pressing "Next" again with the same ref is no circle, since the page changes.
+ */
+export function actionGoesNowhere(events, call) {
+  if (PURE_READS.has(call.name)) return false;
+  const ids = events.filter((e) => e.type === "tool/call" && e.name === call.name && argsKey(e.input) === argsKey(call.input)).map((e) => e.id);
+  if (ids.length < 2) return false;
+  const pages = ids.slice(-2).map((id) => events.find((e) => e.type === "tool/result" && e.id === id)?.result);
+  if (!pages.every((r) => r && (r.unchanged || typeof r.text === "string"))) return false;
+  return !!pages[1].unchanged || resultText(pages[0]) === resultText(pages[1]);
+}
+
 /** What an identical repeated result becomes: a pointer to the copy the model already has. */
 export function unchangedNotice(name) {
   return { unchanged: `Exactly the same result as your earlier ${name} call with these arguments, which is still above. Use it rather than asking again.` };
@@ -326,7 +339,8 @@ export function mountAgentGuards(ctx, { provider, system = "", contextWindow = 0
 
   // ── Each tool call: a real loop is refused, an identical result pointed back ─────────────────
   ctx.on("tools/pre-execute", async (d, next) => {
-    if (PURE_READS.has(d.call.name) && repeatsSinceChange(ctx.events().slice(0, -1), d.call) >= REPEAT_LIMIT - 1) {
+    const before = ctx.events().slice(0, -1);
+    if ((PURE_READS.has(d.call.name) && repeatsSinceChange(before, d.call) >= REPEAT_LIMIT - 1) || actionGoesNowhere(before, d.call)) {
       state.repeatNudges++;
       if (state.repeatNudges > MAX_REPEAT_NUDGES) state.stoppedRepeating = true;
       once("repeat");

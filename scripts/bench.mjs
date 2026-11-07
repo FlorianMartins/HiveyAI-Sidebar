@@ -183,7 +183,8 @@ async function runTask(task) {
   try {
     const page = task.page || (browser && browser.activePage()) || null;
     if (conversation && conversation.benchTurns) {
-      out = await conversation.benchTurns({ task, settings, browser, page, signal: ctl.signal, thinkLevel });
+      if (browser) browser.observe = LEAN;
+      out = await conversation.benchTurns({ task, settings, browser, page, signal: ctl.signal, thinkLevel, lean: LEAN });
     } else if (task.tab === "agent") out = await legacyAgent(task, browser, ctl.signal);
     else if (task.tab === "wisebase") out = await legacyWisebase(task, ctl.signal);
     else out = await legacyChat(task, ctl.signal);

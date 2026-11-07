@@ -27,6 +27,8 @@ import { executeTool, setAgentTab, clearAgentTab, getAgentTab, TOOLS } from "../
 const webSearchTool = () => TOOLS.find((x) => x.name === "web_search");
 import { initBenchmarkView } from "../lib/benchmarkView.js";
 import { buildTurn } from "../lib/untrusted.js";
+import { cleanPageText } from "../lib/page-guard.js";
+import { pageNote } from "../lib/conversation.js";
 import { isWebChatUrl } from "../lib/memory-policy.js";
 import { registerFrameUnblock } from "../lib/frame-unblock.js";
 import { configureMarkdown, renderMarkdown, enhanceArtifacts, setArtifactsLive, setJudge0Config } from "../lib/markdown.js";
@@ -8347,10 +8349,12 @@ function pageContextBlock() {
   if (!currentPage) return "";
   // On the local model the page takes a share of its small window, not the same 12 000 characters as on a big one.
   const maxChars = settings.provider === HIVEY_LOCAL ? Math.min(settings.maxPageChars, Math.floor(HIVEY_LOCAL_WINDOW * 0.7)) : settings.maxPageChars;
-  const ctx = cleanText((currentPage.text || "")).slice(0, maxChars);
+  const whole = cleanPageText(cleanText(currentPage.text || "")).text;
+  const ctx = whole.slice(0, maxChars);
   return (
     `[Active page context]\nTitle: ${currentPage.title}\nURL: ${currentPage.url}\n` +
-    (currentPage.description ? `Description: ${currentPage.description}\n` : "") + `${ctx}\n\n`
+    (currentPage.description ? `Description: ${currentPage.description}\n` : "") + `${ctx}\n` +
+    (leanLocalTools() ? `${pageNote(whole, maxChars)}\n` : "") + "\n"
   );
 }
 async function getSelection() {
@@ -8432,8 +8436,7 @@ function endBusy() {
 // The light Hivey Browser draws around its address bar follows this. Written only in that browser.
 /** Few tools for the small local model, the one that runs without a graphics card. */
 function leanLocalTools() {
-  const ai = settings && settings.hiveyAi;
-  const sel = ai && !ai.gpu ? currentSelection() : null;
+  const sel = settings && settings.hiveyAi ? currentSelection() : null;
   return !!(sel && sel.providerId === HIVEY_LOCAL);
 }
 /** Should this turn act on the browser? Any failure leaves it a chat turn, which still answers. */
@@ -9496,7 +9499,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
   // title cost 0.025 $ instead of 0.001 $ (measured 2026-10-26). Anthropic's own search is already a
   // tool the model calls when it needs it.
   const noOwnSearch = !(PROVIDERS[turnSel.providerId] && PROVIDERS[turnSel.providerId].supportsWebSearch);
-  const agentWebTool = agentMode && wantWeb && (turnSel.providerId === "openrouter" || noOwnSearch);
+  const agentWebTool = agentMode && ((wantWeb && (turnSel.providerId === "openrouter" || noOwnSearch)) || (noOwnSearch && leanLocalTools()));
   if (agentWebTool) webPlugin = false;
   // The Chat, « Web » on, nothing searched up front: the MODEL judges whether it knows. « Il faudrait
   // que le modèle se demande s'il a l'information, et s'il ne l'a pas, qu'il cherche sur le web »
@@ -9598,7 +9601,7 @@ async function sendToModel(displayText, modelContent, { forceWeb = false, runMod
         compactNote = null;
       },
       system, history: turnHistory, tools,
-      ...(mcpExecute ? { execute: mcpExecute } : agentMode || chatWebTool ? { execute: (name, input, opts) => (refused ? Promise.resolve(REFUSED) : executeTool(name, input, { ...opts, webSearch: agentWebTool || chatWebTool ? agentWebSearch : null })) } : {}),
+      ...(mcpExecute ? { execute: mcpExecute } : agentMode || chatWebTool ? { execute: (name, input, opts) => (refused ? Promise.resolve(REFUSED) : executeTool(name, input, { ...opts, observe: leanLocalTools(), webSearch: agentWebTool || chatWebTool ? agentWebSearch : null })) } : {}),
       onText: sink.onText, onThink: sink.onThink,
       onToolStart: (call) => {
         sink.finalize();

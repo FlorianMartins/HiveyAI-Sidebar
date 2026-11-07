@@ -132,7 +132,19 @@ function setHTML(el, html) {
     return style.visibility !== "hidden" && style.display !== "none" && style.opacity !== "0";
   }
 
+  const isField = (el) => el.tagName === "TEXTAREA" || el.tagName === "SELECT" ||
+    (el.tagName === "INPUT" && !/^(button|submit|reset|image)$/i.test(el.getAttribute("type") || ""));
+
+  // What the page calls a field, as its reader sees it. Its value is not its name.
+  function fieldLabel(el) {
+    const named = (el.labels && el.labels[0] && el.labels[0].innerText) ||
+      (el.getAttribute("aria-labelledby") || "").split(/\s+/).map((id) => { const n = id && document.getElementById(id); return n ? n.innerText : ""; }).join(" ").trim();
+    return (named || el.getAttribute("aria-label") || el.getAttribute("placeholder") || el.getAttribute("title") || el.getAttribute("name") || "")
+      .replace(/\s+/g, " ").trim().slice(0, 120);
+  }
+
   function labelOf(el) {
+    if (isField(el)) return fieldLabel(el);
     const txt =
       (el.innerText || "").trim() ||
       (el.value || "").trim() ||
@@ -153,9 +165,10 @@ function setHTML(el, html) {
 
   // One part of the page: the model reads on with `from`, rather than a long page being cut for good.
   const PAGE_PART = 20000;
-  function readPage(from) {
+  function readPage(from, actions, find) {
     const main = document.querySelector("main, article, [role=main]") || document.body;
     const full = (main.innerText || "").replace(/\n{3,}/g, "\n\n");
+    if (find) return { title: document.title, url: location.href, ...linesHolding(full, find) };
     const start = Math.max(0, Number(from) || 0);
     const end = start + PAGE_PART;
     return {
@@ -164,7 +177,17 @@ function setHTML(el, html) {
       description: metaDescription(),
       text: full.slice(start, end),
       ...(end < full.length ? { more: `The page goes on: ${full.length - end} more characters. Call again with from=${end} to read them, and do not conclude that something is absent before you have.` } : {}),
+      ...(actions ? { actions: findElements("").elements } : {}),
     };
+  }
+
+  // The lines of a long page that hold any of these words, with the lines around them.
+  function linesHolding(full, find) {
+    const words = plain(find).split(" ").filter((w) => w.length > 1);
+    const lines = full.split("\n");
+    const hits = lines.flatMap((line, i) => (words.some((w) => plain(line).includes(w)) ? [i] : []));
+    const kept = [...new Set(hits.slice(0, 40).flatMap((i) => [i - 1, i, i + 1]))].filter((i) => i >= 0 && i < lines.length).sort((a, b) => a - b);
+    return { found: hits.length, text: kept.map((i) => lines[i]).filter((l) => l.trim()).join("\n") };
   }
 
   function readSelection() {
@@ -320,6 +343,10 @@ function setHTML(el, html) {
   function clickElement(ref, guard, confirmed) {
     const el = refMap.get(ref);
     if (!el) return { error: `ref not found: ${ref} (re-run find_elements)` };
+    return clickNode(el, guard, confirmed);
+  }
+
+  function clickNode(el, guard, confirmed) {
     if (guard && guard.blockPayments && looksLikePaymentControl(el)) {
       return { error: "Blocked by safety guardrail: payment/checkout action is not allowed.", blocked: true };
     }
@@ -332,6 +359,56 @@ function setHTML(el, html) {
     showGhost(el);
     el.click();
     return { ok: true, clicked: labelOf(el) };
+  }
+
+  const plain = (s) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+  // The element the words name: the same label first, else one holding the other's words.
+  function byLabel(nodes, words) {
+    const want = plain(words);
+    if (!want) return null;
+    const named = nodes.map((el) => [el, plain(labelOf(el))]).filter(([, label]) => label);
+    const hit = named.find(([, label]) => label === want) || named.find(([, label]) => label.includes(want) || want.includes(label));
+    return hit ? hit[0] : null;
+  }
+
+  function setValue(el, value) {
+    if (el.tagName === "SELECT") {
+      const option = byOption(el, value);
+      if (option) el.value = option.value;
+    } else {
+      const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(el), "value");
+      if (setter && setter.set) setter.set.call(el, value);
+      else el.value = value;
+    }
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+  function byOption(select, value) {
+    const want = plain(value);
+    const options = [...select.options];
+    return options.find((o) => plain(o.text) === want || plain(o.value) === want) || options.find((o) => plain(o.text).includes(want));
+  }
+
+  // A whole form, by what the page calls its fields: nothing for the model to look up, no ref to get wrong.
+  function fillForm(fields, submit, guard, confirmed) {
+    const nodes = [...document.querySelectorAll("input:not([type=hidden]), textarea, select")].filter((el) => isVisible(el) && isField(el));
+    const filled = [], missing = [], refused = [];
+    for (const [label, value] of Object.entries(fields || {})) {
+      const el = byLabel(nodes, label);
+      if (!el) { missing.push(label); continue; }
+      if (guard && guard.blockPayments && looksLikeCardField(el)) { refused.push(label); continue; }
+      showGhost(el);
+      el.focus();
+      setValue(el, String(value));
+      filled.push(label);
+    }
+    const result = { ok: filled.length > 0 || !Object.keys(fields || {}).length, filled, ...(missing.length ? { missing, fields: nodes.map(fieldLabel).filter(Boolean) } : {}), ...(refused.length ? { refused, note: "Card and payment fields are left to the user." } : {}) };
+    if (!submit || missing.length) return result;
+    const buttons = [...document.querySelectorAll("button, input[type=submit], input[type=button], a[href], [role=button]")].filter(isVisible);
+    const button = byLabel(buttons, submit);
+    if (!button) return { ...result, ok: false, error: `No button called « ${submit} »`, buttons: buttons.map(labelOf).filter(Boolean).slice(0, 30) };
+    const click = clickNode(button, guard, confirmed);
+    return click.ok ? { ...result, clicked: click.clicked } : { ...result, ...click, ok: false };
   }
 
   function fillInput(ref, value, submit, guard, confirmed) {
@@ -1032,7 +1109,7 @@ function setHTML(el, html) {
         setAgentGlow(!!msg.on);
         return Promise.resolve({ ok: true });
       case "read_page":
-        return Promise.resolve(readPage(msg.from));
+        return Promise.resolve(readPage(msg.from, msg.actions, msg.find));
       case "read_selection":
         return Promise.resolve(readSelection());
       case "tr_collect":
@@ -1059,6 +1136,8 @@ function setHTML(el, html) {
         return Promise.resolve(clickElement(msg.ref, msg.guard, msg.confirmed));
       case "fill_input":
         return Promise.resolve(fillInput(msg.ref, msg.value, msg.submit, msg.guard, msg.confirmed));
+      case "fill_form":
+        return Promise.resolve(fillForm(msg.fields, msg.submit, msg.guard, msg.confirmed));
       case "scroll_page":
         return Promise.resolve(scrollPage(msg.direction));
       case "control_media":
