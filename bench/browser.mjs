@@ -163,8 +163,16 @@ export function createBrowser({ sites = {}, tabs = [], search = [], initial = {}
     return { url: active.url, query: url ? url.searchParams : new URLSearchParams(), state, browser: api };
   };
 
-  const pageNow = (from) => {
+  const linesHolding = (full, find) => {
+    const words = plain(find).split(" ").filter((w) => w.length > 1);
+    const lines = full.split("\n");
+    const hits = lines.flatMap((line, i) => (words.some((w) => plain(line).includes(w)) ? [i] : []));
+    const kept = [...new Set(hits.slice(0, 40).flatMap((i) => [i - 1, i, i + 1]))].filter((i) => i >= 0 && i < lines.length).sort((a, b) => a - b);
+    return { found: hits.length, text: kept.map((i) => lines[i]).filter((l) => l.trim()).join("\n") };
+  };
+  const pageNow = (from, find) => {
     const p = render(active);
+    if (find) return guardPage({ title: p.title, url: active.url, ...linesHolding(p.text, find) });
     return guardPage({ title: p.title, url: active.url, description: p.description, ...pagePart(p.text.replace(/\n{3,}/g, "\n\n"), from), ...(api.observe ? { actions: elementsOf("").elements } : {}) });
   };
   const thenPage = (res) => (api.observe && res.ok && active ? { ...res, ...pageNow() } : res);
@@ -184,7 +192,7 @@ export function createBrowser({ sites = {}, tabs = [], search = [], initial = {}
     switch (name) {
       case "read_page": {
         if (!active) return { error: "No active tab." };
-        return pageNow(input && input.from);
+        return pageNow(input && input.from, input && input.find);
       }
       case "read_selection":
         return { selection: "" };

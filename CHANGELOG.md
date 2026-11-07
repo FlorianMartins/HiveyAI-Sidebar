@@ -16,6 +16,8 @@ Version de développement, toujours à jour :
   (Qwen3.5 4B) gagne environ 3 points sur 12.
 - **Les formulaires sont mieux compris** : les libellés des champs (`<label>`) sont enfin lus, pour tous les modèles.
 - **Les pages piégées** : le texte qu'une page adresse aux assistants IA est retiré avant d'arriver au modèle.
+- **Fini les boucles** : une action qui ramène deux fois exactement la même page n'est plus répétée, et une longue page
+  se fouille par mots-clés au lieu d'être lue en entier.
 
 - **Hivey Browser : l'agent agit au lieu de réfléchir** : la réflexion est coupée sur les modèles locaux, car elle
   n'apportait rien de mesurable à l'agent (15, 15, 16 sur 16 sans, 15, 15, 15 avec) pour environ 40 % de temps en plus.

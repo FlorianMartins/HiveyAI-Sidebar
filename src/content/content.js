@@ -165,9 +165,10 @@ function setHTML(el, html) {
 
   // One part of the page: the model reads on with `from`, rather than a long page being cut for good.
   const PAGE_PART = 20000;
-  function readPage(from, actions) {
+  function readPage(from, actions, find) {
     const main = document.querySelector("main, article, [role=main]") || document.body;
     const full = (main.innerText || "").replace(/\n{3,}/g, "\n\n");
+    if (find) return { title: document.title, url: location.href, ...linesHolding(full, find) };
     const start = Math.max(0, Number(from) || 0);
     const end = start + PAGE_PART;
     return {
@@ -178,6 +179,15 @@ function setHTML(el, html) {
       ...(end < full.length ? { more: `The page goes on: ${full.length - end} more characters. Call again with from=${end} to read them, and do not conclude that something is absent before you have.` } : {}),
       ...(actions ? { actions: findElements("").elements } : {}),
     };
+  }
+
+  // The lines of a long page that hold any of these words, with the lines around them.
+  function linesHolding(full, find) {
+    const words = plain(find).split(" ").filter((w) => w.length > 1);
+    const lines = full.split("\n");
+    const hits = lines.flatMap((line, i) => (words.some((w) => plain(line).includes(w)) ? [i] : []));
+    const kept = [...new Set(hits.slice(0, 40).flatMap((i) => [i - 1, i, i + 1]))].filter((i) => i >= 0 && i < lines.length).sort((a, b) => a - b);
+    return { found: hits.length, text: kept.map((i) => lines[i]).filter((l) => l.trim()).join("\n") };
   }
 
   function readSelection() {
@@ -1099,7 +1109,7 @@ function setHTML(el, html) {
         setAgentGlow(!!msg.on);
         return Promise.resolve({ ok: true });
       case "read_page":
-        return Promise.resolve(readPage(msg.from, msg.actions));
+        return Promise.resolve(readPage(msg.from, msg.actions, msg.find));
       case "read_selection":
         return Promise.resolve(readSelection());
       case "tr_collect":

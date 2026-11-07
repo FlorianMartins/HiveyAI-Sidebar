@@ -497,7 +497,7 @@ export async function executeTool(name, input, opts = {}) {
         return await opts.webSearch(String((input && input.query) || ""));
       }
       case "read_page":
-        return guardPage(await sendToActiveTab({ type: "read_page", from: input && input.from, actions: observe }));
+        return guardPage(await sendToActiveTab({ type: "read_page", from: input && input.from, find: input && input.find, actions: observe }));
       case "calculate":
         try { return { result: calculate(input && input.expression) }; } catch (e) { return { error: e.message }; }
       case "read_selection":

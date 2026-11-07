@@ -28,6 +28,7 @@ const webSearchTool = () => TOOLS.find((x) => x.name === "web_search");
 import { initBenchmarkView } from "../lib/benchmarkView.js";
 import { buildTurn } from "../lib/untrusted.js";
 import { cleanPageText } from "../lib/page-guard.js";
+import { pageNote } from "../lib/conversation.js";
 import { isWebChatUrl } from "../lib/memory-policy.js";
 import { registerFrameUnblock } from "../lib/frame-unblock.js";
 import { configureMarkdown, renderMarkdown, enhanceArtifacts, setArtifactsLive, setJudge0Config } from "../lib/markdown.js";
@@ -8348,10 +8349,12 @@ function pageContextBlock() {
   if (!currentPage) return "";
   // On the local model the page takes a share of its small window, not the same 12 000 characters as on a big one.
   const maxChars = settings.provider === HIVEY_LOCAL ? Math.min(settings.maxPageChars, Math.floor(HIVEY_LOCAL_WINDOW * 0.7)) : settings.maxPageChars;
-  const ctx = cleanPageText(cleanText(currentPage.text || "")).text.slice(0, maxChars);
+  const whole = cleanPageText(cleanText(currentPage.text || "")).text;
+  const ctx = whole.slice(0, maxChars);
   return (
     `[Active page context]\nTitle: ${currentPage.title}\nURL: ${currentPage.url}\n` +
-    (currentPage.description ? `Description: ${currentPage.description}\n` : "") + `${ctx}\n\n`
+    (currentPage.description ? `Description: ${currentPage.description}\n` : "") + `${ctx}\n` +
+    (leanLocalTools() ? `${pageNote(whole, maxChars)}\n` : "") + "\n"
   );
 }
 async function getSelection() {
