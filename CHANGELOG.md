@@ -10,6 +10,13 @@ Version de développement, toujours à jour :
 
 ## Prochaine version
 
+- **Hivey Browser : le navigateur fait le travail à la place du modèle** : une page arrive avec ses liens et ses boutons,
+  une action avec la page qu'elle ouvre, un formulaire se remplit en un seul appel, et la recherche web donne ses sources
+  directement. L'agent du grand modèle (Qwen3.8 27B) va environ 5 fois plus vite sur nos tâches d'essai, et le petit
+  (Qwen3.5 4B) gagne environ 3 points sur 12.
+- **Les formulaires sont mieux compris** : les libellés des champs (`<label>`) sont enfin lus, pour tous les modèles.
+- **Les pages piégées** : le texte qu'une page adresse aux assistants IA est retiré avant d'arriver au modèle.
+
 - **Hivey Browser : l'agent agit au lieu de réfléchir** : la réflexion est coupée sur les modèles locaux, car elle
   n'apportait rien de mesurable à l'agent (15, 15, 16 sur 16 sans, 15, 15, 15 avec) pour environ 40 % de temps en plus.
 - **Les ordres tapés vite sont compris** : « lanc ela musique… » lance la musique directement, sans modèle. Sur carte

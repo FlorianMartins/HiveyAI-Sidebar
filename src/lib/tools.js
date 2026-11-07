@@ -13,6 +13,7 @@
 import { calculate } from "./calc.js";
 import { isWebChatUrl } from "./memory-policy.js";
 import { t } from "./i18n.js";
+import { guardPage } from "./page-guard.js";
 
 export const TOOLS = [
   {
@@ -166,6 +167,20 @@ export const TOOLS = [
         submit: { type: "boolean" },
       },
       required: ["ref", "value"],
+    },
+  },
+  {
+    name: "fill_form",
+    description:
+      "Fill a form in one call, by what the page calls its fields, and optionally press a button. Payment and card fields are refused.",
+    write: true,
+    input_schema: {
+      type: "object",
+      properties: {
+        fields: { type: "object", description: "Each field's label and what to put in it, for example {\"Nom\": \"Léa Martin\", \"E-mail\": \"lea@example.org\"}.", additionalProperties: { type: "string" } },
+        submit: { type: "string", description: "The label of the button to press afterwards, for example \"Envoyer\"." },
+      },
+      required: ["fields"],
     },
   },
   {
@@ -385,7 +400,7 @@ async function playMedia(query) {
 // anti-purchase guard is code: a prompt is not a control.
 const TAB_ACTING = new Set([
   "read_page", "calculate", "read_selection", "read_tab", "find_elements", "click_element",
-  "fill_input", "scroll_page", "control_media", "screenshot", "extract_data",
+  "fill_input", "fill_form", "scroll_page", "control_media", "screenshot", "extract_data",
 ]);
 function webChatRefused(url) {
   return {
@@ -428,7 +443,17 @@ function isSensitiveUrl(url) {
 //   guard : { blockPayments } — forwarded to the page so the content script can
 //           refuse payment/checkout interactions in code (defence in depth).
 export async function executeTool(name, input, opts = {}) {
-  const { confirmActions, confirmFn, guard = {} } = opts;
+  const { confirmActions, confirmFn, guard = {}, observe = false } = opts;
+  // With `observe`, what an action leads to comes with its result: a small model no longer has to
+  // think of looking, nor spend a step and a model call on it.
+  const thenPage = async (res) => {
+    if (!observe || !res || !res.ok) return res;
+    await delay(250);
+    const tab = await getActiveTab();
+    await waitForTabLoad(tab.id, 8000);
+    const page = await sendToTab(tab.id, { type: "read_page", actions: true }).catch(() => null);
+    return page ? { ...res, ...guardPage(page) } : res;
+  };
   const def = TOOLS.find((t) => t.name === name);
   if (!def) return { error: `Unknown tool: ${name}` };
 
@@ -472,13 +497,13 @@ export async function executeTool(name, input, opts = {}) {
         return await opts.webSearch(String((input && input.query) || ""));
       }
       case "read_page":
-        return await sendToActiveTab({ type: "read_page", from: input && input.from });
+        return guardPage(await sendToActiveTab({ type: "read_page", from: input && input.from, actions: observe }));
       case "calculate":
         try { return { result: calculate(input && input.expression) }; } catch (e) { return { error: e.message }; }
       case "read_selection":
         return await sendToActiveTab({ type: "read_selection" });
       case "read_tab":
-        return await sendToTab(input.tabId, { type: "read_page", from: input.from });
+        return guardPage(await sendToTab(input.tabId, { type: "read_page", from: input.from }));
       case "find_elements":
         return await sendToActiveTab({ type: "find_elements", query: input.query || "" });
       case "click_element": {
@@ -489,7 +514,17 @@ export async function executeTool(name, input, opts = {}) {
           if (!ok) return { error: "Action declined by the user." };
           res = await sendToActiveTab({ type: "click_element", ref: input.ref, guard, confirmed: true });
         }
-        return res;
+        return await thenPage(res);
+      }
+      case "fill_form": {
+        const payload = { type: "fill_form", fields: input.fields, submit: input.submit, guard };
+        let res = await sendToActiveTab({ ...payload, confirmed });
+        if (res && res.confirm && confirmFn) {
+          const ok = await confirmFn("fill_form", { sensitive: res.action, label: res.label });
+          if (!ok) return { error: "Action declined by the user." };
+          res = await sendToActiveTab({ ...payload, confirmed: true });
+        }
+        return await thenPage(res);
       }
       case "fill_input": {
         const payload = { type: "fill_input", ref: input.ref, value: input.value, submit: !!input.submit, guard };
@@ -548,7 +583,7 @@ export async function executeTool(name, input, opts = {}) {
         const tab = await getActiveTab();
         await browser.tabs.update(tab.id, { url: input.url, ...(input.active === true ? { active: true } : {}) });
         await waitForTabLoad(tab.id);
-        return { ok: true, tabId: tab.id, reusedTab: true };
+        return await thenPage({ ok: true, tabId: tab.id, reusedTab: true });
       }
       case "check_links": {
         // Probe candidate URLs in HIDDEN background tabs (active:false), read title/final-url/snippet,
@@ -592,7 +627,7 @@ export async function executeTool(name, input, opts = {}) {
         const tab = await getActiveTab();
         await browser.tabs.update(tab.id, { url: input.url });
         await waitForTabLoad(tab.id); // resolve only once the page has actually loaded
-        return { ok: true };
+        return await thenPage({ ok: true });
       }
       default:
         return { error: `Tool not implemented: ${name}` };
