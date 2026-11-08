@@ -4,7 +4,7 @@
 // ids this add-on can actually select. Each source carries its OWN freshness, because that is
 // the number people forget to ask for: a leaderboard can be maintained daily and still cover
 // nothing released this year.
-export const BENCHMARK_FETCHED_AT = "2026-11-07";
+export const BENCHMARK_FETCHED_AT = "2026-11-08";
 export const BENCHMARK_SOURCES = {
   "webdev": {
     "label": "LMArena WebDev",
@@ -12,7 +12,7 @@ export const BENCHMARK_SOURCES = {
     "home": "https://lmarena.ai/leaderboard/webdev",
     "metric": "elo",
     "about": "People give two anonymous models the same web-app task and vote for the better result. The score is an Elo rating: higher is better, and only the gaps between models mean something.",
-    "matched": 120,
+    "matched": 119,
     "total": 153,
     "newestModelCovered": "2026-11-04"
   },
@@ -22,7 +22,7 @@ export const BENCHMARK_SOURCES = {
     "home": "https://github.com/vectara/hallucination-leaderboard",
     "metric": "factual",
     "about": "How often a model invents facts when summarising a document it was given. Lower hallucination is better.",
-    "matched": 56,
+    "matched": 55,
     "total": 111,
     "newestModelCovered": "2026-10-13"
   }
@@ -879,19 +879,6 @@ export const BENCHMARK_WEB = {
       "as": "google/gemini-2.5-pro"
     }
   },
-  "inception/mercury-2": {
-    "webdev": {
-      "elo": 1170,
-      "votes": 954,
-      "as": "Mercury 2"
-    },
-    "vectara": {
-      "hallucination": 12.3,
-      "factual": 87.7,
-      "answerRate": 100,
-      "as": "inceptionlabs/mercury-2"
-    }
-  },
   "openai/gpt-5.4-nano": {
     "vectara": {
       "hallucination": 3.1,
@@ -1202,6 +1189,10 @@ export const BENCHMARK_UNMATCHED = [
   },
   {
     "source": "webdev",
+    "model": "Mercury 2"
+  },
+  {
+    "source": "webdev",
     "model": "Grok Code Fast 1"
   },
   {
@@ -1366,6 +1357,10 @@ export const BENCHMARK_UNMATCHED = [
   },
   {
     "source": "vectara",
+    "model": "inceptionlabs/mercury-2"
+  },
+  {
+    "source": "vectara",
     "model": "MiniMaxAI/minimax-m2p7"
   },
   {
@@ -1391,14 +1386,6 @@ export const BENCHMARK_UNMATCHED = [
   {
     "source": "vectara",
     "model": "xai-org/grok-4-1-fast-non-reasoning"
-  },
-  {
-    "source": "vectara",
-    "model": "openai/o4-mini-low-2025-04-16"
-  },
-  {
-    "source": "vectara",
-    "model": "openai/o4-mini-high-2025-04-16"
   }
 ];
 // The newest catalogue models NO published source covers. This is the gap the live test fills.
@@ -1418,9 +1405,9 @@ export const BENCHMARK_UNCOVERED = [
   "openai/gpt-6.1-terra:batch",
   "recursive/flint-v1.0:free",
   "deepseek/deepseek-v4.1-flash-1017",
+  "deepseek/deepseek-v4.1-flash-1017:batch",
   "elorian/glimpse",
   "xingchen-agi/xing4.0-29b-a4b:free",
-  "inception/mercury-3",
   "prism-ml/ternary-bonsai-2-9b",
   "moondream/moondream3-preview",
   "moondream/moondream3.1-9b-a2b",
