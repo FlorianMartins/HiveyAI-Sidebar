@@ -10,7 +10,7 @@
 // (see content.js) refuses checkout/payment actions when enabled, so the agent
 // can fill a cart but can never complete a purchase.
 
-import { calculate } from "./calc.js";
+import { calculate, priceTotal } from "./calc.js";
 import { isWebChatUrl } from "./memory-policy.js";
 import { t } from "./i18n.js";
 import { guardPage } from "./page-guard.js";
@@ -29,6 +29,31 @@ export const TOOLS = [
       "Work out arithmetic exactly: + - * / % and parentheses. Use it for every sum, total, average or price comparison instead of doing it in your head.",
     write: false,
     input_schema: { type: "object", properties: { expression: { type: "string", description: "For example 41+17+8" } }, required: ["expression"] },
+  },
+  {
+    name: "price_total",
+    description:
+      "Add up a price from the page's tariffs: one line per price, with its unit copied from the page and how many times it applies. Use it for every total of several prices.",
+    write: false,
+    input_schema: {
+      type: "object",
+      properties: {
+        lines: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              item: { type: "string", description: "What is paid for, e.g. « Gilet »." },
+              price: { type: "number" },
+              per: { type: "string", description: "The unit exactly as the page writes it, e.g. « par personne, pour toute la location »." },
+              count: { type: "number", description: "How many times that unit applies here." },
+            },
+            required: ["item", "price", "per", "count"],
+          },
+        },
+      },
+      required: ["lines"],
+    },
   },
   {
     name: "read_selection",
@@ -500,6 +525,8 @@ export async function executeTool(name, input, opts = {}) {
         return guardPage(await sendToActiveTab({ type: "read_page", from: input && input.from, find: input && input.find, actions: observe }));
       case "calculate":
         try { return { result: calculate(input && input.expression) }; } catch (e) { return { error: e.message }; }
+      case "price_total":
+        return priceTotal(input && input.lines);
       case "read_selection":
         return await sendToActiveTab({ type: "read_selection" });
       case "read_tab":

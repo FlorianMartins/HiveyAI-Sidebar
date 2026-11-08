@@ -43,3 +43,22 @@ export function calculate(expression) {
   if (i !== src.length) throw new Error(`Unexpected "${src[i]}" in the expression.`);
   return Math.round(value * 1e9) / 1e9;
 }
+
+/**
+ * A total from its lines. The unit stays next to the count it explains: a small model that multiplies
+ * "7 € per rental" by the days writes « per rental » × 3 and can see it is wrong; the sum is exact.
+ */
+export function priceTotal(lines) {
+  if (!Array.isArray(lines) || !lines.length) return { error: "Give the lines: each price, its unit as the page writes it, and how many times it applies." };
+  let total = 0;
+  const shown = [];
+  for (const line of lines) {
+    const price = Number(String(line && line.price).replace(",", "."));
+    const count = Number(String(line && line.count).replace(",", "."));
+    if (!Number.isFinite(price) || !Number.isFinite(count)) return { error: `Line « ${line && line.item} »: price and count must be numbers.` };
+    const amount = Math.round(price * count * 100) / 100;
+    total = Math.round((total + amount) * 100) / 100;
+    shown.push(`${line.item}: ${price} × ${count} = ${amount} (${line.per || "unit not given"})`);
+  }
+  return { total, lines: shown, check: "Each count must match its unit: per day × days, per person × people, per person and per day × both, once or per rental × 1; apply any offer or threshold the page states." };
+}
