@@ -44,21 +44,103 @@ export function calculate(expression) {
   return Math.round(value * 1e9) / 1e9;
 }
 
+// ── Totals: the browser counts, from each price's unit ───────────────────────────────────────
+//
+// « 7 € par location » counted every day, « 2 € par personne, pour toute la location » counted every
+// day for each person: a small model reads the unit and still multiplies by habit (the agent 4B got
+// 2 to 4 of 8 such totals right). Here the model copies the unit as the page writes it and gives the
+// request's quantities once; the code decides how many times each price counts. What it cannot read
+// (« offert dès 4 semaines », « première heure ») stays the model's: `free`, or a `count` of its own.
+
+const PLAIN = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const WHO = [
+  ["adults", /\b(adultes?|adults?)\b/],
+  ["children", /\b(enfants?|children|child|kids?)\b/],
+  ["people", /\b(personnes?|pers\b|participants?|joueurs?|cavaliers?|voyageurs?|passagers?|chacun|chacune|par tete|person|people|head|each guest|guests?|pax)\b|\/\s*pers/],
+];
+const WHEN = [
+  // First: « demi-journée » is not a day.
+  ["sessions", /\b(seances?|sessions?|cours|lessons?|demi-journees?|half-days?)\b/],
+  ["nights", /\b(nuits?|nuitees?|nights?)\b/],
+  ["days", /\b(jours?|journees?|day|days|daily)\b/],
+  ["hours", /\b(heures?|hours?|hourly)\b|\/\s*h\b/],
+  ["weeks", /\b(semaines?|weeks?|weekly)\b/],
+  ["months", /\b(mois|months?|monthly)\b/],
+];
+// The whole stay, the booking: no time in it, even when a time word follows (« pour toute la durée »).
+const WHOLE = /\b(une (seule )?fois|forfait|par (reservation|commande|dossier|location|sejour|stage|inscription)|pour (tout|toute) (le|la|l')|quelle que soit la duree|per (booking|order|rental|stay|hire)|for the whole|one-?off|once)\b/;
+const ITEM = /\b(unite|piece|paire|exemplaire|page|km|kilometres?|kilometers?|article|bouteille|carte|item|pair|copy|each one)\b/;
+
+/** Which of the request's quantities a unit, as a page writes it, multiplies by. */
+export function unitFactors(per) {
+  const text = PLAIN(per);
+  const factors = [];
+  const who = WHO.find(([, re]) => re.test(text));
+  if (who) factors.push(who[0]);
+  if (!WHOLE.test(text)) {
+    const when = WHEN.find(([, re]) => re.test(text));
+    if (when) factors.push(when[0]);
+  }
+  if (ITEM.test(text)) factors.push("items");
+  const known = factors.length > 0 || WHOLE.test(text);
+  return { factors, known };
+}
+
+// Absent is not zero: a missing count must be asked for, not priced at nothing.
+const num = (v) => (v === undefined || v === null || v === "" ? NaN : Number(String(v).replace(",", ".")));
+const round2 = (n) => Math.round(n * 100) / 100;
+
 /**
- * A total from its lines. The unit stays next to the count it explains: a small model that multiplies
- * "7 € per rental" by the days writes « per rental » × 3 and can see it is wrong; the sum is exact.
+ * lines: [{ item, price, per, count?, free? }]; quantities: { people, adults, children, days, nights,
+ * hours, weeks, months, sessions }. `count` is how many of the item (pieces, pages, km) for a price
+ * « par unité », or the count itself where the unit is not one the browser reads.
  */
-export function priceTotal(lines) {
-  if (!Array.isArray(lines) || !lines.length) return { error: "Give the lines: each price, its unit as the page writes it, and how many times it applies." };
+export function priceTotal(lines, quantities = {}) {
+  if (!Array.isArray(lines) || !lines.length) return { error: "Give the request's quantities, then each price with its unit copied from the page." };
+  const q = {};
+  for (const [k, v] of Object.entries(quantities || {})) if (Number.isFinite(num(v))) q[k] = num(v);
+  if (q.people === undefined && (q.adults !== undefined || q.children !== undefined)) q.people = (q.adults || 0) + (q.children || 0);
   let total = 0;
   const shown = [];
+  const missing = [];
   for (const line of lines) {
-    const price = Number(String(line && line.price).replace(",", "."));
-    const count = Number(String(line && line.count).replace(",", "."));
-    if (!Number.isFinite(price) || !Number.isFinite(count)) return { error: `Line « ${line && line.item} »: price and count must be numbers.` };
-    const amount = Math.round(price * count * 100) / 100;
-    total = Math.round((total + amount) * 100) / 100;
-    shown.push(`${line.item}: ${price} × ${count} = ${amount} (${line.per || "unit not given"})`);
+    const price = num(line && line.price);
+    if (!Number.isFinite(price)) return { error: `Line « ${line && line.item} »: the price must be a number.` };
+    const { factors, known } = unitFactors(line.per);
+    let times = 1;
+    const why = [];
+    if (line.free) {
+      times = 0;
+      why.push("offert");
+    } else if (!known) {
+      const count = num(line.count);
+      if (!Number.isFinite(count)) { missing.push(`« ${line.item} » (${line.per || "no unit"}): unit not read, give its count`); continue; }
+      times = count;
+      why.push(`${count} (count given)`);
+    } else {
+      for (const f of factors) {
+        const value = f === "items" ? num(line.count) : q[f];
+        if (!Number.isFinite(value)) { missing.push(`« ${line.item} » needs ${f === "items" ? "its count" : f}`); times = NaN; break; }
+        times *= value;
+        why.push(`${value} ${f}`);
+      }
+      if (!Number.isFinite(times)) continue;
+      if (!factors.length) why.push("once");
+    }
+    const amount = round2(price * times);
+    total = round2(total + amount);
+    shown.push(`${line.item}: ${price} × ${why.join(" × ")} = ${amount}  [« ${line.per || ""} »]`);
   }
-  return { total, lines: shown, check: "Each count must match its unit: per day × days, per person × people, per person and per day × both, once or per rental × 1; apply any offer or threshold the page states." };
+  if (missing.length) return { error: "Missing: " + missing.join("; ") + ". Call again with them.", lines: shown };
+  return { total, lines: shown };
 }
+
+/**
+ * A total of a tariff written as arithmetic: three terms or more, some multiplied. The small model's
+ * habit, and where it counts a unit wrong; price_total counts it from the unit instead.
+ */
+export function looksLikeTariffTotal(expression) {
+  const terms = String(expression || "").split(/(?<![*/(e])[+]/).filter((x) => x.trim());
+  return terms.length >= 3 && terms.some((x) => /[*×x]/.test(x));
+}
+export const USE_PRICE_TOTAL = "Not calculated: for a total of prices, call price_total with the request's quantities and each price with its unit copied from the page; the browser counts each line. Use calculate for other arithmetic.";

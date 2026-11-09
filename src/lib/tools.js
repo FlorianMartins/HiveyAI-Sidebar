@@ -10,7 +10,7 @@
 // (see content.js) refuses checkout/payment actions when enabled, so the agent
 // can fill a cart but can never complete a purchase.
 
-import { calculate, priceTotal } from "./calc.js";
+import { calculate, priceTotal, looksLikeTariffTotal, USE_PRICE_TOTAL } from "./calc.js";
 import { isWebChatUrl } from "./memory-policy.js";
 import { t } from "./i18n.js";
 import { guardPage } from "./page-guard.js";
@@ -33,11 +33,16 @@ export const TOOLS = [
   {
     name: "price_total",
     description:
-      "Add up a price from the page's tariffs: one line per price, with its unit copied from the page and how many times it applies. Use it for every total of several prices.",
+      "Add up a price from the page's tariffs. Give the request's quantities once, and each price with its unit copied exactly from the page: the browser counts how many times each price applies. Use it for every total of several prices.",
     write: false,
     input_schema: {
       type: "object",
       properties: {
+        quantities: {
+          type: "object",
+          description: "What the request says: people, adults, children, days, nights, hours, weeks, months, sessions (only those it says).",
+          additionalProperties: { type: "number" },
+        },
         lines: {
           type: "array",
           items: {
@@ -46,9 +51,10 @@ export const TOOLS = [
               item: { type: "string", description: "What is paid for, e.g. « Gilet »." },
               price: { type: "number" },
               per: { type: "string", description: "The unit exactly as the page writes it, e.g. « par personne, pour toute la location »." },
-              count: { type: "number", description: "How many times that unit applies here." },
+              count: { type: "number", description: "Only for a price per piece, page, km… : how many. Or the count, when the unit is unusual." },
+              free: { type: "boolean", description: "True when an offer on the page makes this line free for this request." },
             },
-            required: ["item", "price", "per", "count"],
+            required: ["item", "price", "per"],
           },
         },
       },
@@ -524,9 +530,10 @@ export async function executeTool(name, input, opts = {}) {
       case "read_page":
         return guardPage(await sendToActiveTab({ type: "read_page", from: input && input.from, find: input && input.find, actions: observe }));
       case "calculate":
+        if (observe && looksLikeTariffTotal(input && input.expression)) return { error: USE_PRICE_TOTAL };
         try { return { result: calculate(input && input.expression) }; } catch (e) { return { error: e.message }; }
       case "price_total":
-        return priceTotal(input && input.lines);
+        return priceTotal(input && input.lines, input && input.quantities);
       case "read_selection":
         return await sendToActiveTab({ type: "read_selection" });
       case "read_tab":
