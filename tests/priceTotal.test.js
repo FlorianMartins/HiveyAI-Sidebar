@@ -50,13 +50,3 @@ test("adults and children make the people when no total is given", () => {
   assert.equal(r.total, 30 + 7.2);
 });
 
-test("a tariff written as arithmetic is recognised, other arithmetic is not", async () => {
-  const { looksLikeTariffTotal } = await import("../src/lib/calc.js");
-  assert.equal(looksLikeTariffTotal("2*14 + 9 + 2*4"), true);
-  assert.equal(looksLikeTariffTotal("4 * 95 + 500 * 0.25 + 15 + 4 * 18"), true);
-  assert.equal(looksLikeTariffTotal("329 + 0"), false);
-  assert.equal(looksLikeTariffTotal("314 + 9.9"), false);
-  assert.equal(looksLikeTariffTotal("15 * 24 + 80"), false);
-  assert.equal(looksLikeTariffTotal("41 + 17 + 8"), false);
-  assert.equal(looksLikeTariffTotal("1e3 + 2 + 3"), false);
-});

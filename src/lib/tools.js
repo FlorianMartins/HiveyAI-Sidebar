@@ -10,7 +10,7 @@
 // (see content.js) refuses checkout/payment actions when enabled, so the agent
 // can fill a cart but can never complete a purchase.
 
-import { calculate, priceTotal, looksLikeTariffTotal, USE_PRICE_TOTAL } from "./calc.js";
+import { calculate, priceTotal } from "./calc.js";
 import { isWebChatUrl } from "./memory-policy.js";
 import { t } from "./i18n.js";
 import { guardPage } from "./page-guard.js";
@@ -530,7 +530,6 @@ export async function executeTool(name, input, opts = {}) {
       case "read_page":
         return guardPage(await sendToActiveTab({ type: "read_page", from: input && input.from, find: input && input.find, actions: observe }));
       case "calculate":
-        if (observe && looksLikeTariffTotal(input && input.expression)) return { error: USE_PRICE_TOTAL };
         try { return { result: calculate(input && input.expression) }; } catch (e) { return { error: e.message }; }
       case "price_total":
         return priceTotal(input && input.lines, input && input.quantities);

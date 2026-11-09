@@ -135,12 +135,3 @@ export function priceTotal(lines, quantities = {}) {
   return { total, lines: shown };
 }
 
-/**
- * A total of a tariff written as arithmetic: three terms or more, some multiplied. The small model's
- * habit, and where it counts a unit wrong; price_total counts it from the unit instead.
- */
-export function looksLikeTariffTotal(expression) {
-  const terms = String(expression || "").split(/(?<![*/(e])[+]/).filter((x) => x.trim());
-  return terms.length >= 3 && terms.some((x) => /[*×x]/.test(x));
-}
-export const USE_PRICE_TOTAL = "Not calculated: for a total of prices, call price_total with the request's quantities and each price with its unit copied from the page; the browser counts each line. Use calculate for other arithmetic.";

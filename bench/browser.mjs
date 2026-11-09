@@ -1,4 +1,4 @@
-import { calculate, priceTotal, looksLikeTariffTotal, USE_PRICE_TOTAL } from "../src/lib/calc.js";
+import { calculate, priceTotal } from "../src/lib/calc.js";
 import { guardPage } from "../src/lib/page-guard.js";
 import { webContextBlock } from "../src/lib/web-search.js";
 // A simulated browser for the bench: the agent's real tools, answered from fixture sites.
@@ -199,7 +199,6 @@ export function createBrowser({ sites = {}, tabs = [], search = [], initial = {}
       case "price_total":
         return priceTotal(input && input.lines, input && input.quantities);
       case "calculate":
-        if (api.observe && looksLikeTariffTotal(input && input.expression)) return { error: USE_PRICE_TOTAL };
         try { return { result: calculate(input && input.expression) }; } catch (e) { return { error: e.message }; }
       case "list_tabs":
         return { tabs: openTabs.map((t) => ({ id: t.id, title: render(t).title, url: t.url, active: t === active })) };
