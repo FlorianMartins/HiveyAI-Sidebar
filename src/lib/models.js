@@ -45,11 +45,11 @@ export const PROVIDERS = {
     // auto-maintained by scripts/update-models.mjs (daily)
     // <models:anthropic:start>
     models: [
+      ["claude-fable-5-2", "Claude Fable 5.2"],
       ["claude-sonnet-5-5", "Claude Sonnet 5.5"],
       ["claude-opus-5-5", "Claude Opus 5.5"],
       ["claude-fable-5-1", "Claude Fable 5.1"],
       ["claude-opus-5", "Claude Opus 5"],
-      ["claude-sonnet-5", "Claude Sonnet 5"],
       ["claude-haiku-5-5", "Claude Haiku 5.5"],
     ],
     // <models:anthropic:end>
@@ -126,17 +126,17 @@ export const PROVIDERS = {
       ["nvidia/nemotron-3.5-lightning:free", "Nemotron 3.5 Lightning — free"],
       ["nvidia/nemotron-3-ultra-550b-a55b:free", "Nemotron 3 Ultra — free"],
       ["nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free", "Nemotron 3 Nano Omni — free (reasoning)"],
+      ["thinkingmachines/inkling-2-small:free", "Inkling 2 Small — free (reasoning)"],
       ["liquid/lfm-3-1.7b:free", "LFM3-1.7B — free"],
-      ["stealth/crouton-alpha", "Crouton Alpha — free"],
       ["recursive/flint-v1.0:free", "Flint — free"],
       ["xingchen-agi/xing4.0-29b-a4b:free", "Xing4.0 29B A4B — free"],
       ["dots-studio/dots-3-note-preview:free", "Dots3-Note Preview — free"],
       ["liquid/lfm-2.5-2.6b:free", "LFM2.5-2.6B — free"],
       ["cohere/north-mini-code:free", "North Mini Code — free"],
       ["openrouter/free", "Free Models Router — free"],
+      ["anthropic/claude-fable-5.2", "Claude Fable 5.2 (paid)"],
       ["anthropic/claude-sonnet-5.5", "Claude Sonnet 5.5 (paid)"],
       ["anthropic/claude-opus-5.5", "Claude Opus 5.5 (paid)"],
-      ["anthropic/claude-fable-5.1", "Claude Fable 5.1 (paid)"],
       ["openai/gpt-6.1-terra-pro", "GPT-6.1 Terra Pro (paid)"],
       ["openai/gpt-6.1-terra", "GPT-6.1 Terra (paid)"],
       ["openai/gpt-6.1-sol-pro", "GPT-6.1 Sol Pro (paid)"],
