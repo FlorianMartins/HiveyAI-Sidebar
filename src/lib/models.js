@@ -129,7 +129,6 @@ export const PROVIDERS = {
       ["thinkingmachines/inkling-2-small:free", "Inkling 2 Small — free (reasoning)"],
       ["liquid/lfm-3-1.7b:free", "LFM3-1.7B — free"],
       ["recursive/flint-v1.0:free", "Flint — free"],
-      ["xingchen-agi/xing4.0-29b-a4b:free", "Xing4.0 29B A4B — free"],
       ["dots-studio/dots-3-note-preview:free", "Dots3-Note Preview — free"],
       ["liquid/lfm-2.5-2.6b:free", "LFM2.5-2.6B — free"],
       ["cohere/north-mini-code:free", "North Mini Code — free"],
@@ -140,9 +139,9 @@ export const PROVIDERS = {
       ["openai/gpt-6.1-terra-pro", "GPT-6.1 Terra Pro (paid)"],
       ["openai/gpt-6.1-terra", "GPT-6.1 Terra (paid)"],
       ["openai/gpt-6.1-sol-pro", "GPT-6.1 Sol Pro (paid)"],
+      ["google/gemini-4-carbon", "Gemini 4 Carbon (paid)"],
       ["google/gemini-omni-1.2-flash", "Gemini Omni 1.2 Flash (paid)"],
       ["google/gemini-omni-1.1-flash", "Gemini Omni 1.1 Flash (paid)"],
-      ["google/gemini-4-argon", "Gemini 4 Argon (paid)"],
       ["x-ai/grok-4.7", "Grok 4.7 (paid)"],
       ["x-ai/grok-4.6", "Grok 4.6 (paid)"],
       ["x-ai/grok-4.5", "Grok 4.5 (paid)"],
@@ -176,11 +175,11 @@ export const PROVIDERS = {
     // auto-maintained by scripts/update-models.mjs (daily)
     // <models:google:start>
     models: [
+      ["gemini-4-carbon", "Gemini 4 Carbon"],
       ["gemini-omni-1.2-flash", "Gemini Omni 1.2 Flash"],
       ["gemini-omni-1.1-flash", "Gemini Omni 1.1 Flash"],
       ["gemini-4-argon", "Gemini 4 Argon"],
       ["gemini-3.8-flash", "Gemini 3.8 Flash"],
-      ["gemini-3.7-flash", "Gemini 3.7 Flash"],
       ["gemini-nano-banana-2.1", "Nano Banana 2.1"],
     ],
     // <models:google:end>
