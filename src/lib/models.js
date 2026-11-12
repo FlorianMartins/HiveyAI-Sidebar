@@ -126,6 +126,7 @@ export const PROVIDERS = {
       ["nvidia/nemotron-3.5-lightning:free", "Nemotron 3.5 Lightning — free"],
       ["nvidia/nemotron-3-ultra-550b-a55b:free", "Nemotron 3 Ultra — free"],
       ["nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free", "Nemotron 3 Nano Omni — free (reasoning)"],
+      ["baidu/ernie-5.5-flash-preview:free", "ERNIE-5.5-Flash-Preview — free"],
       ["thinkingmachines/inkling-2-small:free", "Inkling 2 Small — free (reasoning)"],
       ["liquid/lfm-3-1.7b:free", "LFM3-1.7B — free"],
       ["recursive/flint-v1.0:free", "Flint — free"],
