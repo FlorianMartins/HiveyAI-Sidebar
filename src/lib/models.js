@@ -129,7 +129,9 @@ export const PROVIDERS = {
       ["baidu/ernie-5.5-flash-preview:free", "ERNIE-5.5-Flash-Preview — free"],
       ["thinkingmachines/inkling-2-small:free", "Inkling 2 Small — free (reasoning)"],
       ["liquid/lfm-3-1.7b:free", "LFM3-1.7B — free"],
+      ["particle-ai/particle-1:free", "Particle-1 — free"],
       ["recursive/flint-v1.0:free", "Flint — free"],
+      ["apodex/apodex-1.1-mini:free", "Apodex 1.1 Mini — free"],
       ["dots-studio/dots-3-note-preview:free", "Dots3-Note Preview — free"],
       ["liquid/lfm-2.5-2.6b:free", "LFM2.5-2.6B — free"],
       ["cohere/north-mini-code:free", "North Mini Code — free"],
@@ -140,9 +142,9 @@ export const PROVIDERS = {
       ["openai/gpt-6.1-terra-pro", "GPT-6.1 Terra Pro (paid)"],
       ["openai/gpt-6.1-terra", "GPT-6.1 Terra (paid)"],
       ["openai/gpt-6.1-sol-pro", "GPT-6.1 Sol Pro (paid)"],
+      ["google/gemini-4-hydrogen", "Gemini 4 Hydrogen (paid)"],
       ["google/gemini-4-carbon", "Gemini 4 Carbon (paid)"],
       ["google/gemini-omni-1.2-flash", "Gemini Omni 1.2 Flash (paid)"],
-      ["google/gemini-omni-1.1-flash", "Gemini Omni 1.1 Flash (paid)"],
       ["x-ai/grok-4.7", "Grok 4.7 (paid)"],
       ["x-ai/grok-4.6", "Grok 4.6 (paid)"],
       ["x-ai/grok-4.5", "Grok 4.5 (paid)"],
@@ -176,11 +178,11 @@ export const PROVIDERS = {
     // auto-maintained by scripts/update-models.mjs (daily)
     // <models:google:start>
     models: [
+      ["gemini-4-hydrogen", "Gemini 4 Hydrogen"],
       ["gemini-4-carbon", "Gemini 4 Carbon"],
       ["gemini-omni-1.2-flash", "Gemini Omni 1.2 Flash"],
       ["gemini-omni-1.1-flash", "Gemini Omni 1.1 Flash"],
       ["gemini-4-argon", "Gemini 4 Argon"],
-      ["gemini-3.8-flash", "Gemini 3.8 Flash"],
       ["gemini-nano-banana-2.1", "Nano Banana 2.1"],
     ],
     // <models:google:end>
