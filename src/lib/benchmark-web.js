@@ -4,7 +4,7 @@
 // ids this add-on can actually select. Each source carries its OWN freshness, because that is
 // the number people forget to ask for: a leaderboard can be maintained daily and still cover
 // nothing released this year.
-export const BENCHMARK_FETCHED_AT = "2026-11-13";
+export const BENCHMARK_FETCHED_AT = "2026-11-14";
 export const BENCHMARK_SOURCES = {
   "webdev": {
     "label": "LMArena WebDev",
@@ -1418,6 +1418,7 @@ export const BENCHMARK_UNMATCHED = [
 ];
 // The newest catalogue models NO published source covers. This is the gap the live test fills.
 export const BENCHMARK_UNCOVERED = [
+  "inclusionai/ling-3.2-flash:free",
   "google/gemini-4-hydrogen:batch",
   "baidu/ernie-5.5-flash-preview:free",
   "baidu/ernie-light-dt-1.0-intl",
@@ -1456,6 +1457,5 @@ export const BENCHMARK_UNCOVERED = [
   "google/gemini-4-argon:batch",
   "scaledown/summarize",
   "scaledown/extract",
-  "anthropic/claude-haiku-5.5:batch",
-  "google/gemini-nano-banana-2.1"
+  "anthropic/claude-haiku-5.5:batch"
 ];
