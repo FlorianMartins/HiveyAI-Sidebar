@@ -72,12 +72,12 @@ export const PROVIDERS = {
     // auto-maintained by scripts/update-models.mjs (daily)
     // <models:openai:start>
     models: [
+      ["gpt-6.2-astra-pro", "GPT-6.2 Astra Pro"],
+      ["gpt-6.2-astra", "GPT-6.2 Astra"],
+      ["gpt-6.2-sol-pro", "GPT-6.2 Sol Pro"],
+      ["gpt-6.2-sol", "GPT-6.2 Sol"],
       ["gpt-6.1-terra-pro", "GPT-6.1 Terra Pro"],
       ["gpt-6.1-terra", "GPT-6.1 Terra"],
-      ["gpt-6.1-sol-pro", "GPT-6.1 Sol Pro"],
-      ["gpt-6.1-sol", "GPT-6.1 Sol"],
-      ["gpt-6-luna-pro", "GPT-6 Luna Pro"],
-      ["gpt-6-luna", "GPT-6 Luna"],
       ["gpt-5.4-nano", "GPT-5.4 Nano"],
     ],
     // <models:openai:end>
@@ -138,9 +138,9 @@ export const PROVIDERS = {
       ["anthropic/claude-fable-5.2", "Claude Fable 5.2 (paid)"],
       ["anthropic/claude-sonnet-5.5", "Claude Sonnet 5.5 (paid)"],
       ["anthropic/claude-opus-5.5", "Claude Opus 5.5 (paid)"],
-      ["openai/gpt-6.1-terra-pro", "GPT-6.1 Terra Pro (paid)"],
-      ["openai/gpt-6.1-terra", "GPT-6.1 Terra (paid)"],
-      ["openai/gpt-6.1-sol-pro", "GPT-6.1 Sol Pro (paid)"],
+      ["openai/gpt-6.2-astra-pro", "GPT-6.2 Astra Pro (paid)"],
+      ["openai/gpt-6.2-astra", "GPT-6.2 Astra (paid)"],
+      ["openai/gpt-6.2-sol-pro", "GPT-6.2 Sol Pro (paid)"],
       ["google/gemini-4-hydrogen", "Gemini 4 Hydrogen (paid)"],
       ["google/gemini-4-carbon", "Gemini 4 Carbon (paid)"],
       ["google/gemini-omni-1.2-flash", "Gemini Omni 1.2 Flash (paid)"],

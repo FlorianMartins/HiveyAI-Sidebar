@@ -4,7 +4,7 @@
 // ids this add-on can actually select. Each source carries its OWN freshness, because that is
 // the number people forget to ask for: a leaderboard can be maintained daily and still cover
 // nothing released this year.
-export const BENCHMARK_FETCHED_AT = "2026-11-17";
+export const BENCHMARK_FETCHED_AT = "2026-11-18";
 export const BENCHMARK_SOURCES = {
   "webdev": {
     "label": "LMArena WebDev",
@@ -1425,6 +1425,14 @@ export const BENCHMARK_UNMATCHED = [
 ];
 // The newest catalogue models NO published source covers. This is the gap the live test fills.
 export const BENCHMARK_UNCOVERED = [
+  "openai/gpt-6.2-astra-pro",
+  "openai/gpt-6.2-astra-pro:batch",
+  "openai/gpt-6.2-astra",
+  "openai/gpt-6.2-astra:batch",
+  "openai/gpt-6.2-sol-pro",
+  "openai/gpt-6.2-sol-pro:batch",
+  "openai/gpt-6.2-sol",
+  "openai/gpt-6.2-sol:batch",
   "tencent/hy4-flash",
   "inclusionai/ling-3.2-flash:free",
   "google/gemini-4-hydrogen:batch",
@@ -1456,13 +1464,5 @@ export const BENCHMARK_UNCOVERED = [
   "elorian/glimpse",
   "prism-ml/ternary-bonsai-2-9b",
   "moondream/moondream3-preview",
-  "moondream/moondream3.1-9b-a2b",
-  "nvidia/nemotron-3.5-super-vl",
-  "nvidia/nemotron-3.5-super-vl:free",
-  "unbiased/pareto-26.10",
-  "unbiased/pareto-26.9",
-  "liquid/lfm-2.5-24b-a2b",
-  "google/gemini-4-argon:batch",
-  "scaledown/summarize",
-  "scaledown/extract"
+  "moondream/moondream3.1-9b-a2b"
 ];
