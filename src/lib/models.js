@@ -131,7 +131,6 @@ export const PROVIDERS = {
       ["liquid/lfm-3-1.7b:free", "LFM3-1.7B — free"],
       ["particle-ai/particle-1:free", "Particle-1 — free"],
       ["recursive/flint-v1.0:free", "Flint — free"],
-      ["dots-studio/dots-3-note-preview:free", "Dots3-Note Preview — free"],
       ["openrouter/free", "Free Models Router — free"],
       ["anthropic/claude-fable-5.2", "Claude Fable 5.2 (paid)"],
       ["anthropic/claude-sonnet-5.5", "Claude Sonnet 5.5 (paid)"],
