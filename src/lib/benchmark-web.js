@@ -4,7 +4,7 @@
 // ids this add-on can actually select. Each source carries its OWN freshness, because that is
 // the number people forget to ask for: a leaderboard can be maintained daily and still cover
 // nothing released this year.
-export const BENCHMARK_FETCHED_AT = "2026-11-25";
+export const BENCHMARK_FETCHED_AT = "2026-11-27";
 export const BENCHMARK_SOURCES = {
   "webdev": {
     "label": "LMArena WebDev",
@@ -22,7 +22,7 @@ export const BENCHMARK_SOURCES = {
     "home": "https://github.com/vectara/hallucination-leaderboard",
     "metric": "factual",
     "about": "How often a model invents facts when summarising a document it was given. Lower hallucination is better.",
-    "matched": 59,
+    "matched": 61,
     "total": 117,
     "newestModelCovered": "2026-10-19"
   }
@@ -1111,12 +1111,28 @@ export const BENCHMARK_WEB = {
       "as": "openai/gpt-5-mini-2025-08-07"
     }
   },
+  "moonshotai/kimi-k2": {
+    "vectara": {
+      "hallucination": 13.9,
+      "factual": 86.1,
+      "answerRate": 97,
+      "as": "moonshotai/Kimi-K2-Instruct"
+    }
+  },
   "openai/gpt-oss-120b": {
     "vectara": {
       "hallucination": 14.2,
       "factual": 85.8,
       "answerRate": 99.9,
       "as": "openai/gpt-oss-120b"
+    }
+  },
+  "moonshotai/kimi-k2-0905": {
+    "vectara": {
+      "hallucination": 17.9,
+      "factual": 82.1,
+      "answerRate": 98.6,
+      "as": "moonshotai/Kimi-K2-Instruct-0905"
     }
   },
   "openai/o3-pro": {
@@ -1441,19 +1457,20 @@ export const BENCHMARK_UNMATCHED = [
   },
   {
     "source": "vectara",
-    "model": "moonshotai/Kimi-K2-Instruct"
-  },
-  {
-    "source": "vectara",
     "model": "mistralai/mistral-3-large-2512"
   },
   {
     "source": "vectara",
     "model": "ai21labs/jamba-mini-1.7-2025-07"
+  },
+  {
+    "source": "vectara",
+    "model": "openai/gpt-5-minimal-2025-08-07"
   }
 ];
 // The newest catalogue models NO published source covers. This is the gap the live test fills.
 export const BENCHMARK_UNCOVERED = [
+  "inclusionai/lingsante-3.1-air-vl",
   "upstage/solar-mini-4-5",
   "upstage/solar-pro-4-contributor",
   "xiaomi/mimo-v2.6-flash-mopd",
@@ -1492,6 +1509,5 @@ export const BENCHMARK_UNCOVERED = [
   "moonshotai/kimi-k3.1-pro:batch",
   "recursive/flint-v1.0:free",
   "deepseek/deepseek-v4.1-flash-1017",
-  "deepseek/deepseek-v4.1-flash-1017:batch",
-  "elorian/glimpse"
+  "deepseek/deepseek-v4.1-flash-1017:batch"
 ];
