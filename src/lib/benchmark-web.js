@@ -4,7 +4,7 @@
 // ids this add-on can actually select. Each source carries its OWN freshness, because that is
 // the number people forget to ask for: a leaderboard can be maintained daily and still cover
 // nothing released this year.
-export const BENCHMARK_FETCHED_AT = "2026-11-27";
+export const BENCHMARK_FETCHED_AT = "2026-11-28";
 export const BENCHMARK_SOURCES = {
   "webdev": {
     "label": "LMArena WebDev",
@@ -1484,7 +1484,7 @@ export const BENCHMARK_UNCOVERED = [
   "openai/gpt-6.2-sol-pro:batch",
   "openai/gpt-6.2-sol:batch",
   "tencent/hy4-flash",
-  "inclusionai/ling-3.2-flash:free",
+  "inclusionai/ling-3.2-flash",
   "google/gemini-4-hydrogen:batch",
   "baidu/ernie-5.5-flash-preview:free",
   "baidu/ernie-light-dt-1.0-intl",
